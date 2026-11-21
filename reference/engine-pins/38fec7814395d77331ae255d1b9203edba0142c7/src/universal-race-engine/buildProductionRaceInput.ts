@@ -1,0 +1,922 @@
+/**
+ * Phase 11A production input adapter.
+ *
+ * Pure adapter only: no RPCs, no database writes, no race calculation.
+ * It converts production rows already loaded by the application/Edge Function
+ * into the single UniversalRaceEngineInput consumed by runRaceEngine().
+ */
+import {
+  AVAILABILITY_STATUSES,
+  PPM_UNIVERSAL_RACE_ENGINE_KEY,
+  PPM_UNIVERSAL_RACE_ENGINE_VERSION,
+  RIDER_STAGE_ROLES,
+  ROAD_PHASE_1_TO_3_COMMANDS,
+  ROAD_PHASE_4_COMMANDS,
+  ROAD_TEAM_TACTICS,
+  type AvailabilityStatus,
+  type FinishType,
+  type JsonRecord,
+  type RiderStageRole,
+  type RoadPhase1To3Command,
+  type RoadPhase4Command,
+  type StageFormat,
+  type TerrainType,
+  type UniversalPreparationInput,
+  type UniversalPreStageLeadersInput,
+  type UniversalPreStageStandingInput,
+  type UniversalRaceEngineInput,
+} from './runRaceEngine.ts'
+
+type Row = Record<string, unknown>
+
+export interface ProductionRaceRow extends Row {
+  id: string
+}
+
+export interface ProductionStageRow extends Row {
+  id: string
+  race_id: string
+}
+
+export interface ProductionProfilePayload extends Row {}
+export interface ProductionStagePointRow extends Row {}
+export interface ProductionStageRiderInputRow extends Row {
+  rider_id: string
+  team_id: string
+}
+export interface ProductionStagePhaseCommandRow extends Row {
+  rider_id: string
+  team_id: string
+}
+export interface ProductionParticipantTeamRow extends Row {
+  race_id?: string
+  team_id?: string
+  club_id?: string
+  status?: string
+}
+export interface ProductionParticipantRiderRow extends Row {
+  race_id?: string
+  rider_id: string
+  team_id: string
+}
+export interface ProductionLockedStagePlanRow extends Row {
+  team_id?: string
+  club_id?: string
+  participating_club_id?: string
+}
+
+export interface ProductionPhase9Payload extends Row {
+  riderModifiers?: readonly Row[]
+  rider_modifiers?: readonly Row[]
+  preparation?: UniversalPreparationInput | Row
+  diagnostics?: Row
+  modelVersion?: string | null
+  model_version?: string | null
+  source?: string | null
+}
+
+export interface ProductionUniversalRaceSources {
+  readonly race: ProductionRaceRow
+  readonly stage: ProductionStageRow
+  readonly profile: ProductionProfilePayload
+  readonly stagePoints: readonly ProductionStagePointRow[]
+  readonly participantTeams: readonly ProductionParticipantTeamRow[]
+  readonly participantRiders: readonly ProductionParticipantRiderRow[]
+  readonly riderInputRows: readonly ProductionStageRiderInputRow[]
+  readonly phaseCommandRows: readonly ProductionStagePhaseCommandRow[]
+  readonly lockedPlanRows: readonly ProductionLockedStagePlanRow[]
+  readonly preStageLeaders?: unknown
+  readonly preStageStandings?: unknown
+  readonly phase9Payload?: ProductionPhase9Payload | null
+  readonly deterministicSeed: string
+}
+
+const availabilitySet = new Set<string>(AVAILABILITY_STATUSES)
+const roleSet = new Set<string>(RIDER_STAGE_ROLES)
+const phase1To3Set = new Set<string>(ROAD_PHASE_1_TO_3_COMMANDS)
+const phase4Set = new Set<string>(ROAD_PHASE_4_COMMANDS)
+const teamTacticSet = new Set<string>(ROAD_TEAM_TACTICS)
+
+function object(value: unknown): Row {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Row)
+    : {}
+}
+
+function array(value: unknown): Row[] {
+  return Array.isArray(value) ? value.map(object) : []
+}
+
+function text(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const normalized = value.trim()
+  return normalized ? normalized : null
+}
+
+function numberValue(value: unknown, fallback = 0): number {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : fallback
+}
+
+function optionalNumber(value: unknown): number | null {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+function integerValue(value: unknown, fallback = 0): number {
+  return Math.trunc(numberValue(value, fallback))
+}
+
+function booleanValue(value: unknown): boolean {
+  if (typeof value === 'boolean') return value
+  if (typeof value === 'number') return value === 1
+  if (typeof value === 'string') {
+    return ['true', '1', 'yes', 'y'].includes(value.trim().toLowerCase())
+  }
+  return false
+}
+
+function clamp(value: number, minimum: number, maximum: number): number {
+  return Math.min(maximum, Math.max(minimum, value))
+}
+
+function percent(value: unknown, fallback = 50): number {
+  return clamp(numberValue(value, fallback), 0, 100)
+}
+
+function numericArray(value: unknown): number[] {
+  if (Array.isArray(value)) {
+    return value
+      .map(Number)
+      .filter((entry) => Number.isFinite(entry) && entry >= 0)
+  }
+  if (typeof value === 'string' && value.trim()) {
+    try {
+      return numericArray(JSON.parse(value))
+    } catch {
+      const parsed = Number(value)
+      return Number.isFinite(parsed) && parsed >= 0 ? [parsed] : []
+    }
+  }
+  return []
+}
+
+function nestedNumber(
+  sources: readonly unknown[],
+  keys: readonly string[],
+  fallback: number,
+): number {
+  for (const source of sources) {
+    const row = object(source)
+    for (const key of keys) {
+      const parsed = Number(row[key])
+      if (Number.isFinite(parsed)) return parsed
+    }
+  }
+  return fallback
+}
+
+function normalizeStageFormat(stage: Row): StageFormat {
+  const raw = `${text(stage.stage_format) ?? ''} ${text(stage.terrain_type) ?? ''}`
+    .trim()
+    .toLowerCase()
+  if (raw.includes('team_time_trial')) return 'team_time_trial'
+  if (raw.includes('pair_time_trial')) return 'pair_time_trial'
+  if (raw.includes('individual_time_trial') || raw === 'time_trial') {
+    return 'individual_time_trial'
+  }
+  if (raw.includes('prologue')) return 'prologue'
+  return 'road_race'
+}
+
+function normalizeTerrainType(
+  stage: Row,
+  profile: Row,
+  stageFormat: StageFormat,
+): TerrainType {
+  if (stageFormat === 'individual_time_trial') return 'individual_time_trial'
+  if (stageFormat === 'team_time_trial' || stageFormat === 'pair_time_trial') {
+    return 'team_time_trial'
+  }
+  if (stageFormat === 'prologue') return 'prologue'
+  const raw = (text(profile.terrain_type) ?? text(stage.terrain_type) ?? 'flat').toLowerCase()
+  if (raw.includes('mountain')) return 'mountain'
+  if (raw.includes('hill')) return 'hilly'
+  if (raw.includes('cobbl')) return 'cobbled'
+  return 'flat'
+}
+
+function inferSummitFinish(
+  stage: Row,
+  profile: Row,
+  terrainType: TerrainType,
+): boolean {
+  if (booleanValue(stage.is_summit_finish)) return true
+  if (terrainType !== 'mountain') return false
+
+  const distanceKm = Math.max(
+    1,
+    numberValue(profile.distance_km ?? stage.distance_km, 1),
+  )
+  const climbs = [
+    ...array(profile.mountain_climbs),
+    ...array(stage.mountain_climbs_json),
+  ]
+
+  return climbs.some((climb) => {
+    const km = optionalNumber(
+      climb.km ?? climb.kilometer ?? climb.km_from_start ?? climb.distance_km,
+    )
+    if (km === null || Math.abs(km - distanceKm) > 0.25) return false
+    const category = String(
+      climb.category ?? climb.kom_category ?? '',
+    )
+      .trim()
+      .toUpperCase()
+      .replace(/^CAT(?:EGORY)?\s*/i, '')
+    return ['HC', '1', '2'].includes(category)
+  })
+}
+
+function normalizeFinishType(
+  stage: Row,
+  profile: Row,
+  stageFormat: StageFormat,
+  terrainType: TerrainType,
+  summitFinish: boolean,
+): FinishType {
+  if (stageFormat === 'individual_time_trial') return 'time_trial_finish'
+  if (stageFormat === 'team_time_trial' || stageFormat === 'pair_time_trial') {
+    return 'team_time_trial_finish'
+  }
+  if (stageFormat === 'prologue') return 'prologue_finish'
+  const hint = `${text(stage.finish_type) ?? ''} ${text(profile.profile_type) ?? text(stage.profile_type) ?? ''}`.toLowerCase()
+  if (summitFinish || hint.includes('summit')) return 'summit_finish'
+  if (hint.includes('uphill')) return 'uphill_finish'
+  if (terrainType === 'cobbled' || hint.includes('cobbl')) return 'cobbled_finish'
+  return 'flat_finish'
+}
+
+function normalizeSprintZoneKm(
+  stage: Row,
+  stageFormat: StageFormat,
+  finishType: FinishType,
+): number {
+  if (stageFormat !== 'road_race' || finishType !== 'flat_finish') return 0
+  const rules = object(stage.rules_snapshot)
+  const metadata = object(stage.metadata)
+  const configured =
+    rules.sprint_zone_km ?? rules.sprintZoneKm ??
+    metadata.sprint_zone_km ?? metadata.sprintZoneKm
+  if (configured === null || configured === undefined || configured === '') return 3
+  return clamp(numberValue(configured, 3), 0, 5)
+}
+
+function buildTerrainPercentages(stage: Row, profile: Row, terrainType: TerrainType) {
+  const split = object(profile.terrain_split)
+  const raw = {
+    flat: Math.max(0, numberValue(split.flat ?? stage.flat_pct, 0)),
+    hilly: Math.max(0, numberValue(split.hilly ?? stage.hilly_pct, 0)),
+    mountain: Math.max(0, numberValue(split.mountain ?? stage.mountain_pct, 0)),
+    cobbled: Math.max(0, numberValue(split.cobbled ?? stage.cobbled_pct, 0)),
+  }
+  let total = raw.flat + raw.hilly + raw.mountain + raw.cobbled
+  if (total <= 0) {
+    raw.flat = terrainType === 'flat' ? 100 : 0
+    raw.hilly = terrainType === 'hilly' ? 100 : 0
+    raw.mountain = terrainType === 'mountain' ? 100 : 0
+    raw.cobbled = terrainType === 'cobbled' ? 100 : 0
+    total = 100
+  }
+  const normalized = {
+    flat: Number(((raw.flat / total) * 100).toFixed(6)),
+    hilly: Number(((raw.hilly / total) * 100).toFixed(6)),
+    mountain: Number(((raw.mountain / total) * 100).toFixed(6)),
+    cobbled: Number(((raw.cobbled / total) * 100).toFixed(6)),
+  }
+  const normalizedTotal = normalized.flat + normalized.hilly + normalized.mountain + normalized.cobbled
+  normalized.flat = Number((normalized.flat + (100 - normalizedTotal)).toFixed(6))
+  return normalized
+}
+
+function buildProfilePoints(profile: Row, distanceKm: number) {
+  const source = array(profile.profile_points)
+  const byKm = new Map<number, { km: number; elevationM: number }>()
+  source.forEach((point) => {
+    const km = clamp(numberValue(point.km, 0), 0, distanceKm)
+    byKm.set(km, {
+      km,
+      elevationM: numberValue(point.elevation_m ?? point.elevationM ?? point.elevation, 0),
+    })
+  })
+  const points = [...byKm.values()].sort((a, b) => a.km - b.km)
+  const firstElevation = points[0]?.elevationM ?? 0
+  const lastElevation = points[points.length - 1]?.elevationM ?? firstElevation
+  if (points[0]?.km !== 0) points.unshift({ km: 0, elevationM: firstElevation })
+  if (points[points.length - 1]?.km !== distanceKm) points.push({ km: distanceKm, elevationM: lastElevation })
+  return points.length >= 2
+    ? points
+    : [{ km: 0, elevationM: 0 }, { km: distanceKm, elevationM: 0 }]
+}
+
+function normalizePointType(value: unknown): 'START' | 'INTERMEDIATE_SPRINT' | 'KOM' | 'BONUS_SPRINT' | 'FINISH' | null {
+  const raw = String(value ?? '').trim().toUpperCase()
+  if (['START', 'INTERMEDIATE_SPRINT', 'KOM', 'BONUS_SPRINT', 'FINISH'].includes(raw)) {
+    return raw as 'START' | 'INTERMEDIATE_SPRINT' | 'KOM' | 'BONUS_SPRINT' | 'FINISH'
+  }
+  if (['SPRINT', 'INTERMEDIATE', 'INTERMEDIATE SPRINT'].includes(raw)) return 'INTERMEDIATE_SPRINT'
+  if (['BONUS', 'BONUS SPRINT'].includes(raw)) return 'BONUS_SPRINT'
+  if (['CLIMB', 'MOUNTAIN_CLIMB', 'MOUNTAIN CLIMB'].includes(raw)) return 'KOM'
+  return null
+}
+
+function normalizeKomCategory(value: unknown): 'HC' | '1' | '2' | '3' | '4' {
+  const raw = String(value ?? '').trim().toUpperCase().replace(/^CAT(?:EGORY)?\s*/i, '')
+  return ['HC', '1', '2', '3', '4'].includes(raw) ? raw as 'HC' | '1' | '2' | '3' | '4' : '4'
+}
+
+function buildStagePoints(stageId: string, distanceKm: number, rows: readonly Row[]) {
+  return rows
+    .map((row, index) => {
+      const pointType = normalizePointType(row.point_type)
+      if (!pointType) return null
+      const isFinish = booleanValue(row.is_finish_point) || pointType === 'FINISH'
+      return {
+        pointId: text(row.id) ?? `${stageId}:${pointType.toLowerCase()}:${index}`,
+        stageId,
+        pointType,
+        kmFromStart: clamp(numberValue(row.km_from_start, isFinish ? distanceKm : 0), 0, distanceKm),
+        name: text(row.name),
+        komCategory: pointType === 'KOM' ? normalizeKomCategory(row.kom_category) : null,
+        pointsScheme: numericArray(row.points_scheme),
+        timeBonusSeconds: numericArray(row.time_bonus_seconds),
+        isFinishPoint: isFinish,
+        sortOrder: integerValue(row.sort_order, index),
+        metadata: object(row.metadata) as JsonRecord,
+      }
+    })
+    .filter((row): row is NonNullable<typeof row> => row !== null)
+    .sort((a, b) => a.kmFromStart - b.kmFromStart || a.sortOrder - b.sortOrder || a.pointId.localeCompare(b.pointId))
+    .map((row, index) => ({ ...row, sortOrder: index }))
+}
+
+type ProductionProfileCompetitionMarker = {
+  readonly family: 'sprint' | 'kom'
+  readonly kmFromStart: number
+  readonly name: string | null
+  readonly komCategory: 'HC' | '1' | '2' | '3' | '4' | null
+  readonly source: 'profile_intermediate_sprints' | 'profile_mountain_climbs' | 'profile_route_markers'
+  readonly sourceIndex: number
+}
+
+function markerKm(row: Row, distanceKm: number): number | null {
+  const raw = row.km ?? row.kilometer ?? row.km_from_start ?? row.distance_km
+  const parsed = optionalNumber(raw)
+  if (parsed === null) return null
+  return clamp(parsed, 0, distanceKm)
+}
+
+function markerName(row: Row): string | null {
+  return text(row.name ?? row.label ?? row.title)
+}
+
+function buildProfileCompetitionMarkers(
+  profile: Row,
+  distanceKm: number,
+): readonly ProductionProfileCompetitionMarker[] {
+  const sprintRows = array(profile.intermediate_sprints)
+  const climbRows = array(profile.mountain_climbs)
+  const explicitMarkers: ProductionProfileCompetitionMarker[] = [
+    ...sprintRows.flatMap((row, index) => {
+      const kmFromStart = markerKm(row, distanceKm)
+      if (kmFromStart === null) return []
+      return [{
+        family: 'sprint' as const,
+        kmFromStart,
+        name: markerName(row),
+        komCategory: null,
+        source: 'profile_intermediate_sprints' as const,
+        sourceIndex: index,
+      }]
+    }),
+    ...climbRows.flatMap((row, index) => {
+      const kmFromStart = markerKm(row, distanceKm)
+      if (kmFromStart === null) return []
+      return [{
+        family: 'kom' as const,
+        kmFromStart,
+        name: markerName(row),
+        komCategory: normalizeKomCategory(row.category ?? row.kom_category),
+        source: 'profile_mountain_climbs' as const,
+        sourceIndex: index,
+      }]
+    }),
+  ]
+
+  // The stage/profile UI uses intermediate_sprints + mountain_climbs for its
+  // competition cards. Only fall back to route_markers when neither explicit
+  // catalogue is present, so one physical marker source remains authoritative.
+  if (sprintRows.length > 0 || climbRows.length > 0) {
+    return explicitMarkers.sort(
+      (a, b) => a.kmFromStart - b.kmFromStart || a.sourceIndex - b.sourceIndex,
+    )
+  }
+
+  return array(profile.route_markers)
+    .flatMap((row, index): ProductionProfileCompetitionMarker[] => {
+      const rawType = String(row.type ?? row.point_type ?? '').trim().toLowerCase()
+      const family =
+        rawType.includes('kom') || rawType.includes('climb') || rawType.includes('mountain')
+          ? 'kom'
+          : rawType.includes('sprint')
+            ? 'sprint'
+            : null
+      if (family === null) return []
+      const kmFromStart = markerKm(row, distanceKm)
+      if (kmFromStart === null) return []
+      return [{
+        family,
+        kmFromStart,
+        name: markerName(row),
+        komCategory:
+          family === 'kom'
+            ? normalizeKomCategory(row.category ?? row.kom_category)
+            : null,
+        source: 'profile_route_markers',
+        sourceIndex: index,
+      }]
+    })
+    .sort((a, b) => a.kmFromStart - b.kmFromStart || a.sourceIndex - b.sourceIndex)
+}
+
+function buildReconciledStagePoints(
+  stageId: string,
+  distanceKm: number,
+  rows: readonly Row[],
+  profile: Row,
+): ReturnType<typeof buildStagePoints> {
+  const canonicalPoints = buildStagePoints(stageId, distanceKm, rows)
+  const profileMarkers = buildProfileCompetitionMarkers(profile, distanceKm)
+  if (profileMarkers.length === 0) return canonicalPoints
+
+  const canonicalSprintIndexes = canonicalPoints
+    .map((point, index) => ({ point, index }))
+    .filter(({ point }) =>
+      point.pointType === 'INTERMEDIATE_SPRINT' || point.pointType === 'BONUS_SPRINT',
+    )
+    .sort(
+      (a, b) =>
+        a.point.kmFromStart - b.point.kmFromStart ||
+        a.point.sortOrder - b.point.sortOrder ||
+        a.point.pointId.localeCompare(b.point.pointId),
+    )
+  const canonicalKomIndexes = canonicalPoints
+    .map((point, index) => ({ point, index }))
+    .filter(({ point }) => point.pointType === 'KOM')
+    .sort(
+      (a, b) =>
+        a.point.kmFromStart - b.point.kmFromStart ||
+        a.point.sortOrder - b.point.sortOrder ||
+        a.point.pointId.localeCompare(b.point.pointId),
+    )
+  const profileSprints = profileMarkers.filter((marker) => marker.family === 'sprint')
+  const profileKoms = profileMarkers.filter((marker) => marker.family === 'kom')
+
+  const assertCompatibleCount = (
+    family: 'sprint' | 'kom',
+    canonicalCount: number,
+    profileCount: number,
+  ): void => {
+    if (canonicalCount === profileCount) return
+    throw new Error(
+      `Production stage point/profile mismatch for ${stageId}: ${family} catalogue has ` +
+        `${canonicalCount} scoring row(s) but ${profileCount} profile marker(s). ` +
+        'Refusing to invent, drop, or silently relocate a competition point.',
+    )
+  }
+  assertCompatibleCount('sprint', canonicalSprintIndexes.length, profileSprints.length)
+  assertCompatibleCount('kom', canonicalKomIndexes.length, profileKoms.length)
+
+  const reconciled = canonicalPoints.map((point) => ({ ...point }))
+  const applyMarker = (
+    canonicalIndex: number,
+    marker: ProductionProfileCompetitionMarker,
+  ): void => {
+    const point = reconciled[canonicalIndex]
+    reconciled[canonicalIndex] = {
+      ...point,
+      kmFromStart: marker.kmFromStart,
+      name: marker.name ?? point.name,
+      komCategory:
+        point.pointType === 'KOM'
+          ? marker.komCategory ?? point.komCategory
+          : null,
+      metadata: {
+        ...point.metadata,
+        physical_marker_source: marker.source,
+        scoring_row_km_from_start: point.kmFromStart,
+        reconciled_to_profile_marker: true,
+      },
+    }
+  }
+  canonicalSprintIndexes.forEach(({ index }, markerIndex) =>
+    applyMarker(index, profileSprints[markerIndex]),
+  )
+  canonicalKomIndexes.forEach(({ index }, markerIndex) =>
+    applyMarker(index, profileKoms[markerIndex]),
+  )
+
+  return reconciled
+    .sort(
+      (a, b) =>
+        a.kmFromStart - b.kmFromStart ||
+        a.sortOrder - b.sortOrder ||
+        a.pointId.localeCompare(b.pointId),
+    )
+    .map((point, index) => ({ ...point, sortOrder: index }))
+}
+
+function normalizeAvailability(value: unknown): AvailabilityStatus {
+  const raw = String(value ?? '').trim().toLowerCase()
+  return availabilitySet.has(raw) ? raw as AvailabilityStatus : 'fit'
+}
+
+function normalizeRole(value: unknown): RiderStageRole {
+  const raw = String(value ?? '').trim().toLowerCase()
+  const aliases: Record<string, string> = {
+    leader: 'team_leader_gc', team_leader: 'team_leader_gc', gc_leader: 'team_leader_gc',
+    protected: 'protected_rider', leadout: 'lead_out_rider', lead_out: 'lead_out_rider',
+    domestique: 'helper_domestique', helper: 'helper_domestique', mountain_helper: 'mountain_domestique',
+    breakaway: 'breakaway_rider', chaser: 'breakaway_chaser', road_captain: 'free_role',
+  }
+  const normalized = aliases[raw] ?? raw
+  return roleSet.has(normalized) ? normalized as RiderStageRole : 'free_role'
+}
+
+function normalizePhase1To3Command(value: unknown): RoadPhase1To3Command {
+  const raw = String(value ?? '').trim().toLowerCase()
+  const aliases: Record<string, string> = {
+    balanced: 'follow_team_plan', normal: 'follow_team_plan', safe: 'avoid_risks', defensive: 'avoid_risks',
+    control: 'control_race', chase_breakaways: 'chase_breakaway', go_for_kom: 'fight_kom_points', go_for_sprint: 'fight_sprint_points',
+  }
+  const normalized = aliases[raw] ?? raw
+  return phase1To3Set.has(normalized) ? normalized as RoadPhase1To3Command : 'follow_team_plan'
+}
+
+function normalizePhase4Command(value: unknown): RoadPhase4Command {
+  const raw = String(value ?? '').trim().toLowerCase()
+  const aliases: Record<string, string> = {
+    balanced: 'follow_team_plan', normal: 'follow_team_plan', safe: 'avoid_risks', defensive: 'avoid_risks',
+    go_for_kom: 'fight_kom_points', go_for_sprint: 'fight_sprint_points', sprint_for_stage: 'final_sprint', leadout: 'lead_out_rider',
+  }
+  const normalized = aliases[raw] ?? raw
+  return phase4Set.has(normalized) ? normalized as RoadPhase4Command : 'follow_team_plan'
+}
+
+function normalizeTeamTactic(value: unknown): string {
+  const raw = String(value ?? '').trim().toLowerCase()
+  const aliases: Record<string, string> = { defensive: 'balanced', conservative: 'balanced', protect_gc: 'gc_protection', stage_win: 'aggressive' }
+  const normalized = aliases[raw] ?? raw
+  return teamTacticSet.has(normalized) ? normalized : 'balanced'
+}
+
+function phase9Rows(payload: ProductionPhase9Payload | null | undefined): Row[] {
+  if (!payload) return []
+  return array(payload.riderModifiers ?? payload.rider_modifiers)
+}
+
+function phase9Preparation(payload: ProductionPhase9Payload | null | undefined): UniversalPreparationInput {
+  const prep = object(payload?.preparation)
+  return {
+    equipment: object(prep.equipment),
+    staff: object(prep.staff),
+    assets: object(prep.assets),
+    raceSupplies: object(prep.raceSupplies ?? prep.race_supplies),
+    standardizedBonuses: {
+      ...object(prep.standardizedBonuses ?? prep.standardized_bonuses),
+      productionDiagnostics: object(payload?.diagnostics),
+      productionSource: text(payload?.source) ?? 'race_engine_get_stage_phase9_inputs_v1',
+      productionModelVersion: text(payload?.modelVersion ?? payload?.model_version),
+    },
+  }
+}
+
+function normalizePreStageLeaders(value: unknown): UniversalPreStageLeadersInput | null {
+  const root = Array.isArray(value) ? object(value[0]) : object(value)
+  if (Object.keys(root).length === 0) return null
+  const result: { hasEstablishedLeaders: boolean; general?: UniversalPreStageLeadersInput['general']; points?: UniversalPreStageLeadersInput['points']; mountain?: UniversalPreStageLeadersInput['mountain'] } = {
+    hasEstablishedLeaders: booleanValue(root.hasEstablishedLeaders ?? root.has_established_leaders),
+  }
+  for (const classificationType of ['general', 'points', 'mountain'] as const) {
+    const nested = object(root[classificationType])
+    const riderId = text(nested.riderId ?? nested.rider_id ?? root[`${classificationType}_rider_id`])
+    const teamId = text(nested.teamId ?? nested.team_id ?? root[`${classificationType}_team_id`])
+    if (riderId && teamId) {
+      result[classificationType] = { classificationType, riderId, teamId, rank: 1 }
+      result.hasEstablishedLeaders = true
+    }
+  }
+  return result as UniversalPreStageLeadersInput
+}
+
+function normalizePreStageStandings(
+  value: unknown,
+  acceptedRiderIds: ReadonlySet<string>,
+  acceptedTeamIds: ReadonlySet<string>,
+): UniversalPreStageStandingInput[] {
+  const allowedClassifications = new Set(['general', 'points', 'mountain'])
+  const seen = new Set<string>()
+  return array(value)
+    .map((row): UniversalPreStageStandingInput | null => {
+      const classificationType = text(
+        row.classification_type ?? row.classificationType,
+      )?.toLowerCase()
+      const riderId = text(row.rider_id ?? row.riderId)
+      const teamId = text(row.team_id ?? row.teamId)
+      const rank = integerValue(row.rank, 0)
+      if (
+        !classificationType ||
+        !allowedClassifications.has(classificationType) ||
+        !riderId ||
+        !teamId ||
+        rank <= 0 ||
+        (acceptedRiderIds.size > 0 && !acceptedRiderIds.has(riderId)) ||
+        (acceptedTeamIds.size > 0 && !acceptedTeamIds.has(teamId))
+      ) {
+        return null
+      }
+      const key = `${classificationType}:${riderId}`
+      if (seen.has(key)) return null
+      seen.add(key)
+      const gapSeconds = optionalNumber(row.gap_seconds ?? row.gapSeconds)
+      const points = optionalNumber(row.points)
+      return {
+        classificationType:
+          classificationType as UniversalPreStageStandingInput['classificationType'],
+        riderId,
+        teamId,
+        rank,
+        gapSeconds:
+          classificationType === 'general' && gapSeconds !== null
+            ? Math.max(0, gapSeconds)
+            : null,
+        points:
+          classificationType !== 'general' && points !== null
+            ? Math.max(0, points)
+            : null,
+      }
+    })
+    .filter((row): row is UniversalPreStageStandingInput => row !== null)
+    .sort(
+      (left, right) =>
+        left.classificationType.localeCompare(right.classificationType) ||
+        left.rank - right.rank ||
+        left.riderId.localeCompare(right.riderId),
+    )
+}
+
+function teamIdFromParticipant(row: Row): string | null {
+  return text(row.team_id ?? row.club_id ?? row.participating_club_id)
+}
+
+export function buildProductionUniversalRaceEngineInput(
+  sources: ProductionUniversalRaceSources,
+): UniversalRaceEngineInput {
+  const race = object(sources.race)
+  const stage = object(sources.stage)
+  const profile = object(sources.profile)
+  const raceId = text(race.id)
+  const stageId = text(stage.id)
+  if (!raceId || !stageId || text(stage.race_id) !== raceId) {
+    throw new Error('Production race/stage identity is missing or inconsistent.')
+  }
+  if (!text(sources.deterministicSeed)) throw new Error('Production deterministic seed is required.')
+
+  const acceptedTeams = sources.participantTeams.filter((row) => {
+    const status = text(row.status)?.toLowerCase()
+    return !status || status === 'accepted'
+  })
+  const acceptedTeamIds = new Set(acceptedTeams.map(teamIdFromParticipant).filter((id): id is string => Boolean(id)))
+  const participantRiders = sources.participantRiders.filter((row) => acceptedTeamIds.size === 0 || acceptedTeamIds.has(text(row.team_id) ?? ''))
+  const participantByRiderId = new Map(participantRiders.map((row) => [row.rider_id, row] as const))
+  const stageFormat = normalizeStageFormat(stage)
+  const aiTeamIds = new Set(
+    acceptedTeams
+      .filter((row) => {
+        const entrySource = text(row.entry_source)?.toLowerCase() ?? ''
+        return (
+          booleanValue(row.is_ai_filler) ||
+          entrySource === 'ai' ||
+          entrySource === 'ai_fill' ||
+          entrySource === 'ai_filler'
+        )
+      })
+      .map((row) => teamIdFromParticipant(row))
+      .filter((teamId): teamId is string => Boolean(teamId))
+  )
+  const riderRows = sources.riderInputRows.filter((row) => text(row.rider_id) && text(row.team_id) && (acceptedTeamIds.size === 0 || acceptedTeamIds.has(row.team_id)))
+  if (riderRows.length < 2) throw new Error(`Stage ${stageId} has fewer than two accepted production rider inputs.`)
+
+  const acceptedRiderIds = new Set(participantRiders.map((row) => row.rider_id))
+  if (acceptedRiderIds.size > 0) {
+    const missing = [...acceptedRiderIds].filter((id) => !riderRows.some((row) => row.rider_id === id))
+    if (missing.length > 0) throw new Error(`Production rider-input coverage is incomplete (${riderRows.length}/${acceptedRiderIds.size}).`)
+  }
+
+  const commandByRider = new Map(sources.phaseCommandRows.map((row) => [row.rider_id, row] as const))
+  const modifierByRider = new Map(phase9Rows(sources.phase9Payload).map((row) => [text(row.rider_id) ?? '', row] as const))
+  const planByTeam = new Map(sources.lockedPlanRows.map((row) => [text(row.team_id ?? row.club_id ?? row.participating_club_id) ?? '', row] as const))
+  const rowsByTeam = new Map<string, ProductionStageRiderInputRow[]>()
+  riderRows.forEach((row) => rowsByTeam.set(row.team_id, [...(rowsByTeam.get(row.team_id) ?? []), row]))
+
+  const teamParticipantById = new Map(acceptedTeams.map((row) => [teamIdFromParticipant(row) ?? '', row] as const))
+  const teams: UniversalRaceEngineInput['teams'][number][] = [...rowsByTeam.entries()].map(([teamId, rows]) => {
+    const participant = teamParticipantById.get(teamId) ?? {}
+    const first = rows[0] ?? ({} as ProductionStageRiderInputRow)
+    return {
+      participantTeamId: text(participant.id) ?? `${raceId}:${teamId}`,
+      teamId,
+      clubId: text(participant.club_id) ?? teamId,
+      participatingClubId: text(participant.participating_club_id) ?? text(participant.club_id) ?? teamId,
+      ownerClubId: text(participant.owner_club_id),
+      parentClubId: text(participant.parent_club_id),
+      raceTeamEntryId: text(participant.race_team_entry_id),
+      clubType: text(participant.club_type),
+      acceptedRiderIds: rows.map((row) => row.rider_id),
+      snapshot: {
+        teamName: text(first.team_name ?? participant.team_name_snapshot ?? participant.team_name ?? participant.name),
+        countryCode: text(participant.country_code ?? participant.country_code_snapshot),
+        clubTier: text(participant.club_tier),
+        worldTier: text(participant.world_tier),
+        logoUrl: text(participant.logo_url_snapshot ?? participant.logo_url),
+        jerseyUrl: text(participant.jersey_url_snapshot ?? participant.jersey_url),
+        metadata: { source: 'accepted_production_participant_team' },
+      },
+    }
+  })
+
+  const riders: UniversalRaceEngineInput['riders'][number][] = riderRows.map((row) => {
+    const participant = participantByRiderId.get(row.rider_id) ?? ({} as ProductionParticipantRiderRow)
+    const modifier = modifierByRider.get(row.rider_id)
+    const snapshots = [row.bonus_snapshot_json, row.rider_stage_snapshot_json, row.rider_snapshot_json, row.availability_snapshot_json]
+    const fatigueBeforeStage = percent(row.fatigue_before_stage ?? row.fatigue, 0)
+    const availabilityStatus = normalizeAvailability(row.availability_status)
+    const preparationApplied = modifier ? modifier.preparation_applied !== false : false
+    const hasEquipment = modifier ? Object.keys(object(modifier.equipment_selection)).length > 0 : false
+    const hasPhase9 = Boolean(modifier && (preparationApplied || hasEquipment || Math.abs(numberValue(modifier.equipment_engine_stage_bonus_pct ?? modifier.equipment_performance_bonus_points, 0)) > 0))
+    return {
+      participantRiderId: text(participant.id) ?? `${raceId}:${row.rider_id}`,
+      riderId: row.rider_id,
+      teamId: row.team_id,
+      participatingClubId: text(participant.participating_club_id) ?? text(participant.club_id) ?? row.team_id,
+      sprint: percent(row.sprint), climbing: percent(row.climbing), timeTrial: percent(row.time_trial), flat: percent(row.flat),
+      endurance: percent(row.endurance), recovery: percent(row.recovery), resistance: percent(row.resistance), raceIQ: percent(row.race_iq),
+      teamwork: percent(row.teamwork), overall: percent(row.overall), morale: percent(row.morale),
+      fatigueBeforeStage,
+      raceSharpness: percent(nestedNumber(snapshots, ['race_sharpness', 'raceSharpness'], 50)),
+      startStamina: percent(row.start_stamina, clamp(100 - fatigueBeforeStage * 0.45, 1, 100)),
+      recentFormScore: clamp(nestedNumber(snapshots, ['recent_form_score', 'recentFormScore', 'form_score'], 0), -15, 30),
+      seasonResultPoints: Math.max(0, nestedNumber(snapshots, ['season_result_points', 'seasonResultPoints', 'ranking_points'], 0)),
+      roleSnapshot: text(participant.role_snapshot ?? row.role_code),
+      availabilityStatus,
+      unavailableUntil: text(row.unavailable_until),
+      unavailableReason: text(row.unavailable_reason),
+      startStatus: availabilityStatus === 'injured' || availabilityStatus === 'sick' ? 'dns' : 'starter',
+      healthSnapshot: Object.keys(object(row.availability_snapshot_json)).length > 0 ? object(row.availability_snapshot_json) : object(row.rider_snapshot_json),
+      healthCase: null,
+      previousStage: null,
+      preparationModifiers: hasPhase9 && modifier ? {
+        inStageEnergyCostMultiplier: clamp(preparationApplied ? numberValue(modifier.in_stage_energy_cost_multiplier, 1) : 1, 0.75, 1.35),
+        postStageFatigueMultiplier: clamp((preparationApplied ? numberValue(modifier.post_stage_fatigue_multiplier, 1) : 1) * (1 - clamp(numberValue(modifier.equipment_fatigue_reduction_pct, 0), 0, 10) / 100), 0.7, 1.4),
+        postStageRecoveryBonusPoints: clamp(preparationApplied ? numberValue(modifier.post_stage_recovery_bonus_points, 0) : 0, 0, 4),
+        performanceBonusPoints: clamp(
+          preparationApplied
+            ? numberValue(
+                modifier.non_neutral_command_capability_bonus,
+                0,
+              )
+            : 0,
+          0,
+          1.5,
+        ),
+        equipmentStagePerformancePct: (() => {
+          const equipmentPct = clamp(
+            numberValue(
+              modifier.equipment_engine_stage_bonus_pct ??
+                modifier.equipment_performance_bonus_points,
+              0
+            ),
+            -20,
+            20
+          )
+          const isTimeTrialStage =
+            stageFormat === 'individual_time_trial' ||
+            stageFormat === 'team_time_trial' ||
+            stageFormat === 'pair_time_trial' ||
+            stageFormat === 'prologue'
+
+          // AI teams do not own/manage user-facing TT equipment. They may keep
+          // positive equipment effects, but a missing/mismatched TT setup must
+          // never create a negative sporting penalty for them.
+          if (
+            isTimeTrialStage &&
+            aiTeamIds.has(row.team_id) &&
+            equipmentPct < 0
+          ) {
+            return 0
+          }
+
+          return equipmentPct
+        })(),
+        supplyStagePerformancePct: clamp(numberValue(modifier.supply_stage_performance_pct, 0), -20, 20),
+        incidentRiskMultiplier: clamp(preparationApplied ? numberValue(modifier.health_incident_risk_multiplier, 1) : 1, 0.7, 1.4),
+        healthIncidentRiskMultiplier: clamp(preparationApplied ? numberValue(modifier.health_incident_risk_multiplier, 1) : 1, 0.25, 1.5),
+        mechanicalIncidentRiskMultiplier: clamp(numberValue(modifier.mechanical_incident_risk_multiplier, 1), 0.78, 1.5),
+        mechanicalTimeLossMultiplier: clamp(numberValue(modifier.mechanical_time_loss_multiplier, 1), 0.82, 1),
+        equipmentConditionPercent: clamp(numberValue(modifier.equipment_condition_factor, 1) * 100, 0, 100),
+      } : null,
+      snapshot: {
+        displayName: text(row.rider_name ?? participant.display_name ?? participant.rider_name_snapshot) ?? row.rider_id,
+        firstName: text(participant.first_name), lastName: text(participant.last_name),
+        countryCode: text(participant.country_code ?? participant.country_code_snapshot),
+        startNumber: optionalNumber(participant.display_start_number ?? participant.start_number),
+        metadata: { source: 'race_engine_get_stage_rider_inputs_v1', phase9ProductionModel: text(sources.phase9Payload?.modelVersion ?? sources.phase9Payload?.model_version) },
+      },
+    }
+  })
+
+  const stagePlans: UniversalRaceEngineInput['stagePlans'][number][] = [...rowsByTeam.entries()].map(([teamId, rows]) => {
+    const plan = planByTeam.get(teamId) ?? {}
+    const commands = rows.map((row) => commandByRider.get(row.rider_id)).filter(Boolean) as ProductionStagePhaseCommandRow[]
+    return {
+      teamId,
+      teamTactic: normalizeTeamTactic(commands[0]?.team_plan ?? object(plan.team_tactic_json).plan ?? plan.team_strategy),
+      status: 'locked', locked: true, defaulted: Object.keys(plan).length === 0,
+      riders: rows.map((row) => {
+        const command = commandByRider.get(row.rider_id)
+        const modifier = modifierByRider.get(row.rider_id)
+        return {
+          riderId: row.rider_id,
+          stageRole: normalizeRole(command?.role_code ?? row.stage_role ?? row.role_code),
+          commands: {
+            phase1: normalizePhase1To3Command(command?.phase_1_command),
+            phase2: normalizePhase1To3Command(command?.phase_2_command),
+            phase3: normalizePhase1To3Command(command?.phase_3_command),
+            phase4: normalizePhase4Command(command?.phase_4_command),
+          },
+          equipmentSelection: Object.keys(object(modifier?.equipment_selection)).length > 0 ? object(modifier?.equipment_selection) : null,
+          supplySelection: Object.keys(object(modifier?.supply_selection)).length > 0 ? object(modifier?.supply_selection) : null,
+        }
+      }),
+      metadata: { source: 'locked_stage_plan_and_phase_command_adapters', raceStagePlanId: text(plan.id), immutableSnapshotHash: text(object(plan.engine_stage_payload_json).immutable_snapshot_hash ?? object(plan.engine_stage_payload_json).snapshot_hash) },
+    }
+  })
+
+  const distanceKm = Math.max(1, numberValue(profile.distance_km ?? stage.distance_km, 1))
+  const terrainType = normalizeTerrainType(stage, profile, stageFormat)
+  const summitFinish = inferSummitFinish(stage, profile, terrainType)
+  const finishType = normalizeFinishType(
+    stage,
+    profile,
+    stageFormat,
+    terrainType,
+    summitFinish,
+  )
+  const weather = object(profile.stage_weather ?? profile.weather_snapshot ?? stage.weather_snapshot)
+
+  return {
+    engine: { engineKey: PPM_UNIVERSAL_RACE_ENGINE_KEY, engineVersion: PPM_UNIVERSAL_RACE_ENGINE_VERSION, deterministicSeed: sources.deterministicSeed },
+    race: { raceId, raceType: booleanValue(race.is_stage_race) || text(race.race_type)?.toLowerCase() === 'stage_race' ? 'stage_race' : 'one_day', stageCount: Math.max(1, integerValue(race.stage_count, 1)) },
+    stage: {
+      raceId, stageId, stageNumber: Math.max(1, integerValue(stage.stage_number, 1)), stageFormat, terrainType,
+      profileType: text(profile.profile_type) ?? text(stage.profile_type), finishType,
+      sprintZoneKm: normalizeSprintZoneKm(stage, stageFormat, finishType),
+      distanceKm, elevationGainM: Math.max(0, numberValue(profile.elevation_gain_m ?? stage.elevation_gain_m, 0)),
+      summitFinish, terrainPercentages: buildTerrainPercentages(stage, profile, terrainType),
+      profilePoints: buildProfilePoints(profile, distanceKm), timeTrialRules: null,
+    },
+    points: buildReconciledStagePoints(
+      stageId,
+      distanceKm,
+      sources.stagePoints,
+      profile,
+    ), teams, riders, stagePlans,
+    weather: {
+      condition: text(weather.condition ?? weather.condition_label),
+      temperatureC: optionalNumber(weather.avg_temp_c ?? weather.average_temp_c ?? weather.temperature_c ?? weather.temp_c),
+      windKmh: optionalNumber(weather.avg_wind_kmh ?? weather.wind_kmh),
+      precipitationMm: optionalNumber(weather.precipitation_mm ?? weather.rain_mm),
+      rainProbabilityPct: optionalNumber(weather.rain_probability_pct ?? weather.rain_probability),
+      crosswindRisk: text(weather.crosswind_risk), descentRisk: text(weather.descent_risk), surfaceRisk: text(weather.surface_risk),
+      cancelled: booleanValue(stage.weather_cancelled), cancellationReason: text(stage.weather_cancellation_reason), source: text(weather.source), snapshot: weather as JsonRecord,
+    },
+    preparation: phase9Preparation(sources.phase9Payload),
+    incidentModel: { enabled: true },
+    preStageLeaders: normalizePreStageLeaders(sources.preStageLeaders),
+    preStageStandings: normalizePreStageStandings(
+      sources.preStageStandings,
+      acceptedRiderIds,
+      acceptedTeamIds,
+    ),
+  }
+}

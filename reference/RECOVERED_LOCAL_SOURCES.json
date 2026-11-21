@@ -1,0 +1,217 @@
+[
+  {
+    "file": "scripts/v4/isolatedShadowExecutionFailureV4.mjs",
+    "ref": "HEAD",
+    "sha256": "3ed2d166075b9493fdf42170426121f64a397385edb469475ba532be7042dca1"
+  },
+  {
+    "file": "scripts/v4/isolatedShadowGateV4.mjs",
+    "ref": "HEAD",
+    "sha256": "b6a7dc3cb157976d5c5d8720307bfc19b1ed521d92fe729d5f73bcb3fe6914c3"
+  },
+  {
+    "file": "scripts/v4/privateRealVsOfficialCompareV4.mjs",
+    "ref": "HEAD",
+    "sha256": "518ba89d89906caa9ef48ec7c6176043cc1f5d9090380c1a2bff3b73dbc792e1"
+  },
+  {
+    "file": "scripts/v4/privateControlledFourWayDiagnosticsV4.mjs",
+    "ref": "HEAD",
+    "sha256": "0a32c6279136b38563667a2e9753b50751d729ba623a6ed3729f61558cc1b7b5"
+  },
+  {
+    "file": "scripts/v4/privateControlledFourWaySafeFailuresV4.mjs",
+    "ref": "HEAD",
+    "sha256": "9c116923e711eb449a586790df0319e67858a7fc49e942f3ac2b19b5d08998ad"
+  },
+  {
+    "file": "scripts/v4/privatePhysicalFailureMatchV4.mjs",
+    "ref": "HEAD",
+    "sha256": "ef0774d5b817d0fa4dbf937d307f5b2d1fb8b6ee1912da9396226b7ea42fcae8"
+  },
+  {
+    "file": "src/race-replay/replayTypes.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "b83f335a7258783f0aebc22cb352c677eabc71060884e196536b4b5aaa7aafa2"
+  },
+  {
+    "file": "src/race-engine/simulation/createInitialState.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "9d5a2e74683ee16455bc1221df1289f42cf6c92de2a04b7efdc3aa6e7920c27a"
+  },
+  {
+    "file": "src/race-engine/simulation/groupHold.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "3b89be0bbae6f97a6af93aa812afcc6540f2ceede591378fc26b67ed7268406e"
+  },
+  {
+    "file": "src/race-engine/simulation/groupSeparationEligibility.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "f73828094ce93b43eb7178befe144af85abf57bd3db9d23b7775df8bc21b0a56"
+  },
+  {
+    "file": "src/race-engine/domain/SimulationOutput.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "21fa173612b9ce8b28875c5af67e414ee263fb52d80f427a3f22d2456c378792"
+  },
+  {
+    "file": "src/race-engine/migration/replayRoutingContract.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "caf53b5e217137f7f81d8f64604d9d1148093b4dfe6663e4758b07297cc1de25"
+  },
+  {
+    "file": "src/race-engine/migration/resolveReplayRoutingDecision.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "13bde35d5199c232a6008ad3ce5d066617fa54db064a36fd4c74712a11c02cb0"
+  },
+  {
+    "file": "src/race-engine/migration/validateReplayRoutingDecision.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "cdbe3d5df5ed5bf1ecc90086e00a27b96b298ab53e398982499daff79bc5d5df"
+  },
+  {
+    "file": "src/race-engine/migration/stagingDualRunComparison.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "69e59ffb1d6bb061b6be0b6d34f06d3dc2ab6a8370af48320542d732668abeee"
+  },
+  {
+    "file": "src/race-engine/migration/StagingMigrationPlan.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "674b57d909900af8724785e1c5067147418c6fa53e14e0f16fe1ee0f61547c17"
+  },
+  {
+    "file": "src/race-engine/migration/validateStagingMigrationPlan.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "6f5a69d42a34c31a0358001e2b783600cfea4314051ea036e37142f907561524"
+  },
+  {
+    "file": "src/race-engine/domain/RaceEvent.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "dd847863d9dc3ecbfbee933c349f0db0d274a284fc1677a996d0704a1961d0ba"
+  },
+  {
+    "file": "src/race-engine/domain/TeamState.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "7e9ffe892989179f4c20f746b51a9dc93ca594b046b4a9eda80752002478d10d"
+  },
+  {
+    "file": "src/race-engine/migration/aggregateShadowEvidence.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "09d6907ff8d9c3e5281191b474909ff8c35e9b0892d29fdadf4231b37140399f"
+  },
+  {
+    "file": "src/race-engine/migration/migrationModeResolver.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "29b5d8877c300b33629ac5ab22e2273632a7718face927eece36ba754a1c5272"
+  },
+  {
+    "file": "src/race-engine/migration/stagingCanaryPolicy.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "ea16510afdddc36e83781e4fda64f18310c288095cf95df2c8b9db744f647be7"
+  },
+  {
+    "file": "src/race-engine/migration/createDeterministicPersistenceWritePlan.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "6a9715b0c1e8dbb28d17aa6bd88eda3cccfcaf738dcaf32862636fff152166c5"
+  },
+  {
+    "file": "src/race-engine/migration/evaluateStagingCanaryMonitoring.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "ef1ae00bf4ee30fd2ffb143bc3f247da7b023ccdbde1cc5940a429be10033267"
+  },
+  {
+    "file": "src/race-engine/migration/stagingIntegrationBoundary.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "e51d98c5ee1178d02ea03f8d469b1f183fb8abad9ef2b511ed3a2b05a59147aa"
+  },
+  {
+    "file": "src/race-engine/simulation/selectEligibleTeamOrders.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "580d84c22aedd522d3d59624c0561955b3113109d1055cc1cd323c5cdb6d15a3"
+  },
+  {
+    "file": "src/race-engine/simulation/stageProfile.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "a1f93d41dcb67cb2663a15b3863c1221b8402b3ba403e21e41e75aa6d6a3ca94"
+  },
+  {
+    "file": "src/race-engine/simulation/multiGroupMovement.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "08795d6e8b5f89b5ccd0bc339f2f9077c1517522e7fbddee927716ee7458205d"
+  },
+  {
+    "file": "src/race-engine/simulation/equipmentIncidentRisk.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "b52b0d1a85f3423e55f6fc36ebcbe3737c3cc1a53b021b82491beb9d2be8087c"
+  },
+  {
+    "file": "src/race-engine/simulation/fatigueModifier.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "f81f1d26bea17a51b0d3660998540cb6f6146f4e6e38b680287e20b0b0558994"
+  },
+  {
+    "file": "src/race-engine/simulation/runMultiGroupStage.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "d8a8f11746d90f3512d35c96f9228287a15da17d5d57b89d0022126a67e3207b"
+  },
+  {
+    "file": "src/race-engine/simulation/applyMultiGroupEnergy.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "826f63df7df13e4716d19210e43158446bbb79ab84a1ba08682dcfa4c0f783aa"
+  },
+  {
+    "file": "src/race-engine/simulation/applyMultiGroupFinish.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "db00bd45198a58f3751b8068cefb61784c7b7462792386b5ee2f159bf76a64b8"
+  },
+  {
+    "file": "src/race-engine/simulation/reconcileBreakawayGroups.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "4e339804c565b1bd6afd96e64e5375fa97ad579b01669bc16d62f27db5774532"
+  },
+  {
+    "file": "src/race-engine/simulation/individualCrashIntegration.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "23460f35bbcfbffbc50471677e3cc1ef685291ea023d09925342bdb5940a3eb0"
+  },
+  {
+    "file": "src/race-engine/simulation/groupTerrainPace.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "767c9d267bc5755046eecbb88af00bde923f56297f40bb86972c04a15378b39f"
+  },
+  {
+    "file": "src/race-engine/simulation/droppedGroup.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "8444a03ec543afa7ad768a2472ccec8b18e26b9487223e09ba28ee38ead8d3f6"
+  },
+  {
+    "file": "src/race-engine/simulation/energyCost.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "d8dd34a6d7a2ccba986843d5ed95bc39780792a1e6af09cb7d6fd01ddc029bbc"
+  },
+  {
+    "file": "src/race-replay/createReplayStageModelFromSimulationOutput.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "3f2951166f4958d869928616c0af7709500ea41876b78e08f54ef9beeb8edbb8"
+  },
+  {
+    "file": "src/race-engine/simulation/seededRandom.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "451e478e44f55a1b8ca54b7d6137ae74362bf4587cb2d760b837ca7feadef999"
+  },
+  {
+    "file": "src/race-engine/migration/validateShadowDualRunEvidence.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "938dd338e6b1bfe59d57d0667d43db6335f834e3e47a045e5f6c39acc7f5ab4f"
+  },
+  {
+    "file": "src/race-engine/migration/discoverDeterministicReplayCandidate.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "75ea73d1639d6509956ac7a26a9c46f2c80f660af9e9bc1c3a4ace5a4a2643f6"
+  },
+  {
+    "file": "src/race-engine/simulation/terrainSpeed.ts",
+    "ref": "fef4153b3489e3e118051ea4459e629c9da68682",
+    "sha256": "b219862685fb26a04f14d6581da4ee72e414ae552bc348f204ec096d17a42e30"
+  }
+]

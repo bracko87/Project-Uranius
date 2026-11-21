@@ -1,0 +1,57 @@
+{
+  "coins": {
+    "perRenewal": "Coins {{cost}} per rinnovo",
+    "toActivate": "Coins {{cost}} per attivare",
+    "reactivationPrice": "Prezzo di riattivazione: Coins {{cost}}",
+    "nextRenewal": "Il prossimo rinnovo: {{cost}} Coins",
+    "firstActivation": "Prima attivazione: Coins {{cost}}"
+  },
+  "movement": {
+    "open": "Finestra movimento aperto ora: {{label}}",
+    "closed": "Finestra movimento chiusa. Finestra successiva: {{label}}",
+    "unavailable": "Finestra di movimento non disponibile.",
+    "currentWindow": "Finestra corrente",
+    "unknown": "Sconosciuto"
+  },
+  "activation": {
+    "reactivateForSeason": "Riattivare per la stagione {{season}} {{cost}} Coins",
+    "activate": "Attiva Developing Team — {{cost}} Coins",
+    "activatedForSeason": "Sviluppo del team attivato per la stagione {{season}}. Il rinnovo automatico è {{renewal}}.",
+    "activatedSuccessfully": "Il team di sviluppo ha attivato con successo.",
+    "renewalEnabled": "Sviluppo del team di rinnovo automatico abilitato.",
+    "renewalDisabled": "Sviluppo del team di rinnovo automatico disabilitato.",
+    "on": "il",
+    "off": "spento"
+  },
+  "errors": {
+    "loadStatus": "Caricamento dello stato del team di sviluppo non riuscito.",
+    "activate": "Attivazione del team di sviluppo non riuscita.",
+    "renewal": "Aggiornamento automatico del rinnovo non riuscito.",
+    "premiumRequired": "È richiesto un abbonamento Premium per accedere al Developing Team."
+  },
+  "service": {
+    "summary": "Richiede Premium a pagamento e 60 giorni di gioco. Attivazione: {{activation}} monete; rinnovo: {{renewal}} a stagione.",
+    "eligibilityCosts": "Requisiti: Premium a pagamento e 60 giorni di gioco. Attivazione: {{activation}}; rinnovo: {{renewal}} monete.",
+    "accessUntilSeason": "L'accesso rimane disponibile fino alla fine della stagione {{season}}.",
+    "season": "Stagione {{season}}",
+    "endSeason": "Fine della stagione {{season}}",
+    "startSeason": "Inizio della stagione {{season}}",
+    "coins": "Coins {{count}}",
+    "autoRenewHelp": "Con Premium a pagamento attivo e {{cost}} monete la squadra si rinnova. Altrimenti chiude e i corridori rimasti diventano svincolati.",
+    "activateSeason": "Attiva per la stagione {{season}}",
+    "existingTeam": "Il tuo team di sviluppo esistente sarà attivato per questa stagione.",
+    "newTeam": "Un team di sviluppo sarà creato e attivato per questa stagione.",
+    "activationAccess": "L'accesso dura fino alla fine della stagione corrente. Il rinnovo automatico è attivo per default e può essere disattivato in qualsiasi momento.",
+    "needCoins": "Ti servono {{cost}} Coins per attivare l'accesso a Developing Team. Saldo attuale: {{balance}} Coins.",
+    "team": "Squadra: {{name}}",
+    "closeActivation": "Chiudi Conferma di attivazione del team di sviluppo",
+    "confirmActivate": "Attiva il team di sviluppo per la stagione {{season}}?",
+    "confirmReactivate": "Riattivare il team di sviluppo per la stagione {{season}}?",
+    "deductCoins": "Le Coins {{cost}} saranno detratte dal tuo portafoglio.",
+    "accessThisSeason": "L'accesso dura fino alla fine della stagione di gioco.",
+    "autoRenewModal": "Il rinnovo automatico sarà attivato per default e può essere disattivato in Preferenze o Premium e Fatturazione.",
+    "actionActivate": "Attiva per {{cost}} Coins",
+    "actionReactivate": "Riattivare per {{cost}} Coins",
+    "premiumRequired": "U23 richiede Premium a pagamento: attivazione {{activation}} e rinnovo {{renewal}} monete."
+  }
+}

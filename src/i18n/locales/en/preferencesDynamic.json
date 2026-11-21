@@ -1,0 +1,57 @@
+{
+  "coins": {
+    "perRenewal": "{{cost}} coins per renewal",
+    "toActivate": "{{cost}} coins to activate",
+    "reactivationPrice": "Reactivation price: {{cost}} coins",
+    "nextRenewal": "Next renewal: {{cost}} coins",
+    "firstActivation": "First activation: {{cost}} coins"
+  },
+  "movement": {
+    "open": "Movement window open now: {{label}}",
+    "closed": "Movement window closed. Next window: {{label}}",
+    "unavailable": "Movement window unavailable.",
+    "currentWindow": "Current window",
+    "unknown": "Unknown"
+  },
+  "activation": {
+    "reactivateForSeason": "Reactivate for Season {{season}} — {{cost}} Coins",
+    "activate": "Activate Developing Team — {{cost}} Coins",
+    "activatedForSeason": "Developing Team activated for Season {{season}}. Automatic renewal is {{renewal}}.",
+    "activatedSuccessfully": "Developing Team activated successfully.",
+    "renewalEnabled": "Developing Team automatic renewal enabled.",
+    "renewalDisabled": "Developing Team automatic renewal disabled.",
+    "on": "on",
+    "off": "off"
+  },
+  "errors": {
+    "loadStatus": "Failed to load Developing Team status.",
+    "activate": "Failed to activate Developing Team.",
+    "renewal": "Failed to update automatic renewal.",
+    "premiumRequired": "Premium membership is required for Developing Team access."
+  },
+  "service": {
+    "summary": "Requires paid Premium and 60 in-game days. Initial activation: {{activation}} Coins; each season renewal: {{renewal}} Coins.",
+    "eligibilityCosts": "Requirements: paid Premium and 60 in-game days. Activation: {{activation}} Coins; season renewal: {{renewal}} Coins.",
+    "accessUntilSeason": "Access remains available until the end of Season {{season}}.",
+    "season": "Season {{season}}",
+    "endSeason": "End of Season {{season}}",
+    "startSeason": "Start of Season {{season}}",
+    "coins": "{{count}} coins",
+    "autoRenewHelp": "If paid Premium is active and {{cost}} Coins are available, the Developing Team renews for the next season. Otherwise it closes at rollover and remaining U23 riders join Free Agents.",
+    "activateSeason": "Activate for Season {{season}}",
+    "existingTeam": "Your existing Developing Team will be activated for this season.",
+    "newTeam": "A Developing Team will be created and activated for this season.",
+    "activationAccess": "Access lasts until the end of the current in-game season. Automatic renewal is enabled by default and can be switched off at any time.",
+    "needCoins": "You need {{cost}} coins to activate Developing Team access. Current balance: {{balance}} coins.",
+    "team": "Team: {{name}}",
+    "closeActivation": "Close Developing Team activation confirmation",
+    "confirmActivate": "Activate Developing Team for Season {{season}}?",
+    "confirmReactivate": "Reactivate Developing Team for Season {{season}}?",
+    "deductCoins": "{{cost}} coins will be deducted from your wallet.",
+    "accessThisSeason": "Access lasts until the end of this in-game season.",
+    "autoRenewModal": "Automatic renewal will be enabled by default. You can switch it off at any time in Preferences or Premium & Billing.",
+    "actionActivate": "Activate for {{cost}} Coins",
+    "actionReactivate": "Reactivate for {{cost}} Coins",
+    "premiumRequired": "Paid Premium is required for Developing Team and its {{activation}}-Coin activation / {{renewal}}-Coin renewal."
+  }
+}

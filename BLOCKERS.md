@@ -1,0 +1,25 @@
+﻿# Blockers
+
+## U1.02 resolved
+
+The authorized GitHub checks confirmed the public destination and disabled Actions. See TEST_REPORT.md.
+
+## Proposed upload review
+
+1. Verify the destination owner and repository identity, its public visibility, saved Actions setting and deployment integration settings during the authorized review.
+2. Build a separate export from a reviewed file manifest. Preserve lockfiles and required assets. Exclude inherited Git metadata, credentials, CLI state, production data and private fixtures. Preserve necessary schema logic for review while excluding executable production schedules and callbacks.
+3. Scan the exact export for secret formats, personal data, dumps, device and configuration metadata, and outbound targets. Reconcile all exclusions and changes with the pinned source manifest. Verify that production execution paths are disabled, workers use isolated dependencies and missing or wrong sandbox configuration fails closed.
+4. Initialize a new repository from that reviewed export. Verify that its root commit has no parents and its tree matches the reviewed manifest. Keep the local evidence repository outside that export.
+5. Present the manifest, scan results, destination checks and root commit for owner review. Add the verified destination and publish only after explicit approval.
+
+## Missing pinned worker source — resolved
+
+The five direct files and seven relative dependencies at the three authorized pins were recovered. The draft contains content and blob provenance under reference/engine-pins. See TEST_REPORT.md.
+
+## U1.03 — Missing visual assets resolved
+
+The owner authorized local placeholders. ASSET_REPLACEMENT_REGISTER.md records each replacement. Existing tracked artwork was retained where available.
+
+## U1.03 — Historical fixture disposition resolved
+
+The owner authorized anonymization or quarantine. Numerical inputs were preserved in the attempted transform, but historical sporting equivalence remains unverified after the dependent test run. The affected historic files remain outside the export, with two verified synthetic replacement tests in the staged source. See TEST_REPORT.md.

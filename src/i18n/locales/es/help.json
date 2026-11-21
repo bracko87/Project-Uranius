@@ -1,0 +1,193 @@
+{
+  "hero": {
+    "welcome": "Bienvenida",
+    "title": "Centro de ayuda ProPeloton",
+    "description": "Aprenda a gestionar tu equipo, preparar carreras, entrenar a los ciclistas, manejar transferencias, entender las finanzas, seguir las clasificaciones y obtener apoyo cuando algo no está claro.",
+    "manual": "Abrir manual",
+    "contact": "Contacto",
+    "discord": "Únete a Discord"
+  },
+  "first": {
+    "title": "Primeros pasos para nuevos mánagers",
+    "s1Title": "1. Comenzar desde el panorama general",
+    "s1Text": "La página de resumen es su panel principal. Muestra alertas, finanzas, carreras, estado del equipo, noticias y progreso de temporada.",
+    "s1Action": "Abrir vista general",
+    "s2Title": "2. Compruebe su escuadrón",
+    "s2Text": "Revisa a tus ciclistas, desarrollando equipo, contratos, roles de ciclista, condición, potencial y acceso del personal.",
+    "s2Action": "Escuadrón abierto",
+    "s3Title": "3. Plan de capacitación",
+    "s3Text": "Establezca entrenamiento regular, maneje la intensidad, descanse cuando sea necesario y use los campos de entrenamiento cuidadosamente.",
+    "s3Action": "Capacitación abierta",
+    "s4Title": "4. Prepararse para las carreras",
+    "s4Text": "Usa Calendario y Preparación de carrera para solicitar carreras, enviar Race Plans, seleccionar ciclistas y crear tácticas de etapa.",
+    "s4Action": "Preparación de la carrera abierta"
+  },
+  "quick": {
+    "title": "Enlaces rápidos",
+    "overview": "Descripción general del club",
+    "racePreparation": "Preparación de carrera",
+    "transfers": "Fichajes",
+    "finance": "Finanzas",
+    "invite": "Invitar a amigos",
+    "contact": "Contáctenos"
+  },
+  "rules": {
+    "gameTimeTitle": "Hora de juego",
+    "gameTimeText": "Un día de juego equivale a 12 horas reales. Esto significa que dos días de juego equivalen a un día real. Tenlo en cuenta al comprobar plazos, ventanas de preparación de carrera y bloqueos de Stage Plans.",
+    "tutorialTitle": "El tutorial es la incorporación de la primera sesión",
+    "tutorialText": "El tutorial principal se inicia automáticamente para los nuevos managers solo durante su primera sesión de juego. No vuelve a abrirse automáticamente en futuros inicios de sesión. Puedes reiniciar el tutorial principal o cualquier tutorial de función desde Ayuda → Tutoriales.",
+    "developingTitle": "Equipo de desarrollo",
+    "developingText": "El Equipo de Desarrollo es el puente normal para ciclistas jóvenes y graduados de la Academia Juvenil. Está disponible para managers Free y Premium por 100 Monedas de activación y 100 Monedas por temporada; Premium no es obligatorio. Los movimientos de ciclistas siguen las ventanas normales.",
+    "sponsorsTitle": "Patrocinadores y derechos de nominación",
+    "sponsorsText": "Los contratos de patrocinio pueden ser contratos estándar o contratos de derechos de nominación. Los contratos de derechos de nominación suelen pagar más, pero el nombre del patrocinador se convierte en parte del nombre de tu equipo durante la temporada."
+  },
+  "basics": {
+    "title": "Conceptos básicos del juego",
+    "b1Title": "Construir una lista equilibrada",
+    "b1Text": "Un equipo fuerte necesita diferentes tipos de ciclista. Los velocistas, escaladores, ciclista de prueba temporal, ayudantes, ruleurs y líderes son todos importantes dependiendo del calendario de carreras.",
+    "b2Title": "Desarrollar ciclista con el tiempo",
+    "b2Text": "El entrenamiento, la moral, la fatiga, la experiencia de carrera, la recuperación y el personal apoyan toda la progresión del ciclista.",
+    "b3Title": "Cuestiones relativas a la preparación para la carrera",
+    "b3Text": "Elegir a los ciclistas adecuados es sólo una parte del éxito. Personal, vehículos, equipos, suministros, roles, tácticas y condiciones meteorológicas pueden afectar el rendimiento de la carrera.",
+    "b4Title": "Dirige tu club como un negocio",
+    "b4Text": "Patrocinadores, impuestos, salarios, infraestructura, campos de entrenamiento, fichajes, equipamiento y Team Policy afectan al futuro financiero de tu club.",
+    "b5Title": "Observar los plazos cuidadosamente",
+    "b5Text": "Race Plans, las inscripciones de ciclistas y Stage Plans tienen plazos. Si los incumples, tu equipo puede quedar mal preparado o incluso no poder competir correctamente.",
+    "b6Title": "Usa las clasificaciones como su objetivo a largo plazo",
+    "b6Text": "Los puntos internacionales determinan tu posición. Los ascensos y descensos hacen que cada temporada sea importante, especialmente para los clubes ProTeam, Continental y amateur."
+  },
+  "manual": {
+    "title": "Secciones manuales",
+    "description": "Usa estas secciones como un manual rápido para las páginas más importantes del juego.",
+    "full": "Abrir manual completo",
+    "openPage": "Abrir página",
+    "overviewTitle": "Resumen",
+    "overviewText": "Su página principal de control. Utilícelo para entender lo que necesita atención, ver las carreras de hoy, seguir la salud del equipo, las finanzas, los patrocinadores, las noticias y el progreso de la temporada.",
+    "squadTitle": "Plantilla",
+    "squadText": "Administra tus ciclistas, visualiza perfiles de ciclista, compara habilidades, verifica contratos, comprende tu equipo de desarrollo y accede a la información del personal.",
+    "trainingTitle": "Entrenamiento",
+    "trainingText": "Controle el entrenamiento regular del ciclista, los fallos del equipo, las áreas de enfoque individuales, la intensidad del entrenamiento, los días de descanso y los campos de entrenamiento.",
+    "equipmentTitle": "Equipamiento",
+    "equipmentText": "Gestionar configuraciones de carreras, inventario, compras en el mercado y suministros de carreras. Mejores equipos y suministros pueden mejorar el rendimiento y proteger a los ciclistas en condiciones difíciles.",
+    "infrastructureTitle": "Infraestructura",
+    "infrastructureText": "Construye y mejora instalaciones como Clubhouse, Training Center, Medical Center, Mechanics Workshop y Scouting Office. El programa separado Youth Academy / U16 tiene sus propias reglas de acceso Premium y con Monedas.",
+    "calendarTitle": "Calendario",
+    "calendarText": "Usa el Calendario de temporada para actividades diarias y el Calendario de carreras para aplicaciones de carreras, categorías de carreras, objetivos de patrocinadores y acceso al perfil de carreras.",
+    "raceTitle": "Preparación de carrera",
+    "raceText": "Prepare carreras aceptadas. Seleccione ciclista, personal, activos, equipos, suministros y tácticas de etapa. Esta es una de las páginas más importantes durante la temporada.",
+    "rankingTitle": "Clasificación por equipos",
+    "rankingText": "Sigue WorldTeam, ProTeam, Continental y la clasificación Amateur. Los rankings deciden la promoción, la relegación y el progreso a largo plazo del equipo.",
+    "statisticsTitle": "Estadísticas",
+    "statisticsText": "Compara equipos y ciclista por puntos internacionales, victorias, podios, camisetas, historia y rendimiento de la temporada actual.",
+    "transfersTitle": "Fichajes",
+    "transfersText": "scouts, hacer ofertas de transferencia, firmar agentes gratis, negociar contratos, y contratar personal cuando los límites de tu club lo permiten.",
+    "financeTitle": "Finanzas",
+    "financeText": "Consulta el saldo, los ingresos, los gastos, las transacciones, los impuestos, los patrocinadores, Team Policy y los costes operativos.",
+    "menuTitle": "Menú, notificaciones y Coins",
+    "menuText": "Usa el menú superior derecho para la configuración de perfil, ayuda, preferencias, Discord, Contáctenos, Paquetes de Coins e Invitar a amigos. Las notificaciones muestran plazos y acciones importantes del juego."
+  },
+  "faq": {
+    "title": "Preguntas frecuentes",
+    "description": "Abre una pregunta para ver la respuesta. Estas respuestas cubren las preguntas más comunes de incorporación, carrera, finanzas y apoyo.",
+    "open": "Abrir",
+    "close": "Cerrar",
+    "q1": "¿Qué debo hacer después de crear mi club?",
+    "a1": "Comience con la página de resumen, luego compruebe Escuadrón, Entrenamiento, Finanzas y Calendario. La descripción le dice lo que necesita atención, Escuadrón muestra la fuerza de tu ciclista, Entrenamiento le ayuda a planificar el desarrollo, Finanzas protege su presupuesto, y Calendario muestra las próximas carreras.",
+    "q2": "¿Aparecerá el tutorial cada vez que me inscribo?",
+    "a2": "No. El tutorial principal se inicia automáticamente solo durante la primera sesión de juego de un nuevo manager. Un tutorial incompleto no vuelve a aparecer en inicios de sesión posteriores. Usa Ayuda → Tutoriales para reiniciarlo o abrir un tutorial de función.",
+    "q3": "¿Cómo funciona el tiempo de juego?",
+    "a3": "Un día de juego equivale a 12 horas reales. Dos días de juego equivalen a un día real. Esto es importante para las ventanas de Race Plans, los plazos de inscripción de ciclistas, Stage Plans, campos de entrenamiento y otros sistemas del juego basados en el tiempo.",
+    "q4": "¿Para qué se utiliza Preparación para la Carrera?",
+    "a4": "La preparación de carrera es donde preparas las carreras aceptadas. Seleccionas los ciclistas, el personal, los activos, el equipamiento, los suministros y las tácticas de etapa. En las carreras por etapas, también preparas las tácticas de cada etapa después de enviar Race Plan.",
+    "q5": "¿Por qué veo diferentes estados en las carreras aceptadas?",
+    "a5": "Las carreras aceptadas pueden mostrar estados como Race Plan Open, Rider Deadline Reached, Stage Plans Open, Race Active, Race Finished o All Set. Estos estados le indican qué acción necesita actualmente.",
+    "q6": "¿Cómo puedo mejorar a mis ciclistas más rápido?",
+    "a6": "Usa Entrenamiento consistentemente, elija áreas de enfoque útiles, controle la fatiga y utilice campos de entrenamiento cuando tengan sentido. Entrenar demasiado duro todo el tiempo puede dañar la frescura y el rendimiento de la carrera.",
+    "q7": "¿Por qué mi equipo está mal funcionando incluso con ciclistas fuertes?",
+    "a7": "Las habilidades fuertes no son suficientes. Fatiga, moral, enfermedad, lesiones, equipo, suministros de carreras, personal, clima, tácticas y roles de ciclista pueden afectar el rendimiento.",
+    "q8": "¿Por qué importa el equipo?",
+    "a8": "El equipo puede mejorar el rendimiento a través de configuraciones de carreras y bonificaciones de artículos. Los suministros de carreras también pueden proteger a los ciclistas de condiciones climáticas difíciles o exigentes.",
+    "q9": "¿Por qué debería actualizar la infraestructura?",
+    "a9": "Algunas mejoras pueden desbloquear o aumentar los límites de personal, mejorar la capacitación, apoyar la recuperación, mejorar el scouting o fortalecer la capacidad operativa.",
+    "q10": "¿Cómo funciona la clasificación de equipos?",
+    "a10": "Los equipos ganan puntos internacionales de los resultados de las carreras. Esos puntos deciden la clasificación dentro de WorldTeam, ProTeam, Continental, y las competiciones Amateur.",
+    "q11": "¿Para qué sirve la página Estadística?",
+    "a11": "Las estadísticas te ayudan a comparar equipos y ciclista. Puedes seguir puntos de la temporada actual, resultados históricos, rankings de ciclista, podios, maillots y equipos o ciclistas dominantes.",
+    "q12": "¿Dónde firmo o vendo ciclista?",
+    "a12": "Usa la página Transferencias. Los ciclistas incluidos en la lista de transferencias requieren una oferta al equipo vendedor, mientras que con los agentes libres puedes pasar directamente a negociar el contrato.",
+    "q13": "¿Por qué no puedo contratar más personal?",
+    "a13": "tu club tiene límites de personal. Si ya ha alcanzado el máximo para un papel de personal, es necesario aumentar el límite, generalmente a través de mejoras de infraestructura, antes de contratar más personal en ese papel.",
+    "q14": "¿Cuál es la diferencia entre los patrocinadores estándar y los patrocinadores de los derechos de nominación?",
+    "a14": "Un contrato de patrocinador estándar le da dinero a tu club sin cambiar el nombre de tu equipo. Un contrato de nominación-derechos generalmente paga más, pero el nombre del patrocinador se convierte en parte del nombre de tu equipo durante la temporada.",
+    "q15": "¿Por qué hay una pestaña de Impuestos en Finanzas?",
+    "a15": "Las transacciones pueden crear obligaciones fiscales. Una auditoría fiscal ocurre una vez al mes, y la página Finanzas le ayuda a ver lo que se ha calculado, pagado o todavía necesita ser pagado.",
+    "q16": "¿Para qué se utilizan las Coins?",
+    "a16": "Coins se muestra en la cabecera superior derecha. Asegúrese de que su saldo está disponible cuando sea necesario. Los paquetes de Coins se pueden abrir desde el menú.",
+    "q17": "¿Para qué son las notificaciones?",
+    "a17": "Las notificaciones le advierten sobre fechas y eventos importantes como preparación de carreras, actualizaciones de patrocinadores, finanzas, transferencias y otras acciones de juego que necesitan atención.",
+    "q18": "¿Cómo puedo invitar a amigos a participar en el juego?",
+    "a18": "Abre Invitar amigos desde el menú del panel y comparta su enlace de referencia. Los nuevos usuarios pueden registrarse a través de su ruta de referencia.",
+    "q19": "¿Cuál es la mejor manera de informar de un error o datos incorrectos?",
+    "a19": "Use Contáctenos o Discord e incluya pasos claros para reproducir el problema. Capturas de pantalla, nombres de carreras, nombres de ciclista, nombres de equipos y la página exacta donde ocurrió el problema son muy útiles."
+  },
+  "footer": {
+    "title": "¿Aún necesitas ayuda?",
+    "description": "Si algo se ve mal, por favor incluya el nombre de la página, nombre del equipo, nombre del ciclista, nombre de la carrera, capturas de pantalla y los pasos necesarios para reproducir el problema. Esto nos ayuda a encontrar y solucionar problemas más rápido.",
+    "contact": "Contáctenos",
+    "discord": "Preguntar en Discord"
+  },
+  "tutorialControl": {
+    "eyebrow": "Tutoriales",
+    "title": "Iniciar o reiniciar cualquier tutorial",
+    "description": "El tutorial inicial ayuda a los nuevos mánagers. Las guías avanzadas pueden aparecer al descubrir funciones. Puedes descartarlas o desactivar todas las sugerencias automáticas.",
+    "manual": "Manual completo del juego",
+    "autoTitle": "Tutoriales automáticos",
+    "autoOff": "Los tutoriales automáticos están desactivados. Puedes iniciarlos manualmente.",
+    "autoOn": "Pueden aparecer guías al acceder a funciones nuevas.",
+    "enableAuto": "Activar tutoriales automáticos",
+    "disableAuto": "Desactivar tutoriales automáticos",
+    "coreLabel": "Tutorial básico",
+    "featureLabel": "Tutorial de función",
+    "coreTitle": "Fundamentos de ProPeloton Manager",
+    "coreDescription": "Reinicia la introducción completa a los sistemas principales.",
+    "startRestart": "Iniciar / Reiniciar",
+    "starting": "Iniciando…",
+    "dismiss": "Descartar tutorial",
+    "dismissed": "Descartado: no aparecerá de nuevo salvo que lo reinicies.",
+    "dismissedNotice": "Tutorial descartado.",
+    "inviteTitle": "¿Necesitas ayuda con {{feature}}?",
+    "startTutorial": "Iniciar tutorial",
+    "noThanks": "No, gracias",
+    "finishForNow": "Terminar por ahora"
+  },
+  "tutorialModules": {
+    "national-championships": {
+      "title": "Campeonatos y clasificación nacionales",
+      "description": "Clasificación, selección nacional, preparación e historial de campeonatos."
+    },
+    "national-association": {
+      "title": "Federación y selección nacional",
+      "description": "Miembros, fondos, elecciones, convocatorias, World Nations e historial."
+    },
+    "national-coach": {
+      "title": "Seleccionador nacional",
+      "description": "Ciclistas elegibles, convocatorias, equipo final y alineaciones."
+    },
+    "youth-academy": {
+      "title": "Academia juvenil / U16",
+      "description": "Ojeadores, personal, presupuesto, carreras, clasificaciones y graduación."
+    },
+    "youth-graduation": {
+      "title": "Graduación de la academia juvenil",
+      "description": "El paso de U16 a la siguiente etapa de formación."
+    },
+    "developing-team": {
+      "title": "Equipo de desarrollo",
+      "description": "El camino U23 hacia el primer equipo."
+    },
+    "new-season": {
+      "title": "Cambio de temporada",
+      "description": "Cambios importantes al comenzar una nueva temporada."
+    }
+  }
+}

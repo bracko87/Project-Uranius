@@ -1,0 +1,327 @@
+{
+  "title": "Nacionalno prvenstvo - {{country}}",
+  "eyebrow": "Nacionalno takmičenje",
+  "description": "Individualni nacionalni rang vozača, kvalifikacije za prvenstvo, nacionalna obaveza i individualna priprema. Bodovi ekipnog ranga se ne menjaju.",
+  "country": "Država",
+  "loading": "Učitavanje nacionalnog prvenstva…",
+  "errors": {
+    "unavailable": "Podaci nacionalnog prvenstva nisu dostupni.",
+    "load": "Nije moguće učitati nacionalno prvenstvo.",
+    "save": "Nije moguće sačuvati plan vozača."
+  },
+  "cards": {
+    "freeze": "Zaključavanje ranga",
+    "frozen": "Rang je zaključan za ovo izdanje",
+    "live": "Rang uživo se još menja",
+    "qualification": "Kvalifikacije",
+    "notRequired": "Nisu potrebne",
+    "heatPlaces": "{{heats}} kvalifikaciona grupa/e · {{places}} mesta u finalu",
+    "directField": "Svi vozači ulaze direktno u finale",
+    "final": "Nacionalno finale",
+    "targetField": "Ciljni broj {{count}} · {{status}}",
+    "preparation": "Priprema",
+    "riderControlled": "Upravljanje vozačem",
+    "prepDescription": "Samo oprema i individualna taktika. Osoblje, vozila i zalihe obezbeđuje organizator.",
+    "dutyWindow": "Termin nacionalne obaveze",
+    "noTeamCost": "Bez troška za klub",
+    "hostRoute": "Ruta finala",
+    "hostPending": "Ruta još nije spremna",
+    "hostPendingHelp": "Prvenstvo čeka dok ne budu dostupne dve odgovarajuće rute."
+  },
+  "duty": {
+    "title": "Moja nacionalna obaveza",
+    "description": "Ovi vozači se prijavljuju automatski. Upravljaš samo opremom i individualnom strategijom svakog vozača.",
+    "locked": "Individualna trka — nema ekipne taktike. Osoblje, vozila i klupske zalihe nisu dostupni.",
+    "directQualifier": "Direktno kvalifikovan",
+    "qualificationHeat": "Kvalifikaciona grupa {{number}}",
+    "noPlan": "Za ovog vozača trenutno nema otvorenog plana koji može da se menja.",
+    "empty": "Nijedan tvoj vozač trenutno nema aktivan poziv za nacionalnu obavezu na ovom prvenstvu."
+  },
+  "organizer": {
+    "title": "Paket organizatora",
+    "bidons": "{{count}} bidona",
+    "gels": "{{count}} gelova",
+    "nutrition": "{{count}} paketa ishrane",
+    "kit": "Komplet za prvenstvo je obezbeđen",
+    "rain": "Zaštita od kiše je obezbeđena po potrebi"
+  },
+  "plan": {
+    "qualificationHeat": "Kvalifikaciona grupa {{number}}",
+    "final": "Finale nacionalnog prvenstva",
+    "openRace": "Otvori trku",
+    "individualBadge": "Individualna trka — nema ekipne taktike",
+    "equipment": "Oprema vozača",
+    "organizerEquipment": "Standardna oprema organizatora",
+    "equipmentHelp": "Možeš izabrati klupski setup; u suprotnom se koristi standardna oprema organizatora. Osoblje, vozila i zalihe ostaju pod kontrolom organizatora.",
+    "strategy": "Individualna strategija",
+    "phaseStart": "Start",
+    "phaseEarly": "Rani / srednji deo",
+    "phaseLate": "Kasni deo trke",
+    "phaseFinish": "Cilj",
+    "save": "Sačuvaj plan vozača",
+    "saved": "{{rider}}: plan za {{event}} je sačuvan."
+  },
+  "event": {
+    "qualification": "kvalifikacije",
+    "final": "finale"
+  },
+  "tactics": {
+    "rideNaturally": "Vozi prirodno",
+    "conserveEnergy": "Čuvaj energiju",
+    "stayNearFront": "Drži se napred",
+    "joinBreakaway": "Uđi u beg",
+    "attack": "Napadni",
+    "chaseBreakaway": "Juri beg",
+    "climbHard": "Jako na usponima",
+    "sprint": "Sprintaj",
+    "avoidRisks": "Izbegavaj rizike"
+  },
+  "heats": {
+    "title": "Kvalifikacione grupe",
+    "heat": "Grupa {{number}}",
+    "summary": "{{riders}} vozača · najboljih {{places}} prolazi",
+    "open": "Otvori grupu"
+  },
+  "ranking": {
+    "frozen": "Zaključani nacionalni rang",
+    "live": "Nacionalni rang uživo",
+    "description": "Zasnovan na bodovima iz trka uz ponderisanje svežine rezultata. Bonus nacionalnog prvenstva važi samo za vozača.",
+    "refresh": "Osveži",
+    "rank": "Mesto",
+    "rider": "Vozač",
+    "weighted": "Ponderisani bodovi",
+    "raw": "Osnovni bodovi",
+    "latest": "Poslednji rezultat",
+    "overall": "Ukupno",
+    "team": "Ekipa",
+    "qualificationStatus": "Status kvalifikacije",
+    "freeAgent": "Slobodan vozač",
+    "pageRange": "{{from}}–{{to}} od {{total}}",
+    "perPage": "{{count}} po stranici",
+    "previous": "Prethodno",
+    "next": "Sledeće",
+    "page": "Stranica {{page}} od {{pages}}",
+    "directFinal": "Direktno u finale",
+    "qualificationHeat": "Kvalifikaciona grupa {{number}}",
+    "qualifiedFinal": "Kvalifikovan za finale",
+    "eliminated": "Eliminisan",
+    "withdrawn": "Ne učestvuje"
+  },
+  "results": {
+    "title": "Rezultati prvenstva",
+    "pending": "Rezultati finala će se pojaviti automatski nakon obračuna prvenstva.",
+    "independent": "Nezavisno"
+  },
+  "champions": {
+    "title": "Prethodni prvaci",
+    "season": "Sezona {{number}}",
+    "first": "Prvi prvak će automatski biti dodat ovde.",
+    "badge": "Nacionalni prvak",
+    "history": "Istorija prvenstva",
+    "titles": "{{count}} nacionalnih titula"
+  },
+  "common": {
+    "club": "Klub",
+    "national": "Nacionalno"
+  },
+  "status": {
+    "planned": "Planirano",
+    "ranking_frozen": "Rang zaključan",
+    "qualification_pending": "Kvalifikacije čekaju",
+    "qualification_completed": "Kvalifikacije završene",
+    "final_ready": "Finale spremno",
+    "completed": "Završeno",
+    "cancelled": "Otkazano",
+    "ready": "Spremno",
+    "direct_qualified": "Direktno kvalifikovan",
+    "qualification_assigned": "Dodeljene kvalifikacije",
+    "qualified": "Kvalifikovan",
+    "eliminated": "Eliminisan",
+    "withdrawn": "Povučen",
+    "finalist": "Finalista"
+  },
+  "availability": {
+    "climateTitle": "Klimatski termin nije dostupan",
+    "climateUnavailable": "U trenutnim klimatskim podacima nema termina prvenstva iznad 20 °C. Najtopliji prihvatljivi nedeljni maksimum: {{temperature}} °C.",
+    "routeTitle": "Potrebna je ruta za prvenstvo",
+    "routeMissing": "Ova država trenutno nema odgovarajuću drumsku etapu za nacionalno prvenstvo. Prvenstvo ostaje pauzirano dok ne postoje najmanje dve odgovarajuće drumske etape.",
+    "singleRoute": "Ova država trenutno ima samo jednu odgovarajuću drumsku etapu za nacionalno prvenstvo. Prvenstvo ostaje pauzirano dok se ne doda druga odgovarajuća ruta, kako bi kvalifikacije i finale koristili različite trase.",
+    "windowTitle": "Termin nacionalne obaveze:",
+    "windowDates": "{{start}}–{{end}} · očekivani maksimum u toplom terminu {{temperature}} °C · bez troška za klub."
+  },
+  "decision": {
+    "title": "Učešće u nacionalnoj obavezi",
+    "blockedWindow": "Ovaj vozač je privremeno nedostupan za klupske obaveze od {{start}} do {{end}}.",
+    "deadline": "Rok za odluku: {{date}}",
+    "approve": "Potvrdi nacionalnu obavezu",
+    "reject": "Odbij · zadrži u klubu",
+    "rejectWarning": "Odbijanje otkazuje planirani nastup ovog vozača u nacionalnoj obavezi i oduzima mu 2 poena morala.",
+    "participationBenefit": "Ako vozač nastupi, normalno se primenjuju umor i razvoj veština; završetak trke nacionalnog prvenstva donosi i +1 moral.",
+    "error": "Nije moguće sačuvati odluku o nacionalnoj obavezi.",
+    "approvedMessage": "{{rider}} će nastupiti u nacionalnoj obavezi.",
+    "rejectedMessage": "{{rider}} ostaje u klubu i dobio je kaznu na moral zbog odbijanja.",
+    "status": {
+      "pending": "Čeka se odluka kluba",
+      "approved": "Klub potvrdio",
+      "auto_approved": "Automatski potvrđeno",
+      "rejected": "Učešće odbijeno"
+    }
+  },
+  "header": {
+    "subtitle": "Nacionalni vozači, kvalifikacije i obaveze prvenstva"
+  },
+  "draw": {
+    "title": "Žreb prvenstva",
+    "confirmed": "Potvrđena struktura prvenstva",
+    "projected": "Projekcija prema trenutnom nacionalnom rangu do zaključavanja ranga",
+    "qualificationHeat": "Kvalifikaciona grupa {{number}}",
+    "final": "Nacionalno finale",
+    "routePending": "Ruta domaćin još nije određena",
+    "ridersCount": "{{count}} vozača",
+    "advanceCount": "Prvih {{count}} prolazi",
+    "finalFieldCount": "{{count}} vozača u finalu"
+  },
+  "tabs": {
+    "ranking": "Rang",
+    "duty": "Moja nacionalna obaveza",
+    "history": "Istorija"
+  },
+  "info": {
+    "title": "Informacije o prvenstvu",
+    "description": "Nacionalna prvenstva su individualne trke. Nema ekipne taktike, osoblja, vozila ni klupskih zaliha. Organizator pokriva logistiku i troškove; ti kontrolišeš samo opremu i individualnu taktiku svakog pozvanog vozača.",
+    "openGuide": "Otvori kompletan vodič za nacionalni poredak i prvenstvo"
+  },
+  "summary": {
+    "title": "Raspored nacionalnog prvenstva",
+    "subtitle": "Ključni datumi, termin nacionalne obaveze i ruta domaćin prvenstva tvoje države."
+  },
+  "host": {
+    "openRace": "Otvori stranicu trke"
+  },
+  "eventPage": {
+    "invalid": "Ovaj događaj nacionalnog prvenstva nije dostupan.",
+    "back": "Nazad na nacionalni rang",
+    "qualificationTitle": "{{country}} – nacionalne kvalifikacije, grupa {{number}}",
+    "finalTitle": "{{country}} – finale nacionalnog prvenstva",
+    "nationalEvent": "Nacionalno prvenstvo",
+    "group": "Grupa {{number}}",
+    "subtitle": "Individualna nacionalna trka. Nema ekipne taktike, prijave ekipe niti troška trke za klub.",
+    "date": "Datum",
+    "startTime": "Start",
+    "startTimeTbd": "Vreme starta se određuje kada se trka generiše",
+    "riders": "Vozači",
+    "qualifyingPlaces": "Kvalifikaciona mesta",
+    "finalField": "Finalno polje",
+    "route": "Ruta",
+    "stageProfile": "Profil rute",
+    "distance": "Dužina",
+    "terrain": "Teren",
+    "elevation": "Uspon",
+    "expectedTemperature": "Očekivana maksimalna temperatura",
+    "profileNote": "Za nacionalno prvenstvo koriste se samo start, cilj i profil terena. Nema KOM/GPM bodova niti prolaznih sprintova.",
+    "profileChartAlt": "Visinski profil rute nacionalnog prvenstva",
+    "profileDescription": "Ruta nacionalnog prvenstva koristi izabrani profil terena zemlje domaćina.",
+    "terrainTypes": {
+      "flat": "Ravno",
+      "hilly": "Valovito",
+      "mountain": "Planinsko",
+      "cobbled": "Kocka"
+    },
+    "oneDayRace": "Jednodnevna trka",
+    "raceDateLine": "Datum trke: {{date}} — {{place}}",
+    "noTeamCost": "Bez troška za ekipu",
+    "stages": "Etape",
+    "stageOne": "Etapa 1",
+    "replayAfterGeneration": "Snimak će biti dostupan kroz standardni sistem snimaka nakon što se ova trka nacionalnog prvenstva generiše i izračuna.",
+    "raceInformation": "Informacije o trci",
+    "ridersResults": "Vozači i rezultati",
+    "results": "Rezultati",
+    "finalRidersPending": "Učesnici finala biće poznati nakon završetka kvalifikacionih grupa.",
+    "noRiders": "Trenutno nema vozača dodeljenih ovom događaju.",
+    "jersey": "Dres",
+    "rider": "Vozač",
+    "team": "Ekipa",
+    "time": "Vreme",
+    "gap": "Zaostatak",
+    "status": "Status",
+    "resultsPending": "Rezultati će biti objavljeni ovde nakon završetka trke.",
+    "refresh": "Osveži",
+    "finished": "Trka završena",
+    "ready": "Trka spremna",
+    "planned": "Planirano"
+  },
+  "world": {
+    "winnerQualifies": "Pobednik se automatski kvalifikuje za Svetsko prvenstvo na drumu",
+    "title": "Svetsko prvenstvo na drumu",
+    "grandFinale": "Veliko finale",
+    "warmHost": "Domaćin sa toplom klimom",
+    "championsQualified": "Kvalifikovanih šampiona: {{count}}",
+    "confirmedCount": "Potvrđenih: {{count}}",
+    "openChampionship": "Otvori Svetsko prvenstvo →",
+    "scheduledDescription": "Zakazano od početka sezone. Nacionalni šampioni se dodaju automatski.",
+    "scheduledNotice": "Veliko finale Svetskog prvenstva zakazano je za ovu sezonu.",
+    "invitation": "Poziv za Svetsko prvenstvo na drumu",
+    "nationalChampionLabel": "Nacionalni šampion države {{country}}",
+    "unavailable": "Nedostupan",
+    "decisionDeadline": "Rok za odluku",
+    "dutyEffects": "Vozač je rezervisan za obavezu na Svetskom prvenstvu. Troškove snosi organizator. Potvrda donosi +10 morala, a odbijanje -15. Umor i ostali efekti trke normalno važe.",
+    "openRace": "Otvori stranicu trke Svetskog prvenstva",
+    "allowRider": "Dozvoli nastup",
+    "refuse": "Odbij",
+    "secondConfirmation": "Druga potvrda - finale Svetskog prvenstva",
+    "secondConfirmationHelp": "Već ste prihvatili poziv za Svetsko prvenstvo. Ponovo potvrdite vozača pre Velikog finala.",
+    "finalDeadline": "Rok za konačnu potvrdu",
+    "status": "Status",
+    "confirmAgain": "Potvrdi ponovo",
+    "refuseFinal": "Odbij finale",
+    "phase": {
+      "planned": "Planirano",
+      "completed": "Završeno",
+      "finalConfirmations": "Konačne potvrde",
+      "startlistConfirmed": "Startna lista potvrđena",
+      "invitationsOpen": "Pozivi su otvoreni",
+      "championsQualifying": "Kvalifikacije nacionalnih šampiona"
+    },
+    "decision": {
+      "pending": "Na čekanju",
+      "approved": "Odobreno",
+      "auto_approved": "Automatski odobreno",
+      "rejected": "Odbijeno",
+      "not_open": "Još nije otvoreno"
+    },
+    "toasts": {
+      "accepted": "{{rider}} će nastupiti u Velikom finalu Svetskog prvenstva. Moral +10.",
+      "refused": "{{rider}} neće nastupiti u Velikom finalu Svetskog prvenstva. Moral -15.",
+      "participationError": "Nije moguće ažurirati učešće na Svetskom prvenstvu.",
+      "nationalConfirmed": "{{rider}} je ponovo potvrđen za finale nacionalnog prvenstva.",
+      "nationalRefused": "{{rider}} neće nastupiti u finalu nacionalnog prvenstva.",
+      "nationalError": "Nije moguće ažurirati drugu potvrdu za nacionalno prvenstvo.",
+      "worldConfirmed": "{{rider}} je konačno potvrđen za Svetsko prvenstvo.",
+      "worldWithdrawn": "{{rider}} je povučen sa Svetskog prvenstva. Moral -15.",
+      "worldError": "Nije moguće ažurirati konačnu potvrdu za Svetsko prvenstvo.",
+      "withdrawnNational": "{{rider}} je povučen iz finala nacionalnog prvenstva i dobio je kaznu morala za odbijanje.",
+      "withdrawError": "Nije moguće povući vozača iz finala nacionalnog prvenstva."
+    }
+  },
+  "dutyExtra": {
+    "decisionsOnly": "Samo odluke o učešću",
+    "decisionsHelp": "Ovde odobrite ili odbijte nacionalnu obavezu. Odobreni vozač se automatski dodaje odgovarajućoj kvalifikacionoj grupi ili startnoj listi finala. Opremu i individualnu taktiku podešavate u Pripremi trke.",
+    "openPreparation": "Otvori Pripremu trke",
+    "secondConfirmation": "Druga potvrda - finale nacionalnog prvenstva",
+    "secondConfirmationHelp": "Ovaj vozač se plasirao u finale nacionalnog prvenstva. Menadžer mora zasebno da potvrdi ili odbije njegov nastup.",
+    "final": "Finale",
+    "confirmFinal": "Potvrdi finale",
+    "synced": "{{rider}} je potvrđen i automatski dodat u {{race}}. Opremom i individualnom taktikom upravljate u Pripremi trke."
+  },
+  "historyExtra": {
+    "raceName": "Finale nacionalnog prvenstva - {{country}}",
+    "myRiders": "Vaši vozači van prvih 10"
+  },
+  "terrain": {
+    "flat": "Ravno",
+    "hilly": "Brdovito",
+    "mountain": "Planinsko",
+    "cobbles": "Kocka",
+    "time_trial": "Hronometar"
+  }
+}

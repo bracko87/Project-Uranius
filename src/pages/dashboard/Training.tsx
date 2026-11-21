@@ -1,0 +1,4620 @@
+'use client'
+
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { Link, useNavigate, useSearchParams } from 'react-router'
+import { supabase } from '../../lib/supabase'
+import PremiumRiderDevelopmentPanel from './training/PremiumRiderDevelopmentPanel'
+import {
+  PremiumFeatureLock,
+  PremiumFeatureLoading,
+} from '../../components/premium/PremiumFeatureLock'
+import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
+import TutorialTargetFrame from '../../components/tutorial/TutorialTargetFrame'
+import HeadCoachTrainingPanel, {
+  type HeadCoachAutomationSnapshot
+} from '../../components/training/HeadCoachTrainingPanel'
+import {
+  trainingTutorialSteps,
+  trainingWelcomeTutorial
+} from '../../lib/tutorials'
+import {
+  getTutorialProgress,
+  saveTutorialProgress
+} from '../../lib/tutorialProgress'
+
+type TabKey = 'regular' | 'development' | 'camps'
+type CampType = 'general' | 'sprint' | 'climbing' | 'flat' | 'time_trial'
+type AvailabilityStatus = 'fit' | 'not_fully_fit' | 'injured' | 'sick'
+type RegularTrainingIntensity = 'recovery' | 'light' | 'normal' | 'hard'
+type WeatherState = 'ideal' | 'good' | 'mixed' | 'poor' | 'unavailable'
+type RegionFilter =
+  | 'all'
+  | 'Europe'
+  | 'North America'
+  | 'South America'
+  | 'Asia'
+  | 'Africa'
+  | 'Oceania'
+  | 'Middle East'
+
+type CalendarSuitability = 'preferred' | 'risky' | 'unavailable' | 'normal'
+
+type GameDateParts = {
+  current_game_date?: string | null
+  game_date?: string | null
+  season_number: number
+  month_number: number
+  day_number: number
+  hour_number: number
+  minute_number?: number | null
+}
+
+type FamilyClub = {
+  club_id: string
+  club_name: string
+  team_label: 'First Team' | 'U23'
+}
+
+type CampStaffOption = {
+  staff_id: string
+  club_id: string
+  club_name: string | null
+  staff_name: string | null
+  role_type: string | null
+  role_label: string | null
+  specialization: string | null
+  team_scope: 'first_team' | 'u23' | 'all' | string | null
+  overall: number | null
+  salary_weekly: number | null
+  on_active_course: boolean
+  overlapping_booking_id: string | null
+  availability_status: string | null
+  block_reason: string | null
+  boost_label: string | null
+  boost_metadata: Record<string, unknown> | null
+}
+
+type ClubRegularTrainingDefaultRow = {
+  club_id: string
+  team_scope: string
+  focus_code: string
+  intensity: RegularTrainingIntensity
+  auto_when_free: boolean
+  updated_at?: string
+  created_at?: string
+}
+
+type RiderRegularTrainingPlanRow = {
+  rider_id: string
+  club_id: string
+  focus_code: string
+  intensity: RegularTrainingIntensity
+  is_active: boolean
+  auto_when_free: boolean
+  preferred_days: number[] | null
+  updated_at?: string
+  created_at?: string
+}
+
+type PremiumTrainingTemplate = {
+  id: string
+  name: string
+  payload_json: {
+    focus_code?: string
+    intensity?: string
+  } | null
+}
+
+type Camp = {
+  id: string
+  name: string
+  country_code: string
+  city_name: string
+  region_name: string
+  camp_type: CampType
+  terrain_profile: string
+  altitude_category: string
+  stars: number
+  location_cost_index: number
+  training_quality_multiplier: number
+  recovery_comfort_bonus: number
+  default_intensity: RegularTrainingIntensity
+  base_accommodation_per_day: number
+  base_camp_fee_per_day: number
+  preferred_weeks: number[]
+  risky_weeks: number[]
+  closed_weeks: number[]
+  image_url: string | null
+  short_description: string
+  long_description: string
+  best_for_text: string
+  weather_note: string
+  is_active: boolean
+  metadata?: {
+    budget_tier?: string
+    best_for?: string[]
+  } | null
+}
+
+type RosterRider = {
+  club_id: string
+  rider_id: string
+  first_name?: string | null
+  last_name?: string | null
+  display_name: string | null
+  assigned_role: string | null
+  age_years: number | null
+  overall: number | null
+  country_code: string | null
+  availability_status: AvailabilityStatus
+  fatigue: number | null
+  source_club_name?: string
+  team_label?: 'First Team' | 'U23'
+}
+
+type RiderNameRow = {
+  id: string
+  first_name: string | null
+  last_name: string | null
+  display_name: string | null
+}
+
+type CampQuote = {
+  camp_id: string
+  camp_name: string
+  city_name: string
+  camp_country_code: string
+  camp_region_name: string
+  camp_type: CampType
+  stars: number
+  club_id: string
+  club_country_code: string
+  club_region_name: string
+  participants_count: number
+  days_count: number
+  weather_state: WeatherState
+  weather_score: number
+  training_modifier: string | number
+  missed_day_chance: number
+  travel_per_rider: number
+  travel_total: number
+  accommodation_total: number
+  camp_fee_total: number
+  logistics_total: number
+  total_cost: number
+  per_rider_total: number
+  warnings: string[]
+
+  riders_count?: number
+  staff_count?: number
+  charged_participants_count?: number
+}
+
+type BookingValidation = {
+  is_valid: boolean
+  participants_count?: number
+  riders_count?: number
+  staff_count?: number
+  charged_participants_count?: number
+  weather_state: WeatherState
+  validation_errors: string[]
+  validation_warnings: string[]
+  blocked_riders?: Array<{
+    rider_id: string
+    display_name: string | null
+    availability_status: AvailabilityStatus | null
+    fatigue: number | null
+    status_code: string
+  }>
+  blocked_staff?: Array<{
+    staff_id: string
+    staff_name: string | null
+    role_type: string | null
+    availability_status: string | null
+    block_reason: string | null
+    status_code?: string | null
+  }>
+}
+
+type BookingResult = {
+  booking_id: string
+  finance_transaction_id: string
+  booking_status: string
+  total_cost: number
+  participants_count: number
+  staff_count?: number
+  charged_participants_count?: number
+  weather_state: WeatherState
+  validation_warnings: string[]
+  created_at: string
+}
+
+type CurrentCampBooking = {
+  id: string
+  camp_id: string
+  start_date: string
+  end_date: string
+  status: 'planned' | 'active' | 'completed' | 'cancelled'
+  participants_count: number | null
+  staff_count: number | null
+  charged_participants_count: number | null
+  total_cost: number | null
+  city_snapshot: string | null
+  country_code_snapshot: string | null
+  camp_type_snapshot: string | null
+  created_at: string
+  notes?: Record<string, unknown> | null
+}
+
+const CAMP_TYPE_TRANSLATION_KEYS: Record<CampType, string> = {
+  general: 'campTypes.general',
+  sprint: 'campTypes.sprint',
+  climbing: 'campTypes.climbing',
+  flat: 'campTypes.flat',
+  time_trial: 'campTypes.timeTrial'
+}
+
+const WEATHER_LABELS: Record<Exclude<WeatherState, 'unavailable'>, string> = {
+  ideal: 'Ideal',
+  good: 'Good',
+  mixed: 'Mixed',
+  poor: 'Poor'
+}
+
+const WEATHER_BADGE_STYLES: Record<WeatherState, string> = {
+  ideal: 'bg-green-100 text-green-700',
+  good: 'bg-emerald-100 text-emerald-700',
+  mixed: 'bg-amber-100 text-amber-700',
+  poor: 'bg-orange-100 text-orange-700',
+  unavailable: 'bg-red-100 text-red-700'
+}
+
+const AVAILABILITY_BADGE_STYLES: Record<AvailabilityStatus, string> = {
+  fit: 'bg-green-100 text-green-700',
+  not_fully_fit: 'bg-amber-100 text-amber-700',
+  injured: 'bg-red-100 text-red-700',
+  sick: 'bg-purple-100 text-purple-700'
+}
+
+const AVAILABILITY_TRANSLATION_KEYS: Record<AvailabilityStatus, string> = {
+  fit: 'availability.fit',
+  not_fully_fit: 'availability.notFullyFit',
+  injured: 'availability.injured',
+  sick: 'availability.sick'
+}
+
+const DURATION_OPTIONS = [7, 10, 14] as const
+
+const REGION_OPTIONS: RegionFilter[] = [
+  'all',
+  'Europe',
+  'North America',
+  'South America',
+  'Asia',
+  'Africa',
+  'Oceania',
+  'Middle East'
+]
+
+const REGION_TRANSLATION_KEYS: Record<string, string> = {
+  Europe: 'regions.europe',
+  'North America': 'regions.northAmerica',
+  'South America': 'regions.southAmerica',
+  Asia: 'regions.asia',
+  Africa: 'regions.africa',
+  Oceania: 'regions.oceania',
+  'Middle East': 'regions.middleEast'
+}
+
+const CAMP_TYPE_OPTIONS: Array<'all' | CampType> = [
+  'all',
+  'general',
+  'sprint',
+  'climbing',
+  'flat',
+  'time_trial'
+]
+
+const REGULAR_TRAINING_FOCUS_OPTIONS = [
+  { value: 'general', translationKey: 'focus.general' },
+  { value: 'recovery', translationKey: 'focus.recovery' },
+  { value: 'sprint', translationKey: 'focus.sprint' },
+  { value: 'climbing', translationKey: 'focus.climbing' },
+  { value: 'flat', translationKey: 'focus.flat' },
+  { value: 'time_trial', translationKey: 'focus.timeTrial' },
+  { value: 'endurance', translationKey: 'focus.endurance' },
+  { value: 'resistance', translationKey: 'focus.resistance' },
+  { value: 'race_iq', translationKey: 'focus.raceIq' },
+  { value: 'teamwork', translationKey: 'focus.teamwork' },
+  { value: 'day_off', translationKey: 'focus.dayOff' }
+] as const
+
+const TRAINING_FOCUS_TRANSLATION_KEYS: Record<string, string> = Object.fromEntries(
+  REGULAR_TRAINING_FOCUS_OPTIONS.map(option => [option.value, option.translationKey])
+)
+
+const REGULAR_TRAINING_INTENSITY_OPTIONS: Array<{
+  value: RegularTrainingIntensity
+  translationKey: string
+}> = [
+  { value: 'recovery', translationKey: 'intensity.recovery' },
+  { value: 'light', translationKey: 'intensity.light' },
+  { value: 'normal', translationKey: 'intensity.normal' },
+  { value: 'hard', translationKey: 'intensity.hard' }
+]
+
+const TRAINING_INTENSITY_TRANSLATION_KEYS: Record<RegularTrainingIntensity, string> =
+  Object.fromEntries(
+    REGULAR_TRAINING_INTENSITY_OPTIONS.map(option => [option.value, option.translationKey])
+  ) as Record<RegularTrainingIntensity, string>
+
+const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+const CAMPS_PER_PAGE = 8
+
+const campHeaderButtonBaseClass =
+  'inline-flex h-8 min-w-[118px] items-center justify-center rounded-full border px-3 text-xs font-medium whitespace-nowrap transition-colors'
+
+const openCurrentCampButtonClass =
+  `${campHeaderButtonBaseClass} border-blue-300 bg-white text-blue-700 hover:bg-blue-50`
+
+const cancelCampButtonClass =
+  `${campHeaderButtonBaseClass} border-red-300 bg-white text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60`
+
+const PAST_TRAINING_CAMP_ERROR = 'Training camp cannot start today or in the past.'
+
+const TRAINING_CAMP_REFUND_NOTICE =
+  'Plan camp dates carefully. Once a training camp is booked, cancelling it close to the start date may only return a partial refund or no refund.'
+
+const DAY_OFF_HELPER_TEXT =
+  'Day Off gives no skill development and no training staff boost. Riders only recover fatigue.'
+
+const GAME_MONTH_SHORT = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+]
+
+function formatCurrency(value: number): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0
+  }).format(value)
+}
+
+function renderStars(count: number): string {
+  return '★'.repeat(Math.max(0, count)) + '☆'.repeat(Math.max(0, 5 - count))
+}
+
+function toArray<T>(value: T | T[] | null | undefined): T[] {
+  if (value == null) return []
+  return Array.isArray(value) ? value : [value]
+}
+
+function resolvePremiumStatus(data: unknown): boolean {
+  const firstRow = Array.isArray(data) ? data[0] : data
+  const row =
+    firstRow && typeof firstRow === 'object' && !Array.isArray(firstRow)
+      ? (firstRow as Record<string, unknown>)
+      : {}
+
+  const possibleValues = [
+    row.is_premium,
+    row.premium_active,
+    row.is_active,
+    row.active,
+    row.has_premium
+  ]
+
+  return possibleValues.some(value => value === true || value === 'true' || value === 1)
+}
+
+function titleCaseFromSnake(value: string | null | undefined): string {
+  if (!value) return 'Training Camp'
+  return value
+    .split('_')
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
+function formatCampTypeLabel(value: string | null | undefined): string {
+  if (!value) return 'Training Camp'
+  return titleCaseFromSnake(value)
+}
+
+function formatCampDateRange(startDateValue: string, endDateValue: string): string {
+  return `${formatGameDateLabel(startDateValue)} → ${formatGameDateLabel(endDateValue)}`
+}
+
+function formatSeasonLabel(dateValue: string | null | undefined): string {
+  if (!dateValue) return 'Season —'
+
+  try {
+    const date = parseDateString(dateValue)
+    const seasonNumber = date.getFullYear() - 1999
+
+    if (!Number.isFinite(seasonNumber) || seasonNumber < 1) {
+      return 'Season —'
+    }
+
+    return `Season ${seasonNumber}`
+  } catch {
+    return 'Season —'
+  }
+}
+
+function formatTrainingFocusLabel(
+  value: string | null | undefined,
+  translate: (key: string) => string
+): string {
+  if (!value) return ''
+
+  const translationKey = TRAINING_FOCUS_TRANSLATION_KEYS[value]
+  return translationKey ? translate(translationKey) : titleCaseFromSnake(value)
+}
+
+function formatTrainingIntensityLabel(
+  value: RegularTrainingIntensity,
+  translate: (key: string) => string
+): string {
+  return translate(TRAINING_INTENSITY_TRANSLATION_KEYS[value])
+}
+
+function isDayOffFocus(focusCode: string | null | undefined): boolean {
+  return focusCode === 'day_off'
+}
+
+function normalizeTrainingIntensityForSave(
+  focusCode: string,
+  intensity: string | null | undefined
+): RegularTrainingIntensity {
+  if (isDayOffFocus(focusCode)) {
+    return 'normal'
+  }
+
+  if (
+    intensity === 'recovery' ||
+    intensity === 'light' ||
+    intensity === 'normal' ||
+    intensity === 'hard'
+  ) {
+    return intensity
+  }
+
+  return 'normal'
+}
+
+function formatEffectiveRegularTrainingLabel(
+  focusCode: string | null | undefined,
+  intensity: string | null | undefined,
+  translate: (key: string) => string
+): string {
+  if (!focusCode) return translate('regular.noPlan')
+
+  if (isDayOffFocus(focusCode)) {
+    return translate('focus.dayOff')
+  }
+
+  return `${formatTrainingFocusLabel(focusCode, translate)} · ${formatTrainingIntensityLabel(
+    normalizeTrainingIntensityForSave(focusCode, intensity),
+    translate
+  )}`
+}
+
+function getFullRiderName(rider: {
+  first_name?: string | null
+  last_name?: string | null
+  display_name?: string | null
+}): string {
+  const fullName = [rider.first_name, rider.last_name]
+    .map(value => value?.trim())
+    .filter(Boolean)
+    .join(' ')
+
+  return fullName || rider.display_name || 'Unnamed rider'
+}
+
+function getCountryRegion(countryCode: string | null | undefined): string {
+  const code = (countryCode ?? '').toUpperCase()
+
+  if (
+    [
+      'AL',
+      'AD',
+      'AT',
+      'BA',
+      'BE',
+      'BG',
+      'BY',
+      'CH',
+      'CY',
+      'CZ',
+      'DE',
+      'DK',
+      'EE',
+      'ES',
+      'FI',
+      'FR',
+      'GB',
+      'GR',
+      'HR',
+      'HU',
+      'IE',
+      'IS',
+      'IT',
+      'LT',
+      'LU',
+      'LV',
+      'ME',
+      'MK',
+      'MT',
+      'NL',
+      'NO',
+      'PL',
+      'PT',
+      'RO',
+      'RS',
+      'SE',
+      'SI',
+      'SK',
+      'SM',
+      'UA'
+    ].includes(code)
+  ) {
+    return 'Europe'
+  }
+
+  if (
+    ['US', 'CA', 'MX', 'CR', 'CU', 'DO', 'GT', 'HN', 'JM', 'NI', 'PA', 'SV', 'TT'].includes(code)
+  ) {
+    return 'North America'
+  }
+
+  if (['AR', 'BO', 'BR', 'CL', 'CO', 'EC', 'PE', 'PY', 'UY', 'VE'].includes(code)) {
+    return 'South America'
+  }
+
+  if (['DZ', 'EG', 'ET', 'GH', 'KE', 'MA', 'NG', 'RW', 'TN', 'UG', 'ZA'].includes(code)) {
+    return 'Africa'
+  }
+
+  if (['AE', 'BH', 'IL', 'IQ', 'IR', 'JO', 'KW', 'LB', 'OM', 'QA', 'SA', 'TR'].includes(code)) {
+    return 'Middle East'
+  }
+
+  if (['AU', 'NZ'].includes(code)) return 'Oceania'
+
+  if (
+    ['CN', 'HK', 'ID', 'IN', 'JP', 'KZ', 'KR', 'MY', 'PH', 'SG', 'TH', 'TW', 'UZ', 'VN'].includes(
+      code
+    )
+  ) {
+    return 'Asia'
+  }
+
+  return 'Other'
+}
+
+function estimateTravelPerRider(
+  clubCountryCode: string | null,
+  campCountryCode: string,
+  campRegionName: string
+): number {
+  const clubRegion = getCountryRegion(clubCountryCode)
+
+  if ((clubCountryCode ?? '').toUpperCase() === campCountryCode.toUpperCase()) return 80
+  if (clubRegion === campRegionName) return 200
+
+  if (
+    (clubRegion === 'Europe' && ['Africa', 'Middle East'].includes(campRegionName)) ||
+    (campRegionName === 'Europe' && ['Africa', 'Middle East'].includes(clubRegion)) ||
+    (clubRegion === 'North America' && campRegionName === 'South America') ||
+    (clubRegion === 'South America' && campRegionName === 'North America') ||
+    (clubRegion === 'Asia' && campRegionName === 'Middle East') ||
+    (clubRegion === 'Middle East' && campRegionName === 'Asia')
+  ) {
+    return 450
+  }
+
+  if (clubRegion === 'Oceania' || campRegionName === 'Oceania') return 1200
+  return 850
+}
+
+function estimatePerRiderCost(
+  camp: Camp,
+  clubCountryCode: string | null,
+  days: number,
+  participantsCount: number
+): number {
+  const travelPerRider = estimateTravelPerRider(clubCountryCode, camp.country_code, camp.region_name)
+
+  const accommodationPerRider = camp.base_accommodation_per_day * camp.location_cost_index * days
+  const campFeePerRider = camp.base_camp_fee_per_day * camp.location_cost_index * days
+  const logisticsShare = participantsCount > 0 ? 500 / participantsCount : 0
+
+  return Math.round(travelPerRider + accommodationPerRider + campFeePerRider + logisticsShare)
+}
+
+function normalizeIsoDateValue(value: string | null | undefined): string | null {
+  if (!value) return null
+
+  const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (!match) return null
+
+  return `${match[1]}-${match[2]}-${match[3]}`
+}
+
+function parseDateString(value: string): Date {
+  const normalizedValue = normalizeIsoDateValue(value) ?? value
+  const [year, month, day] = normalizedValue.split('-').map(Number)
+  return new Date(year, month - 1, day)
+}
+
+function toDateString(date: Date): string {
+  const year = date.getFullYear()
+  const month = `${date.getMonth() + 1}`.padStart(2, '0')
+  const day = `${date.getDate()}`.padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function addDays(dateValue: string, amount: number): string {
+  const date = parseDateString(dateValue)
+  date.setDate(date.getDate() + amount)
+  return toDateString(date)
+}
+
+function normalizeGameDateValue(value: unknown): string | null {
+  if (!value) return null
+
+  if (typeof value === 'string') {
+    return value.slice(0, 10)
+  }
+
+  if (Array.isArray(value)) {
+    return normalizeGameDateValue(value[0])
+  }
+
+  if (typeof value === 'object') {
+    const row = value as Record<string, unknown>
+
+    const possible =
+      row.get_current_game_date_date ??
+      row.current_game_date ??
+      row.game_date ??
+      row.date
+
+    if (typeof possible === 'string') {
+      return possible.slice(0, 10)
+    }
+  }
+
+  return null
+}
+
+function normalizeGameDateParts(value: unknown): GameDateParts | null {
+  if (!value) return null
+
+  const row = Array.isArray(value) ? value[0] : value
+
+  if (!row || typeof row !== 'object') return null
+
+  const record = row as Record<string, unknown>
+
+  const seasonNumber = Number(record.season_number)
+  const monthNumber = Number(record.month_number)
+  const dayNumber = Number(record.day_number)
+  const hourNumber = Number(record.hour_number ?? 0)
+  const minuteNumber = Number(record.minute_number ?? 0)
+
+  if (!Number.isFinite(seasonNumber) || !Number.isFinite(monthNumber) || !Number.isFinite(dayNumber)) {
+    return null
+  }
+
+  return {
+    current_game_date:
+      typeof record.current_game_date === 'string' ? record.current_game_date : null,
+    game_date:
+      typeof record.game_date === 'string' ? record.game_date : null,
+    season_number: seasonNumber,
+    month_number: monthNumber,
+    day_number: dayNumber,
+    hour_number: Number.isFinite(hourNumber) ? hourNumber : 0,
+    minute_number: Number.isFinite(minuteNumber) ? minuteNumber : 0
+  }
+}
+
+function buildGameDateFromParts(parts: GameDateParts | null): string | null {
+  if (!parts) return null
+
+  if (parts.current_game_date) return parts.current_game_date.slice(0, 10)
+  if (parts.game_date) return parts.game_date.slice(0, 10)
+
+  const year = parts.season_number + 1999
+  const month = `${parts.month_number}`.padStart(2, '0')
+  const day = `${parts.day_number}`.padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
+
+function compareIsoDates(a: string, b: string): number {
+  if (a === b) return 0
+  return a < b ? -1 : 1
+}
+
+function dateRangesOverlap(
+  leftStartDateValue: string,
+  leftEndDateValue: string,
+  rightStartDateValue: string,
+  rightEndDateValue: string
+): boolean {
+  const leftStart = parseDateString(leftStartDateValue).getTime()
+  const leftEnd = parseDateString(leftEndDateValue).getTime()
+  const rightStart = parseDateString(rightStartDateValue).getTime()
+  const rightEnd = parseDateString(rightEndDateValue).getTime()
+
+  return leftStart <= rightEnd && rightStart <= leftEnd
+}
+
+function startOfMonth(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), 1)
+}
+
+function endOfMonth(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth() + 1, 0)
+}
+
+function addMonths(date: Date, amount: number): Date {
+  return new Date(date.getFullYear(), date.getMonth() + amount, 1)
+}
+
+function startOfWeekMonday(date: Date): Date {
+  const copy = new Date(date)
+  const day = copy.getDay()
+  const diff = day === 0 ? -6 : 1 - day
+  copy.setDate(copy.getDate() + diff)
+  copy.setHours(0, 0, 0, 0)
+  return copy
+}
+
+function endOfWeekSunday(date: Date): Date {
+  const start = startOfWeekMonday(date)
+  const end = new Date(start)
+  end.setDate(start.getDate() + 6)
+  end.setHours(0, 0, 0, 0)
+  return end
+}
+
+function isSameDay(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  )
+}
+
+function isBeforeDay(a: Date, b: Date): boolean {
+  const left = new Date(a.getFullYear(), a.getMonth(), a.getDate()).getTime()
+  const right = new Date(b.getFullYear(), b.getMonth(), b.getDate()).getTime()
+  return left < right
+}
+
+function isAfterDay(a: Date, b: Date): boolean {
+  const left = new Date(a.getFullYear(), a.getMonth(), a.getDate()).getTime()
+  const right = new Date(b.getFullYear(), b.getMonth(), b.getDate()).getTime()
+  return left > right
+}
+
+function isDateWithinRange(date: Date, startDateValue: string, endDateValue: string): boolean {
+  const start = parseDateString(startDateValue)
+  const end = parseDateString(endDateValue)
+  const target = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime()
+  const startTime = new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime()
+  const endTime = new Date(end.getFullYear(), end.getMonth(), end.getDate()).getTime()
+
+  return target >= startTime && target <= endTime
+}
+
+function getCurrentSeasonStartDate(currentGameDateValue: string | null): Date | null {
+  if (!currentGameDateValue) return null
+  const current = parseDateString(currentGameDateValue)
+  return new Date(current.getFullYear(), 0, 1)
+}
+
+function getCurrentSeasonEndDate(currentGameDateValue: string | null): Date | null {
+  if (!currentGameDateValue) return null
+  const current = parseDateString(currentGameDateValue)
+  return new Date(current.getFullYear(), 11, 31)
+}
+
+function formatGameDateLabel(dateValue: string): string {
+  try {
+    const selected = parseDateString(dateValue)
+    return `${GAME_MONTH_SHORT[selected.getMonth()]} ${selected.getDate()}`
+  } catch {
+    return dateValue
+  }
+}
+
+function formatGameMonthLabel(
+  monthDate: Date,
+  currentGameDateValue: string | null,
+  currentSeasonNumber: number | null
+): string {
+  if (!currentGameDateValue || currentSeasonNumber == null) {
+    return `Month ${monthDate.getMonth() + 1}`
+  }
+
+  return `Current Season · Month ${monthDate.getMonth() + 1}`
+}
+
+function getISOWeek(date: Date): number {
+  const target = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
+  const dayNumber = target.getUTCDay() || 7
+  target.setUTCDate(target.getUTCDate() + 4 - dayNumber)
+  const yearStart = new Date(Date.UTC(target.getUTCFullYear(), 0, 1))
+  return Math.ceil((((target.getTime() - yearStart.getTime()) / 86400000) + 1) / 7)
+}
+
+function getDateSuitability(date: Date, camp: Camp | null): CalendarSuitability {
+  if (!camp) return 'normal'
+  const week = getISOWeek(date)
+
+  if (toArray(camp.closed_weeks).includes(week)) return 'unavailable'
+  if (toArray(camp.preferred_weeks).includes(week)) return 'preferred'
+  if (toArray(camp.risky_weeks).includes(week)) return 'risky'
+  return 'normal'
+}
+
+function getMonthGridDates(monthDate: Date): Date[] {
+  const monthStart = startOfMonth(monthDate)
+  const monthEnd = endOfMonth(monthDate)
+  const gridStart = startOfWeekMonday(monthStart)
+  const gridEnd = endOfWeekSunday(monthEnd)
+
+  const days: Date[] = []
+  const cursor = new Date(gridStart)
+
+  while (cursor <= gridEnd) {
+    days.push(new Date(cursor))
+    cursor.setDate(cursor.getDate() + 1)
+  }
+
+  return days
+}
+
+function getSuitabilityTitle(suitability: CalendarSuitability): string {
+  if (suitability === 'preferred') return 'Best period'
+  if (suitability === 'risky') return 'Risky weather period'
+  if (suitability === 'unavailable') return 'Unavailable period'
+  return 'Normal period'
+}
+
+function getDayButtonClassName(
+  suitability: CalendarSuitability,
+  isSelected: boolean,
+  isCurrentMonth: boolean
+): string {
+  if (suitability === 'unavailable') {
+    return [
+      'bg-red-50 text-red-400',
+      isCurrentMonth ? '' : 'opacity-60',
+      isSelected ? 'ring-2 ring-red-300' : ''
+    ]
+      .join(' ')
+      .trim()
+  }
+
+  if (isSelected) {
+    return [
+      suitability === 'preferred'
+        ? 'bg-green-600 text-white'
+        : suitability === 'risky'
+          ? 'bg-amber-500 text-white'
+          : 'bg-blue-600 text-white',
+      'ring-2 ring-blue-200'
+    ].join(' ')
+  }
+
+  if (suitability === 'preferred') {
+    return `bg-green-100 text-green-700 hover:bg-green-200 ${!isCurrentMonth ? 'opacity-70' : ''}`
+  }
+
+  if (suitability === 'risky') {
+    return `bg-amber-100 text-amber-700 hover:bg-amber-200 ${!isCurrentMonth ? 'opacity-70' : ''}`
+  }
+
+  return `${isCurrentMonth ? 'text-gray-700 hover:bg-gray-100' : 'text-gray-400 hover:bg-gray-50'}`
+}
+
+type CampDatePickerProps = {
+  value: string
+  onChange: (nextValue: string) => void
+  camp: Camp | null
+  minDate: string | null
+  maxDate: string | null
+  currentGameDateValue: string | null
+  currentSeasonNumber: number | null
+  bookings: CurrentCampBooking[]
+}
+
+function CampDatePicker({
+  value,
+  onChange,
+  camp,
+  minDate,
+  maxDate,
+  currentGameDateValue,
+  currentSeasonNumber,
+  bookings
+}: CampDatePickerProps): JSX.Element {
+  const { t } = useTranslation('training')
+  const baseDateValue =
+    normalizeIsoDateValue(value) ||
+    normalizeIsoDateValue(minDate) ||
+    normalizeIsoDateValue(currentGameDateValue) ||
+    '2000-01-01'
+
+  const selectedDate = useMemo(() => parseDateString(baseDateValue), [baseDateValue])
+
+  const minimumDate = useMemo(() => {
+    const normalized = normalizeIsoDateValue(minDate)
+    return normalized ? parseDateString(normalized) : null
+  }, [minDate])
+
+  const maximumDate = useMemo(() => {
+    const normalized = normalizeIsoDateValue(maxDate)
+    return normalized ? parseDateString(normalized) : null
+  }, [maxDate])
+
+  const seasonStartDate = useMemo(
+    () => getCurrentSeasonStartDate(currentGameDateValue),
+    [currentGameDateValue]
+  )
+
+  const seasonEndDate = useMemo(
+    () => getCurrentSeasonEndDate(currentGameDateValue),
+    [currentGameDateValue]
+  )
+
+  const [isOpen, setIsOpen] = useState(false)
+  const [viewMonth, setViewMonth] = useState<Date>(() => startOfMonth(selectedDate))
+  const containerRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    setViewMonth(startOfMonth(selectedDate))
+  }, [selectedDate])
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent): void {
+      if (!containerRef.current) return
+      if (!containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const calendarDays = useMemo(() => getMonthGridDates(viewMonth), [viewMonth])
+
+  const canGoToPreviousMonth = useMemo(() => {
+    if (!seasonStartDate) return true
+    const previousMonth = addMonths(viewMonth, -1)
+    return startOfMonth(previousMonth).getTime() >= startOfMonth(seasonStartDate).getTime()
+  }, [viewMonth, seasonStartDate])
+
+  const canGoToNextMonth = useMemo(() => {
+    if (!seasonEndDate) return true
+    const nextMonth = addMonths(viewMonth, 1)
+    return startOfMonth(nextMonth).getTime() <= startOfMonth(seasonEndDate).getTime()
+  }, [viewMonth, seasonEndDate])
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(current => !current)}
+        className="flex w-full items-center justify-between rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition hover:border-gray-400 focus:border-blue-500"
+      >
+        <span>{formatGameDateLabel(baseDateValue)}</span>
+        <span className="text-gray-500">📅</span>
+      </button>
+
+      {isOpen ? (
+        <div className="absolute left-0 top-full z-30 mt-2 w-[320px] rounded-2xl border border-gray-200 bg-white p-4 shadow-xl">
+          <div className="mb-3 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => {
+                if (!canGoToPreviousMonth) return
+                setViewMonth(prev => addMonths(prev, -1))
+              }}
+              disabled={!canGoToPreviousMonth}
+              className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              ←
+            </button>
+
+            <div className="text-sm font-semibold text-gray-900">
+              {formatGameMonthLabel(viewMonth, currentGameDateValue, currentSeasonNumber)}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (!canGoToNextMonth) return
+                setViewMonth(prev => addMonths(prev, 1))
+              }}
+              disabled={!canGoToNextMonth}
+              className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              →
+            </button>
+          </div>
+
+          <div className="mb-2 grid grid-cols-7 gap-1">
+            {WEEKDAY_LABELS.map(label => (
+              <div key={label} className="py-1 text-center text-xs font-medium text-gray-500">
+                {label}
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-7 gap-1">
+            {calendarDays.map(day => {
+              const isoDate = toDateString(day)
+              const isSelected = isSameDay(day, selectedDate)
+              const isCurrentMonth = day.getMonth() === viewMonth.getMonth()
+              const suitability = getDateSuitability(day, camp)
+              const isPastDate = minimumDate != null ? isBeforeDay(day, minimumDate) : false
+              const isAfterMaximum = maximumDate != null ? isAfterDay(day, maximumDate) : false
+              const isUnavailable = suitability === 'unavailable'
+              const isDisabled = isPastDate || isAfterMaximum || isUnavailable
+              const isBookedPeriod = bookings.some(booking =>
+                isDateWithinRange(day, booking.start_date, booking.end_date)
+              )
+
+              return (
+                <button
+                  key={isoDate}
+                  type="button"
+                  disabled={isDisabled}
+                  title={
+                    isPastDate
+                      ? 'Before earliest bookable start date'
+                      : isAfterMaximum
+                        ? 'Outside current season'
+                        : getSuitabilityTitle(suitability)
+                  }
+                  onClick={() => {
+                    if (isDisabled) return
+                    onChange(isoDate)
+                    setIsOpen(false)
+                  }}
+                  className={`flex h-10 items-center justify-center rounded-lg text-sm transition ${getDayButtonClassName(
+                    suitability,
+                    isSelected,
+                    isCurrentMonth
+                  )} ${isBookedPeriod ? 'ring-2 ring-blue-200' : ''} ${
+                    isDisabled ? 'cursor-not-allowed opacity-70' : ''
+                  } ${isPastDate ? 'bg-slate-100 text-slate-400 hover:bg-slate-100' : ''}`}
+                >
+                  {day.getDate()}
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-gray-600">
+            <div className="flex items-center gap-2">
+              <span className="inline-block h-3 w-3 rounded-full bg-green-100 ring-1 ring-green-200" />
+              <span>{t('weather.bestPeriod')}</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="inline-block h-3 w-3 rounded-full bg-amber-100 ring-1 ring-amber-200" />
+              <span>{t('weather.riskyPeriod')}</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="inline-block h-3 w-3 rounded-full bg-red-100 ring-1 ring-red-200" />
+              <span>{t('common.unavailable')}</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="inline-block h-3 w-3 rounded-full bg-gray-100 ring-1 ring-gray-200" />
+              <span>{t('weather.normalPeriod')}</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="inline-block h-3 w-3 rounded-full bg-white ring-2 ring-blue-200" />
+              <span>{t('weather.existingBooking')}</span>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+function arraysEqual(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false
+  for (let i = 0; i < a.length; i += 1) {
+    if (a[i] !== b[i]) return false
+  }
+  return true
+}
+
+function isClubLevelActiveCampOnlyError(message: string): boolean {
+  const normalized = message.trim().toLowerCase()
+  return normalized === 'club already has a planned or active training camp.'
+}
+
+export default function TrainingPage(): JSX.Element {
+  const { t, i18n } = useTranslation('training')
+  const isSerbianUi = (i18n.resolvedLanguage ?? i18n.language ?? 'en').startsWith('sr')
+  const translateCampSystemMessage = (message: string): string => {
+    const normalized = message.trim()
+
+    if (normalized === 'No staff selected. This is allowed, but the camp will not receive staff boosts.') {
+      return t('camps.noStaffWarningAllowed')
+    }
+
+    if (normalized === 'No staff selected. The camp will run without staff boosts.') {
+      return t('camps.noStaffWarningRunning')
+    }
+
+    if (normalized === 'No staff selected. The camp can still be booked, but there will be no coach, doctor, mechanic, or director boost.') {
+      return t('camps.noStaffSelected')
+    }
+
+    return message
+  }
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const focusedRiderId = searchParams.get('riderId')
+
+  const requestedTab = searchParams.get('tab')
+  const initialTrainingTab: TabKey =
+    requestedTab === 'development' || requestedTab === 'camps' ? requestedTab : 'regular'
+  const [activeTab, setActiveTab] = useState<TabKey>(initialTrainingTab)
+  const [loading, setLoading] = useState(true)
+  const [isPremium, setIsPremium] = useState(false)
+  const [premiumStatusLoading, setPremiumStatusLoading] = useState(true)
+  const [premiumTrainingTemplates, setPremiumTrainingTemplates] = useState<PremiumTrainingTemplate[]>([])
+  const [premiumPrefillMessage, setPremiumPrefillMessage] = useState<string | null>(null)
+  const [premiumPrefillRiderId, setPremiumPrefillRiderId] = useState<string | null>(null)
+  const premiumAutoAppliedRiderIdsRef = useRef<Set<string>>(new Set())
+  const [error, setError] = useState<string | null>(null)
+
+  const [clubId, setClubId] = useState<string | null>(null)
+  const [clubCountryCode, setClubCountryCode] = useState<string | null>(null)
+  const [currentGameDate, setCurrentGameDate] = useState<string | null>(null)
+  const [currentGameDateParts, setCurrentGameDateParts] = useState<GameDateParts | null>(null)
+  const [camps, setCamps] = useState<Camp[]>([])
+  const [selectedCampId, setSelectedCampId] = useState<string | null>(null)
+  const [roster, setRoster] = useState<RosterRider[]>([])
+
+  const [days, setDays] = useState<number>(7)
+  const [startDate, setStartDate] = useState<string>('')
+  const [selectedRiderIds, setSelectedRiderIds] = useState<string[]>([])
+  const [availableStaff, setAvailableStaff] = useState<CampStaffOption[]>([])
+  const [selectedStaffIds, setSelectedStaffIds] = useState<string[]>([])
+  const [staffLoading, setStaffLoading] = useState(false)
+  const [regionFilter, setRegionFilter] = useState<RegionFilter>('all')
+  const [campTypeFilter, setCampTypeFilter] = useState<'all' | CampType>('all')
+  const [maxPerRiderFilter, setMaxPerRiderFilter] = useState<number>(2500)
+  const [currentPage, setCurrentPage] = useState<number>(1)
+
+  const [quoteLoading, setQuoteLoading] = useState(false)
+  const [quote, setQuote] = useState<CampQuote | null>(null)
+  const [validation, setValidation] = useState<BookingValidation | null>(null)
+  const [bookingLoading, setBookingLoading] = useState(false)
+  const [showAssignedRidersModal, setShowAssignedRidersModal] = useState(false)
+  const [currentCampParticipantIds, setCurrentCampParticipantIds] = useState<string[]>([])
+  const [isCancellingCamp, setIsCancellingCamp] = useState(false)
+  const [cancelCampError, setCancelCampError] = useState<string | null>(null)
+  const [showCancelCampModal, setShowCancelCampModal] = useState(false)
+  const [cancelCampName, setCancelCampName] = useState<string>('')
+  const [bookingResult, setBookingResult] = useState<BookingResult | null>(null)
+  const [currentCampBooking, setCurrentCampBooking] = useState<CurrentCampBooking | null>(null)
+  const [clubBookings, setClubBookings] = useState<CurrentCampBooking[]>([])
+  const [bookingParticipantsByBookingId, setBookingParticipantsByBookingId] = useState<
+    Record<string, string[]>
+  >({})
+  const [overlapBlockedRiders, setOverlapBlockedRiders] = useState<
+    NonNullable<BookingValidation['blocked_riders']>
+  >([])
+  const [familyClubs, setFamilyClubs] = useState<FamilyClub[]>([])
+  const [regularDefaults, setRegularDefaults] = useState<ClubRegularTrainingDefaultRow[]>([])
+  const [regularPlans, setRegularPlans] = useState<RiderRegularTrainingPlanRow[]>([])
+  const [regularSavingDefaultClubId, setRegularSavingDefaultClubId] = useState<string | null>(null)
+  const [regularSavingRiderId, setRegularSavingRiderId] = useState<string | null>(null)
+  const [regularResettingAll, setRegularResettingAll] = useState(false)
+  const [regularMessage, setRegularMessage] = useState<string | null>(null)
+  const [isTeamDefaultsExpanded, setIsTeamDefaultsExpanded] = useState(false)
+  const [headCoachAutomation, setHeadCoachAutomation] =
+    useState<HeadCoachAutomationSnapshot>({
+      enabledByClubId: {},
+      todayPlanByRiderId: {}
+    })
+  const [regularDirtyRiderIds, setRegularDirtyRiderIds] = useState<string[]>([])
+  const [tutorialLoading, setTutorialLoading] = useState(true)
+  const [tutorialMode, setTutorialMode] = useState<'closed' | 'invite' | 'steps'>('closed')
+  const [tutorialStepIndex, setTutorialStepIndex] = useState(0)
+
+  const selectedCamp = useMemo(
+    () => camps.find(camp => camp.id === selectedCampId) ?? null,
+    [camps, selectedCampId]
+  )
+
+  const focusedRider = useMemo(
+    () => (focusedRiderId ? roster.find(rider => rider.rider_id === focusedRiderId) ?? null : null),
+    [roster, focusedRiderId]
+  )
+
+  const orderedRegularRoster = useMemo(() => {
+    if (!focusedRiderId) return roster
+
+    const matchedRider = roster.find(rider => rider.rider_id === focusedRiderId)
+    if (!matchedRider) return roster
+
+    return [matchedRider, ...roster.filter(rider => rider.rider_id !== focusedRiderId)]
+  }, [roster, focusedRiderId])
+
+  const currentGameDateIso = useMemo(() => currentGameDate, [currentGameDate])
+
+  const currentSeasonEndDateValue = useMemo(() => {
+    if (!currentGameDateIso) return null
+    const current = parseDateString(currentGameDateIso)
+    return toDateString(new Date(current.getFullYear(), 11, 31))
+  }, [currentGameDateIso])
+
+  const minimumBookableCampStartDate = useMemo(() => {
+    if (!currentGameDate) return null
+    return addDays(currentGameDate, 1)
+  }, [currentGameDate])
+
+  const selectedRangeEndValue = useMemo(() => {
+    if (!startDate) return null
+    const endDate = parseDateString(startDate)
+    endDate.setDate(endDate.getDate() + Math.max(0, days - 1))
+    return toDateString(endDate)
+  }, [startDate, days])
+
+  const isSelectedStartDateInPast = useMemo(() => {
+    if (!minimumBookableCampStartDate || !startDate) return false
+
+    const selectedStartDateIso = normalizeIsoDateValue(startDate) ?? startDate
+    return compareIsoDates(selectedStartDateIso, minimumBookableCampStartDate) < 0
+  }, [minimumBookableCampStartDate, startDate])
+
+  const selectableRoster = useMemo(
+    () =>
+      roster.filter(
+        rider =>
+          rider.availability_status === 'fit' ||
+          rider.availability_status === 'not_fully_fit' ||
+          rider.availability_status === 'injured' ||
+          rider.availability_status === 'sick'
+      ),
+    [roster]
+  )
+
+  const locallyBlockedRiderIds = useMemo(() => {
+    if (!startDate || !selectedRangeEndValue) return []
+
+    const blocked = new Set<string>()
+
+    clubBookings.forEach(booking => {
+      if (
+        !dateRangesOverlap(
+          startDate,
+          selectedRangeEndValue,
+          booking.start_date,
+          booking.end_date
+        )
+      ) {
+        return
+      }
+
+      ;(bookingParticipantsByBookingId[booking.id] ?? []).forEach(riderId => blocked.add(riderId))
+    })
+
+    return Array.from(blocked)
+  }, [clubBookings, bookingParticipantsByBookingId, startDate, selectedRangeEndValue])
+
+  const overlapBlockedRiderMap = useMemo(() => {
+    const map = new Map<
+      string,
+      NonNullable<BookingValidation['blocked_riders']>[number]
+    >()
+
+    overlapBlockedRiders.forEach(blocked => {
+      map.set(blocked.rider_id, blocked)
+    })
+
+    locallyBlockedRiderIds.forEach(riderId => {
+      if (map.has(riderId)) return
+      map.set(riderId, {
+        rider_id: riderId,
+        display_name: null,
+        availability_status: null,
+        fatigue: null,
+        status_code: 'already_in_overlapping_camp'
+      })
+    })
+
+    return map
+  }, [overlapBlockedRiders, locallyBlockedRiderIds])
+
+  const validationErrors = useMemo(
+    () => toArray(validation?.validation_errors),
+    [validation?.validation_errors]
+  )
+
+  const filteredValidationErrors = useMemo(
+    () => validationErrors.filter(message => !isClubLevelActiveCampOnlyError(message)),
+    [validationErrors]
+  )
+
+  const hasSelectedOverlapBlockedRider = useMemo(
+    () => selectedRiderIds.some(riderId => overlapBlockedRiderMap.has(riderId)),
+    [selectedRiderIds, overlapBlockedRiderMap]
+  )
+
+  const isBookingAllowedWithAvailableRiders =
+    filteredValidationErrors.length === 0 &&
+    !hasSelectedOverlapBlockedRider &&
+    selectedRiderIds.length >= 5 &&
+    !isSelectedStartDateInPast
+
+  const canSubmitBooking =
+    Boolean(selectedCampId) &&
+    !bookingLoading &&
+    !isSelectedStartDateInPast &&
+    Boolean(validation?.is_valid || isBookingAllowedWithAvailableRiders)
+
+  const currentCampParticipants = useMemo(() => {
+    return roster.filter(rider => currentCampParticipantIds.includes(rider.rider_id))
+  }, [roster, currentCampParticipantIds])
+
+  const filteredCamps = useMemo(() => {
+    const selectedCount = Math.max(selectedRiderIds.length, 5)
+
+    return camps.filter(camp => {
+      const matchesRegion = regionFilter === 'all' || camp.region_name === regionFilter
+      const matchesType = campTypeFilter === 'all' || camp.camp_type === campTypeFilter
+
+      const estimatedPerRider = estimatePerRiderCost(camp, clubCountryCode, days, selectedCount)
+      const matchesCost = estimatedPerRider <= maxPerRiderFilter
+
+      return matchesRegion && matchesType && matchesCost
+    })
+  }, [
+    camps,
+    regionFilter,
+    campTypeFilter,
+    maxPerRiderFilter,
+    clubCountryCode,
+    days,
+    selectedRiderIds.length
+  ])
+
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(filteredCamps.length / CAMPS_PER_PAGE)),
+    [filteredCamps.length]
+  )
+
+  const pagedCamps = useMemo(() => {
+    const startIndex = (currentPage - 1) * CAMPS_PER_PAGE
+    return filteredCamps.slice(startIndex, startIndex + CAMPS_PER_PAGE)
+  }, [filteredCamps, currentPage])
+
+  const regularDefaultsByClubId = useMemo(() => {
+    return new Map(regularDefaults.map(row => [row.club_id, row]))
+  }, [regularDefaults])
+
+  const regularPlansByRiderId = useMemo(() => {
+    return new Map(regularPlans.map(row => [row.rider_id, row]))
+  }, [regularPlans])
+
+  function upsertRegularDefaultLocal(nextRow: ClubRegularTrainingDefaultRow): void {
+    setRegularDefaults(current => {
+      const existingIndex = current.findIndex(row => row.club_id === nextRow.club_id)
+      if (existingIndex === -1) return [...current, nextRow]
+
+      const copy = [...current]
+      copy[existingIndex] = nextRow
+      return copy
+    })
+  }
+
+  function upsertRegularPlanLocal(nextRow: RiderRegularTrainingPlanRow): void {
+    setRegularPlans(current => {
+      const existingIndex = current.findIndex(row => row.rider_id === nextRow.rider_id)
+      if (existingIndex === -1) return [...current, nextRow]
+
+      const copy = [...current]
+      copy[existingIndex] = nextRow
+      return copy
+    })
+  }
+
+  function buildDefaultRowForClub(clubIdValue: string): ClubRegularTrainingDefaultRow {
+    const existing = regularDefaultsByClubId.get(clubIdValue)
+    if (existing) return existing
+
+    const familyClub = familyClubs.find(row => row.club_id === clubIdValue)
+
+    return {
+      club_id: clubIdValue,
+      team_scope: familyClub?.team_label === 'U23' ? 'u23' : 'first_team',
+      focus_code: 'general',
+      intensity: 'normal',
+      auto_when_free: true
+    }
+  }
+
+  function isHeadCoachEnabledForRider(rider: RosterRider): boolean {
+    return Boolean(headCoachAutomation.enabledByClubId[rider.club_id])
+  }
+
+  function getHeadCoachTodayPlan(rider: RosterRider) {
+    return headCoachAutomation.todayPlanByRiderId[rider.rider_id] ?? null
+  }
+
+  function buildPlanRowForRider(rider: RosterRider): RiderRegularTrainingPlanRow {
+    const existing = regularPlansByRiderId.get(rider.rider_id)
+    const hasDirtyDraft = regularDirtyRiderIds.includes(rider.rider_id)
+
+    if (hasDirtyDraft && existing) {
+      return existing
+    }
+
+    const coachPlan = getHeadCoachTodayPlan(rider)
+
+    if (
+      isHeadCoachEnabledForRider(rider) &&
+      coachPlan?.focus_code &&
+      coachPlan.intensity
+    ) {
+      return {
+        rider_id: rider.rider_id,
+        club_id: rider.club_id,
+        focus_code: coachPlan.focus_code,
+        intensity: coachPlan.intensity,
+        is_active: true,
+        auto_when_free: true,
+        preferred_days: null
+      }
+    }
+
+    if (existing) return existing
+
+    const defaultRow = regularDefaultsByClubId.get(rider.club_id)
+
+    return {
+      rider_id: rider.rider_id,
+      club_id: rider.club_id,
+      focus_code: defaultRow?.focus_code ?? 'general',
+      intensity: defaultRow?.intensity ?? 'normal',
+      is_active: true,
+      auto_when_free: true,
+      preferred_days: null
+    }
+  }
+
+  function getEffectiveRegularTraining(rider: RosterRider): {
+    source: 'head_coach' | 'manual_today' | 'override' | 'default' | 'none'
+    focus_code: string | null
+    intensity: RegularTrainingIntensity | null
+    auto_when_free: boolean
+    is_active: boolean
+  } {
+    const coachPlan = getHeadCoachTodayPlan(rider)
+
+    if (
+      isHeadCoachEnabledForRider(rider) &&
+      coachPlan?.focus_code &&
+      coachPlan.intensity
+    ) {
+      return {
+        source:
+          coachPlan.source_type === 'manual_override'
+            ? 'manual_today'
+            : 'head_coach',
+        focus_code: coachPlan.focus_code,
+        intensity: coachPlan.intensity,
+        auto_when_free: true,
+        is_active: true
+      }
+    }
+
+    const plan = regularPlansByRiderId.get(rider.rider_id)
+
+    if (plan && plan.is_active) {
+      return {
+        source: 'override',
+        focus_code: plan.focus_code,
+        intensity: plan.intensity,
+        auto_when_free: plan.auto_when_free,
+        is_active: plan.is_active
+      }
+    }
+
+    const defaultRow = regularDefaultsByClubId.get(rider.club_id)
+
+    if (defaultRow) {
+      return {
+        source: 'default',
+        focus_code: defaultRow.focus_code,
+        intensity: defaultRow.intensity,
+        auto_when_free: defaultRow.auto_when_free,
+        is_active: true
+      }
+    }
+
+    return {
+      source: 'none',
+      focus_code: null,
+      intensity: null,
+      auto_when_free: false,
+      is_active: false
+    }
+  }
+
+  const regularTrainingSummary = useMemo(() => {
+    const totalRiders = roster.length
+    const blockedRiders = roster.filter(
+      rider =>
+        rider.availability_status === 'injured' ||
+        rider.availability_status === 'sick'
+    ).length
+
+    const overrideCount = roster.filter(rider => {
+      const effective = getEffectiveRegularTraining(rider)
+      return (
+        effective.source === 'override' ||
+        effective.source === 'manual_today'
+      )
+    }).length
+
+    const defaultOnlyCount = roster.filter(rider => {
+      const effective = getEffectiveRegularTraining(rider)
+      return effective.source === 'default'
+    }).length
+
+    const headCoachManagedCount = roster.filter(rider => {
+      const effective = getEffectiveRegularTraining(rider)
+      return effective.source === 'head_coach'
+    }).length
+
+    const noPlanCount = roster.filter(rider => {
+      const effective = getEffectiveRegularTraining(rider)
+      return effective.source === 'none'
+    }).length
+
+    return {
+      totalRiders,
+      blockedRiders,
+      overrideCount,
+      defaultOnlyCount,
+      headCoachManagedCount,
+      noPlanCount
+    }
+  }, [
+    roster,
+    regularPlansByRiderId,
+    regularDefaultsByClubId,
+    headCoachAutomation
+  ])
+
+  function updateRegularDefaultDraft(
+    clubIdValue: string,
+    patch: Partial<ClubRegularTrainingDefaultRow>
+  ): void {
+    const base = buildDefaultRowForClub(clubIdValue)
+    const nextFocusCode = patch.focus_code ?? base.focus_code
+
+    upsertRegularDefaultLocal({
+      ...base,
+      ...patch,
+      club_id: clubIdValue,
+      intensity: normalizeTrainingIntensityForSave(
+        nextFocusCode,
+        patch.intensity ?? base.intensity
+      )
+    })
+  }
+
+  function updateRegularPlanDraft(
+    rider: RosterRider,
+    patch: Partial<RiderRegularTrainingPlanRow>
+  ): void {
+    const base = buildPlanRowForRider(rider)
+    const nextFocusCode = patch.focus_code ?? base.focus_code
+
+    upsertRegularPlanLocal({
+      ...base,
+      ...patch,
+      rider_id: rider.rider_id,
+      club_id: rider.club_id,
+      intensity: normalizeTrainingIntensityForSave(
+        nextFocusCode,
+        patch.intensity ?? base.intensity
+      )
+    })
+
+    setRegularDirtyRiderIds(current =>
+      current.includes(rider.rider_id)
+        ? current
+        : [...current, rider.rider_id]
+    )
+  }
+
+  function getTrainingTemplateValues(template: PremiumTrainingTemplate): {
+    focusCode: string
+    intensity: RegularTrainingIntensity
+  } {
+    const focusCode = String(template.payload_json?.focus_code ?? 'general')
+    const rawIntensity = String(template.payload_json?.intensity ?? 'normal')
+    const intensity: RegularTrainingIntensity =
+      rawIntensity === 'recovery' ||
+      rawIntensity === 'light' ||
+      rawIntensity === 'hard'
+        ? rawIntensity
+        : 'normal'
+
+    return {
+      focusCode,
+      intensity: normalizeTrainingIntensityForSave(focusCode, intensity)
+    }
+  }
+
+  function applyTrainingTemplateToTeamDefaults(
+    template: PremiumTrainingTemplate
+  ): void {
+    const values = getTrainingTemplateValues(template)
+
+    familyClubs.forEach(team => {
+      updateRegularDefaultDraft(team.club_id, {
+        focus_code: values.focusCode,
+        intensity: values.intensity
+      })
+    })
+
+    setIsTeamDefaultsExpanded(true)
+    setPremiumPrefillMessage(
+      t('premiumCenter:integrations.training.appliedTeam', { name: template.name })
+    )
+  }
+
+  async function applyMatchingTrainingPrefill(
+    rider: RosterRider
+  ): Promise<void> {
+    if (!clubId || !isPremium) return
+
+    setPremiumPrefillRiderId(rider.rider_id)
+    setPremiumPrefillMessage(null)
+
+    try {
+      const { data, error: matchError } = await supabase.rpc(
+        'premium_match_automation_template_v1',
+        {
+          p_club_id: clubId,
+          p_rule_type: 'training_prefill',
+          p_context: {
+            availability_status: rider.availability_status,
+            role: rider.assigned_role ?? ''
+          }
+        }
+      )
+
+      if (matchError) throw matchError
+
+      const match = (data ?? {}) as Record<string, any>
+
+      if (match.matched !== true) {
+        setPremiumPrefillMessage(
+          t('premiumCenter:integrations.training.noRule', { rider: getFullRiderName(rider) })
+        )
+        return
+      }
+
+      const template: PremiumTrainingTemplate = {
+        id: String(match.template_id ?? ''),
+        name: String(match.template_name ?? t('premiumCenter:integrations.training.templateFallback')),
+        payload_json: (match.payload_json ?? {}) as PremiumTrainingTemplate['payload_json']
+      }
+      const values = getTrainingTemplateValues(template)
+
+      updateRegularPlanDraft(rider, {
+        focus_code: values.focusCode,
+        intensity: values.intensity,
+        is_active: true
+      })
+
+      setPremiumPrefillMessage(
+        t('premiumCenter:integrations.training.matched', { name: template.name, rider: getFullRiderName(rider) })
+      )
+    } catch (prefillError) {
+      setPremiumPrefillMessage(
+        prefillError instanceof Error
+          ? prefillError.message
+          : t('premiumCenter:integrations.training.failed')
+      )
+    } finally {
+      setPremiumPrefillRiderId(null)
+    }
+  }
+
+  async function loadRegularTrainingConfig(familyClubIds: string[]): Promise<void> {
+    if (familyClubIds.length === 0) {
+      setRegularDefaults([])
+      setRegularPlans([])
+      return
+    }
+
+    const [defaultsRes, plansRes] = await Promise.all([
+      supabase
+        .from('club_regular_training_defaults')
+        .select('*')
+        .in('club_id', familyClubIds),
+      supabase
+        .from('rider_regular_training_plans')
+        .select('*')
+        .in('club_id', familyClubIds)
+    ])
+
+    if (defaultsRes.error) throw defaultsRes.error
+    if (plansRes.error) throw plansRes.error
+
+    setRegularDefaults((defaultsRes.data ?? []) as ClubRegularTrainingDefaultRow[])
+    setRegularPlans((plansRes.data ?? []) as RiderRegularTrainingPlanRow[])
+    setRegularDirtyRiderIds([])
+  }
+
+  async function loadCurrentCampBooking(nextClubId: string): Promise<void> {
+    const { data, error } = await supabase
+      .from('training_camp_bookings')
+      .select(
+        `
+        id,
+        camp_id,
+        start_date,
+        end_date,
+        status,
+        participants_count,
+        staff_count,
+        charged_participants_count,
+        total_cost,
+        city_snapshot,
+        country_code_snapshot,
+        camp_type_snapshot,
+        created_at,
+        notes
+      `
+      )
+      .eq('club_id', nextClubId)
+      .in('status', ['planned', 'active'])
+      .order('start_date', { ascending: true })
+
+    if (error) {
+      console.error('loadCurrentCampBooking error:', error)
+      throw error
+    }
+
+    const bookings = (data ?? []) as CurrentCampBooking[]
+    setClubBookings(bookings)
+
+    const bookingIds = bookings.map(booking => booking.id)
+
+    if (bookingIds.length === 0) {
+      setBookingParticipantsByBookingId({})
+      setCurrentCampBooking(null)
+      return
+    }
+
+    const { data: participantsData, error: participantsError } = await supabase
+      .from('training_camp_participants')
+      .select('booking_id, rider_id')
+      .in('booking_id', bookingIds)
+
+    if (participantsError) {
+      console.error('loadCurrentCampBooking participants error:', participantsError)
+      throw participantsError
+    }
+
+    const grouped = (participantsData ?? []).reduce<Record<string, string[]>>(
+      (acc, row: { booking_id: string; rider_id: string }) => {
+        if (!acc[row.booking_id]) acc[row.booking_id] = []
+        acc[row.booking_id].push(row.rider_id)
+        return acc
+      },
+      {}
+    )
+
+    setBookingParticipantsByBookingId(grouped)
+
+    const activeBooking = bookings.find(booking => booking.status === 'active') ?? null
+    const plannedBooking = bookings.find(booking => booking.status === 'planned') ?? null
+
+    setCurrentCampBooking(activeBooking ?? plannedBooking ?? bookings[0] ?? null)
+  }
+
+  async function loadCurrentCampParticipants(bookingId: string): Promise<void> {
+    const { data, error } = await supabase
+      .from('training_camp_participants')
+      .select('rider_id')
+      .eq('booking_id', bookingId)
+
+    if (error) throw error
+
+    setCurrentCampParticipantIds((data ?? []).map((row: { rider_id: string }) => row.rider_id))
+  }
+
+  async function fetchAvailableCampStaff(
+    nextClubId: string,
+    nextStartDate: string,
+    nextDays: number
+  ): Promise<CampStaffOption[]> {
+    const { data, error } = await supabase.rpc('get_available_training_camp_staff', {
+      p_club_id: nextClubId,
+      p_start_date: nextStartDate || null,
+      p_days: nextDays
+    })
+
+    if (error) throw error
+
+    return ((data ?? []) as CampStaffOption[]).filter(
+      member => member.role_type !== 'scout_analyst'
+    )
+  }
+
+  function isStaffSelectable(member: CampStaffOption): boolean {
+    return (
+      member.availability_status === 'available' &&
+      !member.on_active_course &&
+      !member.overlapping_booking_id
+    )
+  }
+
+  function keepOnlySelectableStaff(rows: CampStaffOption[]): void {
+    const selectableIds = rows.filter(isStaffSelectable).map(member => member.staff_id)
+
+    setSelectedStaffIds(current =>
+      current.filter(staffId => selectableIds.includes(staffId))
+    )
+  }
+
+  useEffect(() => {
+    let alive = true
+
+    async function loadPremiumStatus(): Promise<void> {
+      setPremiumStatusLoading(true)
+
+      const { data, error: premiumError } = await supabase.rpc('get_my_premium_status')
+
+      if (!alive) return
+
+      if (premiumError) {
+        setIsPremium(false)
+      } else {
+        setIsPremium(resolvePremiumStatus(data))
+      }
+
+      setPremiumStatusLoading(false)
+    }
+
+    void loadPremiumStatus()
+
+    function handlePremiumStatusChanged(): void {
+      void loadPremiumStatus()
+    }
+
+    window.addEventListener('premium-status-changed', handlePremiumStatusChanged)
+
+    return () => {
+      alive = false
+      window.removeEventListener('premium-status-changed', handlePremiumStatusChanged)
+    }
+  }, [])
+
+  useEffect(() => {
+    let active = true
+
+    if (!clubId || !isPremium || premiumStatusLoading) {
+      setPremiumTrainingTemplates([])
+      return () => {
+        active = false
+      }
+    }
+
+    void supabase
+      .rpc('premium_list_templates_v1', {
+        p_club_id: clubId,
+        p_template_type: 'training'
+      })
+      .then(({ data, error: templateError }) => {
+        if (!active) return
+
+        if (templateError) {
+          console.warn('Could not load Premium training templates:', templateError)
+          return
+        }
+
+        setPremiumTrainingTemplates((data ?? []) as PremiumTrainingTemplate[])
+      })
+
+    return () => {
+      active = false
+    }
+  }, [clubId, isPremium, premiumStatusLoading])
+
+  useEffect(() => {
+    if (!isPremium && !premiumStatusLoading) {
+      setHeadCoachAutomation({
+        enabledByClubId: {},
+        todayPlanByRiderId: {}
+      })
+    }
+  }, [isPremium, premiumStatusLoading])
+
+  useEffect(() => {
+    if (!clubId || !isPremium || premiumStatusLoading || loading || roster.length === 0) {
+      return
+    }
+
+    const existingPlanRiderIds = new Set(regularPlans.map(row => row.rider_id))
+    const pendingRiders = roster.filter(
+      rider =>
+        !existingPlanRiderIds.has(rider.rider_id) &&
+        !premiumAutoAppliedRiderIdsRef.current.has(rider.rider_id)
+    )
+
+    if (pendingRiders.length === 0) return
+
+    pendingRiders.forEach(rider => {
+      premiumAutoAppliedRiderIdsRef.current.add(rider.rider_id)
+      void applyMatchingTrainingPrefill(rider)
+    })
+  }, [
+    clubId,
+    isPremium,
+    loading,
+    premiumStatusLoading,
+    regularPlans,
+    roster,
+  ])
+
+  useEffect(() => {
+    if (focusedRiderId) {
+      setActiveTab('regular')
+    }
+  }, [focusedRiderId])
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [regionFilter, campTypeFilter, maxPerRiderFilter])
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages)
+    }
+  }, [currentPage, totalPages])
+
+  useEffect(() => {
+    if (filteredCamps.length === 0) {
+      setSelectedCampId(null)
+      return
+    }
+
+    if (!selectedCampId || !filteredCamps.some(camp => camp.id === selectedCampId)) {
+      setSelectedCampId(filteredCamps[0].id)
+    }
+  }, [filteredCamps, selectedCampId])
+
+  useEffect(() => {
+    if (!minimumBookableCampStartDate) return
+
+    setStartDate(current => {
+      const normalizedCurrent = normalizeIsoDateValue(current) ?? current
+
+      if (!normalizedCurrent) {
+        return minimumBookableCampStartDate
+      }
+
+      const selectedDate = parseDateString(normalizedCurrent)
+      const minimumDate = parseDateString(minimumBookableCampStartDate)
+
+      if (isBeforeDay(selectedDate, minimumDate)) {
+        return minimumBookableCampStartDate
+      }
+
+      return normalizedCurrent
+    })
+  }, [minimumBookableCampStartDate])
+
+  useEffect(() => {
+    const validIds = selectableRoster
+      .filter(rider => !overlapBlockedRiderMap.has(rider.rider_id))
+      .map(rider => rider.rider_id)
+
+    setSelectedRiderIds(current => {
+      const kept = current.filter(id => validIds.includes(id))
+      const fill = validIds
+        .filter(id => !kept.includes(id))
+        .slice(0, Math.max(0, 5 - kept.length))
+
+      const next = [...kept, ...fill]
+
+      return arraysEqual(current, next) ? current : next
+    })
+  }, [selectableRoster, overlapBlockedRiderMap])
+
+  useEffect(() => {
+    setOverlapBlockedRiders([])
+  }, [clubId, selectedCampId, startDate, days])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadPage(): Promise<void> {
+      setLoading(true)
+      setError(null)
+
+      try {
+        const { data: myClubId, error: clubError } = await supabase.rpc('get_my_primary_club_id')
+        if (clubError) throw clubError
+        if (!myClubId) {
+          throw new Error('No club was found for the logged-in user.')
+        }
+
+        const familyRes = await supabase.rpc('get_club_family_ids', {
+          p_club_id: myClubId
+        })
+
+        if (familyRes.error) throw familyRes.error
+
+        const familyClubs = (familyRes.data ?? []) as Array<{
+          club_id: string
+          club_name: string
+          team_label: 'First Team' | 'U23'
+        }>
+
+        const familyClubIds = familyClubs.map(row => row.club_id)
+        const familyClubMap = new Map(
+          familyClubs.map(row => [
+            row.club_id,
+            { club_name: row.club_name, team_label: row.team_label }
+          ])
+        )
+
+        const [gameDateRes, gameDatePartsRes] = await Promise.all([
+          supabase.rpc('get_current_game_date_date'),
+          supabase.rpc('get_current_game_date_parts')
+        ])
+
+        if (gameDateRes.error) throw gameDateRes.error
+        if (gameDatePartsRes.error) throw gameDatePartsRes.error
+
+        const { data: clubRow, error: clubRowError } = await supabase
+          .from('clubs')
+          .select('country_code')
+          .eq('id', myClubId)
+          .single()
+
+        if (clubRowError) throw clubRowError
+
+        const [campRes, rosterRes] = await Promise.all([
+          supabase
+            .from('training_camp_catalog')
+            .select('*')
+            .eq('is_active', true)
+            .order('country_code', { ascending: true })
+            .order('city_name', { ascending: true }),
+          supabase
+            .from('club_roster')
+            .select(
+              'club_id, rider_id, display_name, assigned_role, age_years, overall, country_code, availability_status, fatigue'
+            )
+            .in('club_id', familyClubIds)
+            .order('overall', { ascending: false })
+        ])
+
+        if (campRes.error) throw campRes.error
+        if (rosterRes.error) throw rosterRes.error
+
+        const rosterRows = (rosterRes.data ?? []) as RosterRider[]
+        const rosterRiderIds = Array.from(
+          new Set(
+            rosterRows
+              .map(row => row.rider_id)
+              .filter((riderId): riderId is string => Boolean(riderId))
+          )
+        )
+
+        let riderNameById = new Map<string, RiderNameRow>()
+
+        if (rosterRiderIds.length > 0) {
+          const { data: riderNameRows, error: riderNameError } = await supabase
+            .from('riders')
+            .select('id, first_name, last_name, display_name')
+            .in('id', rosterRiderIds)
+
+          if (riderNameError) {
+            console.warn('Could not load rider first/last names:', riderNameError)
+          }
+
+          riderNameById = new Map(
+            ((riderNameRows ?? []) as RiderNameRow[]).map(row => [row.id, row])
+          )
+        }
+
+        if (cancelled) return
+
+        const loadedCamps = (campRes.data ?? []) as Camp[]
+        const loadedRoster = rosterRows
+          .map(row => {
+            const source = familyClubMap.get(row.club_id)
+            const riderName = riderNameById.get(row.rider_id)
+            const fullName = [riderName?.first_name, riderName?.last_name]
+              .map(value => value?.trim())
+              .filter(Boolean)
+              .join(' ')
+
+            return {
+              ...row,
+              first_name: riderName?.first_name ?? null,
+              last_name: riderName?.last_name ?? null,
+              display_name:
+                fullName ||
+                riderName?.display_name ||
+                row.display_name ||
+                'Unnamed rider',
+              source_club_name: source?.club_name ?? 'Unknown Team',
+              team_label: (source?.team_label ?? 'First Team') as 'First Team' | 'U23'
+            }
+          })
+          .sort((a, b) => {
+            const aPriority = a.team_label === 'U23' ? 1 : 0
+            const bPriority = b.team_label === 'U23' ? 1 : 0
+            if (aPriority !== bPriority) return aPriority - bPriority
+            return (b.overall ?? 0) - (a.overall ?? 0)
+          })
+
+        const nextGameDateParts = normalizeGameDateParts(gameDatePartsRes.data)
+
+        const nextGameDateFromParts = buildGameDateFromParts(nextGameDateParts)
+        const nextGameDateFromDateRpc = normalizeGameDateValue(gameDateRes.data)
+
+        const nextGameDate = nextGameDateFromParts ?? nextGameDateFromDateRpc ?? ''
+        const nextMinimumBookableCampStartDate = nextGameDate ? addDays(nextGameDate, 1) : ''
+
+        setClubId(myClubId as string)
+        setClubCountryCode(clubRow.country_code ?? null)
+        setCurrentGameDate(nextGameDate || null)
+        setCurrentGameDateParts(nextGameDateParts)
+        setCamps(loadedCamps)
+        setSelectedCampId(prev => prev ?? loadedCamps[0]?.id ?? null)
+        setRoster(loadedRoster)
+        setFamilyClubs(familyClubs)
+
+        await loadRegularTrainingConfig(familyClubIds)
+
+        setSelectedRiderIds(
+          loadedRoster
+            .filter(
+              rider =>
+                rider.availability_status === 'fit' ||
+                rider.availability_status === 'not_fully_fit' ||
+                rider.availability_status === 'injured' ||
+                rider.availability_status === 'sick'
+            )
+            .slice(0, 5)
+            .map(rider => rider.rider_id)
+        )
+
+        setStartDate(prev => {
+          const normalizedPrev = normalizeIsoDateValue(prev) ?? prev
+
+          if (!nextMinimumBookableCampStartDate) {
+            return normalizedPrev
+          }
+
+          if (!normalizedPrev) {
+            return nextMinimumBookableCampStartDate
+          }
+
+          const previousSelected = parseDateString(normalizedPrev)
+          const minimumAllowed = parseDateString(nextMinimumBookableCampStartDate)
+
+          if (isBeforeDay(previousSelected, minimumAllowed)) {
+            return nextMinimumBookableCampStartDate
+          }
+
+          return normalizedPrev
+        })
+
+        await loadCurrentCampBooking(myClubId as string)
+      } catch (err) {
+        if (!cancelled) {
+          console.error('Training page load failed:', err)
+
+          const message =
+            err instanceof Error
+              ? err.message
+              : typeof err === 'object' && err !== null && 'message' in err
+                ? String((err as { message?: unknown }).message)
+                : 'Failed to load training page.'
+
+          setError(message)
+        }
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    void loadPage()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    let alive = true
+
+    async function loadTrainingTutorialProgress() {
+      setTutorialLoading(true)
+
+      const autoStartTutorial =
+        window.sessionStorage.getItem('ppm:auto-start-tutorial') === 'training'
+
+      if (autoStartTutorial) {
+        window.sessionStorage.removeItem('ppm:auto-start-tutorial')
+
+        const firstStep = trainingTutorialSteps[0]
+
+        await saveTutorialProgress('training', 'started', firstStep?.key ?? null)
+
+        if (!alive) return
+
+        setActiveTab('regular')
+        setTutorialStepIndex(0)
+        setTutorialMode('steps')
+        setTutorialLoading(false)
+        return
+      }
+
+      const progress = await getTutorialProgress('training')
+
+      if (!alive) return
+
+      if (progress?.status === 'started') {
+        const savedStepIndex = trainingTutorialSteps.findIndex(
+          step => step.key === progress.last_step_key
+        )
+
+        setTutorialStepIndex(savedStepIndex >= 0 ? savedStepIndex : 0)
+        setTutorialMode('steps')
+
+        if (trainingTutorialSteps[savedStepIndex]?.key === 'training-camps') {
+          setActiveTab('camps')
+        } else {
+          setActiveTab('regular')
+        }
+      } else {
+        setTutorialMode('closed')
+      }
+
+      setTutorialLoading(false)
+    }
+
+    void loadTrainingTutorialProgress()
+
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadAvailableStaff(): Promise<void> {
+      if (!clubId || !startDate) {
+        setAvailableStaff([])
+        setSelectedStaffIds([])
+        return
+      }
+
+      setStaffLoading(true)
+
+      try {
+        const normalizedStartDate = normalizeIsoDateValue(startDate) ?? startDate
+        const rows = await fetchAvailableCampStaff(clubId, normalizedStartDate, days)
+
+        if (cancelled) return
+
+        setAvailableStaff(rows)
+        keepOnlySelectableStaff(rows)
+      } catch (err) {
+        if (!cancelled) {
+          const message =
+            err instanceof Error ? err.message : 'Failed to load training camp staff.'
+          setError(message)
+          setAvailableStaff([])
+          setSelectedStaffIds([])
+        }
+      } finally {
+        if (!cancelled) setStaffLoading(false)
+      }
+    }
+
+    void loadAvailableStaff()
+
+    return () => {
+      cancelled = true
+    }
+  }, [clubId, startDate, days])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function refreshQuoteAndValidation(): Promise<void> {
+      if (!clubId || !selectedCampId || !startDate) {
+        setQuote(null)
+        setValidation(null)
+        return
+      }
+
+      const normalizedStartDate = normalizeIsoDateValue(startDate) ?? startDate
+
+      if (minimumBookableCampStartDate) {
+        const selectedDate = parseDateString(normalizedStartDate)
+        const minimumDate = parseDateString(minimumBookableCampStartDate)
+
+        if (isBeforeDay(selectedDate, minimumDate)) {
+          setQuote(null)
+          setValidation(null)
+          setOverlapBlockedRiders([])
+          setStartDate(minimumBookableCampStartDate)
+          return
+        }
+      }
+
+      setError(current => (current === PAST_TRAINING_CAMP_ERROR ? null : current))
+      setQuoteLoading(true)
+      setBookingResult(null)
+
+      try {
+        const riderIds = [...new Set(selectedRiderIds)]
+        const staffIds = [...new Set(selectedStaffIds)]
+
+        const [quoteRes, validationRes] = await Promise.all([
+          supabase.rpc('get_training_camp_quote_v2', {
+            p_club_id: clubId,
+            p_camp_id: selectedCampId,
+            p_start_date: normalizedStartDate,
+            p_days: days,
+            p_rider_ids: riderIds,
+            p_staff_ids: staffIds
+          }),
+          supabase.rpc('validate_training_camp_booking_v2', {
+            p_club_id: clubId,
+            p_camp_id: selectedCampId,
+            p_start_date: normalizedStartDate,
+            p_days: days,
+            p_rider_ids: riderIds,
+            p_staff_ids: staffIds
+          })
+        ])
+
+        if (quoteRes.error) throw quoteRes.error
+        if (validationRes.error) throw validationRes.error
+        if (cancelled) return
+
+        const nextQuote = (quoteRes.data?.[0] ?? null) as CampQuote | null
+        const nextValidation = (validationRes.data?.[0] ?? null) as BookingValidation | null
+        const nextOverlapBlockedRiders = toArray(nextValidation?.blocked_riders).filter(
+          rider => rider.status_code === 'already_in_overlapping_camp'
+        )
+
+        setQuote(nextQuote)
+        setValidation(nextValidation)
+
+        setOverlapBlockedRiders(current => {
+          const currentIds = current.map(r => `${r.rider_id}:${r.status_code}`).sort()
+          const nextIds = nextOverlapBlockedRiders.map(r => `${r.rider_id}:${r.status_code}`).sort()
+
+          if (arraysEqual(currentIds, nextIds)) {
+            return current
+          }
+
+          return nextOverlapBlockedRiders
+        })
+      } catch (err) {
+        if (!cancelled) {
+          const message =
+            err instanceof Error ? err.message : 'Failed to calculate training camp quote.'
+          setError(message)
+          setQuote(null)
+          setValidation(null)
+        }
+      } finally {
+        if (!cancelled) setQuoteLoading(false)
+      }
+    }
+
+    void refreshQuoteAndValidation()
+
+    return () => {
+      cancelled = true
+    }
+  }, [
+    clubId,
+    selectedCampId,
+    startDate,
+    days,
+    selectedRiderIds,
+    selectedStaffIds,
+    minimumBookableCampStartDate
+  ])
+
+  async function saveRegularTrainingDefault(clubIdValue: string): Promise<void> {
+    const row = buildDefaultRowForClub(clubIdValue)
+    const normalizedIntensity = normalizeTrainingIntensityForSave(row.focus_code, row.intensity)
+
+    setRegularSavingDefaultClubId(clubIdValue)
+    setRegularMessage(null)
+    setError(null)
+
+    try {
+      const payload = {
+        club_id: row.club_id,
+        team_scope: row.team_scope,
+        focus_code: row.focus_code,
+        intensity: normalizedIntensity,
+        auto_when_free: row.auto_when_free
+      }
+
+      const { error } = await supabase
+        .from('club_regular_training_defaults')
+        .upsert(payload, { onConflict: 'club_id' })
+
+      if (error) throw error
+
+      await loadRegularTrainingConfig(familyClubs.map(row => row.club_id))
+      setRegularMessage('Team default saved successfully.')
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to save regular training default.'
+      setError(message)
+    } finally {
+      setRegularSavingDefaultClubId(null)
+    }
+  }
+
+  async function saveRegularTrainingPlan(rider: RosterRider): Promise<void> {
+    const row = buildPlanRowForRider(rider)
+    const riderName = getFullRiderName(rider)
+    const normalizedIntensity = normalizeTrainingIntensityForSave(
+      row.focus_code,
+      row.intensity
+    )
+    const coachEnabled = isHeadCoachEnabledForRider(rider)
+
+    setRegularSavingRiderId(rider.rider_id)
+    setRegularMessage(null)
+    setError(null)
+
+    try {
+      if (coachEnabled) {
+        if (!currentGameDate) {
+          throw new Error('Current game date could not be resolved.')
+        }
+
+        const { error: overrideError } = await supabase.rpc(
+          'set_rider_daily_training_override_v1',
+          {
+            p_club_id: rider.club_id,
+            p_rider_id: rider.rider_id,
+            p_plan_date: currentGameDate,
+            p_focus_code: row.focus_code,
+            p_intensity: normalizedIntensity
+          }
+        )
+
+        if (overrideError) throw overrideError
+
+        await loadRegularTrainingConfig(
+          familyClubs.map(team => team.club_id)
+        )
+
+        window.dispatchEvent(
+          new CustomEvent('ppm:head-coach-training-refresh')
+        )
+
+        setRegularMessage(
+          t('regular.savedOneDayOverride', { name: riderName })
+        )
+        return
+      }
+
+      const payload = {
+        rider_id: row.rider_id,
+        club_id: row.club_id,
+        focus_code: row.focus_code,
+        intensity: normalizedIntensity,
+        is_active: true,
+        auto_when_free: true,
+        preferred_days: row.preferred_days
+      }
+
+      const { error } = await supabase
+        .from('rider_regular_training_plans')
+        .upsert(payload, { onConflict: 'rider_id' })
+
+      if (error) throw error
+
+      await loadRegularTrainingConfig(
+        familyClubs.map(team => team.club_id)
+      )
+      setRegularMessage(
+        t('regular.savedOverride', { name: riderName })
+      )
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : t('regular.saveOverrideFailed')
+      setError(message)
+    } finally {
+      setRegularSavingRiderId(null)
+    }
+  }
+
+  async function clearRegularTrainingPlan(rider: RosterRider): Promise<void> {
+    const riderName = getFullRiderName(rider)
+    const coachEnabled = isHeadCoachEnabledForRider(rider)
+    const todayCoachPlan = getHeadCoachTodayPlan(rider)
+
+    setRegularSavingRiderId(rider.rider_id)
+    setRegularMessage(null)
+    setError(null)
+
+    try {
+      if (
+        coachEnabled &&
+        todayCoachPlan?.source_type === 'manual_override'
+      ) {
+        const { error: clearError } = await supabase.rpc(
+          'clear_rider_daily_training_override_v1',
+          {
+            p_club_id: rider.club_id,
+            p_rider_id: rider.rider_id,
+            p_plan_date: todayCoachPlan.plan_date
+          }
+        )
+
+        if (clearError) throw clearError
+
+        const { error: refreshError } = await supabase.rpc(
+          'refresh_regular_training_coach_plan_v1',
+          {
+            p_club_id: rider.club_id
+          }
+        )
+
+        if (refreshError) throw refreshError
+
+        await loadRegularTrainingConfig(
+          familyClubs.map(team => team.club_id)
+        )
+
+        window.dispatchEvent(
+          new CustomEvent('ppm:head-coach-training-refresh')
+        )
+
+        setRegularMessage(
+          t('regular.removedTodayOverride', { name: riderName })
+        )
+        return
+      }
+
+      const { error } = await supabase
+        .from('rider_regular_training_plans')
+        .delete()
+        .eq('rider_id', rider.rider_id)
+
+      if (error) throw error
+
+      await loadRegularTrainingConfig(
+        familyClubs.map(team => team.club_id)
+      )
+      setRegularMessage(
+        t('regular.removedOverride', { name: riderName })
+      )
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : t('regular.clearOverrideFailed')
+      setError(message)
+    } finally {
+      setRegularSavingRiderId(null)
+    }
+  }
+
+  async function resetAllRidersToTeamDefaults(): Promise<void> {
+    if (familyClubs.length === 0) return
+
+    setRegularResettingAll(true)
+    setRegularMessage(null)
+    setError(null)
+
+    try {
+      const familyClubIds = familyClubs.map(team => team.club_id)
+
+      const { error: deleteError } = await supabase
+        .from('rider_regular_training_plans')
+        .delete()
+        .in('club_id', familyClubIds)
+
+      if (deleteError) throw deleteError
+
+      await Promise.all(
+        familyClubs.map(async team => {
+          if (!headCoachAutomation.enabledByClubId[team.club_id]) return
+
+          const { error: automationError } = await supabase.rpc(
+            'set_regular_training_coach_automation_v1',
+            {
+              p_club_id: team.club_id,
+              p_enabled: false,
+              p_manager_staff_id: null
+            }
+          )
+
+          if (automationError) throw automationError
+        })
+      )
+
+      setRegularDirtyRiderIds([])
+      await loadRegularTrainingConfig(familyClubIds)
+      window.dispatchEvent(new CustomEvent('ppm:head-coach-training-refresh'))
+
+      setRegularMessage(
+        t('premiumCenter:integrations.training.defaultsRestored')
+      )
+    } catch (resetError) {
+      setError(
+        resetError instanceof Error
+          ? resetError.message
+          : t('premiumCenter:integrations.training.defaultsRestoreFailed')
+      )
+    } finally {
+      setRegularResettingAll(false)
+    }
+  }
+
+  async function handleDebugBooking(): Promise<void> {
+    if (!clubId || !selectedCampId || !startDate) return
+
+    const normalizedStartDate = normalizeIsoDateValue(startDate) ?? startDate
+
+    if (minimumBookableCampStartDate) {
+      const selectedDate = parseDateString(normalizedStartDate)
+      const minimumDate = parseDateString(minimumBookableCampStartDate)
+
+      if (isBeforeDay(selectedDate, minimumDate)) {
+        setError(
+          `Training camp cannot start today or in the past. Earliest start is ${formatGameDateLabel(
+            minimumBookableCampStartDate
+          )}.`
+        )
+        setStartDate(minimumBookableCampStartDate)
+        return
+      }
+    }
+
+    setBookingLoading(true)
+    setError(null)
+    setBookingResult(null)
+
+    try {
+      const riderIds = [...new Set(selectedRiderIds)]
+      const staffIds = [...new Set(selectedStaffIds)]
+      const idempotencyKey = `training-camp-${selectedCampId}-${normalizedStartDate}-${days}-${Date.now()}`
+
+      const { data, error: functionError } = await supabase.functions.invoke('book-training-camp', {
+        body: {
+          club_id: clubId,
+          camp_id: selectedCampId,
+          start_date: normalizedStartDate,
+          days,
+          rider_ids: riderIds,
+          staff_ids: staffIds,
+          idempotency_key: idempotencyKey
+        }
+      })
+
+      if (functionError) {
+        throw new Error(functionError.message || 'Training camp booking failed.')
+      }
+
+      const debugResult = data as
+        | {
+            ok: boolean
+            message?: string
+            booking_id?: string
+            finance_transaction_id?: string
+            booking_status?: string
+            total_cost?: number
+            participants_count?: number
+            riders_count?: number
+            staff_count?: number
+            charged_participants_count?: number
+            weather_state?: WeatherState
+            validation_warnings?: string[]
+            created_at?: string
+          }
+        | null
+
+      if (!debugResult) {
+        throw new Error('Training camp booking response was empty.')
+      }
+
+      if (!debugResult.ok) {
+        throw new Error(debugResult.message || 'Training camp booking failed.')
+      }
+
+      setBookingResult({
+        booking_id: debugResult.booking_id ?? '',
+        finance_transaction_id: debugResult.finance_transaction_id ?? '',
+        booking_status: debugResult.booking_status ?? 'planned',
+        total_cost: debugResult.total_cost ?? 0,
+        participants_count: debugResult.participants_count ?? debugResult.riders_count ?? 0,
+        staff_count: debugResult.staff_count ?? 0,
+        charged_participants_count: debugResult.charged_participants_count ?? 0,
+        weather_state: (debugResult.weather_state ?? 'good') as WeatherState,
+        validation_warnings: debugResult.validation_warnings ?? [],
+        created_at: debugResult.created_at ?? new Date().toISOString()
+      })
+
+      await loadCurrentCampBooking(clubId)
+
+      const refreshedStaff = await fetchAvailableCampStaff(clubId, normalizedStartDate, days)
+      setAvailableStaff(refreshedStaff)
+      keepOnlySelectableStaff(refreshedStaff)
+      setSelectedStaffIds([])
+      setOverlapBlockedRiders([])
+
+      const validationRes = await supabase.rpc('validate_training_camp_booking_v2', {
+        p_club_id: clubId,
+        p_camp_id: selectedCampId,
+        p_start_date: normalizedStartDate,
+        p_days: days,
+        p_rider_ids: riderIds,
+        p_staff_ids: staffIds
+      })
+
+      if (!validationRes.error) {
+        setValidation((validationRes.data?.[0] ?? null) as BookingValidation | null)
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Training camp booking failed.'
+      setError(message)
+    } finally {
+      setBookingLoading(false)
+    }
+  }
+
+  function openCancelCampModal(): void {
+    if (!currentCampBooking) return
+
+    const campName =
+      currentCampBooking.city_snapshot ||
+      currentCampBooking.country_code_snapshot ||
+      'this training camp'
+
+    setCancelCampName(campName)
+    setCancelCampError(null)
+    setShowCancelCampModal(true)
+  }
+
+  async function handleCancelCampConfirm(): Promise<void> {
+    if (!currentCampBooking || !clubId) return
+
+    setIsCancellingCamp(true)
+    setCancelCampError(null)
+    setError(null)
+
+    try {
+      const { data, error } = await supabase.rpc('cancel_training_camp_booking', {
+        p_booking_id: currentCampBooking.id
+      })
+
+      if (error) {
+        throw new Error(error.message || 'Training camp could not be cancelled.')
+      }
+
+      const result = data as
+        | {
+            ok?: boolean
+            reason?: string
+            message?: string
+            refund_amount?: number
+          }
+        | null
+
+      if (result?.ok === false) {
+        throw new Error(
+          result.reason ||
+            result.message ||
+            'Training camp could not be cancelled.'
+        )
+      }
+
+      await loadCurrentCampBooking(clubId)
+
+      if (startDate) {
+        const normalizedStartDate = normalizeIsoDateValue(startDate) ?? startDate
+        const refreshedStaff = await fetchAvailableCampStaff(
+          clubId,
+          normalizedStartDate,
+          days
+        )
+
+        setAvailableStaff(refreshedStaff)
+        keepOnlySelectableStaff(refreshedStaff)
+      }
+
+      setSelectedStaffIds([])
+      setCurrentCampParticipantIds([])
+      setShowAssignedRidersModal(false)
+      setBookingResult(null)
+      setShowCancelCampModal(false)
+    } catch (error) {
+      setCancelCampError(
+        error instanceof Error
+          ? error.message
+          : 'Training camp could not be cancelled.'
+      )
+    } finally {
+      setIsCancellingCamp(false)
+    }
+  }
+
+  function handleCampStartDateChange(nextValue: string): void {
+    if (!minimumBookableCampStartDate) {
+      setStartDate(nextValue)
+      return
+    }
+
+    const selectedDate = parseDateString(nextValue)
+    const minimumDate = parseDateString(minimumBookableCampStartDate)
+
+    if (isBeforeDay(selectedDate, minimumDate)) {
+      setStartDate(minimumBookableCampStartDate)
+      return
+    }
+
+    setStartDate(nextValue)
+  }
+
+  function toggleRider(riderId: string): void {
+    if (overlapBlockedRiderMap.has(riderId)) return
+
+    setSelectedRiderIds(current => {
+      if (current.includes(riderId)) {
+        return current.filter(id => id !== riderId)
+      }
+      return [...current, riderId]
+    })
+  }
+
+  function getStaffBlockText(member: CampStaffOption): string | null {
+    if (member.block_reason) return member.block_reason
+    if (member.on_active_course) return 'Unavailable: this staff member is currently on a course.'
+    if (member.overlapping_booking_id) {
+      return 'Unavailable: already assigned to an overlapping training camp.'
+    }
+    if (member.availability_status && member.availability_status !== 'available') {
+      return `Unavailable: ${member.availability_status.replaceAll('_', ' ')}.`
+    }
+    return null
+  }
+
+  function toggleStaff(staffId: string): void {
+    const member = availableStaff.find(row => row.staff_id === staffId)
+    if (!member || !isStaffSelectable(member)) return
+
+    setSelectedStaffIds(current => {
+      if (current.includes(staffId)) {
+        return current.filter(id => id !== staffId)
+      }
+
+      return [...current, staffId]
+    })
+  }
+
+  async function handleStartTrainingTutorial() {
+    const firstStep = trainingTutorialSteps[0]
+
+    await saveTutorialProgress('training', 'started', firstStep?.key ?? null)
+
+    setActiveTab('regular')
+    setTutorialStepIndex(0)
+    setTutorialMode('steps')
+  }
+
+  async function handleSkipTrainingTutorial() {
+    await saveTutorialProgress('training', 'skipped', null)
+    setTutorialMode('closed')
+  }
+
+  async function handleNextTrainingTutorialStep() {
+    const currentStep = trainingTutorialSteps[tutorialStepIndex]
+    const isLastStep = tutorialStepIndex >= trainingTutorialSteps.length - 1
+
+    if (!isLastStep) {
+      const nextIndex = tutorialStepIndex + 1
+      const nextStep = trainingTutorialSteps[nextIndex]
+
+      if (nextStep.key === 'training-camps') {
+        setActiveTab('camps')
+      }
+
+      await saveTutorialProgress('training', 'started', nextStep.key)
+
+      setTutorialStepIndex(nextIndex)
+      return
+    }
+
+    await saveTutorialProgress('training', 'completed', currentStep?.key ?? null)
+
+    window.sessionStorage.setItem('ppm:auto-start-tutorial', 'equipment')
+    navigate('/dashboard/equipment')
+  }
+
+  async function handleFinishTrainingTutorialForNow() {
+    const currentStep = trainingTutorialSteps[tutorialStepIndex]
+
+    await saveTutorialProgress('training', 'completed', currentStep?.key ?? null)
+
+    setTutorialMode('closed')
+  }
+
+  async function handleCloseTrainingTutorial() {
+    const currentStep = trainingTutorialSteps[tutorialStepIndex]
+
+    if (tutorialMode === 'invite') {
+      await saveTutorialProgress('training', 'skipped', null)
+      setTutorialMode('closed')
+      return
+    }
+
+    if (tutorialMode === 'steps') {
+      await saveTutorialProgress(
+        'training',
+        'started',
+        currentStep?.key ?? null
+      )
+    }
+
+    setTutorialMode('closed')
+  }
+
+  useEffect(() => {
+    const nextTab = searchParams.get('tab')
+    if (nextTab === 'regular' || nextTab === 'development' || nextTab === 'camps') {
+      setActiveTab(nextTab)
+    }
+  }, [searchParams])
+
+  if (loading) {
+    return <div className="w-full text-sm text-gray-600">{t('page.loading')}</div>
+  }
+
+  return (
+    <div className="w-full space-y-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div>
+          <h2 className="text-2xl font-semibold text-gray-900">{t('page.title')}</h2>
+          <p className="mt-1 text-sm text-gray-600">
+            {t('page.subtitle')}
+          </p>
+        </div>
+
+        <div className="flex md:justify-end">
+          <div className="inline-flex rounded-2xl border border-gray-200 bg-white p-1 shadow-sm">
+            <button
+              type="button"
+              onClick={() => setActiveTab('regular')}
+              className={`rounded-xl px-5 py-2.5 text-sm font-medium transition ${
+                activeTab === 'regular'
+                  ? 'bg-yellow-400 text-black shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {t('page.regularTab')}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('development')}
+              className={`rounded-xl px-5 py-2.5 text-sm font-medium transition ${
+                activeTab === 'development'
+                  ? 'bg-yellow-400 text-black shadow-sm'
+                  : isPremium
+                    ? 'text-gray-500 hover:text-gray-700'
+                    : 'text-gray-400 hover:text-gray-600'
+              }`}
+            >
+              <span className="inline-flex items-center gap-1.5">
+                {t('premiumCenter:tabs.development')}
+                {!premiumStatusLoading && !isPremium ? (
+                  <span aria-hidden="true" className="text-[11px]">🔒</span>
+                ) : null}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('camps')}
+              className={`rounded-xl px-5 py-2.5 text-sm font-medium transition ${
+                activeTab === 'camps'
+                  ? 'bg-yellow-400 text-black shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {t('page.campsTab')}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {focusedRiderId ? (
+        <div className="rounded-lg bg-white p-4 shadow">
+          <div className="text-sm font-semibold text-slate-900">{t('page.focusedRider')}</div>
+          <div className="mt-1 text-sm text-slate-600">
+            Opened from rider profile for rider id: {focusedRiderId}
+            {focusedRider ? ` · ${getFullRiderName(focusedRider)}` : ''}
+          </div>
+          <div className="mt-3 text-sm text-slate-500">
+            Use this riderId to preload the rider card, fetch current assignments, and save
+            individual training changes for that rider.
+          </div>
+        </div>
+      ) : null}
+
+      {error ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      ) : null}
+
+      {bookingResult ? (
+        <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+          Booking created successfully. Booking ID:{' '}
+          <span className="font-medium">{bookingResult.booking_id}</span>
+        </div>
+      ) : null}
+
+      {regularMessage ? (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+          {regularMessage}
+        </div>
+      ) : null}
+
+      {currentCampBooking ? (
+        <div className="rounded-xl border border-blue-200 bg-blue-50 p-5 shadow-sm">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {t('camps.currentTitle')}
+                </h3>
+
+                <p className="mt-1 text-sm text-gray-700">
+                  {currentCampBooking.city_snapshot ?? 'Training Camp'} ·{' '}
+                  {titleCaseFromSnake(currentCampBooking.camp_type_snapshot)}
+                </p>
+
+                <p className="mt-2 text-sm text-gray-600">
+                  {formatGameDateLabel(currentCampBooking.start_date)} →{' '}
+                  {formatGameDateLabel(currentCampBooking.end_date)}
+                </p>
+
+                {currentGameDateParts?.season_number != null ? (
+                  <p className="mt-1 text-xs text-gray-500">
+                    Season {currentGameDateParts.season_number}
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigate(`/dashboard/training/current-camp/${currentCampBooking.id}`)
+                  }
+                  className={openCurrentCampButtonClass}
+                >
+                  {t('camps.openCurrent')}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={openCancelCampModal}
+                  disabled={isCancellingCamp}
+                  className={cancelCampButtonClass}
+                >
+                  {isCancellingCamp ? 'Cancelling…' : t('camps.cancelCamp')}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 md:justify-end">
+              <span
+                className={`rounded-full px-3 py-1 text-xs font-medium ${
+                  currentCampBooking.status === 'active'
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-blue-100 text-blue-700'
+                }`}
+              >
+                {currentCampBooking.status}
+              </span>
+
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!currentCampBooking) return
+                  await loadCurrentCampParticipants(currentCampBooking.id)
+                  setShowAssignedRidersModal(true)
+                }}
+                className="rounded-full border border-gray-200 bg-white px-3 py-1 text-xs text-gray-700 hover:bg-gray-50"
+              >
+                Riders: {currentCampBooking.participants_count ?? 0}
+              </button>
+
+              <span className="rounded-full bg-white px-3 py-1 text-xs text-gray-700">
+                Staff: {currentCampBooking.staff_count ?? 0}
+              </span>
+
+              <span className="rounded-full bg-white px-3 py-1 text-xs text-gray-700">
+                Charged:{' '}
+                {currentCampBooking.charged_participants_count ??
+                  currentCampBooking.participants_count ??
+                  0}
+              </span>
+
+              <span className="rounded-full bg-white px-3 py-1 text-xs text-gray-700">
+                {formatCurrency(currentCampBooking.total_cost ?? 0)}
+              </span>
+            </div>
+          </div>
+
+          {cancelCampError ? (
+            <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {cancelCampError}
+            </div>
+          ) : null}
+
+          <div className="mt-4 text-sm text-gray-600">
+            Existing camp dates are outlined in blue in the date picker. Overlap is enforced per
+            rider during validation and booking, so another camp in the same period can still be
+            planned if riders do not conflict.
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <h3 className="text-lg font-semibold text-gray-900">
+            {t('camps.currentTitle')}
+          </h3>
+          <p className="mt-2 text-sm text-gray-600">
+            {t('camps.noneCurrent')}
+          </p>
+        </div>
+      )}
+
+      {activeTab === 'regular' ? (
+        <div className="space-y-6">
+          {premiumStatusLoading ? (
+            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="text-sm text-slate-500">{t('regular.checkingPremium')}</div>
+            </div>
+          ) : isPremium ? (
+            <HeadCoachTrainingPanel
+              familyClubs={familyClubs}
+              roster={roster}
+              currentGameDate={currentGameDate}
+              onMessage={setRegularMessage}
+              onError={setError}
+              onAutomationStateChange={setHeadCoachAutomation}
+            />
+          ) : (
+            <PremiumFeatureLock
+              title={t('regular.automationTitle')}
+              description={t('regular.automationDescription')}
+            />
+          )}
+
+          <div className="grid gap-4 md:grid-cols-5">
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                {t('regular.ridersInScope')}
+              </div>
+              <div className="mt-2 text-2xl font-semibold text-gray-900">
+                {regularTrainingSummary.totalRiders}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                {t('regular.riderOverridesCount')}
+              </div>
+              <div className="mt-2 text-2xl font-semibold text-gray-900">
+                {regularTrainingSummary.overrideCount}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                {t('regular.usingDefaults')}
+              </div>
+              <div className="mt-2 text-2xl font-semibold text-gray-900">
+                {regularTrainingSummary.defaultOnlyCount}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                {t('regular.headCoachManaged')}
+              </div>
+              <div className="mt-2 text-2xl font-semibold text-gray-900">
+                {regularTrainingSummary.headCoachManagedCount}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                {t('regular.healthBlocked')}
+              </div>
+              <div className="mt-2 text-2xl font-semibold text-gray-900">
+                {regularTrainingSummary.blockedRiders}
+              </div>
+            </div>
+          </div>
+
+          {premiumStatusLoading ? (
+            <PremiumFeatureLoading />
+          ) : isPremium ? (
+            <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-semibold text-gray-900">{t('premiumCenter:integrations.training.title')}</h3>
+                    <span className="rounded-full border border-gray-300 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">
+                      Premium
+                    </span>
+                  </div>
+                  <p className="mt-1 text-sm text-gray-600">
+                    {t('premiumCenter:integrations.training.description')}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Link
+                    to="/dashboard/premium-center?tab=templates"
+                    className="shrink-0 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-800 hover:bg-gray-50"
+                  >
+                    {t('premiumCenter:integrations.training.manage')}
+                  </Link>
+                </div>
+              </div>
+
+              {premiumTrainingTemplates.length > 0 ? (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {premiumTrainingTemplates.map(template => {
+                    const values = getTrainingTemplateValues(template)
+                    return (
+                      <button
+                        type="button"
+                        key={template.id}
+                        onClick={() => applyTrainingTemplateToTeamDefaults(template)}
+                        className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-left text-sm text-gray-800 hover:border-gray-400"
+                      >
+                        <span className="font-semibold">{template.name}</span>
+                        <span className="ml-2 text-xs text-gray-500">
+                          {formatTrainingFocusLabel(values.focusCode, t)} · {formatTrainingIntensityLabel(values.intensity, t)}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="mt-3 text-sm text-gray-600">
+                  {t('premiumCenter:integrations.training.none')}
+                </div>
+              )}
+
+              {premiumPrefillMessage ? (
+                <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700">
+                  {premiumPrefillMessage}
+                </div>
+              ) : null}
+            </div>
+          ) : (
+            <PremiumFeatureLock
+              title={t('premiumCenter:integrations.training.title')}
+              description={t('premiumCenter:integrations.training.description')}
+            />
+          )}
+
+          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+            <div
+              className={`flex flex-col gap-3 md:flex-row md:items-start md:justify-between ${
+                isTeamDefaultsExpanded ? 'mb-4' : ''
+              }`}
+            >
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">{t('regular.teamDefaults')}</h3>
+                <p className="mt-1 text-sm text-gray-600">
+                  {t('regular.teamDefaultsDescription')}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => void resetAllRidersToTeamDefaults()}
+                  disabled={regularResettingAll}
+                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {regularResettingAll
+                    ? t('common.saving')
+                    : t('premiumCenter:integrations.training.useDefaultsForAll')}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsTeamDefaultsExpanded(current => !current)}
+                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  aria-expanded={isTeamDefaultsExpanded}
+                  aria-controls="team-defaults-content"
+                >
+                  {isTeamDefaultsExpanded ? t('common.collapse') : t('common.expand')}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    void loadRegularTrainingConfig(familyClubs.map(row => row.club_id))
+                  }
+                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                >
+                  {t('regular.refreshConfig')}
+                </button>
+              </div>
+            </div>
+
+            {isTeamDefaultsExpanded ? (
+              <div id="team-defaults-content" className="grid gap-4 lg:grid-cols-2">
+              {familyClubs.map(team => {
+                const row = buildDefaultRowForClub(team.club_id)
+                const hasSavedDefault = regularDefaultsByClubId.has(team.club_id)
+                const ridersInTeam = roster.filter(rider => rider.club_id === team.club_id).length
+                const defaultIsDayOff = isDayOffFocus(row.focus_code)
+
+                return (
+                  <div
+                    key={team.club_id}
+                    className="rounded-xl border border-gray-200 bg-gray-50 p-4"
+                  >
+                    <div className="mb-4 flex items-start justify-between gap-3">
+                      <div>
+                        <div className="text-base font-semibold text-gray-900">
+                          {team.team_label === 'U23' ? t('common.u23') : t('common.firstTeam')}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {team.club_name} · Riders: {ridersInTeam}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col items-end gap-2">
+                        <span className="rounded-full bg-white px-2.5 py-1 text-xs text-gray-700">
+                          Scope: {row.team_scope}
+                        </span>
+
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                            hasSavedDefault
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : 'bg-amber-100 text-amber-700'
+                          }`}
+                        >
+                          {hasSavedDefault ? t('regular.savedDefault') : t('regular.draftOnly')}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <label className="block">
+                        <span className="mb-1 block text-sm font-medium text-gray-700">
+                          {t('regular.focus')}
+                        </span>
+                        <select
+                          value={row.focus_code}
+                          onChange={event => {
+                            const nextFocus = event.target.value
+
+                            updateRegularDefaultDraft(team.club_id, {
+                              focus_code: nextFocus,
+                              intensity: normalizeTrainingIntensityForSave(nextFocus, row.intensity)
+                            })
+                          }}
+                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500"
+                        >
+                          {REGULAR_TRAINING_FOCUS_OPTIONS.map(option => (
+                            <option key={option.value} value={option.value}>
+                              {t(option.translationKey)}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+
+                      <div>
+                        <span className="mb-1 block text-sm font-medium text-gray-700">
+                          {t('regular.intensity')}
+                        </span>
+
+                        <select
+                          value={defaultIsDayOff ? 'normal' : row.intensity}
+                          disabled={defaultIsDayOff}
+                          onChange={event =>
+                            updateRegularDefaultDraft(team.club_id, {
+                              intensity: event.target.value as RegularTrainingIntensity
+                            })
+                          }
+                          className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 outline-none focus:border-blue-500 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
+                        >
+                          {REGULAR_TRAINING_INTENSITY_OPTIONS.map(option => (
+                            <option key={option.value} value={option.value}>
+                              {t(option.translationKey)}
+                            </option>
+                          ))}
+                        </select>
+
+                        {defaultIsDayOff ? (
+                          <div className="mt-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-700">
+                            {DAY_OFF_HELPER_TEXT}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    <label className="mt-3 flex items-center gap-2 text-sm text-gray-700">
+                      <input
+                        type="checkbox"
+                        checked={row.auto_when_free}
+                        onChange={event =>
+                          updateRegularDefaultDraft(team.club_id, {
+                            auto_when_free: event.target.checked
+                          })
+                        }
+                      />
+                      {t('regular.autoApply')}
+                    </label>
+
+                    <div className="mt-4">
+                      <button
+                        type="button"
+                        onClick={() => void saveRegularTrainingDefault(team.club_id)}
+                        disabled={regularSavingDefaultClubId === team.club_id}
+                        className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+                      >
+                        {regularSavingDefaultClubId === team.club_id
+                          ? 'Saving Default…'
+                          : t('regular.saveTeamDefault')}
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+              </div>
+            ) : null}
+          </div>
+
+          {isPremium && regularTrainingSummary.headCoachManagedCount > 0 ? (
+            <div className="rounded-xl border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800 shadow-sm">
+              {t('regular.headCoachNotice')}
+            </div>
+          ) : null}
+
+          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">{t('regular.riderOverrides')}</h3>
+              <p className="mt-1 text-sm text-gray-600">
+                {isPremium
+                  ? t('regular.riderOverridesPremium')
+                  : t('regular.manualTrainingHelp')}
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {orderedRegularRoster.map(rider => {
+                const effective = getEffectiveRegularTraining(rider)
+                const draft = buildPlanRowForRider(rider)
+                const coachEnabled = isHeadCoachEnabledForRider(rider)
+                const todayCoachPlan = getHeadCoachTodayPlan(rider)
+                const hasPersistentOverride = regularPlansByRiderId.has(
+                  rider.rider_id
+                )
+                const hasTodayOverride =
+                  todayCoachPlan?.source_type === 'manual_override'
+                const hasClearableOverride = coachEnabled
+                  ? hasTodayOverride
+                  : hasPersistentOverride
+                const isFocusedRider = focusedRiderId === rider.rider_id
+                const draftIsDayOff = isDayOffFocus(draft.focus_code)
+
+                return (
+                  <div
+                    key={rider.rider_id}
+                    className={`rounded-xl border p-4 ${
+                      isFocusedRider
+                        ? 'border-blue-400 bg-blue-50/40 ring-2 ring-blue-100'
+                        : 'border-gray-200'
+                    }`}
+                  >
+                    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(360px,1fr)]">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Link
+                            to={`/dashboard/my-riders/${rider.rider_id}`}
+                            className="text-base font-semibold text-gray-900 underline-offset-2 hover:text-blue-700 hover:underline"
+                          >
+                            {getFullRiderName(rider)}
+                          </Link>
+
+                          {isFocusedRider ? (
+                            <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-medium text-blue-700">
+                              {t('regular.focusedRider')}
+                            </span>
+                          ) : null}
+
+                          {rider.team_label === 'U23' ? (
+                            <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] font-medium text-indigo-700">
+                              {t('common.u23')}
+                            </span>
+                          ) : (
+                            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700">
+                              {t('common.firstTeam')}
+                            </span>
+                          )}
+
+                          <span
+                            className={`rounded-full px-2.5 py-1 text-xs font-medium ${AVAILABILITY_BADGE_STYLES[rider.availability_status]}`}
+                          >
+                            {t(AVAILABILITY_TRANSLATION_KEYS[rider.availability_status])}
+                          </span>
+
+                          <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-700">
+                            {t('common.fatigue', { value: rider.fatigue ?? 0 })}
+                          </span>
+
+                          {effective.source === 'head_coach' ? (
+                            <span className="rounded-full bg-yellow-100 px-2.5 py-1 text-xs font-medium text-yellow-800">
+                              {t('regular.headCoach')}
+                            </span>
+                          ) : effective.source === 'manual_today' ? (
+                            <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700">
+                              {t('regular.manualToday')}
+                            </span>
+                          ) : effective.source === 'override' ? (
+                            <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700">
+                              {t('regular.persistentOverride')}
+                            </span>
+                          ) : effective.source === 'default' ? (
+                            <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                              {t('regular.teamDefault')}
+                            </span>
+                          ) : (
+                            <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-700">
+                              {t('regular.noPlan')}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="mt-2 text-sm text-gray-500">
+                          {rider.source_club_name} · OVR {rider.overall ?? '-'}
+                        </div>
+
+                        <div className="mt-3 rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-700">
+                          {t('regular.effectiveToday')}{' '}
+                          <span className="font-medium">
+                            {formatEffectiveRegularTrainingLabel(
+                              effective.focus_code,
+                              effective.intensity,
+                              t
+                            )}
+                          </span>
+                          <div className="mt-1 text-xs text-gray-500">
+                            {effective.source === 'head_coach'
+                              ? t('regular.selectedByCoach')
+                              : effective.source === 'manual_today'
+                                ? t('regular.oneDayOverride')
+                                : effective.auto_when_free
+                                  ? t('regular.autoWhenFree')
+                                  : t('regular.manualOnly')}
+                          </div>
+                        </div>
+
+                        <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => void saveRegularTrainingPlan(rider)}
+                            disabled={regularSavingRiderId === rider.rider_id}
+                            className="rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+                          >
+                            {regularSavingRiderId === rider.rider_id
+                              ? t('common.saving')
+                              : coachEnabled
+                                ? hasTodayOverride
+                                  ? t('regular.saveTodayOverride')
+                                  : t('regular.overrideToday')
+                                : hasPersistentOverride
+                                  ? t('regular.saveOverride')
+                                  : t('regular.createOverride')}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => void clearRegularTrainingPlan(rider)}
+                            disabled={
+                              !hasClearableOverride ||
+                              regularSavingRiderId === rider.rider_id
+                            }
+                            className="rounded-md border border-red-300 bg-white px-2.5 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {coachEnabled
+                              ? t('regular.clearTodayOverride')
+                              : t('regular.clearOverride')}
+                          </button>
+
+                          {isPremium ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => void applyMatchingTrainingPrefill(rider)}
+                                disabled={premiumPrefillRiderId === rider.rider_id}
+                                className="inline-flex items-center justify-center rounded-md border border-yellow-300 bg-yellow-50 px-2.5 py-1.5 text-xs font-medium text-yellow-900 transition hover:bg-yellow-100 disabled:opacity-50"
+                              >
+                                {premiumPrefillRiderId === rider.rider_id
+                                  ? t('premiumCenter:integrations.training.checking')
+                                  : t('premiumCenter:integrations.training.smartPrefill')}
+                              </button>
+                              <Link
+                                to={`/dashboard/my-riders/${rider.rider_id}?tab=analysis#training-and-skill-development`}
+                                className="inline-flex items-center justify-center rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:border-yellow-400 hover:bg-yellow-50"
+                              >
+                                {t('regular.trainingDevelopment')}
+                              </Link>
+                            </>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-1">
+                        <label className="block">
+                          <span className="mb-1 block text-sm font-medium text-gray-700">
+                            {t('regular.focus')}
+                          </span>
+                          <select
+                            value={draft.focus_code}
+                            onChange={event => {
+                              const nextFocus = event.target.value
+
+                              updateRegularPlanDraft(rider, {
+                                focus_code: nextFocus,
+                                intensity: normalizeTrainingIntensityForSave(nextFocus, draft.intensity)
+                              })
+                            }}
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500"
+                          >
+                            {REGULAR_TRAINING_FOCUS_OPTIONS.map(option => (
+                              <option key={option.value} value={option.value}>
+                                {t(option.translationKey)}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+
+                        <div>
+                          <span className="mb-1 block text-sm font-medium text-gray-700">
+                            {t('regular.intensity')}
+                          </span>
+
+                          <select
+                            value={draftIsDayOff ? 'normal' : draft.intensity}
+                            disabled={draftIsDayOff}
+                            onChange={event =>
+                              updateRegularPlanDraft(rider, {
+                                intensity: event.target.value as RegularTrainingIntensity
+                              })
+                            }
+                            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 outline-none focus:border-blue-500 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
+                          >
+                            {REGULAR_TRAINING_INTENSITY_OPTIONS.map(option => (
+                              <option key={option.value} value={option.value}>
+                                {t(option.translationKey)}
+                              </option>
+                            ))}
+                          </select>
+
+                          {draftIsDayOff ? (
+                            <div className="mt-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-700">
+                              {DAY_OFF_HELPER_TEXT}
+                            </div>
+                          ) : null}
+                        </div>
+
+                      </div>
+
+
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {activeTab === 'development' ? (
+        premiumStatusLoading ? (
+          <PremiumFeatureLoading />
+        ) : isPremium && clubId ? (
+          <PremiumRiderDevelopmentPanel clubId={clubId} />
+        ) : (
+          <PremiumFeatureLock
+            title={t('premiumCenter:development.title')}
+            description={t('premiumCenter:development.description')}
+          />
+        )
+      ) : null}
+
+      {activeTab === 'camps' ? (
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+          <div className="space-y-4">
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-[1fr_1fr_1.5fr]">
+                <label className="block">
+                  <span className="mb-1 block text-sm font-medium text-gray-700">{t('camps.region')}</span>
+                  <select
+                    value={regionFilter}
+                    onChange={event => setRegionFilter(event.target.value as RegionFilter)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
+                  >
+                    {REGION_OPTIONS.map(region => (
+                      <option key={region} value={region}>
+                        {region === 'all' ? t('camps.allRegions') : t(REGION_TRANSLATION_KEYS[region] ?? region)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="block">
+                  <span className="mb-1 block text-sm font-medium text-gray-700">{t('camps.campType')}</span>
+                  <select
+                    value={campTypeFilter}
+                    onChange={event => setCampTypeFilter(event.target.value as 'all' | CampType)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
+                  >
+                    {CAMP_TYPE_OPTIONS.map(type => (
+                      <option key={type} value={type}>
+                        {type === 'all' ? t('camps.allTypes') : t(CAMP_TYPE_TRANSLATION_KEYS[type])}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <div>
+                  <span className="mb-1 block text-sm font-medium text-gray-700">
+                    Max cost / rider: {formatCurrency(maxPerRiderFilter)}
+                  </span>
+                  <input
+                    type="range"
+                    min={500}
+                    max={5000}
+                    step={100}
+                    value={maxPerRiderFilter}
+                    onChange={event => setMaxPerRiderFilter(Number(event.target.value))}
+                    className="mt-3 w-full"
+                  />
+                  <div className="mt-2 flex justify-between text-xs text-gray-500">
+                    <span>$500</span>
+                    <span>$5,000</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">{t('camps.availableCamps')}</h3>
+                <span className="text-xs text-gray-500">
+                  {filteredCamps.length} offers · Page {currentPage}/{totalPages}
+                </span>
+              </div>
+
+              <div className="space-y-4">
+                {pagedCamps.map(camp => {
+                  const isSelected = camp.id === selectedCampId
+                  return (
+                    <button
+                      key={camp.id}
+                      type="button"
+                      onClick={() => setSelectedCampId(camp.id)}
+                      className={`w-full overflow-hidden rounded-xl border text-left transition ${
+                        isSelected
+                          ? 'border-blue-400 ring-2 ring-blue-100'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="grid gap-4 md:grid-cols-[180px_1fr]">
+                        <div className="h-40 bg-gray-100">
+                          {camp.image_url ? (
+                            <img
+                              src={camp.image_url}
+                              alt={camp.name}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-sm text-slate-500">
+                              {t('camps.noImage')}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="p-4">
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                              <h4 className="text-base font-semibold text-gray-900">{camp.name}</h4>
+                              <p className="text-sm text-gray-500">
+                                {camp.city_name}, {camp.country_code} ·{' '}
+                                {t(CAMP_TYPE_TRANSLATION_KEYS[camp.camp_type])}
+                              </p>
+                            </div>
+                            <span className="text-sm font-medium text-amber-600">
+                              {renderStars(camp.stars)}
+                            </span>
+                          </div>
+
+                          <p className="mt-3 text-sm text-gray-600">{isSerbianUi ? t('camps.genericShort', { city: camp.city_name, type: t(CAMP_TYPE_TRANSLATION_KEYS[camp.camp_type]).toLowerCase() }) : camp.short_description}</p>
+
+                          <div className="mt-3 text-sm font-medium text-gray-900">
+                            {t('camps.from')}{' '}
+                            {formatCurrency(
+                              estimatePerRiderCost(
+                                camp,
+                                clubCountryCode,
+                                days,
+                                Math.max(selectedRiderIds.length, 5)
+                              )
+                            )}{' '}
+                            / {t('camps.perRider')}
+                          </div>
+
+                          <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                            <span className="rounded-full bg-blue-50 px-2.5 py-1 text-blue-700">
+                              {t('camps.bestFor')} {isSerbianUi ? t('camps.genericBestFor', { type: t(CAMP_TYPE_TRANSLATION_KEYS[camp.camp_type]).toLowerCase() }) : (camp.best_for_text || t(CAMP_TYPE_TRANSLATION_KEYS[camp.camp_type]))}
+                            </span>
+                            <span className="rounded-full bg-gray-100 px-2.5 py-1 text-gray-700">
+                              {t(`campTags.${camp.metadata?.budget_tier ?? 'standard'}`, { defaultValue: camp.metadata?.budget_tier ?? 'standard' })}
+                            </span>
+                            <span className="rounded-full bg-gray-100 px-2.5 py-1 text-gray-700">
+                              {t(`campTags.${camp.terrain_profile}`, { defaultValue: camp.terrain_profile })}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {filteredCamps.length > CAMPS_PER_PAGE ? (
+                <div className="mt-4 flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
+                    disabled={currentPage === 1}
+                    className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {t('common.previous')}
+                  </button>
+
+                  <div className="flex items-center gap-2">
+                    {Array.from({ length: totalPages }, (_, index) => index + 1).map(page => (
+                      <button
+                        key={page}
+                        type="button"
+                        onClick={() => setCurrentPage(page)}
+                        className={`h-9 min-w-9 rounded-lg px-3 text-sm font-medium ${
+                          page === currentPage
+                            ? 'bg-yellow-400 text-black'
+                            : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))}
+                    disabled={currentPage === totalPages}
+                    className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {t('common.next')}
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+              <div className="h-52 overflow-hidden rounded-t-xl bg-gray-100">
+                {selectedCamp?.image_url ? (
+                  <img
+                    src={selectedCamp.image_url}
+                    alt={selectedCamp.name}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-sm text-slate-500">
+                    {t('camps.imagePlaceholder')}
+                  </div>
+                )}
+              </div>
+
+              {selectedCamp ? (
+                <div className="space-y-4 overflow-visible p-5">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-900">{selectedCamp.name}</h3>
+                      <p className="text-sm text-gray-500">
+                        {selectedCamp.city_name}, {selectedCamp.country_code} ·{' '}
+                        {t(REGION_TRANSLATION_KEYS[selectedCamp.region_name] ?? selectedCamp.region_name)}
+                      </p>
+                    </div>
+                    <div className="text-right text-sm text-amber-600">
+                      <div className="font-medium">{renderStars(selectedCamp.stars)}</div>
+                      <div className="text-xs text-gray-500">
+                        {t(CAMP_TYPE_TRANSLATION_KEYS[selectedCamp.camp_type])}
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-gray-700">{isSerbianUi ? t('camps.genericLong', { city: selectedCamp.city_name, type: t(CAMP_TYPE_TRANSLATION_KEYS[selectedCamp.camp_type]).toLowerCase() }) : selectedCamp.long_description}</p>
+
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div className="rounded-lg bg-gray-50 p-3">
+                      <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                        {t('camps.bestFor')}
+                      </div>
+                      <div className="mt-1 text-sm text-gray-700">{isSerbianUi ? t('camps.genericBestFor', { type: t(CAMP_TYPE_TRANSLATION_KEYS[selectedCamp.camp_type]).toLowerCase() }) : selectedCamp.best_for_text}</div>
+                    </div>
+                    <div className="rounded-lg bg-gray-50 p-3">
+                      <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                        {t('camps.weatherNote')}
+                      </div>
+                      <div className="mt-1 text-sm text-gray-700">{isSerbianUi ? t('camps.genericWeatherNote') : selectedCamp.weather_note}</div>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div>
+                      <span className="mb-1 block text-sm font-medium text-gray-700">
+                        {t('camps.startDate')}
+                      </span>
+                      <CampDatePicker
+                        value={startDate}
+                        onChange={handleCampStartDateChange}
+                        camp={selectedCamp}
+                        minDate={minimumBookableCampStartDate}
+                        maxDate={currentSeasonEndDateValue}
+                        currentGameDateValue={currentGameDate}
+                        currentSeasonNumber={currentGameDateParts?.season_number ?? null}
+                        bookings={clubBookings}
+                      />
+                      {startDate ? (
+                        <div className="mt-2 text-xs text-gray-500">
+                          {formatGameDateLabel(startDate)}
+                        </div>
+                      ) : null}
+                      {minimumBookableCampStartDate ? (
+                        <div className="mt-1 text-xs text-gray-500">
+                          {t('camps.earliestStart', { date: formatGameDateLabel(minimumBookableCampStartDate) })}
+                        </div>
+                      ) : null}
+                      {currentGameDateParts?.season_number != null ? (
+                        <div className="mt-1 text-xs text-gray-500">
+                          {t('camps.seasonLabel', { season: currentGameDateParts.season_number })}
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <label className="block">
+                      <span className="mb-1 block text-sm font-medium text-gray-700">
+                        {t('camps.duration')}
+                      </span>
+                      <select
+                        value={days}
+                        onChange={event => setDays(Number(event.target.value))}
+                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
+                      >
+                        {DURATION_OPTIONS.map(option => (
+                          <option key={option} value={option}>
+                            {t('camps.daysCount', { count: option })}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                    <div className="flex items-start gap-2">
+                      <span className="mt-0.5">⚠️</span>
+
+                      <div>
+                        <div className="font-medium">{t('camps.checkDates')}</div>
+
+                        <div className="mt-1">
+                          {t('camps.refundNotice')}
+                        </div>
+
+                        {startDate && selectedRangeEndValue ? (
+                          <div className="mt-2 text-xs text-amber-700">
+                            {t('camps.selectedPeriodLabel')}:{' '}
+                            <span className="font-medium">
+                              {formatCampDateRange(startDate, selectedRangeEndValue)}
+                            </span>
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+
+                  {isSelectedStartDateInPast ? (
+                    <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                      {t('camps.cannotStartPast')}
+                      {minimumBookableCampStartDate
+                        ? ` ${t('camps.earliestStartSentence', { date: formatGameDateLabel(minimumBookableCampStartDate) })}`
+                        : ''}
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="p-5 text-sm text-gray-500">
+                  {t('camps.noMatches')}
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">{t('camps.riderSelection')}</h3>
+                <span className="text-xs text-gray-500">{t('camps.minimumRiders')}</span>
+              </div>
+
+              <div className="max-h-80 space-y-2 overflow-y-auto">
+                {selectableRoster.map(rider => {
+                  const isSelected = selectedRiderIds.includes(rider.rider_id)
+                  const overlapBlocked = overlapBlockedRiderMap.get(rider.rider_id)
+                  const isDisabled = Boolean(overlapBlocked)
+
+                  return (
+                    <label
+                      key={rider.rider_id}
+                      className={`flex items-center justify-between rounded-lg border px-3 py-2 ${
+                        isSelected ? 'border-blue-300 bg-blue-50' : 'border-gray-200'
+                      } ${isDisabled ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          disabled={isDisabled}
+                          onChange={() => toggleRider(rider.rider_id)}
+                        />
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <div className="text-sm font-medium text-gray-900">
+                              {getFullRiderName(rider)}
+                            </div>
+
+                            {rider.team_label === 'U23' ? (
+                              <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] font-medium text-indigo-700">
+                                {t('common.u23')}
+                              </span>
+                            ) : (
+                              <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700">
+                                {t('common.firstTeam')}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="text-xs text-gray-500">
+                            {rider.source_club_name} · OVR {rider.overall ?? '-'} · Fatigue{' '}
+                            {rider.fatigue ?? 0}
+                          </div>
+
+                          {overlapBlocked ? (
+                            <div className="text-[11px] text-red-600">
+                              {t('camps.overlapRider')}
+                            </div>
+                          ) : null}
+
+                          {['injured', 'sick'].includes(rider.availability_status) ? (
+                            <div className="text-[11px] text-amber-600">
+                              {t('camps.injuredCanAttend')}
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-xs font-medium ${AVAILABILITY_BADGE_STYLES[rider.availability_status]}`}
+                      >
+                        {t(AVAILABILITY_TRANSLATION_KEYS[rider.availability_status])}
+                      </span>
+                    </label>
+                  )
+                })}
+              </div>
+
+              {overlapBlockedRiderMap.size > 0 ? (
+                <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                  {t('camps.overlapWarning')}
+                </div>
+              ) : null}
+            </div>
+
+            <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+              <div className="mb-3 flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">{t('camps.staffSelection')}</h3>
+                  <p className="mt-1 text-sm text-gray-600">
+                    {t('camps.staffSelectionDescription')}
+                  </p>
+                </div>
+
+                <span className="text-xs text-gray-500">
+                  {t('common.selected')}: {selectedStaffIds.length}
+                </span>
+              </div>
+
+              {staffLoading ? (
+                <div className="rounded-lg border border-gray-200 p-4 text-sm text-gray-500">
+                  {t('camps.loadingStaff')}
+                </div>
+              ) : availableStaff.length === 0 ? (
+                <div className="rounded-lg border border-gray-200 p-4 text-sm text-gray-500">
+                  {t('camps.noEligibleStaff')}
+                </div>
+              ) : (
+                <div className="max-h-80 space-y-2 overflow-y-auto">
+                  {availableStaff.map(member => {
+                    const isSelected = selectedStaffIds.includes(member.staff_id)
+                    const isDisabled = !isStaffSelectable(member)
+                    const blockText = getStaffBlockText(member)
+
+                    return (
+                      <label
+                        key={member.staff_id}
+                        className={`flex items-center justify-between rounded-lg border px-3 py-2 ${
+                          isSelected ? 'border-blue-300 bg-blue-50' : 'border-gray-200'
+                        } ${isDisabled ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            disabled={isDisabled}
+                            onChange={() => toggleStaff(member.staff_id)}
+                          />
+
+                          <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <div className="text-sm font-medium text-gray-900">
+                                {member.staff_name || t('camps.unknownStaff')}
+                              </div>
+
+                              <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700">
+                                {member.role_label || titleCaseFromSnake(member.role_type || 'staff')}
+                              </span>
+
+                              {member.team_scope ? (
+                                <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-700">
+                                  {t('camps.scope', { value: member.team_scope.replaceAll('_', ' ') })}
+                                </span>
+                              ) : null}
+                            </div>
+
+                            <div className="text-xs text-gray-500">
+                              {member.club_name || t('common.club')} · {member.specialization === 'General' ? t('common.general') : (member.specialization || t('common.general'))} · OVR{' '}
+                              {member.overall ?? '-'} · {t('common.wage')} {formatCurrency(member.salary_weekly ?? 0)}
+                            </div>
+
+                            {member.boost_label ? (
+                              <div className="mt-1 text-[11px] text-green-700">
+                                {t('common.boost', { value: member.boost_label })}
+                              </div>
+                            ) : null}
+
+                            {blockText ? (
+                              <div className="mt-1 text-[11px] text-red-600">
+                                {blockText}
+                              </div>
+                            ) : null}
+                          </div>
+                        </div>
+
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                            isDisabled
+                              ? 'bg-red-100 text-red-700'
+                              : isSelected
+                                ? 'bg-blue-100 text-blue-700'
+                                : 'bg-green-100 text-green-700'
+                          }`}
+                        >
+                          {isDisabled ? t('common.unavailable') : isSelected ? t('common.selected') : t('common.available')}
+                        </span>
+                      </label>
+                    )
+                  })}
+                </div>
+              )}
+
+              {selectedStaffIds.length === 0 ? (
+                <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                  {t('camps.noStaffSelected')}
+                </div>
+              ) : null}
+            </div>
+
+            <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">{t('camps.quoteTitle')}</h3>
+                {quote?.weather_state ? (
+                  <span
+                    className={`rounded-full px-2.5 py-1 text-xs font-medium ${WEATHER_BADGE_STYLES[quote.weather_state]}`}
+                  >
+                    {t(`weather.${quote.weather_state}`, { defaultValue: WEATHER_LABELS[quote.weather_state] })}
+                  </span>
+                ) : null}
+              </div>
+
+              {quoteLoading ? (
+                <div className="text-sm text-gray-600">{t('camps.calculatingQuote')}</div>
+              ) : quote ? (
+                <div className="space-y-4">
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700">
+                      <div className="font-medium">{t('camps.ridersLabel')}</div>
+                      <div>{quote.riders_count ?? quote.participants_count}</div>
+                    </div>
+
+                    <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700">
+                      <div className="font-medium">{t('camps.staffLabel')}</div>
+                      <div>{quote.staff_count ?? selectedStaffIds.length}</div>
+                    </div>
+
+                    <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700">
+                      <div className="font-medium">{t('camps.chargedParticipants')}</div>
+                      <div>{quote.charged_participants_count ?? quote.participants_count}</div>
+                    </div>
+
+                    <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700">
+                      <div className="font-medium">{t('camps.perPerson')}</div>
+                      <div>{formatCurrency(quote.per_rider_total)}</div>
+                    </div>
+
+                    <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700">
+                      <div className="font-medium">{t('camps.travelTotal')}</div>
+                      <div>{formatCurrency(quote.travel_total)}</div>
+                    </div>
+                    <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700">
+                      <div className="font-medium">{t('camps.accommodation')}</div>
+                      <div>{formatCurrency(quote.accommodation_total)}</div>
+                    </div>
+                    <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700">
+                      <div className="font-medium">{t('camps.campFee')}</div>
+                      <div>{formatCurrency(quote.camp_fee_total)}</div>
+                    </div>
+                    <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700">
+                      <div className="font-medium">{t('camps.logistics')}</div>
+                      <div>{formatCurrency(quote.logistics_total)}</div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border border-gray-200 px-4 py-3">
+                    <div className="text-sm text-gray-500">{t('camps.totalCampCost')}</div>
+                    <div className="text-2xl font-semibold text-gray-900">
+                      {formatCurrency(quote.total_cost)}
+                    </div>
+                  </div>
+
+                  {isSelectedStartDateInPast ? (
+                    <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                      <div className="font-medium">{t('camps.bookingBlocked')}</div>
+                      <div className="mt-1">
+                        {t('camps.cannotStartPast')}
+                        {minimumBookableCampStartDate
+                          ? ` ${t('camps.earliestStartSentence', { date: formatGameDateLabel(minimumBookableCampStartDate) })}`
+                          : ''}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {filteredValidationErrors.length > 0 ? (
+                    <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                      <div className="font-medium">{t('camps.bookingBlocked')}</div>
+                      <ul className="mt-2 list-disc space-y-1 pl-5">
+                        {filteredValidationErrors.map(message => (
+                          <li key={message}>{translateCampSystemMessage(message)}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+
+                  {toArray(validation?.validation_warnings).length > 0 ||
+                  toArray(quote.warnings).length > 0 ? (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                      <div className="font-medium">{t('camps.warnings')}</div>
+                      <ul className="mt-2 list-disc space-y-1 pl-5">
+                        {toArray(validation?.validation_warnings).map(message => (
+                          <li key={`validation-${message}`}>{translateCampSystemMessage(message)}</li>
+                        ))}
+                        {toArray(quote.warnings).map(message => (
+                          <li key={`quote-${message}`}>{translateCampSystemMessage(message)}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+
+                  <button
+                    type="button"
+                    onClick={() => void handleDebugBooking()}
+                    disabled={!canSubmitBooking}
+                    className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+                  >
+                    {bookingLoading ? t('camps.bookingCamp') : t('camps.bookCamp')}
+                  </button>
+                </div>
+              ) : (
+                <div className="text-sm text-gray-600">
+                  {t('camps.quotePrompt')}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showCancelCampModal ? (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
+            <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {t('camps.cancelTitle')}
+                </h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  {t('camps.cancelSubtitle')}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (isCancellingCamp) return
+                  setShowCancelCampModal(false)
+                  setCancelCampError(null)
+                }}
+                disabled={isCancellingCamp}
+                className="rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
+                aria-label={t('camps.closeCancel')}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="space-y-4 px-6 py-5">
+              <div className="rounded-xl bg-gray-50 p-4">
+                <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                  {t('camps.camp')}
+                </div>
+                <div className="mt-1 text-sm font-semibold text-gray-900">
+                  {cancelCampName}
+                </div>
+                {currentCampBooking ? (
+                  <div className="mt-2 text-sm text-gray-600">
+                    <div>
+                      {formatCampDateRange(
+                        currentCampBooking.start_date,
+                        currentCampBooking.end_date
+                      )}
+                    </div>
+                    <div className="mt-1">
+                      {formatSeasonLabel(currentCampBooking.start_date)}
+                    </div>
+                    <div className="mt-1">
+                      Riders: {currentCampBooking.participants_count ?? 0} · Staff:{' '}
+                      {currentCampBooking.staff_count ?? 0} · Cost:{' '}
+                      {formatCurrency(currentCampBooking.total_cost ?? 0)}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                <div className="font-medium">{t('camps.important')}</div>
+                <div className="mt-1">
+                  This action will cancel the current training camp booking. Depending on your game rules, refund handling may be partial or unavailable.
+                </div>
+              </div>
+
+              {cancelCampError ? (
+                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  {cancelCampError}
+                </div>
+              ) : null}
+            </div>
+
+            <div className="flex justify-end gap-3 border-t border-gray-200 px-6 py-4">
+              <button
+                type="button"
+                onClick={() => {
+                  if (isCancellingCamp) return
+                  setShowCancelCampModal(false)
+                  setCancelCampError(null)
+                }}
+                disabled={isCancellingCamp}
+                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Keep Camp
+              </button>
+
+              <button
+                type="button"
+                onClick={() => void handleCancelCampConfirm()}
+                disabled={isCancellingCamp}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-300"
+              >
+                {isCancellingCamp ? 'Cancelling…' : 'Yes, Cancel Camp'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showAssignedRidersModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900">{t('camps.assignedRiders')}</h3>
+              <button
+                type="button"
+                onClick={() => setShowAssignedRidersModal(false)}
+                className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+              >
+                {t('common.close')}
+              </button>
+            </div>
+
+            <div className="mt-4 max-h-[420px] space-y-2 overflow-y-auto">
+              {currentCampParticipants.length === 0 ? (
+                <div className="rounded-lg border border-gray-200 p-4 text-sm text-gray-500">
+                  No assigned riders found.
+                </div>
+              ) : (
+                currentCampParticipants.map(rider => (
+                  <div
+                    key={rider.rider_id}
+                    className="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2"
+                  >
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-900">
+                          {getFullRiderName(rider)}
+                        </span>
+
+                        {rider.team_label === 'U23' ? (
+                          <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] font-medium text-indigo-700">
+                            {t('common.u23')}
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700">
+                            {t('common.firstTeam')}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="text-xs text-gray-500">
+                        {rider.source_club_name} · OVR {rider.overall ?? '-'} · Fatigue{' '}
+                        {rider.fatigue ?? 0}
+                      </div>
+                    </div>
+
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                        AVAILABILITY_BADGE_STYLES[rider.availability_status]
+                      }`}
+                    >
+                      {t(AVAILABILITY_TRANSLATION_KEYS[rider.availability_status])}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {!tutorialLoading && tutorialMode === 'invite' ? (
+        <TutorialOverlay
+          open
+          variant="invite"
+          title={trainingWelcomeTutorial.title}
+          body={trainingWelcomeTutorial.body}
+          primaryAction={trainingWelcomeTutorial.primaryAction}
+          secondaryAction={trainingWelcomeTutorial.secondaryAction}
+          onPrimary={handleStartTrainingTutorial}
+          onSecondary={handleSkipTrainingTutorial}
+          onClose={handleCloseTrainingTutorial}
+        />
+      ) : null}
+
+      {!tutorialLoading && tutorialMode === 'steps' ? (
+        <TutorialTargetFrame
+          target={trainingTutorialSteps[tutorialStepIndex].target ?? 'dashboard-page-body'}
+        />
+      ) : null}
+
+      {!tutorialLoading && tutorialMode === 'steps' ? (
+        <TutorialOverlay
+          open
+          variant="panel"
+          title={trainingTutorialSteps[tutorialStepIndex].title}
+          body={trainingTutorialSteps[tutorialStepIndex].body}
+          accessNote={trainingTutorialSteps[tutorialStepIndex].accessNote}
+          tip={trainingTutorialSteps[tutorialStepIndex].tip}
+          stepLabel={`${tutorialStepIndex + 1}/${trainingTutorialSteps.length}`}
+          primaryAction={
+            trainingTutorialSteps[tutorialStepIndex].primaryAction ?? t('common.next')
+          }
+          secondaryAction={
+            tutorialStepIndex === trainingTutorialSteps.length - 1
+              ? trainingTutorialSteps[tutorialStepIndex].secondaryAction
+              : 'Skip tutorial'
+          }
+          onPrimary={handleNextTrainingTutorialStep}
+          onSecondary={
+            tutorialStepIndex === trainingTutorialSteps.length - 1
+              ? handleFinishTrainingTutorialForNow
+              : handleSkipTrainingTutorial
+          }
+          onClose={handleCloseTrainingTutorial}
+        />
+      ) : null}
+    </div>
+  )
+}

@@ -1,0 +1,133 @@
+/**
+ * V4 research-only correction for a final OFFICIAL GROUP assignment that is
+ * NOT an observed physical catch. V2 production and classification untouched.
+ * A separate leading B lineage may survive while an F rider is grouped into P
+ * at the finish according to official results.
+ */
+export interface V4FinishBridge {
+ readonly riderIds:readonly string[]
+ readonly caughtByPeloton:boolean
+ readonly catchKm:number|null
+ readonly gapSamples?:readonly {readonly gapToPelotonSeconds:number}[]
+}
+export interface V4FinishTransitionContext {
+ readonly allTransitionsAreFrontCaughtByPeloton:boolean
+ readonly allTransitionsAreOpeningCaughtByPeloton:boolean
+ readonly physicalPelotonCatchToleranceSeconds:number
+ readonly changedRiderIds:readonly string[]
+ readonly finalDisplayCodes:readonly string[]
+ readonly bridgeGroups:readonly V4FinishBridge[]
+ readonly breakawaySurvived:boolean
+ readonly breakawayCaught:boolean
+ readonly physicalEndGapSeconds:number
+ readonly officialFinishGroupingToleranceSeconds:number
+}
+export interface V4FinishTransitionDecision {
+ readonly officialGroupingWithoutPhysicalCatch:boolean
+ readonly eventType:'catch'|'group_split'
+ readonly title:string
+ readonly usePhysicalPelotonGapAtTransition:boolean
+}
+export function reconcileV4FinishTransition(context:V4FinishTransitionContext):V4FinishTransitionDecision{
+ const b=context.bridgeGroups
+ const tolerated=context.officialFinishGroupingToleranceSeconds
+ const physicallyCaughtOpeningOnFinish =
+  context.allTransitionsAreOpeningCaughtByPeloton &&
+  context.changedRiderIds.length>0 &&
+  context.breakawayCaught===true &&
+  context.breakawaySurvived===false &&
+  Number.isFinite(context.physicalEndGapSeconds) &&
+  context.physicalEndGapSeconds>=0 &&
+  Number.isFinite(context.physicalPelotonCatchToleranceSeconds) &&
+  context.physicalPelotonCatchToleranceSeconds>=0 &&
+  context.physicalEndGapSeconds<=context.physicalPelotonCatchToleranceSeconds
+ const officiallyGroupedButNotCaught=
+  context.allTransitionsAreFrontCaughtByPeloton &&
+  context.changedRiderIds.length>0 &&
+  context.breakawaySurvived===true &&
+  context.breakawayCaught===false &&
+  context.finalDisplayCodes.some(code=>code.startsWith('B')) &&
+  context.finalDisplayCodes.includes('P') &&
+  Number.isFinite(context.physicalEndGapSeconds)&&context.physicalEndGapSeconds>0 &&
+  Number.isFinite(tolerated)&&tolerated>=0 &&
+  context.changedRiderIds.every(id=>b.some(bridge=>{
+    const separation=bridge.gapSamples?.at(-1)?.gapToPelotonSeconds
+    return bridge.riderIds.includes(id)&&bridge.caughtByPeloton===false&&
+      bridge.catchKm===null&&separation!==undefined&&
+      Number.isFinite(separation)&&separation>=0&&separation<=tolerated
+  }))
+ // The leading opening B can remain physically ahead by more than catch
+ // tolerance while official timing legitimately assigns the same finish group.
+ // Preserve that distinction. The replay catch-type event is only a grouping
+ // transition marker, NOT evidence that the peloton physically caught B.
+ const officialOpeningGroupingWithoutPhysicalCatch =
+  context.allTransitionsAreOpeningCaughtByPeloton &&
+  context.changedRiderIds.length>0 &&
+  context.breakawayCaught===false &&
+  context.breakawaySurvived===true &&
+  context.finalDisplayCodes.includes('P') &&
+  Number.isFinite(context.physicalPelotonCatchToleranceSeconds) &&
+  context.physicalPelotonCatchToleranceSeconds>=0 &&
+  Number.isFinite(context.officialFinishGroupingToleranceSeconds) &&
+  context.officialFinishGroupingToleranceSeconds>context.physicalPelotonCatchToleranceSeconds &&
+  Number.isFinite(context.physicalEndGapSeconds) &&
+  context.physicalEndGapSeconds>context.physicalPelotonCatchToleranceSeconds &&
+  context.physicalEndGapSeconds<=context.officialFinishGroupingToleranceSeconds
+ if(officialOpeningGroupingWithoutPhysicalCatch)return {
+  officialGroupingWithoutPhysicalCatch:true,
+  eventType:'catch',
+  title:'Opening breakaway shares the official peloton finish group',
+  usePhysicalPelotonGapAtTransition:true
+ }
+ // An opening B-to-P finish transition needs measured peloton contact, not
+ // just a shared official time group or a synthetic catch label.
+ if(physicallyCaughtOpeningOnFinish)return {
+  officialGroupingWithoutPhysicalCatch:false,
+  eventType:'catch',
+  title:'Opening breakaway caught on the line',
+  usePhysicalPelotonGapAtTransition:false
+ }
+ // Preserve physical catches if *any* changed rider has recorded catch evidence.
+ if(officiallyGroupedButNotCaught)return {
+  officialGroupingWithoutPhysicalCatch:true,
+  eventType:'catch',
+  title:'Front group joins the official peloton finish group',
+  usePhysicalPelotonGapAtTransition:true
+ }
+ return {
+  officialGroupingWithoutPhysicalCatch:false,
+  eventType:context.allTransitionsAreFrontCaughtByPeloton?'catch':'group_split',
+  title:context.allTransitionsAreFrontCaughtByPeloton
+   ?'Front group caught on the line':'Final gaps open on the line',
+  usePhysicalPelotonGapAtTransition:false
+ }
+}
+
+
+/**
+ * Preserve fractional road seconds when deciding actual finishing group
+ * membership. Pre-finish transitive grouping retains legacy rounded gaps.
+ * The five-second physical tolerance remains unchanged.
+ */
+export function preserveV4FinishGroupGap(
+ gapSeconds:number,
+ allowTransitiveMerging:boolean
+):number{
+ if(!Number.isFinite(gapSeconds))throw Error('Invalid physical finish gap')
+ return Math.max(0,allowTransitiveMerging?Math.round(gapSeconds):gapSeconds)
+}
+
+/**
+ * V4's fractional physical finish gap and absolute official time must satisfy
+ * the unchanged exact timing invariant. Round-trip through the absolute time
+ * solely to align their IEEE-754 representations; no whole-second rounding.
+ */
+export function canonicalV4OfficialFinishGap(
+ winnerTimeSeconds:number,
+ physicalGapSeconds:number
+):number{
+ if(!Number.isFinite(winnerTimeSeconds)||!Number.isFinite(physicalGapSeconds)||
+    winnerTimeSeconds<0||physicalGapSeconds<0)
+  throw Error('Invalid V4 official finish timing input')
+ return (winnerTimeSeconds+physicalGapSeconds)-winnerTimeSeconds
+}

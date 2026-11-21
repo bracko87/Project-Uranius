@@ -1,0 +1,58 @@
+{
+  "page": {
+    "back": "← Zurück",
+    "title": "Scouting",
+    "subtitle": "Alle abgeschlossenen Scout-Berichte an einem Ort. Filtern Sie nach Status und springen Sie direkt zum Reiterprofil.",
+    "loading": "Scouting-Berichte werden geladen...",
+    "empty": "Noch keine Scouting-Berichte entsprechen diesem Filter.",
+    "loadFailed": "Scouting-Berichte konnten nicht geladen werden.",
+    "reviewFailed": "Nicht beschriftet."
+  },
+  "filters": {
+    "all": "Insgesamt",
+    "new": "Neu",
+    "reviewed": "Überprüfung"
+  },
+  "report": {
+    "unknownRider": "Unbekannter Fahrer",
+    "scout": "Scout",
+    "scoutName": "Scout: {{name}}",
+    "completed": "Ergänzt: {{date}}",
+    "overall": "Insgesamt",
+    "potential": "Mögliche",
+    "keyStrengths": "Schlüsselfaktoren",
+    "more": "(+mehr)",
+    "notes": "Anmerkungen:",
+    "openProfile": "Profil des geöffneten Fahrers"
+  },
+  "potential": {
+    "veryLow": "Sehr niedrig",
+    "low": "Niedrig",
+    "medium": "Mittel",
+    "high": "Hoch",
+    "elite": "Elite"
+  },
+  "skills": {
+    "sprint": "Sprint",
+    "climbing": "Klettern",
+    "timeTrial": "Zeitfahren",
+    "endurance": "Ausdauer",
+    "flat": "Flach",
+    "recovery": "Rückforderung",
+    "resistance": "Widerstandsfähigkeit",
+    "raceIq": "Rennen IQ",
+    "teamwork": "Teamarbeit",
+    "morale": "Moral"
+  },
+  "table": {
+    "riderScout": "Fahrer & Scout",
+    "overallPotential": "Gesamt-/Potenziell",
+    "strengthsNotes": "Wichtige Stärken & Anmerkungen",
+    "action": "Maßnahmen"
+  },
+  "pagination": {
+    "previous": "Zurück",
+    "next": "Nächste",
+    "page": "Seite {{page}} von {{total}}"
+  }
+}

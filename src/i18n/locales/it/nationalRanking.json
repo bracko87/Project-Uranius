@@ -1,0 +1,327 @@
+{
+  "title": "Campionato nazionale - {{country}}",
+  "eyebrow": "Competizione nazionale",
+  "description": "Classifica nazionale individuale dei corridori, qualificazione al campionato, impegno nazionale e preparazione individuale. I punti della classifica a squadre non vengono influenzati.",
+  "country": "Paese",
+  "loading": "Caricamento campionato nazionale…",
+  "errors": {
+    "unavailable": "I dati del campionato nazionale non sono disponibili.",
+    "load": "Impossibile caricare il campionato nazionale.",
+    "save": "Impossibile salvare il piano del corridore."
+  },
+  "cards": {
+    "freeze": "Blocco classifica",
+    "frozen": "Classifica bloccata per questa edizione",
+    "live": "La classifica live è ancora in movimento",
+    "qualification": "Qualificazione",
+    "notRequired": "Non richiesta",
+    "heatPlaces": "{{heats}} gruppo/i di qualificazione · {{places}} posti in finale",
+    "directField": "Il gruppo accede direttamente alla finale",
+    "final": "Finale nazionale",
+    "targetField": "Gruppo obiettivo {{count}} · {{status}}",
+    "preparation": "Preparazione",
+    "riderControlled": "Gestione corridore",
+    "prepDescription": "Solo equipaggiamento e tattiche individuali. Staff, mezzi e rifornimenti sono gestiti dall’organizzatore.",
+    "dutyWindow": "Finestra impegno nazionale",
+    "noTeamCost": "Nessun costo per la squadra",
+    "hostRoute": "Percorso della finale",
+    "hostPending": "Percorso non ancora pronto",
+    "hostPendingHelp": "Il campionato attende finché non sono disponibili due percorsi adatti."
+  },
+  "duty": {
+    "title": "Il mio impegno nazionale",
+    "description": "Questi corridori vengono iscritti automaticamente. Gestisci solo equipaggiamento e strategia individuale di ciascuno.",
+    "locked": "Gara individuale — nessuna tattica di squadra. Staff, mezzi e rifornimenti del club non sono disponibili.",
+    "directQualifier": "Qualificato diretto",
+    "qualificationHeat": "Gruppo di qualificazione {{number}}",
+    "noPlan": "Al momento non è disponibile un piano modificabile per questo corridore.",
+    "empty": "Nessuno dei tuoi corridori ha un invito attivo per l'impegno nazionale in questo campionato."
+  },
+  "organizer": {
+    "title": "Pacchetto gara dell’organizzatore",
+    "bidons": "{{count}} borracce",
+    "gels": "{{count}} gel",
+    "nutrition": "{{count}} pacchetti nutrizione",
+    "kit": "Completo del campionato fornito",
+    "rain": "Protezione pioggia fornita se necessaria"
+  },
+  "plan": {
+    "qualificationHeat": "Gruppo di qualificazione {{number}}",
+    "final": "Finale del Campionato Nazionale",
+    "openRace": "Apri gara",
+    "individualBadge": "Gara individuale — nessuna tattica di squadra",
+    "equipment": "Equipaggiamento corridore",
+    "organizerEquipment": "Equipaggiamento standard dell’organizzatore",
+    "equipmentHelp": "Puoi scegliere un setup del club; altrimenti viene usato l’equipaggiamento standard dell’organizzatore. Staff, mezzi e rifornimenti restano gestiti dall’organizzatore.",
+    "strategy": "Strategia individuale",
+    "phaseStart": "Partenza",
+    "phaseEarly": "Inizio / metà",
+    "phaseLate": "Finale di gara",
+    "phaseFinish": "Arrivo",
+    "save": "Salva piano corridore",
+    "saved": "{{rider}}: piano {{event}} salvato."
+  },
+  "event": {
+    "qualification": "qualificazione",
+    "final": "finale"
+  },
+  "tactics": {
+    "rideNaturally": "Correre naturalmente",
+    "conserveEnergy": "Conservare energia",
+    "stayNearFront": "Restare davanti",
+    "joinBreakaway": "Entrare nella fuga",
+    "attack": "Attaccare",
+    "chaseBreakaway": "Inseguire la fuga",
+    "climbHard": "Spingere in salita",
+    "sprint": "Sprintare",
+    "avoidRisks": "Evitare rischi"
+  },
+  "heats": {
+    "title": "Gruppi di qualificazione",
+    "heat": "Gruppo {{number}}",
+    "summary": "{{riders}} corridori · avanzano i primi {{places}}",
+    "open": "Apri batteria"
+  },
+  "ranking": {
+    "frozen": "Classifica nazionale bloccata",
+    "live": "Classifica nazionale live",
+    "description": "Basata sui punti gara con ponderazione della recenza. I bonus del Campionato Nazionale valgono solo per i corridori.",
+    "refresh": "Aggiorna",
+    "rank": "Pos.",
+    "rider": "Corridore",
+    "weighted": "Punti ponderati",
+    "raw": "Punti grezzi",
+    "latest": "Ultimo risultato",
+    "overall": "Generale",
+    "team": "Squadra",
+    "qualificationStatus": "Stato qualificazione",
+    "freeAgent": "Svincolato",
+    "pageRange": "{{from}}–{{to}} di {{total}}",
+    "perPage": "{{count}} per pagina",
+    "previous": "Precedente",
+    "next": "Successiva",
+    "page": "Pagina {{page}} di {{pages}}",
+    "directFinal": "Finale diretta",
+    "qualificationHeat": "Gruppo di qualificazione {{number}}",
+    "qualifiedFinal": "Qualificato per la finale",
+    "eliminated": "Eliminato",
+    "withdrawn": "Non partecipa"
+  },
+  "results": {
+    "title": "Risultati del campionato",
+    "pending": "I risultati della finale appariranno automaticamente dopo il calcolo del campionato.",
+    "independent": "Indipendente"
+  },
+  "champions": {
+    "title": "Campioni precedenti",
+    "season": "Stagione {{number}}",
+    "first": "Il primo campione verrà aggiunto qui automaticamente.",
+    "badge": "Campione nazionale",
+    "history": "Storico del campionato",
+    "titles": "{{count}} titoli nazionali"
+  },
+  "common": {
+    "club": "Club",
+    "national": "Nazionale"
+  },
+  "status": {
+    "planned": "Pianificato",
+    "ranking_frozen": "Classifica bloccata",
+    "qualification_pending": "Qualificazione in attesa",
+    "qualification_completed": "Qualificazione completata",
+    "final_ready": "Finale pronta",
+    "completed": "Completato",
+    "cancelled": "Annullato",
+    "ready": "Pronto",
+    "direct_qualified": "Qualificato diretto",
+    "qualification_assigned": "Qualificazione assegnata",
+    "qualified": "Qualificato",
+    "eliminated": "Eliminato",
+    "withdrawn": "Ritirato",
+    "finalist": "Finalista"
+  },
+  "availability": {
+    "climateTitle": "Finestra climatica non disponibile",
+    "climateUnavailable": "Nei dati climatici attuali non esiste una finestra di campionato sopra i 20 °C. Massima settimanale idonea più calda: {{temperature}} °C.",
+    "routeTitle": "Serve un percorso per il campionato",
+    "routeMissing": "Questo paese non dispone attualmente di una tappa su strada adatta al Campionato Nazionale. Il campionato resterà in pausa finché non saranno disponibili almeno due tappe adatte.",
+    "singleRoute": "Per questo paese esiste attualmente una sola tappa su strada adatta al Campionato Nazionale. Il campionato resterà in pausa finché non verrà aggiunto un secondo percorso, così qualificazione e finale potranno usare tracciati diversi.",
+    "windowTitle": "Finestra impegno nazionale:",
+    "windowDates": "{{start}}–{{end}} · massima prevista nella finestra calda {{temperature}} °C · nessun costo per la squadra."
+  },
+  "decision": {
+    "title": "Partecipazione all'impegno nazionale",
+    "blockedWindow": "Questo corridore è provvisoriamente indisponibile per il club dal {{start}} al {{end}}.",
+    "deadline": "Scadenza decisione: {{date}}",
+    "approve": "Approva impegno nazionale",
+    "reject": "Rifiuta · tieni al club",
+    "rejectWarning": "Il rifiuto annulla la partecipazione programmata di questo corridore all'impegno nazionale e gli costa 2 punti morale.",
+    "participationBenefit": "Se partecipa, si applicano normalmente fatica e sviluppo delle abilità; concludere una gara del Campionato Nazionale dà anche +1 morale.",
+    "error": "Impossibile salvare la decisione sull'impegno nazionale.",
+    "approvedMessage": "{{rider}} parteciperà all'impegno nazionale.",
+    "rejectedMessage": "{{rider}} resterà con il club e ha ricevuto la penalità morale per il rifiuto.",
+    "status": {
+      "pending": "Decisione del club in attesa",
+      "approved": "Approvato dal club",
+      "auto_approved": "Approvato automaticamente",
+      "rejected": "Partecipazione rifiutata"
+    }
+  },
+  "header": {
+    "subtitle": "Corridori nazionali, qualificazione e impegni del campionato"
+  },
+  "draw": {
+    "title": "Tabellone del campionato",
+    "confirmed": "Struttura del campionato confermata",
+    "projected": "Proiezione basata sulla classifica nazionale attuale fino al blocco della classifica",
+    "qualificationHeat": "Gruppo di qualificazione {{number}}",
+    "final": "Finale nazionale",
+    "routePending": "Percorso ospitante in attesa",
+    "ridersCount": "{{count}} corridori",
+    "advanceCount": "Passano i primi {{count}}",
+    "finalFieldCount": "{{count}} corridori in finale"
+  },
+  "tabs": {
+    "ranking": "Classifica",
+    "duty": "Il mio impegno nazionale",
+    "history": "Storico"
+  },
+  "info": {
+    "title": "Informazioni sul campionato",
+    "description": "I Campionati Nazionali sono gare individuali. Non ci sono tattiche di squadra, staff, veicoli o rifornimenti del club. L'organizzatore copre logistica e costi; tu controlli solo equipaggiamento e tattiche individuali di ogni corridore invitato.",
+    "openGuide": "Apri la guida completa alla Classifica Nazionale e al Campionato"
+  },
+  "summary": {
+    "title": "Calendario del Campionato Nazionale",
+    "subtitle": "Date chiave, finestra dell'impegno nazionale e percorso ospitante del campionato del tuo paese."
+  },
+  "host": {
+    "openRace": "Apri pagina gara"
+  },
+  "eventPage": {
+    "invalid": "Questo evento del Campionato Nazionale non è disponibile.",
+    "back": "Torna alla classifica nazionale",
+    "qualificationTitle": "Qualificazione nazionale {{country}} · Gruppo {{number}}",
+    "finalTitle": "Finale del Campionato Nazionale {{country}}",
+    "nationalEvent": "Campionato Nazionale",
+    "group": "Gruppo {{number}}",
+    "subtitle": "Evento nazionale individuale. Nessuna tattica di squadra, iscrizione della squadra o costo gara per il club.",
+    "date": "Data",
+    "startTime": "Partenza",
+    "startTimeTbd": "L'orario di partenza viene definito quando la gara viene generata",
+    "riders": "Corridori",
+    "qualifyingPlaces": "Posti di qualificazione",
+    "finalField": "Partecipanti alla finale",
+    "route": "Percorso",
+    "stageProfile": "Profilo del percorso",
+    "distance": "Distanza",
+    "terrain": "Terreno",
+    "elevation": "Dislivello",
+    "expectedTemperature": "Temperatura massima prevista",
+    "profileNote": "Negli eventi del Campionato Nazionale vengono usati solo partenza, arrivo e profilo del terreno. Non ci sono GPM/KOM o sprint intermedi.",
+    "profileChartAlt": "Profilo altimetrico del percorso del Campionato Nazionale",
+    "profileDescription": "Percorso del Campionato Nazionale basato sul profilo di terreno selezionato nel paese ospitante.",
+    "terrainTypes": {
+      "flat": "Pianeggiante",
+      "hilly": "Collinare",
+      "mountain": "Montagna",
+      "cobbled": "Pavé"
+    },
+    "oneDayRace": "Gara di un giorno",
+    "raceDateLine": "Data gara: {{date}} — {{place}}",
+    "noTeamCost": "Nessun costo per la squadra",
+    "stages": "Tappe",
+    "stageOne": "Tappa 1",
+    "replayAfterGeneration": "Il replay sarà disponibile tramite il normale sistema di replay dopo che questa gara del Campionato Nazionale sarà stata generata e calcolata.",
+    "raceInformation": "Informazioni gara",
+    "ridersResults": "Corridori e risultati",
+    "results": "Risultati",
+    "finalRidersPending": "I partecipanti alla finale saranno noti dopo il completamento dei gruppi di qualificazione.",
+    "noRiders": "Al momento non ci sono corridori assegnati a questo evento.",
+    "jersey": "Maglia",
+    "rider": "Corridore",
+    "team": "Squadra",
+    "time": "Tempo",
+    "gap": "Distacco",
+    "status": "Stato",
+    "resultsPending": "I risultati saranno pubblicati qui dopo la conclusione della gara.",
+    "refresh": "Aggiorna",
+    "finished": "Gara conclusa",
+    "ready": "Gara pronta",
+    "planned": "Pianificata"
+  },
+  "world": {
+    "winnerQualifies": "Il vincitore si qualifica automaticamente al Campionato Mondiale su Strada",
+    "title": "Campionato Mondiale su Strada",
+    "grandFinale": "Gran Finale",
+    "warmHost": "Paese ospitante dal clima caldo",
+    "championsQualified": "Campioni qualificati: {{count}}",
+    "confirmedCount": "Confermati: {{count}}",
+    "openChampionship": "Apri il Campionato Mondiale →",
+    "scheduledDescription": "In programma dall'inizio della stagione. I campioni nazionali vengono aggiunti automaticamente.",
+    "scheduledNotice": "Il Gran Finale del Mondiale è previsto per questa stagione.",
+    "invitation": "Invito al Campionato Mondiale su Strada",
+    "nationalChampionLabel": "Campione nazionale di {{country}}",
+    "unavailable": "Non disponibile",
+    "decisionDeadline": "Scadenza della decisione",
+    "dutyEffects": "Il corridore è riservato per il Mondiale. L'organizzatore copre i costi. Accettare dà +10 morale; rifiutare toglie 15. Fatica ed effetti della corsa si applicano normalmente.",
+    "openRace": "Apri la pagina della corsa mondiale",
+    "allowRider": "Consenti al corridore",
+    "refuse": "Rifiuta",
+    "secondConfirmation": "Seconda conferma - finale mondiale",
+    "secondConfirmationHelp": "Hai già accettato l'invito al Mondiale. Conferma nuovamente il corridore prima del Gran Finale.",
+    "finalDeadline": "Scadenza conferma finale",
+    "status": "Stato",
+    "confirmAgain": "Conferma nuovamente",
+    "refuseFinal": "Rifiuta finale",
+    "phase": {
+      "planned": "Pianificato",
+      "completed": "Completato",
+      "finalConfirmations": "Conferme finali",
+      "startlistConfirmed": "Startlist confermata",
+      "invitationsOpen": "Inviti aperti",
+      "championsQualifying": "Campioni nazionali in qualificazione"
+    },
+    "decision": {
+      "pending": "In attesa",
+      "approved": "Approvato",
+      "auto_approved": "Approvato automaticamente",
+      "rejected": "Rifiutato",
+      "not_open": "Non ancora aperto"
+    },
+    "toasts": {
+      "accepted": "{{rider}} correrà il Gran Finale mondiale. Morale +10.",
+      "refused": "{{rider}} non correrà il Gran Finale mondiale. Morale -15.",
+      "participationError": "Impossibile aggiornare la partecipazione al Mondiale.",
+      "nationalConfirmed": "{{rider}} è di nuovo confermato per la finale nazionale.",
+      "nationalRefused": "{{rider}} non correrà la finale nazionale.",
+      "nationalError": "Impossibile aggiornare la seconda conferma nazionale.",
+      "worldConfirmed": "{{rider}} è confermato definitivamente per il Mondiale.",
+      "worldWithdrawn": "{{rider}} è stato ritirato dal Mondiale. Morale -15.",
+      "worldError": "Impossibile aggiornare la conferma finale mondiale.",
+      "withdrawnNational": "{{rider}} è stato ritirato dalla finale nazionale e ha ricevuto la penalità morale per rifiuto.",
+      "withdrawError": "Impossibile ritirare il corridore dalla finale nazionale."
+    }
+  },
+  "dutyExtra": {
+    "decisionsOnly": "Solo decisioni di partecipazione",
+    "decisionsHelp": "Approva o rifiuta qui l'impegno per il campionato nazionale. I corridori approvati vengono aggiunti automaticamente al gruppo di qualificazione o alla lista della finale. Attrezzatura e tattica individuale si impostano in Preparazione Gara.",
+    "openPreparation": "Apri Preparazione Gara",
+    "secondConfirmation": "Seconda conferma - finale nazionale",
+    "secondConfirmationHelp": "Questo corridore ha raggiunto la finale nazionale. Il manager deve approvare o rifiutare separatamente la partecipazione.",
+    "final": "Finale",
+    "confirmFinal": "Conferma finale",
+    "synced": "{{rider}} è stato approvato e aggiunto automaticamente a {{race}}. Gestisci attrezzatura e tattica individuale in Preparazione Gara."
+  },
+  "historyExtra": {
+    "raceName": "Finale del Campionato Nazionale - {{country}}",
+    "myRiders": "I tuoi corridori fuori dalla top 10"
+  },
+  "terrain": {
+    "flat": "Pianura",
+    "hilly": "Collinare",
+    "mountain": "Montagna",
+    "cobbles": "Pavé",
+    "time_trial": "Cronometro"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "preferences": {
+    "title": "Podešavanja",
+    "languageSectionTitle": "Jezik",
+    "languageSectionDescription": "Izaberite jezik koji će se koristiti u ProPeloton Manager-u."
+  },
+  "dropdown": {
+    "guest": "Gost",
+    "club": "Klub",
+    "menu": "Meni profila",
+    "signedInAs": "Prijavljeni ste kao"
+  }
+}

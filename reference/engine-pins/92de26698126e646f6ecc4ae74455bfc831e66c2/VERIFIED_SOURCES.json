@@ -1,0 +1,27 @@
+[
+  {
+    "file": "src/universal-race-engine/roadStageWinningTimeV1.ts",
+    "sha256": "535171797fcfd4125853c8a691b7a3659710ef958c22fa62ab601cbf5ec95628",
+    "blob": "dddb7d0fe1843b46ab30c03554e194b1d0e1d97f"
+  },
+  {
+    "file": "src/universal-race-engine/summitFinishSelectivityV1.ts",
+    "sha256": "d7d33d7e5a9b87dfa509cdcb68a4c4eeed1a90b49e81c14b9b4f68abf9a0a17d",
+    "blob": "6eb0c543b7ab8c330c09c1ff7b54c48775450fcb"
+  },
+  {
+    "file": "src/universal-race-engine/summitFinishPhysicalHandoffV1.ts",
+    "sha256": "12d4e7abd8c94b385bf5d842911eafe103abd3d64b4ff80c5ac553fb42e41b03",
+    "blob": "38c4edd8d75a3c94944f708e3c46c186acb7ae05"
+  },
+  {
+    "file": "src/universal-race-engine/roadScenarioPhysicalDirectorV1.ts",
+    "sha256": "1316a0950cc9c1c1c48c04ce6015a4f467c33405224c1d44c58c953546c3e212",
+    "blob": "20c52cfb47306eca76e7b8ff5247adc359f00f73"
+  },
+  {
+    "file": "src/universal-race-engine/replayPhysicalStateV16.ts",
+    "sha256": "68eb0ae1ec285a1a7fba6b94dba90d6e83feb3dd58ea3948f3722fa09c29beee",
+    "blob": "88ee11ae69ddcee742372c70e5bc78b27fad49c5"
+  }
+]

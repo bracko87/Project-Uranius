@@ -1,0 +1,2664 @@
+/**
+ * ProPackages.tsx
+ * Premium membership, billing management, optional coin packages and history.
+ *
+ * - Normal gameplay remains free.
+ * - Free users see Become Premium.
+ * - Existing subscribers see Manage subscription.
+ * - Manage subscription opens Stripe Customer Portal for cancellation,
+ *   payment-method management and Stripe-hosted invoices.
+ * - Premium invoices, coin-package purchases and the coin ledger are shown
+ *   as separate history sections.
+ */
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router'
+import appI18n from '../i18n'
+import { supabase } from '../lib/supabase'
+import EarnCoinsDialog, { useEarnCoinsLabel } from '@/components/rewards/EarnCoinsDialog'
+import { Coins } from 'lucide-react'
+
+type CoinStatusRow = {
+  balance: number
+  can_play: boolean
+}
+
+type PremiumPlanRow = {
+  code: string
+  name: string
+  description: string | null
+  price_cents: number
+  currency: string
+  interval_unit: string
+  interval_count: number
+  coins_per_paid_invoice: number
+  active: boolean
+}
+
+type PremiumStatusRow = {
+  access_tier: string
+  is_premium: boolean
+  plan_code: string | null
+  plan_name: string | null
+  stripe_status: string
+  access_until: string | null
+  cancel_at_period_end: boolean
+  current_period_end: string | null
+  coins_per_paid_invoice: number
+}
+
+type PremiumSubscriptionDetailRow = {
+  plan_code: string
+  stripe_customer_id: string | null
+  stripe_subscription_id: string | null
+  stripe_status: string
+  cancel_at_period_end: boolean
+  current_period_start: string | null
+  current_period_end: string | null
+  access_until: string | null
+  created_at: string
+  metadata: Record<string, unknown> | null
+}
+
+type PremiumInvoiceRow = {
+  stripe_invoice_id: string
+  plan_code: string
+  billing_reason: string | null
+  amount_paid_cents: number | null
+  currency: string | null
+  coins_granted: number
+  period_start: string | null
+  period_end: string | null
+  processed_at: string | null
+  status: string | null
+  credited_cents: number
+  refunded: boolean
+  hosted_invoice_url: string | null
+}
+
+type DevelopingTeamServiceStatus = {
+  main_club_id: string | null
+  developing_club_id: string | null
+  developing_club_name: string | null
+
+  team_exists: boolean
+  access_status: 'active' | 'expired' | 'not_activated'
+  is_active: boolean
+  is_read_only: boolean
+
+  current_season: number
+  active_season: number | null
+  expires_after_season: number | null
+  next_renewal_season: number | null
+
+  auto_renew: boolean
+  activation_coin_cost: number
+  renewal_coin_cost: number
+  coin_balance: number
+
+  can_activate: boolean
+  can_reactivate: boolean
+  can_change_auto_renew: boolean
+}
+
+type YouthAcademyServiceStatus = {
+  premium: boolean
+  activated: boolean
+  read_only?: boolean
+  capacity: number
+  starter_riders?: number
+  default_season_budget?: number
+  activation_coin_cost?: number
+  renewal_coin_cost?: number
+  current_season?: number
+  renewed_through_season?: number | null
+  season_access_active?: boolean
+  renewal_required?: boolean
+  can_renew?: boolean
+  coin_balance?: number
+  real_days_played?: number
+  game_days_played?: number
+  unlock_real_days_required?: number
+  unlock_game_days_required?: number
+  time_requirement_met?: boolean
+  can_activate?: boolean
+  academy?: {
+    id: string
+    active_riders: number
+    reputation: number
+    activated_season: number
+  } | null
+}
+
+type DbCoinPackage = {
+  code: string
+  coins: number
+  price_cents: number
+  currency: string
+  active: boolean
+}
+
+type UiCoinPackage = {
+  code: string
+  coins: number
+  priceEur: number
+  tagline?: string
+}
+
+type PurchaseRow = {
+  delta: number
+  reason: string
+  payload_json: any
+  created_at: string
+}
+
+type PurchaseUi = {
+  createdAt: string
+  coins: number
+  packageCode: string | null
+  priceEur: number | null
+}
+
+type CoinLedgerRow = {
+  delta: number
+  reason: string
+  payload_json: any
+  created_at: string
+}
+
+type CoinTransactionUi = {
+  createdAt: string
+  delta: number
+  reason: string
+  description: string
+  packageCode: string | null
+}
+
+type EdgeResponse = {
+  url?: string
+  error?: string
+  code?: string
+}
+
+type PremiumBillingSubscription = {
+  id: string
+  status: string
+  cancel_at_period_end: boolean
+  cancel_at: string | null
+  canceled_at: string | null
+  ended_at: string | null
+  current_period_start: string | null
+  current_period_end: string | null
+}
+
+type PremiumBillingSummaryResponse = EdgeResponse & {
+  subscription?: PremiumBillingSubscription | null
+  invoices?: PremiumInvoiceRow[]
+  has_billing_profile?: boolean
+  manual_access?: boolean
+}
+
+const COIN_HISTORY_PAGE_SIZE = 20
+// Display fallbacks only. get_developing_team_status() is the authoritative source.
+const DEFAULT_DEVELOPING_TEAM_ACTIVATION_COIN_COST = 100
+const DEFAULT_DEVELOPING_TEAM_RENEWAL_COIN_COST = 100
+
+// Canonical real-money catalog for the Pro Packages page.
+ // Keep these values aligned with the billing database and Stripe catalog.
+ // This page is the only ProPeloton area that intentionally displays EUR.
+const PRO_PREMIUM_PRICE_EUR = 3.29
+const PRO_PREMIUM_MONTHLY_COINS = 30
+const PRO_COIN_PACKAGE_PRICES_EUR: Record<string, number> = {
+  coins_70: 2.99,
+  coins_130: 4.99,
+  coins_270: 9.99,
+  coins_390: 13.99,
+  coins_570: 19.99,
+  coins_900: 29.99,
+}
+const STRIPE_RETURN_RETRY_DELAYS_MS = [0, 1500, 3000, 5000, 8000, 12000]
+
+type StripeReturnResult = 'success' | 'cancel' | 'portal_return'
+
+function readStripeReturnParams(): {
+  result: StripeReturnResult | null
+  sessionId: string | null
+} {
+  if (typeof window === 'undefined') {
+    return { result: null, sessionId: null }
+  }
+
+  const hash = window.location.hash
+  const queryIndex = hash.indexOf('?')
+
+  if (queryIndex < 0) {
+    return { result: null, sessionId: null }
+  }
+
+  const params = new URLSearchParams(hash.slice(queryIndex + 1))
+  const rawResult = params.get('premium')
+  const result: StripeReturnResult | null =
+    rawResult === 'success' ||
+    rawResult === 'cancel' ||
+    rawResult === 'portal_return'
+      ? rawResult
+      : null
+
+  return {
+    result,
+    sessionId: params.get('session_id'),
+  }
+}
+
+function cleanStripeReturnUrl() {
+  if (typeof window === 'undefined') return
+
+  const hash = window.location.hash
+  const queryIndex = hash.indexOf('?')
+  const cleanHash = queryIndex >= 0 ? hash.slice(0, queryIndex) : hash
+  const normalizedHash = cleanHash || '#/dashboard/pro'
+
+  window.history.replaceState(
+    window.history.state,
+    document.title,
+    `${window.location.pathname}${window.location.search}${normalizedHash}`,
+  )
+}
+
+function dispatchPremiumRefreshEvents() {
+  if (typeof window === 'undefined') return
+
+  window.dispatchEvent(new CustomEvent('premium-status-changed'))
+  window.dispatchEvent(new CustomEvent('coin-balance-changed'))
+}
+
+function wait(delayMs: number): Promise<void> {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, delayMs)
+  })
+}
+
+function normalizeCoinCost(value: unknown, fallback: number): number {
+  const parsed = Number(value)
+
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
+}
+
+const COMPARISON_ROWS = [
+  ['comparison.r1', '✓', '✓'],
+  ['comparison.r2', '✓', '✓'],
+  ['comparison.r3', '✓', '✓'],
+  ['comparison.r4', '✓', '✓'],
+  ['comparison.r5', '✓', '✓'],
+  ['comparison.r6', '—', '✓'],
+  ['comparison.r7', '—', '30'],
+  ['comparison.r8', 'comparison.freeShortlist', 'comparison.premiumShortlist'],
+  ['comparison.r9', 'comparison.freeReplay', 'comparison.premiumReplay'],
+  ['comparison.r10', '—', '✓'],
+  ['comparison.r11', '—', '✓'],
+  ['comparison.r12', '✓', '✓'],
+] as const
+
+const PREMIUM_ADVANTAGES = [
+  'advantages.a1',
+  'advantages.a2',
+  'advantages.a3',
+  'advantages.a4',
+  'advantages.a5',
+  'advantages.a6',
+  'advantages.a7',
+  'advantages.a8',
+  'advantages.a9',
+  'advantages.a10',
+] as const
+
+function eur(value: number) {
+  const safeValue = Number.isFinite(Number(value)) ? Number(value) : 0
+  return `€${safeValue.toFixed(2)}`
+}
+
+function moneyFromCents(
+  cents: number | null | undefined,
+  currency: string | null | undefined,
+) {
+  const safeCurrency = String(currency || 'EUR').toUpperCase()
+  const safeCents = Number(cents ?? 0)
+
+  try {
+    return new Intl.NumberFormat(appI18n.resolvedLanguage ?? appI18n.language ?? 'en', {
+      style: 'currency',
+      currency: safeCurrency,
+    }).format(safeCents / 100)
+  } catch {
+    return `${(safeCents / 100).toFixed(2)} ${safeCurrency}`
+  }
+}
+
+function perCoin(priceEur: number, coins: number) {
+  return priceEur / coins
+}
+
+function taglineForCoins(coins: number) {
+  if (coins <= 70) return 'packages.starter'
+  if (coins <= 130) return 'packages.newSeason'
+  if (coins <= 270) return 'packages.balanced'
+  if (coins <= 390) return 'packages.popular'
+  if (coins <= 570) return 'packages.manager'
+  return 'packages.longTerm'
+}
+
+function formatDateTime(iso: string | null | undefined) {
+  if (!iso) return '—'
+
+  try {
+    return new Date(iso).toLocaleString(appI18n.resolvedLanguage ?? appI18n.language ?? 'en', {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  } catch {
+    return iso
+  }
+}
+
+function formatDate(iso: string | null | undefined) {
+  if (!iso) return '—'
+
+  try {
+    return new Date(iso).toLocaleDateString(appI18n.resolvedLanguage ?? appI18n.language ?? 'en', {
+      year: 'numeric',
+      month: 'long',
+      day: '2-digit',
+    })
+  } catch {
+    return iso
+  }
+}
+
+function coinLabel(value: number) {
+  return value === 1 ? 'Coin' : 'Coins'
+}
+
+function titleFromSnake(value: string | null | undefined) {
+  if (!value) return '—'
+
+  return String(value)
+    .replace(/_/g, ' ')
+    .replace(/-/g, ' ')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .replace(/\w\S*/g, (word) =>
+      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(),
+    )
+}
+
+function describeCoinTransaction(reason: string, payload: any) {
+  const packageCode =
+    typeof payload?.package_code === 'string'
+      ? payload.package_code
+      : null
+
+  const description =
+    typeof payload?.description === 'string'
+      ? payload.description
+      : typeof payload?.label === 'string'
+        ? payload.label
+        : typeof payload?.message === 'string'
+          ? payload.message
+          : null
+
+  if (description) return description
+  if (reason === 'purchase' && packageCode) {
+    return appI18n.t('transactions.purchase', { ns: 'proPackages', code: packageCode })
+  }
+  if (reason === 'daily_charge') return appI18n.t('transactions.dailyCharge', { ns: 'proPackages' })
+  if (reason === 'daily_gameplay_unlock') return appI18n.t('transactions.dailyUnlock', { ns: 'proPackages' })
+  if (reason === 'referral_reward') return appI18n.t('transactions.referral', { ns: 'proPackages' })
+  if (reason === 'admin_adjustment') return appI18n.t('transactions.admin', { ns: 'proPackages' })
+  if (reason === 'developing_team_purchase') return appI18n.t('transactions.developingPurchase', { ns: 'proPackages' })
+  if (reason === 'developing_team_unlock') return appI18n.t('transactions.developingPurchase', { ns: 'proPackages' })
+  if (reason === 'developing_team_legacy_creation') return appI18n.t('transactions.developingLegacy', { ns: 'proPackages' })
+
+  if (reason === 'developing_team_season_activation') {
+    const season = Number(payload?.season)
+
+    return Number.isFinite(season)
+      ? appI18n.t('transactions.developingActivation', { ns: 'proPackages', season })
+      : appI18n.t('transactions.developingSeasonalActivation', { ns: 'proPackages' })
+  }
+
+  if (reason === 'developing_team_season_renewal') {
+    const season = Number(payload?.season)
+
+    return Number.isFinite(season)
+      ? appI18n.t('transactions.developingRenewal', { ns: 'proPackages', season })
+      : appI18n.t('transactions.developingSeasonalRenewal', { ns: 'proPackages' })
+  }
+
+  if (reason === 'developing_team_season_reactivation') {
+    const season = Number(payload?.season)
+
+    return Number.isFinite(season)
+      ? appI18n.t('transactions.developingReactivation', { ns: 'proPackages', season })
+      : appI18n.t('transactions.developingSeasonalReactivation', { ns: 'proPackages' })
+  }
+
+  if (reason === 'scout_report_extra') return appI18n.t('transactions.extraScout', { ns: 'proPackages' })
+  if (reason === 'youth_academy_activation') {
+    return appI18n.t('transactions.youthAcademyActivation', { ns: 'proPackages' })
+  }
+  if (reason === 'youth_academy_season_renewal') {
+    const season = Number(payload?.season_number ?? payload?.season)
+    return Number.isFinite(season)
+      ? appI18n.t('transactions.youthAcademyRenewal', { ns: 'proPackages', season })
+      : appI18n.t('transactions.youthAcademySeasonalRenewal', { ns: 'proPackages' })
+  }
+  if (reason === 'premium_monthly_grant') return appI18n.t('transactions.premiumGrant', { ns: 'proPackages' })
+
+  return titleFromSnake(reason)
+}
+
+function billingReasonLabel(value: string | null | undefined): string {
+  const keyByReason: Record<string, string> = {
+    subscription_cycle: 'history.billingSubscriptionCycle',
+    subscription_create: 'history.billingSubscriptionCreate',
+    subscription_update: 'history.billingSubscriptionUpdate',
+    manual: 'history.billingManual',
+  }
+  const key = value ? keyByReason[value] : null
+  return key ? appI18n.t(key, { ns: 'proPackages' }) : titleFromSnake(value)
+}
+
+function slicePage<T>(items: T[], page: number, pageSize: number): T[] {
+  const start = (page - 1) * pageSize
+  return items.slice(start, start + pageSize)
+}
+
+function getTotalPages(totalItems: number, pageSize: number): number {
+  return Math.max(1, Math.ceil(totalItems / pageSize))
+}
+
+function clampPage(page: number, totalPages: number): number {
+  return Math.min(Math.max(page, 1), Math.max(totalPages, 1))
+}
+
+function getSupabaseConfig(): { url: string; anonKey: string } {
+  const anyClient = supabase as any
+
+  const url: string | undefined =
+    anyClient?.supabaseUrl ||
+    anyClient?.url ||
+    anyClient?.rest?.url ||
+    anyClient?.realtime?.url
+
+  const anonKey: string | undefined =
+    anyClient?.supabaseKey ||
+    anyClient?.anonKey ||
+    anyClient?.headers?.apikey ||
+    anyClient?.auth?.headers?.apikey
+
+  if (!url || !anonKey) {
+    throw new Error(
+      'Supabase client config not found. Ensure ../lib/supabase initializes createClient(SUPABASE_URL, SUPABASE_ANON_KEY).',
+    )
+  }
+
+  return { url, anonKey }
+}
+
+async function callAuthenticatedEdgeFunction<
+  T extends EdgeResponse = EdgeResponse,
+>(
+  functionName: string,
+  body: Record<string, unknown>,
+): Promise<T> {
+  const { url: supabaseUrl, anonKey } = getSupabaseConfig()
+
+  const { data: sessionData, error: sessionError } =
+    await supabase.auth.getSession()
+
+  if (sessionError) throw sessionError
+
+  const token = sessionData.session?.access_token
+  if (!token) {
+    throw new Error(appI18n.t('common.notAuthenticated', { ns: 'proPackages' }))
+  }
+
+  const response = await fetch(
+    `${supabaseUrl}/functions/v1/${functionName}`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: anonKey,
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(body),
+    },
+  )
+
+  const responseText = await response.text().catch(() => '')
+  let responseJson = {} as T
+
+  if (responseText) {
+    try {
+      responseJson = JSON.parse(responseText) as T
+    } catch {
+      responseJson = {}
+    }
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      responseJson.error ||
+        responseText ||
+        `Edge function error: ${response.status}`,
+    )
+  }
+
+  return responseJson
+}
+
+export default function ProPackagesPage(): JSX.Element {
+  const earnCoinsLabel = useEarnCoinsLabel()
+  const [earnCoinsOpen, setEarnCoinsOpen] = useState(false)
+
+  const { t, i18n } = useTranslation('proPackages')
+  const purchasePolicyGerman = (i18n.resolvedLanguage ?? i18n.language).toLowerCase().startsWith('de')
+  const stripeReturnHandledRef = useRef(false)
+  const [balance, setBalance] = useState(0)
+  const [loadingBalance, setLoadingBalance] = useState(true)
+
+  const [premiumPlan, setPremiumPlan] =
+    useState<PremiumPlanRow | null>(null)
+  const [premiumPlans, setPremiumPlans] = useState<PremiumPlanRow[]>([])
+  const [premiumStatus, setPremiumStatus] =
+    useState<PremiumStatusRow | null>(null)
+  const [premiumDetails, setPremiumDetails] =
+    useState<PremiumSubscriptionDetailRow | null>(null)
+  const [premiumBilling, setPremiumBilling] =
+    useState<PremiumBillingSummaryResponse | null>(null)
+  const [loadingPremium, setLoadingPremium] = useState(true)
+  const [startingPremiumCheckout, setStartingPremiumCheckout] =
+    useState(false)
+  const [premiumCoinTiming, setPremiumCoinTiming] = useState<'monthly' | 'upfront'>('monthly')
+  const [openingPremiumPortal, setOpeningPremiumPortal] =
+    useState(false)
+  const [openingPremiumCancelPortal, setOpeningPremiumCancelPortal] =
+    useState(false)
+  const [premiumError, setPremiumError] = useState<string | null>(null)
+  const [premiumNotice, setPremiumNotice] = useState<string | null>(null)
+
+  const [packages, setPackages] = useState<UiCoinPackage[]>([])
+  const [loadingPackages, setLoadingPackages] = useState(true)
+  const [buyingCode, setBuyingCode] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const [
+    developingTeamService,
+    setDevelopingTeamService,
+  ] = useState<DevelopingTeamServiceStatus | null>(null)
+  const [youthAcademyService, setYouthAcademyService] =
+    useState<YouthAcademyServiceStatus | null>(null)
+  const [
+    loadingDevelopingTeamService,
+    setLoadingDevelopingTeamService,
+  ] = useState(true)
+  const [loadingYouthAcademyService, setLoadingYouthAcademyService] = useState(true)
+  const [
+    developingTeamServiceError,
+    setDevelopingTeamServiceError,
+  ] = useState<string | null>(null)
+  const [
+    developingTeamServiceNotice,
+    setDevelopingTeamServiceNotice,
+  ] = useState<string | null>(null)
+  const [
+    developingTeamServiceActionError,
+    setDevelopingTeamServiceActionError,
+  ] = useState<string | null>(null)
+  const [
+    updatingDevelopingTeamAutoRenew,
+    setUpdatingDevelopingTeamAutoRenew,
+  ] = useState(false)
+
+  const [premiumInvoicesOpen, setPremiumInvoicesOpen] = useState(false)
+  const [premiumInvoices, setPremiumInvoices] =
+    useState<PremiumInvoiceRow[]>([])
+  const [loadingPremiumInvoices, setLoadingPremiumInvoices] =
+    useState(false)
+  const [premiumInvoicesError, setPremiumInvoicesError] =
+    useState<string | null>(null)
+
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const [loadingHistory, setLoadingHistory] = useState(false)
+  const [historyError, setHistoryError] = useState<string | null>(null)
+  const [purchases, setPurchases] = useState<PurchaseUi[]>([])
+
+  const [coinHistoryOpen, setCoinHistoryOpen] = useState(false)
+  const [loadingCoinHistory, setLoadingCoinHistory] = useState(false)
+  const [coinHistoryError, setCoinHistoryError] =
+    useState<string | null>(null)
+  const [coinTransactions, setCoinTransactions] =
+    useState<CoinTransactionUi[]>([])
+  const [coinHistoryPage, setCoinHistoryPage] = useState(1)
+
+  const billingSubscription = premiumBilling?.subscription ?? null
+  const billingStatus =
+    billingSubscription?.status ??
+    premiumDetails?.stripe_status ??
+    premiumStatus?.stripe_status ??
+    'free'
+  const billingCancelAtPeriodEnd =
+    billingSubscription?.cancel_at_period_end ??
+    premiumDetails?.cancel_at_period_end ??
+    false
+  const billingPeriodEnd =
+    billingSubscription?.current_period_end ??
+    premiumDetails?.current_period_end ??
+    premiumStatus?.current_period_end ??
+    null
+
+  const hasActiveRecurringSubscription = [
+    'trialing',
+    'active',
+    'past_due',
+  ].includes(billingStatus)
+
+  const manualAccessValue =
+    premiumBilling?.manual_access ??
+    premiumDetails?.metadata?.manual_test_access
+
+  const manualAccessFlag =
+    manualAccessValue === true ||
+    String(manualAccessValue ?? '').toLowerCase() === 'true'
+
+  const hasManualPremiumAccess = Boolean(
+    premiumStatus?.is_premium &&
+      manualAccessFlag &&
+      !hasActiveRecurringSubscription,
+  )
+
+  const isWelcomePremiumTrial = premiumStatus?.is_premium === true &&
+    premiumStatus.stripe_status === 'free_trial'
+
+  const premiumCheckoutBlocked = [
+    'trialing',
+    'active',
+    'past_due',
+    'unpaid',
+    'incomplete',
+    'paused',
+  ].includes(billingStatus)
+
+  const hasBillingProfile =
+    premiumBilling?.has_billing_profile ??
+    Boolean(
+      premiumDetails?.stripe_customer_id?.startsWith('cus_'),
+    )
+
+  const showManageSubscription = hasBillingProfile
+
+  const canCancelPremiumSubscription = Boolean(
+    billingSubscription?.id?.startsWith('sub_') &&
+      hasActiveRecurringSubscription &&
+      !billingCancelAtPeriodEnd,
+  )
+
+  const premiumPrice = eur(PRO_PREMIUM_PRICE_EUR)
+  const quarterlyPlan = premiumPlans.find(plan => plan.code === 'premium_quarterly')
+  const yearlyPlan = premiumPlans.find(plan => plan.code === 'premium_yearly')
+  const monthlyPlan = premiumPlans.find(plan => plan.code === 'premium_monthly')
+  const featuredPrice = eur((quarterlyPlan?.price_cents ?? 949) / 100)
+  const premiumCoins = PRO_PREMIUM_MONTHLY_COINS
+
+  const statusLabel = useMemo(() => {
+    if (isWelcomePremiumTrial) return t('trial.freeTrialStatus')
+    if (hasManualPremiumAccess) {
+      return t('premium.accessOverride')
+    }
+
+    if (
+      hasActiveRecurringSubscription &&
+      billingCancelAtPeriodEnd
+    ) {
+      return t('premium.activeCancellation')
+    }
+
+    if (
+      premiumStatus?.is_premium &&
+      hasActiveRecurringSubscription
+    ) {
+      return t('premium.active')
+    }
+
+    const statusKeys: Record<string, string> = {
+      canceled: 'premium.statusCanceled',
+      trialing: 'premium.statusTrialing',
+      past_due: 'premium.statusPastDue',
+      unpaid: 'premium.statusUnpaid',
+      incomplete: 'premium.statusIncomplete',
+      incomplete_expired: 'premium.statusCanceled',
+      paused: 'premium.statusPaused',
+    }
+
+    if (!billingStatus || billingStatus === 'free') {
+      return t('premium.free')
+    }
+
+    return statusKeys[billingStatus]
+      ? t(statusKeys[billingStatus])
+      : titleFromSnake(billingStatus)
+  }, [
+    billingCancelAtPeriodEnd,
+    billingStatus,
+    hasActiveRecurringSubscription,
+    hasManualPremiumAccess,
+    isWelcomePremiumTrial,
+    premiumStatus?.is_premium,
+    t,
+  ])
+
+  const nextRenewalLabel = useMemo(() => {
+    if (
+      !hasActiveRecurringSubscription ||
+      billingCancelAtPeriodEnd
+    ) {
+      return t('premium.noRenewal')
+    }
+
+    return formatDate(billingPeriodEnd)
+  }, [
+    billingCancelAtPeriodEnd,
+    billingPeriodEnd,
+    hasActiveRecurringSubscription,
+    t,
+  ])
+
+  const developingTeamActivationCost = normalizeCoinCost(
+    developingTeamService?.activation_coin_cost,
+    DEFAULT_DEVELOPING_TEAM_ACTIVATION_COIN_COST,
+  )
+
+  const developingTeamRenewalCost = normalizeCoinCost(
+    developingTeamService?.renewal_coin_cost,
+    DEFAULT_DEVELOPING_TEAM_RENEWAL_COIN_COST,
+  )
+
+  const developingTeamServiceStatusLabel =
+    developingTeamService?.access_status === 'active'
+      ? t('services.active')
+      : developingTeamService?.access_status === 'expired'
+        ? t('services.expired')
+        : t('services.notActivated')
+
+  const bestValueCode = useMemo(() => {
+    if (packages.length === 0) return null
+
+    let best = packages[0]
+    for (const item of packages) {
+      if (
+        perCoin(item.priceEur, item.coins) <
+        perCoin(best.priceEur, best.coins)
+      ) {
+        best = item
+      }
+    }
+
+    return best.code
+  }, [packages])
+
+  const priceByCode = useMemo(() => {
+    const prices = new Map<string, number>()
+    for (const item of packages) {
+      prices.set(item.code, item.priceEur)
+    }
+    return prices
+  }, [packages])
+
+  const coinHistoryTotalPages = useMemo(
+    () => getTotalPages(coinTransactions.length, COIN_HISTORY_PAGE_SIZE),
+    [coinTransactions.length],
+  )
+
+  const safeCoinHistoryPage = clampPage(
+    coinHistoryPage,
+    coinHistoryTotalPages,
+  )
+
+  const visibleCoinTransactions = useMemo(
+    () =>
+      slicePage(
+        coinTransactions,
+        safeCoinHistoryPage,
+        COIN_HISTORY_PAGE_SIZE,
+      ),
+    [coinTransactions, safeCoinHistoryPage],
+  )
+
+  useEffect(() => {
+    setCoinHistoryPage((current) =>
+      clampPage(
+        current,
+        getTotalPages(
+          coinTransactions.length,
+          COIN_HISTORY_PAGE_SIZE,
+        ),
+      ),
+    )
+  }, [coinTransactions.length])
+
+  async function loadCoinStatus(): Promise<number> {
+    setLoadingBalance(true)
+
+    const { data, error: coinError } =
+      await supabase.rpc('get_my_coin_status')
+
+    if (coinError) {
+      console.error('Failed to load coin status:', coinError)
+      setBalance(0)
+      setLoadingBalance(false)
+      return 0
+    }
+
+    const row = ((data ?? []) as CoinStatusRow[])[0]
+    const nextBalance = Math.max(Number(row?.balance ?? 0), 0)
+
+    setBalance(nextBalance)
+    setLoadingBalance(false)
+
+    return nextBalance
+  }
+
+  async function loadPremiumData(): Promise<PremiumStatusRow | null> {
+    setLoadingPremium(true)
+    setPremiumError(null)
+
+    try {
+      const billingPromise =
+        callAuthenticatedEdgeFunction<PremiumBillingSummaryResponse>(
+          'get-premium-billing-summary',
+          { include_invoices: false },
+        ).catch((billingError) => {
+          console.warn(
+            'Failed to load live Stripe Premium billing state:',
+            billingError,
+          )
+          return null
+        })
+
+      const [planResult, statusResult, detailsResult, billingResult] =
+        await Promise.all([
+          supabase
+            .from('premium_plans')
+            .select(
+              'code, name, description, price_cents, currency, interval_unit, interval_count, coins_per_paid_invoice, active',
+            )
+            .in('code', ['premium_monthly', 'premium_quarterly', 'premium_yearly'])
+            .eq('active', true),
+          supabase.rpc('get_my_premium_status'),
+          supabase
+            .from('user_premium_subscriptions')
+            .select(
+              'plan_code, stripe_customer_id, stripe_subscription_id, stripe_status, cancel_at_period_end, current_period_start, current_period_end, access_until, created_at, metadata',
+            )
+            .maybeSingle(),
+          billingPromise,
+        ])
+
+      if (planResult.error) throw planResult.error
+      if (statusResult.error) throw statusResult.error
+      if (detailsResult.error) throw detailsResult.error
+
+      const availablePlans = (planResult.data ?? []) as PremiumPlanRow[]
+      setPremiumPlans(availablePlans)
+      setPremiumPlan(availablePlans.find(plan => plan.code === 'premium_monthly') ?? null)
+
+      const statusRows =
+        (statusResult.data ?? []) as PremiumStatusRow[]
+      setPremiumStatus(statusRows[0] ?? null)
+
+      setPremiumDetails(
+        (detailsResult.data as PremiumSubscriptionDetailRow | null) ??
+          null,
+      )
+      setPremiumBilling(billingResult)
+
+      return statusRows[0] ?? null
+    } catch (loadError: any) {
+      console.error('Failed to load Premium data:', loadError)
+      setPremiumPlan(null)
+      setPremiumPlans([])
+      setPremiumStatus(null)
+      setPremiumDetails(null)
+      setPremiumBilling(null)
+      setPremiumError(
+        loadError?.message ??
+          t('premium.detailsFailed'),
+      )
+      return null
+    } finally {
+      setLoadingPremium(false)
+    }
+  }
+
+  async function loadPackages() {
+    setLoadingPackages(true)
+
+    const { data, error: packagesError } = await supabase
+      .from('coin_packages')
+      .select('code, coins, price_cents, currency, active')
+      .eq('active', true)
+
+    if (packagesError) {
+      console.error('Failed to load coin packages:', packagesError)
+      setPackages([])
+      setLoadingPackages(false)
+      return
+    }
+
+    const rows = (data ?? []) as DbCoinPackage[]
+    const mapped = rows
+      .map((row) => ({
+        code: row.code,
+        coins: Number(row.coins),
+        priceEur:
+          PRO_COIN_PACKAGE_PRICES_EUR[row.code] ??
+          Number(row.price_cents) / 100,
+        tagline: taglineForCoins(Number(row.coins)),
+      }))
+      .sort((a, b) => a.coins - b.coins)
+
+    setPackages(mapped)
+    setLoadingPackages(false)
+  }
+
+  async function loadDevelopingTeamService() {
+    setLoadingDevelopingTeamService(true)
+    setDevelopingTeamServiceError(null)
+
+    try {
+      const { data, error } = await supabase.rpc(
+        'get_developing_team_status'
+      )
+
+      if (error) {
+        throw error
+      }
+
+      const normalized = Array.isArray(data) ? data[0] : data
+
+      setDevelopingTeamService(
+        (normalized ?? null) as DevelopingTeamServiceStatus | null,
+      )
+    } catch (error: any) {
+      console.error('Failed to load Developing Team service:', error)
+      setDevelopingTeamService(null)
+      setDevelopingTeamServiceError(
+        error?.message ??
+          t('services.loadFailed'),
+      )
+    } finally {
+      setLoadingDevelopingTeamService(false)
+    }
+  }
+
+  async function loadYouthAcademyService() {
+    setLoadingYouthAcademyService(true)
+
+    try {
+      const { data, error } = await supabase.rpc('get_my_youth_academy_v1')
+      if (error) throw error
+      setYouthAcademyService((data ?? null) as YouthAcademyServiceStatus | null)
+    } catch (loadError) {
+      console.error('Failed to load Youth Academy service:', loadError)
+      setYouthAcademyService(null)
+    } finally {
+      setLoadingYouthAcademyService(false)
+    }
+  }
+
+  async function handleDevelopingTeamAutoRenewChange(
+    enabled: boolean,
+  ) {
+    if (
+      updatingDevelopingTeamAutoRenew ||
+      !developingTeamService?.is_active ||
+      !developingTeamService.can_change_auto_renew
+    ) {
+      return
+    }
+
+    setDevelopingTeamServiceActionError(null)
+    setDevelopingTeamServiceNotice(null)
+    setUpdatingDevelopingTeamAutoRenew(true)
+
+    try {
+      const { error } = await supabase.rpc(
+        'set_developing_team_auto_renew_v1',
+        {
+          p_enabled: enabled,
+        },
+      )
+
+      if (error) throw error
+
+      setDevelopingTeamServiceNotice(
+        enabled
+          ? t('services.autoEnabled', { cost: developingTeamRenewalCost })
+          : t('services.autoDisabled'),
+      )
+
+      await Promise.all([
+        loadDevelopingTeamService(),
+        loadCoinStatus(),
+      ])
+    } catch (updateError: any) {
+      console.error(
+        'Failed to update Developing Team automatic renewal:',
+        updateError,
+      )
+      setDevelopingTeamServiceActionError(
+        updateError?.message ??
+          t('services.autoFailed'),
+      )
+    } finally {
+      setUpdatingDevelopingTeamAutoRenew(false)
+    }
+  }
+
+  async function loadPremiumInvoiceHistory() {
+    setPremiumInvoicesError(null)
+    setLoadingPremiumInvoices(true)
+
+    try {
+      const billingResult =
+        await callAuthenticatedEdgeFunction<PremiumBillingSummaryResponse>(
+          'get-premium-billing-summary',
+          { include_invoices: true },
+        )
+
+      setPremiumBilling((current) => ({
+        ...(current ?? {}),
+        ...billingResult,
+        invoices: undefined,
+      }))
+      setPremiumInvoices(billingResult.invoices ?? [])
+    } catch (loadError: any) {
+      console.error(
+        'Failed to load Premium invoice history:',
+        loadError,
+      )
+      setPremiumInvoices([])
+      setPremiumInvoicesError(
+        loadError?.message ??
+          t('history.invoiceFailed'),
+      )
+    } finally {
+      setLoadingPremiumInvoices(false)
+    }
+  }
+
+  async function loadPurchaseHistory() {
+    setHistoryError(null)
+    setLoadingHistory(true)
+
+    try {
+      const { data, error: purchaseError } = await supabase
+        .from('user_coin_ledger')
+        .select('delta, reason, payload_json, created_at')
+        .eq('reason', 'purchase')
+        .order('created_at', { ascending: false })
+        .limit(50)
+
+      if (purchaseError) throw purchaseError
+
+      const rows = (data ?? []) as PurchaseRow[]
+      const mapped = rows.map((row) => {
+        const payload = (row.payload_json ?? {}) as any
+        const packageCode =
+          typeof payload.package_code === 'string'
+            ? payload.package_code
+            : null
+
+        return {
+          createdAt: row.created_at,
+          coins: Math.max(Number(row.delta ?? 0), 0),
+          packageCode,
+          priceEur: packageCode
+            ? priceByCode.get(packageCode) ?? null
+            : null,
+        }
+      })
+
+      setPurchases(mapped)
+    } catch (loadError: any) {
+      console.error('Failed to load purchase history:', loadError)
+      setHistoryError(
+        loadError?.message ?? t('history.purchaseFailed'),
+      )
+      setPurchases([])
+    } finally {
+      setLoadingHistory(false)
+    }
+  }
+
+  async function loadCoinTransactionHistory() {
+    setCoinHistoryError(null)
+    setLoadingCoinHistory(true)
+
+    try {
+      const { data, error: ledgerError } = await supabase
+        .from('user_coin_ledger')
+        .select('delta, reason, payload_json, created_at')
+        .order('created_at', { ascending: false })
+        .limit(500)
+
+      if (ledgerError) throw ledgerError
+
+      const rows = (data ?? []) as CoinLedgerRow[]
+      const mapped = rows.map((row) => {
+        const payload = (row.payload_json ?? {}) as any
+        const packageCode =
+          typeof payload?.package_code === 'string'
+            ? payload.package_code
+            : null
+
+        return {
+          createdAt: row.created_at,
+          delta: Number(row.delta ?? 0),
+          reason: String(row.reason ?? 'coin_transaction'),
+          description: describeCoinTransaction(
+            String(row.reason ?? ''),
+            payload,
+          ),
+          packageCode,
+        }
+      })
+
+      setCoinTransactions(mapped)
+      setCoinHistoryPage(1)
+    } catch (loadError: any) {
+      console.error(
+        'Failed to load coin transaction history:',
+        loadError,
+      )
+      setCoinHistoryError(
+        loadError?.message ??
+          t('history.ledgerFailed'),
+      )
+      setCoinTransactions([])
+    } finally {
+      setLoadingCoinHistory(false)
+    }
+  }
+
+  async function refreshVisibleData() {
+    await Promise.all([
+      loadCoinStatus(),
+      loadPremiumData(),
+      loadPackages(),
+      loadDevelopingTeamService(),
+      loadYouthAcademyService(),
+      premiumInvoicesOpen
+        ? loadPremiumInvoiceHistory()
+        : Promise.resolve(),
+      historyOpen ? loadPurchaseHistory() : Promise.resolve(),
+      coinHistoryOpen
+        ? loadCoinTransactionHistory()
+        : Promise.resolve(),
+    ])
+
+    dispatchPremiumRefreshEvents()
+  }
+
+  useEffect(() => {
+    void Promise.all([
+      loadCoinStatus(),
+      loadPremiumData(),
+      loadPackages(),
+      loadDevelopingTeamService(),
+      loadYouthAcademyService(),
+    ])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (stripeReturnHandledRef.current) return
+
+    const { result: premiumResult } = readStripeReturnParams()
+    if (!premiumResult) return
+
+    stripeReturnHandledRef.current = true
+    let cancelled = false
+
+    async function processStripeReturn() {
+      const { data: initialSessionData } =
+        await supabase.auth.getSession()
+
+      let activeSession = initialSessionData.session
+
+      if (!activeSession) {
+        const { data: refreshedSessionData, error: refreshError } =
+          await supabase.auth.refreshSession()
+
+        if (refreshError) {
+          console.error(
+            'Failed to restore the session after Stripe return:',
+            refreshError,
+          )
+        }
+
+        activeSession = refreshedSessionData.session
+      }
+
+      if (!activeSession) {
+        setPremiumError(
+          t('premium.returnSessionFailed'),
+        )
+        return
+      }
+
+      if (premiumResult === 'cancel') {
+        setPremiumNotice(
+          t('premium.checkoutCanceled'),
+        )
+        cleanStripeReturnUrl()
+        return
+      }
+
+      setPremiumNotice(
+        premiumResult === 'success'
+          ? t('premium.confirming')
+          : t('premium.refreshing'),
+      )
+
+      cleanStripeReturnUrl()
+
+      for (const delayMs of STRIPE_RETURN_RETRY_DELAYS_MS) {
+        if (cancelled) return
+        if (delayMs > 0) await wait(delayMs)
+        if (cancelled) return
+
+        const [status] = await Promise.all([
+          loadPremiumData(),
+          loadCoinStatus(),
+          premiumInvoicesOpen
+            ? loadPremiumInvoiceHistory()
+            : Promise.resolve(),
+        ])
+
+        dispatchPremiumRefreshEvents()
+
+        if (
+          premiumResult === 'success' &&
+          status?.is_premium
+        ) {
+          setPremiumNotice(
+            t('premium.activated'),
+          )
+          return
+        }
+
+        if (premiumResult === 'portal_return' && status) {
+          setPremiumNotice(
+            t('premium.billingRefreshed'),
+          )
+          return
+        }
+      }
+
+      if (premiumResult === 'success') {
+        setPremiumNotice(
+          t('premium.processing'),
+        )
+      }
+    }
+
+    void processStripeReturn()
+
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!session) return
+
+      if (
+        event === 'SIGNED_IN' ||
+        event === 'TOKEN_REFRESHED' ||
+        event === 'INITIAL_SESSION'
+      ) {
+        void Promise.all([
+          loadPremiumData(),
+          loadCoinStatus(),
+        ]).then(() => {
+          dispatchPremiumRefreshEvents()
+        })
+      }
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  async function handleStartPremiumCheckout(planCode: 'premium_monthly' | 'premium_quarterly' | 'premium_yearly' = 'premium_quarterly') {
+    setPremiumError(null)
+    setPremiumNotice(null)
+    setStartingPremiumCheckout(true)
+
+    try {
+      const response = await callAuthenticatedEdgeFunction(
+        'create-premium-checkout',
+        { plan_code: planCode, coin_distribution: planCode === 'premium_monthly' ? 'monthly' : premiumCoinTiming },
+      )
+
+      if (!response.url) {
+        throw new Error(t('premium.checkoutUrlMissing'))
+      }
+
+      window.sessionStorage.setItem(
+        'ppm-stripe-return-path',
+        `${window.location.origin}/#/dashboard/pro`,
+      )
+      window.location.assign(response.url)
+    } catch (checkoutError: any) {
+      setPremiumError(
+        checkoutError?.message ?? t('premium.checkoutFailed'),
+      )
+      setStartingPremiumCheckout(false)
+    }
+  }
+
+  async function handleManageSubscription() {
+    setPremiumError(null)
+    setPremiumNotice(null)
+    setOpeningPremiumPortal(true)
+
+    try {
+      const response = await callAuthenticatedEdgeFunction(
+        'create-premium-portal',
+        {},
+      )
+
+      if (!response.url) {
+        throw new Error(t('premium.portalUrlMissing'))
+      }
+
+      window.location.href = response.url
+    } catch (portalError: any) {
+      setPremiumError(
+        portalError?.message ??
+          t('premium.portalFailed'),
+      )
+      setOpeningPremiumPortal(false)
+    }
+  }
+
+  async function handleCancelPremiumSubscription() {
+    setPremiumError(null)
+    setPremiumNotice(null)
+    setOpeningPremiumCancelPortal(true)
+
+    try {
+      const response = await callAuthenticatedEdgeFunction(
+        'create-premium-portal',
+        { flow: 'cancel' },
+      )
+
+      if (!response.url) {
+        throw new Error(t('premium.portalUrlMissing'))
+      }
+
+      window.location.href = response.url
+    } catch (portalError: any) {
+      setPremiumError(
+        portalError?.message ??
+          t('premium.cancelPortalFailed'),
+      )
+      setOpeningPremiumCancelPortal(false)
+    }
+  }
+
+  async function handleBuy(code: string) {
+    setError(null)
+    setBuyingCode(code)
+
+    try {
+      const response = await callAuthenticatedEdgeFunction(
+        'create-coin-checkout',
+        { package_code: code },
+      )
+
+      if (!response.url) throw new Error(t('packages.checkoutUrlMissing'))
+
+      window.location.href = response.url
+    } catch (checkoutError: any) {
+      setError(checkoutError?.message ?? t('packages.checkoutFailed'))
+      setBuyingCode(null)
+    }
+  }
+
+  async function handleTogglePremiumInvoices() {
+    const next = !premiumInvoicesOpen
+    setPremiumInvoicesOpen(next)
+
+    if (next && premiumInvoices.length === 0) {
+      await loadPremiumInvoiceHistory()
+    }
+  }
+
+  async function handleToggleHistory() {
+    const next = !historyOpen
+    setHistoryOpen(next)
+
+    if (next && purchases.length === 0) {
+      await loadPurchaseHistory()
+    }
+  }
+
+  async function handleToggleCoinHistory() {
+    const next = !coinHistoryOpen
+    setCoinHistoryOpen(next)
+
+    if (next && coinTransactions.length === 0) {
+      await loadCoinTransactionHistory()
+    }
+  }
+
+  return (
+    <div className="w-full pb-10">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 className="text-2xl font-extrabold text-black">
+            {t('page.title')}
+          </h2>
+          <p className="mt-1 text-sm text-gray-600">
+            {t('page.description')}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => void refreshVisibleData()}
+            className="rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-semibold text-black shadow-sm hover:bg-gray-50"
+          >
+            {t('page.refresh')}
+          </button>
+        </div>
+      </div>
+
+      {premiumNotice ? (
+        <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+          {premiumNotice}
+        </div>
+      ) : null}
+
+      {premiumError ? (
+        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          {premiumError}
+        </div>
+      ) : null}
+
+      <aside aria-label={purchasePolicyGerman ? 'Premium-Kaufbedingungen' : 'Premium purchase terms'}
+        className="mt-5 rounded-xl border border-yellow-300 bg-yellow-50 px-5 py-4 text-sm leading-6 text-gray-800">
+        <p>
+          {purchasePolicyGerman
+            ? 'Premium wird nach erfolgreicher Zahlung für den gewählten Zeitraum (1, 3 oder 12 Monate) freigeschaltet. Automatische Verlängerungen können für die Zukunft gekündigt werden. Für korrekt bereitgestellte Leistungen bieten wir grundsätzlich keine freiwillige Erstattung an; zwingende Verbraucherrechte bleiben bestehen.'
+            : 'Premium starts after successful payment for your selected billing period (1, 3 or 12 months). You can cancel automatic future renewal. Correctly delivered benefits are generally not eligible for voluntary refunds; mandatory consumer rights remain unaffected.'}{' '}
+          <Link to="/refund-policy" className="font-bold text-blue-700 underline underline-offset-2">
+            {purchasePolicyGerman ? 'Erstattungs- und Kündigungsrichtlinie' : 'Refund & Cancellation Policy'}
+          </Link>
+        </p>
+      </aside>
+
+      {/* Section 1 — Premium Membership */}
+      <section className="relative z-20 mt-6 overflow-visible rounded-2xl border border-yellow-400 bg-white shadow-sm">
+        <div className="grid grid-cols-1 overflow-visible lg:grid-cols-[1.35fr_0.65fr]">
+          <div className="relative p-6 sm:p-8">
+            <div className="group absolute right-6 top-6 z-20 sm:right-8 sm:top-8">
+              <button
+                type="button"
+                aria-label={t('premium.showAdvantages')}
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-yellow-400 bg-yellow-50 text-sm font-extrabold text-black shadow-sm transition hover:bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+              >
+                i
+              </button>
+
+              <div
+                role="tooltip"
+                className="pointer-events-none invisible absolute right-0 top-11 z-[100] max-h-[min(70vh,520px)] w-[320px] translate-y-1 overflow-y-auto rounded-2xl border border-yellow-300 bg-white p-4 opacity-0 shadow-2xl transition duration-150 group-hover:pointer-events-auto group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100 sm:w-[380px]"
+              >
+                <div className="text-sm font-extrabold text-black">
+                  {t('premium.allAdvantages')}
+                </div>
+                <ul className="mt-3 space-y-2 text-xs leading-5 text-gray-700">
+                  {PREMIUM_ADVANTAGES.map((advantage) => (
+                    <li key={advantage} className="flex gap-2">
+                      <span className="font-bold text-green-700">✓</span>
+                      <span>{t(advantage)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-yellow-400 px-3 py-1 text-xs font-extrabold text-black">
+                {t('premium.label')}
+              </span>
+
+              {!loadingPremium && premiumStatus?.is_premium ? (
+                <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-800">
+                  {hasManualPremiumAccess
+                    ? t('premium.accessOverride')
+                    : billingCancelAtPeriodEnd
+                      ? t('premium.activeEnding')
+                      : t('premium.active')}
+                </span>
+              ) : (
+                <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-700">
+                  {t('premium.optional')}
+                </span>
+              )}
+            </div>
+
+            <h3 className="mt-4 text-2xl font-extrabold text-black">
+              ProPeloton Manager Premium
+            </h3>
+
+            <div className="mt-2 text-3xl font-extrabold text-black">
+              {featuredPrice}
+              <span className="ml-2 text-sm font-medium text-gray-500">
+                {t('premium.quarterlySummary', { monthlyPrice: eur((quarterlyPlan?.price_cents ?? 949) / 300) })}
+              </span>
+            </div>
+
+            <ul className="mt-5 space-y-2 text-sm text-gray-700">
+              <li className="flex gap-2">
+                <span className="font-bold text-green-700">✓</span>
+                <span>
+                  {t('premium.advancedTools')}
+                </span>
+              </li>
+              <li className="flex gap-2">
+                <span className="font-bold text-green-700">✓</span>
+                <span>
+                  {t('premium.marketTools')}
+                </span>
+              </li>
+              <li className="flex gap-2">
+                <span className="font-bold text-green-700">✓</span>
+                <span>
+                  {t('premium.capacity')}
+                </span>
+              </li>
+              <li className="flex gap-2">
+                <span className="font-bold text-green-700">✓</span>
+                <span>
+                  {t('premium.receive')} {premiumCoins} {t('premium.monthlyCoinsSuffix')}
+                </span>
+              </li>
+              <li className="flex gap-2">
+                <span className="font-bold text-green-700">✓</span>
+                <span>
+                  {t('premium.cancelAnytime')}
+                </span>
+              </li>
+            </ul>
+
+            {isWelcomePremiumTrial ? (
+              <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+                <div className="font-bold">{t('trial.freeTrialStatus')}</div>
+                <div className="mt-1">{t('trial.accessUntil', { date: formatDate(premiumStatus?.access_until) })}</div>
+                <div className="mt-1">{t('trial.subscriptionOffer')}</div>
+              </div>
+            ) : hasManualPremiumAccess ? (
+              <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                <div className="font-bold">
+                  {t('premium.accessOverrideActive')}
+                </div>
+                <div className="mt-1">
+                  {t('premium.accessOverrideUntil', {
+                    date: formatDate(premiumStatus?.access_until),
+                  })}
+                </div>
+                <div className="mt-1">
+                  {t('premium.noActiveRecurringSubscription')}
+                </div>
+              </div>
+            ) : premiumStatus?.is_premium ? (
+              <div className="mt-5 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-900">
+                <div className="font-bold">
+                  {billingCancelAtPeriodEnd
+                    ? t('premium.activeUntilEnd')
+                    : t('premium.activeNow')}
+                </div>
+                <div className="mt-1">
+                  {billingCancelAtPeriodEnd
+                    ? t('premium.futureCanceled', {
+                        date: formatDate(
+                          billingPeriodEnd ||
+                            premiumStatus.access_until,
+                        ),
+                      })
+                    : t('premium.periodEnds', {
+                        date: formatDate(billingPeriodEnd),
+                      })}
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="flex flex-col justify-center border-t border-black/10 bg-yellow-50 p-6 sm:p-8 lg:border-l lg:border-t-0">
+            <div className="text-sm font-semibold text-gray-700">
+              {t('premium.membership')}
+            </div>
+            <div className="mt-2 text-4xl font-extrabold text-black">
+              {featuredPrice}
+            </div>
+            <div className="mt-1 text-sm text-gray-600">
+              {t('premium.quarterlySummaryCoins', { monthlyPrice: eur((quarterlyPlan?.price_cents ?? 949) / 300), coins: quarterlyPlan?.coins_per_paid_invoice ?? 90 })}
+            </div>
+            <div className="mt-3 inline-block rounded-full bg-yellow-400 px-3 py-1 text-xs font-semibold text-black">
+              {t('premium.mostPopular')}
+            </div>
+
+            {showManageSubscription ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => void handleManageSubscription()}
+                  disabled={
+                    openingPremiumPortal ||
+                    openingPremiumCancelPortal ||
+                    loadingPremium
+                  }
+                  className="mt-6 w-full rounded-xl bg-black px-4 py-3 text-sm font-extrabold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {openingPremiumPortal
+                    ? t('premium.openingPortal')
+                    : t('premium.manage')}
+                </button>
+
+                {canCancelPremiumSubscription ? (
+                  <button
+                    type="button"
+                    onClick={() => void handleCancelPremiumSubscription()}
+                    disabled={
+                      openingPremiumPortal ||
+                      openingPremiumCancelPortal ||
+                      loadingPremium
+                    }
+                    className="mt-3 w-full rounded-xl border border-red-300 bg-white px-4 py-3 text-sm font-extrabold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {openingPremiumCancelPortal
+                      ? t('premium.openingCancel')
+                      : t('premium.cancelSubscription')}
+                  </button>
+                ) : !premiumCheckoutBlocked ? (
+                  <button
+                    type="button"
+                    onClick={() => void handleStartPremiumCheckout('premium_quarterly')}
+                    disabled={
+                      loadingPremium ||
+                      startingPremiumCheckout ||
+                      !quarterlyPlan
+                    }
+                    className="mt-3 w-full rounded-xl bg-yellow-400 px-4 py-3 text-sm font-extrabold text-black hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {startingPremiumCheckout
+                      ? t('premium.redirecting')
+                      : t('premium.startPaidSubscription')}
+                  </button>
+                ) : null}
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => void handleStartPremiumCheckout('premium_quarterly')}
+                disabled={
+                  loadingPremium ||
+                  startingPremiumCheckout ||
+                  !quarterlyPlan ||
+                  premiumCheckoutBlocked
+                }
+                className="mt-6 w-full rounded-xl bg-yellow-400 px-4 py-3 text-sm font-extrabold text-black hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {loadingPremium
+                  ? t('premium.loading')
+                  : startingPremiumCheckout
+                    ? t('premium.redirecting')
+                    : premiumCheckoutBlocked
+                      ? t('premium.alreadyExists')
+                      : t('premium.become')}
+              </button>
+            )}
+
+            {!premiumCheckoutBlocked && (
+              <fieldset className="mt-4 rounded-xl border border-yellow-300 bg-yellow-50 p-4">
+                <legend className="px-2 text-sm font-bold text-gray-900">{t('premium.coinDeliveryTitle')}</legend>
+                <p className="mb-3 text-xs text-gray-700">{t('premium.coinDeliveryHelp')}</p>
+                <label className="flex items-center gap-2 text-sm text-gray-900">
+                  <input type="radio" name="premium-coin-delivery" value="monthly" checked={premiumCoinTiming === 'monthly'}
+                    onChange={() => setPremiumCoinTiming('monthly')} />
+                  {t('premium.coinDeliveryMonthly')}
+                </label>
+                <label className="mt-3 flex items-center gap-2 text-sm text-gray-900">
+                  <input type="radio" name="premium-coin-delivery" value="upfront" checked={premiumCoinTiming === 'upfront'}
+                    onChange={() => setPremiumCoinTiming('upfront')} />
+                  {t('premium.coinDeliveryUpfront')}
+                </label>
+                <p className="mt-3 text-xs text-gray-600">{t('premium.coinDeliveryMonthlyPlan')}</p>
+              </fieldset>
+            )}
+
+            {!premiumCheckoutBlocked && (
+              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-1">
+                <button
+                  type="button"
+                  onClick={() => void handleStartPremiumCheckout('premium_monthly')}
+                  disabled={loadingPremium || startingPremiumCheckout || !monthlyPlan}
+                  className="rounded-xl border border-gray-200 bg-white p-4 text-left text-black hover:border-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <div className="font-semibold">{t('premium.monthlyTitle')}</div>
+                  <div className="mt-1 text-lg font-bold">{eur((monthlyPlan?.price_cents ?? 329) / 100)}</div>
+                  <div className="text-xs text-gray-600">{t('premium.monthlySummary', { coins: monthlyPlan?.coins_per_paid_invoice ?? 30 })}</div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleStartPremiumCheckout('premium_yearly')}
+                  disabled={loadingPremium || startingPremiumCheckout || !yearlyPlan}
+                  className="rounded-xl border border-gray-200 bg-white p-4 text-left text-black hover:border-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <div className="font-semibold">{t('premium.yearlyTitle')}</div>
+                  <div className="mt-1 text-lg font-bold">{eur((yearlyPlan?.price_cents ?? 3349) / 100)}</div>
+                  <div className="text-xs text-gray-600">{t('premium.yearlySummary', { monthlyPrice: eur((yearlyPlan?.price_cents ?? 3349) / 1200), coins: yearlyPlan?.coins_per_paid_invoice ?? 360 })}</div>
+                </button>
+              </div>
+            )}
+
+            <div className="mt-3 text-xs text-gray-500">
+              {hasManualPremiumAccess
+                ? t('premium.manualAccessHelp')
+                : canCancelPremiumSubscription
+                  ? t('premium.cancelHelp')
+                  : billingStatus === 'canceled'
+                    ? t('premium.canceledBillingHelp')
+                    : showManageSubscription
+                      ? t('premium.manageHelp')
+                      : t('premium.checkoutHelp')}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 2 — Free vs Premium */}
+      <section className="mt-10">
+        <div>
+          <h3 className="text-xl font-extrabold text-black">
+            {t('comparison.title')}
+          </h3>
+          <p className="mt-1 text-sm text-gray-600">
+            {t('comparison.description')}
+          </p>
+        </div>
+
+        <div className="mt-5 overflow-x-auto rounded-2xl border border-black/10 bg-white shadow-sm">
+          <table className="w-full min-w-[640px] text-sm">
+            <thead className="bg-gray-50 text-left text-gray-600">
+              <tr>
+                <th className="px-5 py-4 font-semibold">{t('comparison.benefit')}</th>
+                <th className="px-5 py-4 text-center font-semibold">{t('premium.free')}</th>
+                <th className="px-5 py-4 text-center font-semibold">{t('comparison.premium')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {COMPARISON_ROWS.map(([benefit, free, premium]) => (
+                <tr key={t(benefit)} className="border-t border-black/5">
+                  <td className="px-5 py-4 font-medium text-gray-900">
+                    {t(benefit)}
+                  </td>
+                  <td className="px-5 py-4 text-center text-gray-700">
+                    {free.startsWith('comparison.') ? t(free) : free}
+                  </td>
+                  <td className="px-5 py-4 text-center font-bold text-gray-900">
+                    {premium.startsWith('comparison.') ? t(premium) : premium}
+                  </td>
+                </tr>
+              ))}
+
+              <tr className="border-t border-black/5">
+                <td className="px-5 py-4 font-medium text-gray-900">
+                  {t('comparison.developing')}
+                </td>
+                <td className="px-5 py-4 text-center font-semibold text-gray-700">
+                  {t('comparison.activationRenewal', { activation: developingTeamActivationCost, renewal: developingTeamRenewalCost })}
+                </td>
+                <td className="px-5 py-4 text-center font-bold text-gray-900">
+                  {t('comparison.activationRenewal', { activation: developingTeamActivationCost, renewal: developingTeamRenewalCost })}
+                </td>
+              </tr>
+              <tr className="border-t border-black/5">
+                <td className="px-5 py-4 font-medium text-gray-900">
+                  {t('comparison.youthAcademy')}
+                </td>
+                <td className="px-5 py-4 text-center font-semibold text-gray-500">
+                  {t('comparison.premiumOnly')}
+                </td>
+                <td className="px-5 py-4 text-center font-bold text-gray-900">
+                  {t('comparison.youthAcademyPremium')}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p className="mt-2 text-xs text-gray-500">
+          {t('comparison.note')}
+        </p>
+      </section>
+
+      {/* Section 3 — Additional coin packages */}
+      <section className="mt-10">
+        <div>
+          <h3 className="text-xl font-extrabold text-black">
+            {t('packages.title')}
+          </h3>
+          <p className="mt-1 max-w-4xl text-sm text-gray-600">
+            {t('packages.description')}
+          </p>
+        </div>
+
+        {error ? (
+          <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            {error}
+          </div>
+        ) : null}
+
+        {loadingPackages ? (
+          <div className="mt-6 rounded-xl border border-black/10 bg-white p-6 text-sm text-gray-600">
+            {t('packages.loading')}
+          </div>
+        ) : (
+          <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {packages.map((item) => {
+              const isBestValue =
+                Boolean(bestValueCode) && item.code === bestValueCode
+              const isBuying = buyingCode === item.code
+
+              return (
+                <div
+                  key={item.code}
+                  className={`relative overflow-hidden rounded-2xl border bg-white p-6 shadow-sm ${
+                    isBestValue
+                      ? 'border-yellow-400 ring-2 ring-yellow-300'
+                      : 'border-black/10'
+                  }`}
+                >
+                  <div className="absolute right-4 top-4">
+                    {isBestValue ? (
+                      <span className="rounded-full bg-yellow-400 px-3 py-1 text-xs font-bold text-black">
+                        {t('packages.bestValue')}
+                      </span>
+                    ) : item.tagline === 'packages.popular' ? (
+                      <span className="rounded-full bg-black px-3 py-1 text-xs font-bold text-white">
+                        {t('packages.mostPopular')}
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <div className="text-sm font-semibold text-gray-700">
+                    {t('packages.coinPack')}
+                  </div>
+                  <div className="mt-1 text-4xl font-bold text-black">
+                    ◎ {item.coins.toLocaleString()}
+                  </div>
+                  <div className="mt-2 text-sm text-gray-600">
+                    {item.tagline ? t(item.tagline) : ''}
+                  </div>
+
+                  <div className="mt-5">
+                    <div className="text-2xl font-normal text-black">
+                      {eur(item.priceEur)}
+                    </div>
+                    <div className="mt-1 text-xs text-gray-500">
+                      ≈ {eur(perCoin(item.priceEur, item.coins))} {t('packages.perCoin')}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => void handleBuy(item.code)}
+                    disabled={isBuying}
+                    className="mt-5 w-full rounded-xl bg-yellow-400 px-4 py-3 text-sm font-extrabold text-black hover:bg-yellow-300 disabled:opacity-60"
+                  >
+                    {isBuying ? t('packages.redirecting') : t('packages.buy')}
+                  </button>
+
+                  <div className="mt-3 text-xs text-gray-500">
+                    {t('packages.checkoutHelp')}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </section>
+
+      <p className="mt-4 rounded-xl border border-gray-200 bg-gray-50 px-5 py-4 text-sm leading-6 text-gray-700">
+        {purchasePolicyGerman
+          ? 'Gekaufte Coins werden nach bestätigter Zahlung gutgeschrieben und bleiben normalerweise bis zur Verwendung verfügbar. Für korrekt bereitgestellte Coins gibt es grundsätzlich keine freiwillige Rückerstattung. Gesetzliche Rechte bleiben unberührt.'
+          : 'Purchased Coins are credited after confirmed payment and normally remain available until spent. Correctly delivered Coins are generally not eligible for voluntary refunds. Statutory rights remain unaffected.'}{' '}
+        <Link to="/refund-policy" className="font-bold text-blue-700 underline underline-offset-2">
+          {purchasePolicyGerman ? 'Erstattungsrichtlinie ansehen' : 'Read the refund policy'}
+        </Link>
+      </p>
+
+      {/* Earn free Coins alongside purchasable packages. */}
+      <section className="mt-6 rounded-2xl border border-amber-300 bg-amber-50 p-5 shadow-sm sm:p-6">
+        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+          <div>
+            <h3 className="flex items-center gap-2 text-xl font-bold text-black">
+              <Coins size={22} className="text-amber-700" /> {earnCoinsLabel}
+            </h3>
+            <p className="mt-2 text-sm leading-6 text-gray-700">
+              {t('earnCoins.bannerDescription')}
+            </p>
+          </div>
+          <button type="button" onClick={() => setEarnCoinsOpen(true)}
+            className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-black px-5 py-3 text-sm font-semibold text-white hover:bg-neutral-800 sm:w-auto">
+            <Coins size={18} /> {earnCoinsLabel}
+          </button>
+        </div>
+      </section>
+      <EarnCoinsDialog open={earnCoinsOpen} onClose={() => setEarnCoinsOpen(false)} />
+
+      {/* Section 4 — Current membership */}
+      <section className="mt-10">
+        <div>
+          <h3 className="text-xl font-extrabold text-black">
+            {t('membership.title')}
+          </h3>
+          <p className="mt-1 text-sm text-gray-600">
+            {t('membership.description')}
+          </p>
+        </div>
+
+        <div className="mt-5 grid grid-cols-1 gap-4 rounded-2xl border border-black/10 bg-white p-5 shadow-sm sm:grid-cols-2 xl:grid-cols-4">
+          <MembershipItem
+            label={t('membership.plan')}
+            value={
+              premiumStatus?.is_premium || premiumDetails
+                ? premiumStatus?.plan_name ||
+                  premiumPlan?.name ||
+                  t('premium.defaultName')
+                : t('premium.free')
+            }
+          />
+          <MembershipItem label={t('membership.status')} value={statusLabel} />
+          <MembershipItem
+            label={t('membership.started')}
+            value={formatDate(
+              billingSubscription?.current_period_start ||
+                premiumDetails?.created_at,
+            )}
+          />
+          <MembershipItem
+            label={t('membership.periodEnds')}
+            value={formatDate(
+              hasManualPremiumAccess
+                ? premiumStatus?.access_until
+                : billingPeriodEnd,
+            )}
+          />
+          <MembershipItem label={t('membership.nextRenewal')} value={nextRenewalLabel} />
+          <MembershipItem label={t('membership.monthlyPrice')} value={premiumPrice} />
+          <MembershipItem
+            label={t('membership.monthlyCoinReward')}
+            value={t('common.coins', { count: premiumCoins })}
+          />
+          <MembershipItem
+            label={t('membership.cancelAtEnd')}
+            value={billingCancelAtPeriodEnd ? t('membership.yes') : t('membership.no')}
+          />
+        </div>
+
+        {showManageSubscription ? (
+          <p className="mt-3 text-sm text-gray-600">
+            {t('membership.manageNotePrefix')} <span className="font-semibold">{t('premium.manage')}</span> {t('membership.manageNoteSuffix')}
+          </p>
+        ) : null}
+      </section>
+
+      {/* Section 5 — Active coin services */}
+      <section className="mt-10">
+        <div>
+          <h3 className="text-xl font-extrabold text-black">
+            {t('services.title')}
+          </h3>
+          <p className="mt-1 text-sm text-gray-600">
+            {t('services.description')}
+          </p>
+        </div>
+
+        {loadingDevelopingTeamService ? (
+          <div className="mt-5 rounded-2xl border border-black/10 bg-white p-6 text-sm text-gray-600 shadow-sm">
+            {t('services.loading')}
+          </div>
+        ) : developingTeamServiceError ? (
+          <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
+            <div className="text-sm font-semibold text-amber-900">
+              {t('services.unavailable')}
+            </div>
+            <p className="mt-1 text-sm text-amber-800">
+              {t('services.unavailableHelp')}
+            </p>
+          </div>
+        ) : (
+          <div className="mt-5 rounded-2xl border border-black/10 bg-white p-5 shadow-sm">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h4 className="text-lg font-extrabold text-black">
+                    {t('services.developing')}
+                  </h4>
+
+                  <span
+                    className={`rounded-full px-2.5 py-1 text-xs font-bold ${
+                      developingTeamService?.access_status === 'active'
+                        ? 'bg-green-100 text-green-800'
+                        : developingTeamService?.access_status === 'expired'
+                          ? 'bg-amber-100 text-amber-800'
+                          : 'bg-gray-100 text-gray-700'
+                    }`}
+                  >
+                    {developingTeamServiceStatusLabel}
+                  </span>
+                </div>
+
+                <p className="mt-2 text-sm text-gray-600">
+                  {t('services.descriptionDeveloping')}
+                </p>
+
+                {developingTeamService?.access_status === 'expired' ? (
+                  <p className="mt-3 text-sm text-amber-800">
+                    {t('services.readOnly')}
+                  </p>
+                ) : null}
+
+                {!developingTeamService?.is_active ? (
+                  <div className="mt-3 space-y-1 text-sm text-gray-600">
+                    {developingTeamService?.access_status === 'expired' ? (
+                      <p>{t('services.reactivationPrice', { cost: developingTeamRenewalCost })}</p>
+                    ) : (
+                      <>
+                        <p>{t('services.firstActivationPrice', { cost: developingTeamActivationCost })}</p>
+                        <p>{t('services.laterPrice', { cost: developingTeamRenewalCost })}</p>
+                      </>
+                    )}
+                  </div>
+                ) : null}
+              </div>
+
+              <a
+                href="#/dashboard/preferences"
+                className="inline-flex shrink-0 items-center justify-center rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-semibold text-black shadow-sm transition hover:bg-gray-50"
+              >
+                {developingTeamService?.access_status === 'expired'
+                  ? t('services.reactivatePreferences')
+                  : developingTeamService?.is_active
+                    ? t('services.manageService')
+                    : t('services.managePreferences')}
+              </a>
+            </div>
+
+            {developingTeamServiceNotice ? (
+              <div className="mt-5 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+                {developingTeamServiceNotice}
+              </div>
+            ) : null}
+
+            {developingTeamServiceActionError ? (
+              <div className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                {developingTeamServiceActionError}
+              </div>
+            ) : null}
+
+            {developingTeamService?.is_active ? (
+              <div className="mt-5 border-t border-black/5 pt-5">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-6">
+                <MembershipItem
+                  label={t('services.teamCreated')}
+                  value={developingTeamService.team_exists ? t('membership.yes') : t('membership.no')}
+                />
+                <MembershipItem
+                  label={t('membership.status')}
+                  value={t('services.active')}
+                />
+                <MembershipItem
+                  label={t('services.currentSeason')}
+                  value={t('services.season', { season: developingTeamService.current_season })}
+                />
+                <MembershipItem
+                  label={t('services.accessEnds')}
+                  value={t('services.endSeason', {
+                    season: developingTeamService.expires_after_season ?? developingTeamService.active_season ?? developingTeamService.current_season,
+                  })}
+                />
+                <MembershipItem
+                  label={t('services.renewalPrice')}
+                  value={t('common.coins', { count: developingTeamRenewalCost })}
+                />
+                <MembershipItem
+                  label={t('services.nextRenewal')}
+                  value={t('services.startSeason', {
+                    season: developingTeamService.next_renewal_season ?? developingTeamService.current_season + 1,
+                  })}
+                />
+                </div>
+
+                <label className="mt-5 flex cursor-pointer items-start justify-between gap-4 rounded-xl border border-black/10 bg-gray-50 p-4">
+                  <div>
+                    <div className="text-sm font-semibold text-black">
+                      {t('services.autoRenew')}
+                    </div>
+                    <div className="mt-1 text-xs leading-5 text-gray-600">
+                      {t('services.autoRenewPrefix')} {developingTeamRenewalCost} {t('services.autoRenewSuffix')}
+                    </div>
+                  </div>
+
+                  <input
+                    type="checkbox"
+                    checked={developingTeamService.auto_renew === true}
+                    disabled={
+                      !developingTeamService.can_change_auto_renew ||
+                      updatingDevelopingTeamAutoRenew
+                    }
+                    onChange={(event) => {
+                      void handleDevelopingTeamAutoRenewChange(event.target.checked)
+                    }}
+                    className="mt-1 h-4 w-4 shrink-0 rounded border-gray-300"
+                  />
+                </label>
+              </div>
+            ) : developingTeamService?.access_status === 'expired' ? (
+              <div className="mt-5 grid grid-cols-1 gap-4 border-t border-black/5 pt-5 sm:grid-cols-3">
+                <MembershipItem
+                  label={t('services.teamCreated')}
+                  value={developingTeamService.team_exists ? t('membership.yes') : t('membership.no')}
+                />
+                <MembershipItem
+                  label={t('membership.status')}
+                  value={t('services.expired')}
+                />
+                <MembershipItem
+                  label={t('services.reactivation')}
+                  value={t('common.coins', { count: developingTeamRenewalCost })}
+                />
+              </div>
+            ) : (
+              <div className="mt-5 grid grid-cols-1 gap-4 border-t border-black/5 pt-5 sm:grid-cols-3">
+                <MembershipItem
+                  label={t('services.teamCreated')}
+                  value={developingTeamService?.team_exists ? t('membership.yes') : t('membership.no')}
+                />
+                <MembershipItem
+                  label={t('membership.status')}
+                  value={t('services.notActivated')}
+                />
+                <MembershipItem
+                  label={t('services.firstActivation')}
+                  value={t('common.coins', { count: developingTeamActivationCost })}
+                />
+                <MembershipItem
+                  label={t('services.laterRenewals')}
+                  value={t('services.coinsPerSeason', { cost: developingTeamRenewalCost })}
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="mt-5 rounded-2xl border border-yellow-200 bg-yellow-50/40 p-5 shadow-sm">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h4 className="text-lg font-extrabold text-black">
+                  {t('services.youthAcademy')}
+                </h4>
+                <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${
+                  youthAcademyService?.activated
+                    ? 'bg-green-100 text-green-800'
+                    : premiumStatus?.is_premium
+                      ? 'bg-yellow-100 text-yellow-800'
+                      : 'bg-gray-100 text-gray-700'
+                }`}>
+                  {loadingYouthAcademyService
+                    ? t('services.loadingYouth')
+                    : youthAcademyService?.activated && youthAcademyService?.renewal_required
+                      ? t('services.renewalRequired')
+                      : youthAcademyService?.activated
+                        ? t('services.active')
+                        : !premiumStatus?.is_premium
+                          ? t('services.premiumRequired')
+                          : youthAcademyService?.can_activate
+                            ? t('services.available')
+                            : t('services.locked')}
+                </span>
+              </div>
+
+              <p className="mt-2 max-w-4xl text-sm leading-6 text-gray-700">
+                {t('services.descriptionYouthAcademy')}
+              </p>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                <MembershipItem
+                  label={t('services.youthCapacity')}
+                  value={t('services.ridersCount', { count: youthAcademyService?.capacity ?? 16 })}
+                />
+                <MembershipItem
+                  label={t('services.youthStarterRiders')}
+                  value={t('services.ridersCount', { count: youthAcademyService?.starter_riders ?? 6 })}
+                />
+                <MembershipItem
+                  label={t('services.youthStarterStaff')}
+                  value={t('services.youthStarterStaffValue')}
+                />
+                <MembershipItem
+                  label={t('services.youthActivationCost')}
+                  value={t('services.youthActivationCostValue', {
+                    activation: youthAcademyService?.activation_coin_cost ?? 50,
+                    renewal: youthAcademyService?.renewal_coin_cost ?? 50,
+                  })}
+                />
+                <MembershipItem
+                  label={t('services.youthUnlock')}
+                  value={t('services.youthUnlockValue', {
+                    game: youthAcademyService?.unlock_game_days_required ?? 90,
+                  })}
+                />
+              </div>
+
+              {!youthAcademyService?.activated &&
+              premiumStatus?.is_premium &&
+              youthAcademyService?.time_requirement_met === false ? (
+                <p className="mt-4 text-sm text-amber-800">
+                  {t('services.youthWaiting', {
+                    gamePlayed: youthAcademyService?.game_days_played ?? 0,
+                    gameRequired: youthAcademyService?.unlock_game_days_required ?? 90,
+                  })}
+                </p>
+              ) : null}
+
+              <ul className="mt-4 grid gap-2 text-sm text-gray-700 md:grid-cols-2">
+                <li>✓ {t('services.youthFeatureScouting')}</li>
+                <li>✓ {t('services.youthFeatureRacing')}</li>
+                <li>✓ {t('services.youthFeatureBudget')}</li>
+                <li>✓ {t('services.youthFeatureEquipment')}</li>
+                <li>✓ {t('services.youthFeatureDevelopment')}</li>
+                <li>✓ {t('services.youthFeatureInfrastructure')}</li>
+                <li>✓ {t('services.youthFeatureResponsibilities')}</li>
+                <li>✓ {t('services.youthFeaturePathway')}</li>
+              </ul>
+
+              {youthAcademyService?.read_only ? (
+                <p className="mt-4 text-sm font-medium text-amber-800">
+                  {t('services.youthReadOnly')}
+                </p>
+              ) : null}
+            </div>
+
+            <a
+              href="#/dashboard/youth-academy"
+              className="inline-flex shrink-0 items-center justify-center rounded-xl bg-black px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-gray-800"
+            >
+              {youthAcademyService?.activated
+                ? t('services.openYouthAcademy')
+                : t('services.viewYouthAcademy')}
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 6 — Billing and purchase history */}
+      <section className="mt-10">
+        <div>
+          <h3 className="text-xl font-extrabold text-black">
+            {t('history.title')}
+          </h3>
+          <p className="mt-1 text-sm text-gray-600">
+            {t('history.description')}
+          </p>
+        </div>
+
+        <div className="mt-5 space-y-4">
+          <HistoryCard
+            title={t('history.premiumInvoices')}
+            subtitle={t('history.premiumInvoicesSubtitle')}
+            open={premiumInvoicesOpen}
+            onToggle={() => void handleTogglePremiumInvoices()}
+          >
+            {premiumInvoicesError ? (
+              <HistoryError message={premiumInvoicesError} />
+            ) : loadingPremiumInvoices ? (
+              <HistoryLoading />
+            ) : premiumInvoices.length === 0 ? (
+              <HistoryEmpty message={t('history.noPremiumInvoices')} />
+            ) : (
+              <div className="overflow-x-auto rounded-xl border border-black/10">
+                <table className="w-full min-w-[900px] text-sm">
+                  <thead className="bg-gray-50 text-left text-gray-600">
+                    <tr>
+                      <th className="px-4 py-3 font-semibold">{t('history.paid')}</th>
+                      <th className="px-4 py-3 font-semibold">{t('history.servicePeriod')}</th>
+                      <th className="px-4 py-3 font-semibold">{t('history.amount')}</th>
+                      <th className="px-4 py-3 font-semibold">{t('history.status')}</th>
+                      <th className="px-4 py-3 font-semibold">{t('history.coinsGranted')}</th>
+                      <th className="px-4 py-3 font-semibold">{t('history.type')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {premiumInvoices.map((invoice) => (
+                      <tr
+                        key={invoice.stripe_invoice_id}
+                        className="border-t border-black/5"
+                      >
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          {formatDateTime(invoice.processed_at)}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          {formatDate(invoice.period_start)} –{' '}
+                          {formatDate(invoice.period_end)}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap font-semibold">
+                          {moneyFromCents(
+                            invoice.amount_paid_cents,
+                            invoice.currency,
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div
+                            className={
+                              invoice.refunded
+                                ? 'font-semibold text-amber-700'
+                                : invoice.status === 'paid'
+                                  ? 'font-semibold text-green-700'
+                                  : 'font-semibold text-gray-700'
+                            }
+                          >
+                            {invoice.refunded
+                              ? t('history.refunded')
+                              : invoice.status === 'paid'
+                                ? t('history.invoicePaid')
+                                : titleFromSnake(
+                                    invoice.status ?? 'unknown',
+                                  )}
+                          </div>
+                          {invoice.hosted_invoice_url ? (
+                            <a
+                              href={invoice.hosted_invoice_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="mt-1 inline-block text-xs font-semibold text-blue-700 hover:underline"
+                            >
+                              {t('history.viewInvoice')}
+                            </a>
+                          ) : null}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-green-700">
+                          +{Number(invoice.coins_granted).toLocaleString()}
+                        </td>
+                        <td className="px-4 py-3">
+                          {billingReasonLabel(invoice.billing_reason)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </HistoryCard>
+
+          <HistoryCard
+            title={t('history.coinPurchases')}
+            subtitle={t('history.coinPurchasesSubtitle')}
+            open={historyOpen}
+            onToggle={() => void handleToggleHistory()}
+          >
+            {historyError ? (
+              <HistoryError message={historyError} />
+            ) : loadingHistory ? (
+              <HistoryLoading />
+            ) : purchases.length === 0 ? (
+              <HistoryEmpty message={t('history.noPurchases')} />
+            ) : (
+              <div className="overflow-x-auto rounded-xl border border-black/10">
+                <table className="w-full min-w-[620px] text-sm">
+                  <thead className="bg-gray-50 text-left text-gray-600">
+                    <tr>
+                      <th className="px-4 py-3 font-semibold">{t('history.date')}</th>
+                      <th className="px-4 py-3 font-semibold">{t('history.package')}</th>
+                      <th className="px-4 py-3 font-semibold">{t('history.coins')}</th>
+                      <th className="px-4 py-3 font-semibold">{t('history.price')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {purchases.map((purchase, index) => (
+                      <tr
+                        key={`${purchase.createdAt}_${purchase.packageCode}_${index}`}
+                        className="border-t border-black/5"
+                      >
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          {formatDateTime(purchase.createdAt)}
+                        </td>
+                        <td className="px-4 py-3">
+                          {purchase.packageCode
+                            ? titleFromSnake(purchase.packageCode)
+                            : t('history.coinPackage')}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-green-700">
+                          +{purchase.coins.toLocaleString()}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          {purchase.priceEur === null
+                            ? '—'
+                            : eur(purchase.priceEur)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </HistoryCard>
+
+          <HistoryCard
+            title={t('history.ledger')}
+            subtitle={t('history.ledgerSubtitle')}
+            open={coinHistoryOpen}
+            onToggle={() => void handleToggleCoinHistory()}
+          >
+            {coinHistoryError ? (
+              <HistoryError message={coinHistoryError} />
+            ) : loadingCoinHistory ? (
+              <HistoryLoading />
+            ) : coinTransactions.length === 0 ? (
+              <HistoryEmpty message={t('history.noTransactions')} />
+            ) : (
+              <>
+                <div className="overflow-x-auto rounded-xl border border-black/10">
+                  <table className="w-full min-w-[760px] text-sm">
+                    <thead className="bg-gray-50 text-left text-gray-600">
+                      <tr>
+                        <th className="px-4 py-3 font-semibold">{t('history.date')}</th>
+                        <th className="px-4 py-3 font-semibold">{t('history.type')}</th>
+                        <th className="px-4 py-3 font-semibold">{t('history.coins')}</th>
+                        <th className="px-4 py-3 font-semibold">{t('history.details')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {visibleCoinTransactions.map((transaction, index) => {
+                        const amountClass =
+                          transaction.delta > 0
+                            ? 'text-green-700'
+                            : transaction.delta < 0
+                              ? 'text-red-700'
+                              : 'text-gray-700'
+
+                        return (
+                          <tr
+                            key={`${transaction.createdAt}_${transaction.reason}_${index}`}
+                            className="border-t border-black/5"
+                          >
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              {formatDateTime(transaction.createdAt)}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap font-medium">
+                              {transaction.description}
+                            </td>
+                            <td className={`px-4 py-3 whitespace-nowrap font-bold ${amountClass}`}>
+                              {transaction.delta > 0 ? '+' : ''}
+                              {transaction.delta.toLocaleString()}
+                            </td>
+                            <td className="px-4 py-3 text-gray-600">
+                              {transaction.description}
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="text-sm text-gray-600">
+                    {t('history.page', { page: safeCoinHistoryPage, pages: coinHistoryTotalPages })}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCoinHistoryPage((current) =>
+                          Math.max(1, current - 1),
+                        )
+                      }
+                      disabled={safeCoinHistoryPage <= 1}
+                      className="rounded-xl border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-black hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {t('history.previous')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCoinHistoryPage((current) =>
+                          Math.min(
+                            coinHistoryTotalPages,
+                            current + 1,
+                          ),
+                        )
+                      }
+                      disabled={
+                        safeCoinHistoryPage >= coinHistoryTotalPages
+                      }
+                      className="rounded-xl border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-black hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {t('history.next')}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </HistoryCard>
+        </div>
+      </section>
+    </div>
+  )
+}
+
+function MembershipItem(props: {
+  label: string
+  value: string
+}): JSX.Element {
+  return (
+    <div className="rounded-xl bg-gray-50 p-4">
+      <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+        {props.label}
+      </div>
+      <div className="mt-1 text-base font-normal text-black">
+        {props.value}
+      </div>
+    </div>
+  )
+}
+
+function HistoryCard(props: {
+  title: string
+  subtitle: string
+  open: boolean
+  onToggle: () => void
+  children: React.ReactNode
+}): JSX.Element {
+  return (
+    <div className="rounded-2xl border border-black/10 bg-white p-5 shadow-sm">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="text-base font-semibold text-black">
+            {props.title}
+          </div>
+          <div className="mt-1 text-sm text-gray-600">
+            {props.subtitle}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={props.onToggle}
+          className="h-10 min-w-[128px] rounded-xl bg-black px-4 py-2.5 text-sm font-bold text-white hover:opacity-90"
+        >
+          {props.open
+            ? appI18n.t('history.hide', { ns: 'proPackages' })
+            : appI18n.t('history.show', { ns: 'proPackages' })}
+        </button>
+      </div>
+
+      {props.open ? <div className="mt-4">{props.children}</div> : null}
+    </div>
+  )
+}
+
+function HistoryError(props: { message: string }): JSX.Element {
+  return (
+    <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+      {props.message}
+    </div>
+  )
+}
+
+function HistoryLoading(): JSX.Element {
+  return (
+    <div className="rounded-xl border border-black/10 bg-white p-4 text-sm text-gray-600">
+      {appI18n.t('history.loading', { ns: 'proPackages' })}
+    </div>
+  )
+}
+
+function HistoryEmpty(props: { message: string }): JSX.Element {
+  return (
+    <div className="rounded-xl border border-black/10 bg-white p-4 text-sm text-gray-600">
+      {props.message}
+    </div>
+  )
+}

@@ -1,0 +1,1288 @@
+/**
+ * EquipmentRaceSuppliesTab.tsx
+ *
+ * Race Supplies tab for the Equipment dashboard.
+ *
+ * Shows stock-based race supplies with image area and purchase controls.
+ *
+ * Updated for durable reusable supplies:
+ * - Bidons / Water Bottles, Energy Gels, Nutrition Packs = consumables.
+ * - Race Jersey Complete = recommended durable kit; shortages apply a proportional performance penalty, 10 stage uses per unit.
+ * - Rain Jackets = optional durable weather item, 25 stage uses per unit.
+ *
+ * Backend note:
+ * - Durable usage comes from public.club_race_supply_units and
+ *   public.get_club_race_supply_unit_summary_v1().
+ * - This component can display durability fields when getRaceSupplies() includes them.
+ */
+
+import React, { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
+import { getRaceSupplies, purchaseRaceSupplies } from '../equipmentApi'
+import type { RaceSupplyItem } from '../types'
+import {
+  formatMoney,
+  getStockBadgeClass,
+  makeIdempotencyKey,
+} from '../equipmentFormatters'
+import {
+  getEquipmentAutoRestockRules,
+  saveEquipmentAutoRestockRule,
+  type EquipmentAutoRestockRule,
+  type EquipmentPremiumAccess,
+} from '../equipmentApi'
+
+type EquipmentRaceSuppliesTabProps = {
+  clubId: string
+  equipmentAccess: EquipmentPremiumAccess | null
+}
+
+type JsonRecord = Record<string, unknown>
+
+type RaceSupplyKey =
+  | 'bidons_water_bottles'
+  | 'energy_gels'
+  | 'nutrition_packs'
+  | 'race_jersey_complete'
+  | 'rain_jackets'
+
+type RaceSupplyUseType = 'consumable' | 'durable'
+
+type RaceSupplyRule = {
+  key: RaceSupplyKey
+  displayNameKey: string
+  useType: RaceSupplyUseType
+  defaultPurchaseQuantity: number
+  minPurchaseQuantity: number
+  maxPurchaseQuantity: number
+  stockLowThreshold: number
+  stageRuleKey: string
+  durabilityRuleKey: string
+  positiveEffectKeys: string[]
+  negativeEffectKeys: string[]
+}
+
+type DurableSupplySummary = {
+  totalUnits: number | null
+  usableUnits: number | null
+  wornOutUnits: number | null
+  discardedUnits: number | null
+  avgUsesRemaining: number | null
+  minUsesRemaining: number | null
+  maxUsesRemaining: number | null
+  maxStageUses: number | null
+}
+
+const raceSupplyRules: Record<RaceSupplyKey, RaceSupplyRule> = {
+  bidons_water_bottles: {
+    key: 'bidons_water_bottles',
+    displayNameKey: 'supplies.bidons',
+    useType: 'consumable',
+    defaultPurchaseQuantity: 50,
+    minPurchaseQuantity: 1,
+    maxPurchaseQuantity: 500,
+    stockLowThreshold: 20,
+    stageRuleKey: 'supplies.bidonsStage',
+    durabilityRuleKey: 'supplies.bidonsDurability',
+    positiveEffectKeys: [
+      'supplies.bidonsPositive1',
+      'supplies.bidonsPositive2',
+    ],
+    negativeEffectKeys: [
+      'supplies.bidonsNegative1',
+      'supplies.bidonsNegative2',
+    ],
+  },
+
+  energy_gels: {
+    key: 'energy_gels',
+    displayNameKey: 'supplies.gels',
+    useType: 'consumable',
+    defaultPurchaseQuantity: 50,
+    minPurchaseQuantity: 1,
+    maxPurchaseQuantity: 500,
+    stockLowThreshold: 20,
+    stageRuleKey: 'supplies.gelsStage',
+    durabilityRuleKey: 'supplies.gelsDurability',
+    positiveEffectKeys: [
+      'supplies.gelsPositive1',
+      'supplies.gelsPositive2',
+    ],
+    negativeEffectKeys: [
+      'supplies.gelsNegative1',
+      'supplies.gelsNegative2',
+    ],
+  },
+
+  nutrition_packs: {
+    key: 'nutrition_packs',
+    displayNameKey: 'supplies.nutrition',
+    useType: 'consumable',
+    defaultPurchaseQuantity: 50,
+    minPurchaseQuantity: 1,
+    maxPurchaseQuantity: 300,
+    stockLowThreshold: 20,
+    stageRuleKey: 'supplies.nutritionStage',
+    durabilityRuleKey: 'supplies.nutritionDurability',
+    positiveEffectKeys: [
+      'supplies.nutritionPositive1',
+      'supplies.nutritionPositive2',
+    ],
+    negativeEffectKeys: [
+      'supplies.nutritionNegative1',
+      'supplies.nutritionNegative2',
+    ],
+  },
+
+  race_jersey_complete: {
+    key: 'race_jersey_complete',
+    displayNameKey: 'supplies.jersey',
+    useType: 'durable',
+    defaultPurchaseQuantity: 10,
+    minPurchaseQuantity: 1,
+    maxPurchaseQuantity: 50,
+    stockLowThreshold: 6,
+    stageRuleKey: 'supplies.jerseyStage',
+    durabilityRuleKey: 'supplies.jerseyDurability',
+    positiveEffectKeys: [
+      'supplies.jerseyPositive1',
+      'supplies.jerseyPositive2',
+    ],
+    negativeEffectKeys: [
+      'supplies.jerseyNegative1',
+      'supplies.jerseyNegative2',
+    ],
+  },
+
+  rain_jackets: {
+    key: 'rain_jackets',
+    displayNameKey: 'supplies.rainJackets',
+    useType: 'durable',
+    defaultPurchaseQuantity: 10,
+    minPurchaseQuantity: 1,
+    maxPurchaseQuantity: 50,
+    stockLowThreshold: 6,
+    stageRuleKey: 'supplies.rainStage',
+    durabilityRuleKey: 'supplies.rainDurability',
+    positiveEffectKeys: [
+      'supplies.rainPositive1',
+      'supplies.rainPositive2',
+    ],
+    negativeEffectKeys: [
+      'supplies.rainNegative1',
+      'supplies.rainNegative2',
+    ],
+  },
+}
+
+const allowedRaceSupplyKeys = Object.keys(raceSupplyRules) as RaceSupplyKey[]
+
+function asRecord(value: unknown): JsonRecord {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as JsonRecord)
+    : {}
+}
+
+function getOptionalNumber(...values: unknown[]): number | null {
+  for (const value of values) {
+    const numeric = Number(value)
+
+    if (Number.isFinite(numeric)) {
+      return numeric
+    }
+  }
+
+  return null
+}
+
+function getRaceSupplyRule(supplyKey: string): RaceSupplyRule | null {
+  return raceSupplyRules[supplyKey as RaceSupplyKey] ?? null
+}
+
+function getRaceSupplyDisplayName(item: RaceSupplyItem, t: TFunction): string {
+  const rule = getRaceSupplyRule(item.supply_key)
+  return rule ? t(rule.displayNameKey) : item.display_name
+}
+
+function getRaceSupplyImageUrl(item: RaceSupplyItem): string | null {
+  const metadata = asRecord(item.metadata)
+
+  const metadataImage =
+    typeof metadata.image_url === 'string' && metadata.image_url.trim()
+      ? metadata.image_url.trim()
+      : null
+
+  const metadataImageUrl =
+    typeof metadata.imageUrl === 'string' && metadata.imageUrl.trim()
+      ? metadata.imageUrl.trim()
+      : null
+
+  return metadataImage ?? metadataImageUrl
+}
+
+function getRaceSupplyInitials(name: string): string {
+  return name
+    .split(/[ /-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('')
+}
+
+function getDurableSupplySummary(item: RaceSupplyItem): DurableSupplySummary {
+  const itemRecord = item as unknown as JsonRecord
+  const metadata = asRecord(item.metadata)
+  const durability = asRecord(metadata.durability)
+  const durabilitySummary = asRecord(metadata.durability_summary)
+  const reusable = asRecord(metadata.reusable)
+
+  return {
+    totalUnits: getOptionalNumber(
+      itemRecord.total_units,
+      durabilitySummary.total_units,
+      durability.total_units,
+      reusable.total_units,
+    ),
+    usableUnits: getOptionalNumber(
+      itemRecord.usable_units,
+      durabilitySummary.usable_units,
+      durability.usable_units,
+      reusable.usable_units,
+    ),
+    wornOutUnits: getOptionalNumber(
+      itemRecord.worn_out_units,
+      durabilitySummary.worn_out_units,
+      durability.worn_out_units,
+      reusable.worn_out_units,
+    ),
+    discardedUnits: getOptionalNumber(
+      itemRecord.discarded_units,
+      durabilitySummary.discarded_units,
+      durability.discarded_units,
+      reusable.discarded_units,
+    ),
+    avgUsesRemaining: getOptionalNumber(
+      itemRecord.avg_uses_remaining,
+      durabilitySummary.avg_uses_remaining,
+      durability.avg_uses_remaining,
+      reusable.avg_uses_remaining,
+    ),
+    minUsesRemaining: getOptionalNumber(
+      itemRecord.min_uses_remaining,
+      durabilitySummary.min_uses_remaining,
+      durability.min_uses_remaining,
+      reusable.min_uses_remaining,
+    ),
+    maxUsesRemaining: getOptionalNumber(
+      itemRecord.max_uses_remaining,
+      durabilitySummary.max_uses_remaining,
+      durability.max_uses_remaining,
+      reusable.max_uses_remaining,
+    ),
+    maxStageUses: getOptionalNumber(
+      itemRecord.max_stage_uses,
+      durabilitySummary.max_stage_uses,
+      durability.max_stage_uses,
+      reusable.max_stage_uses,
+    ),
+  }
+}
+
+function formatUses(value: number | null): string {
+  if (value === null) return '—'
+  return value % 1 === 0 ? value.toFixed(0) : value.toFixed(1)
+}
+
+function formatPercent(value: number | null): string {
+  if (value === null || !Number.isFinite(value)) return '—'
+  return `${Math.round(value)}%`
+}
+
+function getPurchaseInputValue(value: number | undefined): string {
+  if (!value || value <= 0) return ''
+  return String(value)
+}
+
+function getDurableUsageStats(item: RaceSupplyItem, rule: RaceSupplyRule) {
+  const summary = getDurableSupplySummary(item)
+  const maxStageUses = summary.maxStageUses ?? (
+    item.supply_key === 'race_jersey_complete' ? 10 : 25
+  )
+
+  const totalUnits = summary.totalUnits ?? item.total_purchased ?? item.quantity_available ?? 0
+  const usableUnits = summary.usableUnits ?? item.quantity_available ?? 0
+  const wornOutUnits = summary.wornOutUnits ?? 0
+  const discardedUnits = summary.discardedUnits ?? 0
+  const purchasedUnits = item.total_purchased ?? totalUnits
+  const availableUnits = item.quantity_available ?? usableUnits
+
+  const totalStageCapacity = Math.max(0, totalUnits * maxStageUses)
+  const usedStageUses = Math.max(0, Number(item.total_used ?? 0))
+
+  const avgUsesRemaining = summary.avgUsesRemaining
+  const estimatedRemainingFromUnits =
+    avgUsesRemaining !== null ? Math.max(0, avgUsesRemaining * usableUnits) : null
+
+  const remainingStageUses =
+    estimatedRemainingFromUnits !== null
+      ? estimatedRemainingFromUnits
+      : Math.max(0, totalStageCapacity - usedStageUses)
+
+  const consumedStageUses =
+    totalStageCapacity > 0
+      ? Math.min(totalStageCapacity, Math.max(usedStageUses, totalStageCapacity - remainingStageUses))
+      : usedStageUses
+
+  const conditionPercent =
+    totalStageCapacity > 0
+      ? Math.max(0, Math.min(100, (remainingStageUses / totalStageCapacity) * 100))
+      : null
+
+  const usedPercent =
+    totalStageCapacity > 0
+      ? Math.max(0, Math.min(100, (consumedStageUses / totalStageCapacity) * 100))
+      : 0
+
+  return {
+    availableUnits,
+    purchasedUnits,
+    usableUnits,
+    wornOutUnits,
+    discardedUnits,
+    maxStageUses,
+    totalStageCapacity,
+    usedStageUses: consumedStageUses,
+    remainingStageUses,
+    conditionPercent,
+    usedPercent,
+    remainingPercent: conditionPercent,
+    minUsesRemaining: summary.minUsesRemaining,
+    maxUsesRemaining: summary.maxUsesRemaining,
+  }
+}
+
+function getRaceSupplyStockStatus(
+  item: RaceSupplyItem,
+  rule: RaceSupplyRule,
+): 'empty' | 'low' | 'ok' {
+  if (item.quantity_available === 0) return 'empty'
+  if (item.quantity_available < rule.stockLowThreshold) return 'low'
+  return 'ok'
+}
+
+function normalizePurchaseQuantity(value: number, rule: RaceSupplyRule): number {
+  if (!Number.isFinite(value)) return rule.defaultPurchaseQuantity
+
+  return Math.min(
+    Math.max(Math.floor(value), rule.minPurchaseQuantity),
+    rule.maxPurchaseQuantity,
+  )
+}
+
+function sortRaceSupplyItems(items: RaceSupplyItem[]): RaceSupplyItem[] {
+  return [...items]
+    .filter((item) => allowedRaceSupplyKeys.includes(item.supply_key as RaceSupplyKey))
+    .sort((a, b) => {
+      return (
+        allowedRaceSupplyKeys.indexOf(a.supply_key as RaceSupplyKey) -
+        allowedRaceSupplyKeys.indexOf(b.supply_key as RaceSupplyKey)
+      )
+    })
+}
+
+function SupplyEffectsList({
+  title,
+  values,
+  tone,
+}: {
+  title: string
+  values: string[]
+  tone: 'positive' | 'negative'
+}) {
+  return (
+    <div>
+      <div
+        className={[
+          'text-xs font-semibold',
+          tone === 'positive' ? 'text-emerald-700' : 'text-red-700',
+        ].join(' ')}
+      >
+        {title}
+      </div>
+
+      <ul className="mt-1 list-disc space-y-1 pl-4 text-xs leading-5 text-gray-600">
+        {values.map((value) => (
+          <li key={value}>{value}</li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+function RaceSupplyInfoTooltip({ rule }: { rule: RaceSupplyRule }) {
+  const { t } = useTranslation('equipment')
+  const displayName = t(rule.displayNameKey)
+  const [open, setOpen] = useState(false)
+  const [pinned, setPinned] = useState(false)
+  const [position, setPosition] = useState({ top: 0, left: 0 })
+  const buttonRef = React.useRef<HTMLButtonElement | null>(null)
+  const pinTimerRef = React.useRef<number | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (pinTimerRef.current !== null) {
+        window.clearTimeout(pinTimerRef.current)
+      }
+    }
+  }, [])
+
+  function updateTooltipPosition() {
+    const button = buttonRef.current
+    if (!button) return
+
+    const rect = button.getBoundingClientRect()
+    const panelWidth = 560
+    const margin = 16
+    const left = Math.min(
+      Math.max(rect.right - panelWidth, margin),
+      Math.max(window.innerWidth - panelWidth - margin, margin),
+    )
+
+    setPosition({
+      top: rect.bottom + 8,
+      left,
+    })
+  }
+
+  function startPinCountdown() {
+    if (pinTimerRef.current !== null) {
+      window.clearTimeout(pinTimerRef.current)
+    }
+
+    pinTimerRef.current = window.setTimeout(() => {
+      setPinned(true)
+      setOpen(true)
+    }, 3000)
+  }
+
+  function stopPinCountdown() {
+    if (pinTimerRef.current !== null) {
+      window.clearTimeout(pinTimerRef.current)
+      pinTimerRef.current = null
+    }
+  }
+
+  function handleMouseEnter() {
+    updateTooltipPosition()
+    setOpen(true)
+    if (!pinned) {
+      startPinCountdown()
+    }
+  }
+
+  function handleMouseLeave() {
+    stopPinCountdown()
+    if (!pinned) {
+      setOpen(false)
+    }
+  }
+
+  function handleToggleClick() {
+    if (open && pinned) {
+      setPinned(false)
+      setOpen(false)
+      stopPinCountdown()
+      return
+    }
+
+    updateTooltipPosition()
+    setOpen(true)
+    setPinned(true)
+    stopPinCountdown()
+  }
+
+  function handleClose() {
+    setPinned(false)
+    setOpen(false)
+    stopPinCountdown()
+  }
+
+  return (
+    <span
+      className={[
+        'relative inline-flex',
+        open ? 'z-[9999]' : 'z-10',
+      ].join(' ')}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <button
+        ref={buttonRef}
+        type="button"
+        aria-label={t('supplies.ruleAria', { name: displayName })}
+        onClick={handleToggleClick}
+        className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-gray-200 bg-white text-xs font-bold text-gray-500 shadow-sm hover:bg-gray-50"
+      >
+        i
+      </button>
+
+      {open ? (
+        <div
+          className="fixed z-[99999] max-h-[28rem] w-[35rem] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-2xl border border-gray-200 bg-white p-4 text-left text-xs leading-5 text-gray-600 shadow-2xl ring-1 ring-black/5"
+          style={{ top: position.top, left: position.left }}
+        >
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+              {t('supplies.stagePlanRule')}
+            </div>
+
+            {pinned ? (
+              <button
+                type="button"
+                onClick={handleClose}
+                className="rounded-md px-1.5 py-0.5 text-xs font-semibold text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+              >
+                ×
+              </button>
+            ) : null}
+          </div>
+
+          <div className="text-sm font-semibold text-gray-900">
+            {displayName}
+          </div>
+
+          <p className="mt-1 text-xs text-gray-500">{t(rule.stageRuleKey)}</p>
+          <p className="mt-1 text-xs text-gray-500">{t(rule.durabilityRuleKey)}</p>
+
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            <SupplyEffectsList
+              title={t('supplies.positiveEffects')}
+              values={rule.positiveEffectKeys.map((key) => t(key))}
+              tone="positive"
+            />
+
+            <SupplyEffectsList
+              title={t('supplies.negativeLimits')}
+              values={rule.negativeEffectKeys.map((key) => t(key))}
+              tone="negative"
+            />
+          </div>
+
+          <div className="mt-3 rounded-lg bg-gray-50 px-3 py-2 text-[11px] text-gray-500">
+            {t('supplies.pinHelp')}
+          </div>
+        </div>
+      ) : null}
+    </span>
+  )
+}
+
+function DurableMetric({
+  label,
+  value,
+}: {
+  label: string
+  value: string
+}) {
+  return (
+    <div className="rounded-md border border-blue-100 bg-white px-2.5 py-2">
+      <div className="text-[10px] font-semibold uppercase tracking-wide text-blue-500">
+        {label}
+      </div>
+      <div className="mt-0.5 text-sm font-semibold text-blue-950">{value}</div>
+    </div>
+  )
+}
+
+function DurableSupplyOverviewPanel({
+  items,
+}: {
+  items: RaceSupplyItem[]
+}) {
+  const { t } = useTranslation('equipment')
+  const durableItems = items.filter((item) => {
+    const rule = getRaceSupplyRule(item.supply_key)
+    return rule?.useType === 'durable'
+  })
+
+  if (durableItems.length === 0) return null
+
+  return (
+    <div className="rounded-xl bg-white p-4 shadow-sm xl:col-span-2">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h4 className="text-base font-semibold text-gray-900">
+            {t('supplies.durablePanel')}
+          </h4>
+          <p className="mt-1 text-xs text-gray-500">
+            {t('supplies.durablePanelDescription')}
+          </p>
+        </div>
+
+        <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+          {t('supplies.reusableUnits')}
+        </span>
+      </div>
+
+      <div className="mt-3 grid gap-3 lg:grid-cols-2">
+        {durableItems.map((item) => {
+          const rule = getRaceSupplyRule(item.supply_key)
+          if (!rule) return null
+
+          const stats = getDurableUsageStats(item, rule)
+
+          return (
+            <div
+              key={item.supply_key}
+              className="relative rounded-xl border border-blue-100 bg-blue-50 p-3"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold text-blue-950">
+                    {getRaceSupplyDisplayName(item, t)}
+                  </div>
+                  <div className="mt-1 max-w-[34rem] text-xs leading-5 text-blue-800">
+                    {t(rule.durabilityRuleKey)}
+                  </div>
+                </div>
+
+                <span className="rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-blue-700 shadow-sm">
+                  {t('supplies.usesPerUnit', { uses: formatUses(stats.maxStageUses) })}
+                </span>
+              </div>
+
+              <div className="mt-3 rounded-lg border border-blue-100 bg-white p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-wide text-blue-500">
+                      {t('supplies.overallCondition')}
+                    </div>
+                    <div className="mt-0.5 text-xl font-bold text-blue-950">
+                      {formatPercent(stats.conditionPercent)}
+                    </div>
+                  </div>
+
+                  <div className="text-right text-xs text-blue-700">
+                    <div>
+                      {t('supplies.usedMetric', {
+                        percent: formatPercent(stats.usedPercent),
+                        used: formatUses(stats.usedStageUses),
+                        total: formatUses(stats.totalStageCapacity),
+                        capacity: formatUses(stats.totalStageCapacity),
+                      })}
+                    </div>
+                    <div>
+                      {t('supplies.leftMetric', {
+                        percent: formatPercent(stats.remainingPercent),
+                        left: formatUses(stats.remainingStageUses),
+                        uses: formatUses(stats.remainingStageUses),
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-blue-100">
+                  <div
+                    className="h-full rounded-full bg-blue-600"
+                    style={{ width: `${stats.usedPercent}%` }}
+                  />
+                </div>
+
+                <div className="mt-1 flex justify-between text-[11px] text-blue-500">
+                  <span>{t('supplies.used')}</span>
+                  <span>{t('supplies.fullCapacity')}</span>
+                </div>
+              </div>
+
+              <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-4">
+                <DurableMetric
+                  label={t('supplies.availableNow')}
+                  value={formatUses(stats.availableUnits)}
+                />
+                <DurableMetric
+                  label={t('supplies.purchasedUnits')}
+                  value={formatUses(stats.purchasedUnits)}
+                />
+                <DurableMetric
+                  label={t('supplies.usableUnits')}
+                  value={formatUses(stats.usableUnits)}
+                />
+                <DurableMetric
+                  label={t('supplies.wornOut')}
+                  value={formatUses(stats.wornOutUnits)}
+                />
+                <DurableMetric
+                  label={t('supplies.discarded')}
+                  value={formatUses(stats.discardedUnits)}
+                />
+                <DurableMetric
+                  label={t('supplies.capacityLeft')}
+                  value={formatPercent(stats.remainingPercent)}
+                />
+                <DurableMetric
+                  label={t('supplies.capacityUsed')}
+                  value={formatPercent(stats.usedPercent)}
+                />
+                <DurableMetric
+                  label={t('supplies.perUnitRange')}
+                  value={
+                    stats.minUsesRemaining === null || stats.maxUsesRemaining === null
+                      ? '—'
+                      : `${formatUses(stats.minUsesRemaining)}–${formatUses(stats.maxUsesRemaining)}`
+                  }
+                />
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+export default function EquipmentRaceSuppliesTab({
+  clubId,
+  equipmentAccess,
+}: EquipmentRaceSuppliesTabProps): JSX.Element {
+  const { t } = useTranslation('equipment')
+  const [items, setItems] = useState<RaceSupplyItem[]>([])
+  const [quantities, setQuantities] = useState<Record<string, number>>({})
+  const [loading, setLoading] = useState(true)
+  const [actionLoadingKey, setActionLoadingKey] = useState<string | null>(null)
+  const [message, setMessage] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [autoRestockRules, setAutoRestockRules] = useState<EquipmentAutoRestockRule[]>([])
+  const [autoRestockLoading, setAutoRestockLoading] = useState(false)
+  const [autoRestockExpanded, setAutoRestockExpanded] = useState(false)
+
+  const sortedItems = useMemo(() => sortRaceSupplyItems(items), [items])
+
+
+  async function loadAutoRestockRules(): Promise<void> {
+    if (!equipmentAccess?.is_premium) {
+      setAutoRestockRules([])
+      return
+    }
+
+    try {
+      const rules = await getEquipmentAutoRestockRules(clubId)
+      setAutoRestockRules(rules)
+    } catch (caughtError) {
+      console.error('Failed to load auto-restock rules:', caughtError)
+      setAutoRestockRules([])
+    }
+  }
+
+  function getAutoRestockRule(supplyKey: string): EquipmentAutoRestockRule {
+    return autoRestockRules.find(rule => rule.supply_key === supplyKey) ?? {
+      supply_key: supplyKey,
+      enabled: false,
+      minimum_stock: getRaceSupplyRule(supplyKey)?.stockLowThreshold ?? 20,
+      order_quantity: getRaceSupplyRule(supplyKey)?.defaultPurchaseQuantity ?? 10,
+    }
+  }
+
+  function updateAutoRestockRule(
+    supplyKey: string,
+    patch: Partial<EquipmentAutoRestockRule>,
+  ): void {
+    setAutoRestockRules(current => {
+      const existing = getAutoRestockRule(supplyKey)
+      const next = { ...existing, ...patch, supply_key: supplyKey }
+      const without = current.filter(rule => rule.supply_key !== supplyKey)
+      return [...without, next]
+    })
+  }
+
+  async function handleSaveAutoRestockRules(): Promise<void> {
+    if (!equipmentAccess?.is_premium) return
+
+    setAutoRestockLoading(true)
+    setError(null)
+    setMessage(null)
+
+    try {
+      for (const item of sortedItems) {
+        const rule = getAutoRestockRule(item.supply_key)
+        await saveEquipmentAutoRestockRule({
+          clubId,
+          supplyKey: item.supply_key,
+          enabled: rule.enabled,
+          minimumStock: rule.minimum_stock,
+          orderQuantity: rule.order_quantity,
+        })
+      }
+
+      setMessage(t('supplies.rulesSaved'))
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : 'Failed to save automatic restocking rules.',
+      )
+    } finally {
+      setAutoRestockLoading(false)
+    }
+  }
+
+  async function runAutomaticRestock(): Promise<void> {
+    if (!equipmentAccess?.is_premium || autoRestockLoading) return
+
+    const purchases = sortedItems.flatMap(item => {
+      const rule = getAutoRestockRule(item.supply_key)
+      if (!rule.enabled || !item.catalog_item_id) return []
+      if (Number(item.quantity_available ?? 0) >= rule.minimum_stock) return []
+      return [{ item, quantity: Math.max(1, Math.floor(rule.order_quantity)) }]
+    })
+
+    if (purchases.length === 0) {
+      setMessage(t('supplies.restockNone'))
+      return
+    }
+
+    setAutoRestockLoading(true)
+    setError(null)
+
+    try {
+      for (const purchase of purchases) {
+        await purchaseRaceSupplies({
+          clubId,
+          catalogItemId: purchase.item.catalog_item_id!,
+          quantity: purchase.quantity,
+          idempotencyKey: makeIdempotencyKey('race_supplies_auto_restock'),
+        })
+      }
+
+      setMessage(
+        purchases.length === 1
+          ? t('supplies.restockCompletedOne', { count: 1 })
+          : t('supplies.restockCompleted', { count: purchases.length }),
+      )
+      await loadSupplies()
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : 'Automatic restocking failed. Check club cash and purchase limits.',
+      )
+    } finally {
+      setAutoRestockLoading(false)
+    }
+  }
+
+  async function loadSupplies(): Promise<void> {
+    setLoading(true)
+    setError(null)
+
+    try {
+      const data = await getRaceSupplies(clubId)
+      const nextItems = sortRaceSupplyItems(data.items ?? [])
+
+      setItems(nextItems)
+
+      const initialQuantities: Record<string, number> = {}
+
+      nextItems.forEach((item) => {
+        const rule = getRaceSupplyRule(item.supply_key)
+
+        void rule
+        initialQuantities[item.supply_key] = 0
+      })
+
+      setQuantities(initialQuantities)
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Failed to load race supplies',
+      )
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    void loadSupplies()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clubId])
+
+
+  useEffect(() => {
+    void loadAutoRestockRules()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clubId, equipmentAccess?.is_premium])
+
+  async function handleBuy(item: RaceSupplyItem): Promise<void> {
+    const displayName = getRaceSupplyDisplayName(item, t)
+
+    if (!item.catalog_item_id) {
+      setError(`No catalog item found for ${displayName}`)
+      return
+    }
+
+    const rule = getRaceSupplyRule(item.supply_key)
+    const requestedQuantity = quantities[item.supply_key] ?? 0
+
+    if (requestedQuantity <= 0) {
+      setError(`Enter how many ${displayName} you want to buy.`)
+      return
+    }
+
+    const quantity = normalizePurchaseQuantity(
+      requestedQuantity,
+      rule ?? {
+        key: item.supply_key as RaceSupplyKey,
+        useType: 'consumable',
+        defaultPurchaseQuantity: 1,
+        minPurchaseQuantity: 1,
+        maxPurchaseQuantity: 999,
+        stockLowThreshold: 20,
+        displayNameKey: 'supplies.generic',
+        stageRuleKey: 'supplies.generic',
+        durabilityRuleKey: 'supplies.generic',
+        positiveEffectKeys: [],
+        negativeEffectKeys: [],
+      },
+    )
+
+    setActionLoadingKey(item.supply_key)
+    setMessage(null)
+    setError(null)
+
+    try {
+      await purchaseRaceSupplies({
+        clubId,
+        catalogItemId: item.catalog_item_id,
+        quantity,
+        idempotencyKey: makeIdempotencyKey('race_supplies_purchase'),
+      })
+
+      setMessage(`${quantity}x ${displayName} purchased.`)
+      await loadSupplies()
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Purchase failed. Edge Function may not be deployed yet.',
+      )
+    } finally {
+      setActionLoadingKey(null)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-lg bg-white p-4 shadow-sm">
+        <h3 className="font-semibold text-gray-900">{t('supplies.title')}</h3>
+        <p className="mt-1 text-xs text-gray-500">
+          {t('supplies.description')}
+        </p>
+      </div>
+
+
+      {equipmentAccess?.is_premium ? (
+        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold text-slate-900">{t('supplies.automaticRestocking')}</h3>
+                <span className="rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">{t('common.premium')}</span>
+              </div>
+              <p className="mt-1 text-xs text-slate-500">
+                {t('supplies.restockDescription')}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" onClick={() => setAutoRestockExpanded(value => !value)} className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                {autoRestockExpanded ? t('supplies.hideRules') : t('supplies.manageRules')}
+              </button>
+              <button type="button" onClick={() => void runAutomaticRestock()} disabled={autoRestockLoading} className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50">
+                {t('supplies.runNow')}
+              </button>
+              {autoRestockExpanded ? (
+                <button type="button" onClick={() => void handleSaveAutoRestockRules()} disabled={autoRestockLoading} className="rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50">
+                  {autoRestockLoading ? t('supplies.working') : t('supplies.saveRules')}
+                </button>
+              ) : null}
+            </div>
+          </div>
+
+          {!autoRestockExpanded ? (
+            <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-500">
+              <span>
+                {autoRestockRules.filter(rule => rule.enabled).length === 1
+                  ? t('supplies.enabledRule', { count: 1 })
+                  : t('supplies.enabledRules', {
+                      count: autoRestockRules.filter(rule => rule.enabled).length,
+                    })}
+              </span>
+              <span aria-hidden="true">·</span>
+              <span>
+                {t('supplies.belowThresholdCount', {
+                  count: sortedItems.filter(item => {
+                    const rule = getAutoRestockRule(item.supply_key)
+                    return rule.enabled && Number(item.quantity_available ?? 0) < rule.minimum_stock
+                  }).length,
+                })}
+              </span>
+            </div>
+          ) : null}
+
+          {autoRestockExpanded ? (
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {sortedItems.map(item => {
+              const rule = getAutoRestockRule(item.supply_key)
+              return (
+                <div key={item.supply_key} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  <label className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                    <input type="checkbox" checked={rule.enabled} onChange={event => updateAutoRestockRule(item.supply_key, { enabled: event.target.checked })} className="h-4 w-4 rounded border-slate-300 text-yellow-500 focus:ring-yellow-400" />
+                    {getRaceSupplyDisplayName(item, t)}
+                  </label>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <label className="text-xs text-slate-600">{t('supplies.below')}<input type="number" min={0} value={rule.minimum_stock} onChange={event => updateAutoRestockRule(item.supply_key, { minimum_stock: Math.max(0, Number(event.target.value)) })} className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900" /></label>
+                    <label className="text-xs text-slate-600">{t('supplies.buy')}<input type="number" min={1} value={rule.order_quantity} onChange={event => updateAutoRestockRule(item.supply_key, { order_quantity: Math.max(1, Number(event.target.value)) })} className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900" /></label>
+                  </div>
+                  <div className="mt-2 text-xs text-slate-500">{t('supplies.currentStock', { count: Number(item.quantity_available ?? 0).toLocaleString() })}</div>
+                </div>
+              )
+            })}
+          </div>
+          ) : null}
+        </div>
+      ) : (
+        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2"><h3 className="font-semibold text-slate-900">{t('supplies.automaticRestocking')}</h3><span className="rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">{t('common.premium')}</span><span aria-hidden="true" className="text-slate-400">🔒</span></div>
+              <p className="mt-1 text-sm text-slate-600">{t('supplies.restockLocked')}</p>
+            </div>
+            <a href="/dashboard/premium" className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">{t('common.unlockPremium')}</a>
+          </div>
+        </div>
+      )}
+
+      {message ? (
+        <div className="rounded border border-green-200 bg-green-50 p-3 text-sm text-green-700">
+          {message}
+        </div>
+      ) : null}
+
+      {error ? (
+        <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          {error}
+        </div>
+      ) : null}
+
+      {loading ? (
+        <div className="rounded-lg bg-white p-4 text-sm text-gray-500 shadow-sm">
+          {t('supplies.loading')}
+        </div>
+      ) : sortedItems.length === 0 ? (
+        <div className="rounded-lg bg-white p-4 text-sm text-gray-500 shadow-sm">
+          {t('supplies.noneFound')}
+        </div>
+      ) : (
+        <div className="relative grid gap-5 xl:grid-cols-2">
+          {sortedItems.map((item) => {
+            const rule = getRaceSupplyRule(item.supply_key)
+            const stockStatus = rule
+              ? getRaceSupplyStockStatus(item, rule)
+              : item.quantity_available === 0
+                ? 'empty'
+                : item.quantity_available < 20
+                  ? 'low'
+                  : 'ok'
+
+            const imageUrl = getRaceSupplyImageUrl(item)
+            const isDurable = rule?.useType === 'durable'
+            const purchaseQuantity = quantities[item.supply_key] ?? 0
+            const displayName = getRaceSupplyDisplayName(item, t)
+
+            return (
+              <div
+                key={item.supply_key}
+                className="relative rounded-xl bg-white shadow-sm"
+              >
+                <div className="grid min-h-[230px] gap-0 md:grid-cols-[260px_1fr]">
+                  <div className="flex items-center justify-center bg-gray-50 p-4">
+                    <div className="flex h-56 w-full items-center justify-center overflow-hidden rounded-lg border border-gray-100 bg-white">
+                      {imageUrl ? (
+                        <img
+                          src={imageUrl}
+                          alt={displayName}
+                          className="h-full w-full object-cover"
+                          onError={(event) => {
+                            event.currentTarget.style.display = 'none'
+
+                            const fallback = event.currentTarget
+                              .nextElementSibling as HTMLElement | null
+
+                            if (fallback) {
+                              fallback.style.display = 'flex'
+                            }
+                          }}
+                        />
+                      ) : null}
+
+                      <div
+                        className={[
+                          'h-full w-full items-center justify-center bg-gray-100 text-4xl font-bold text-gray-400',
+                          imageUrl ? 'hidden' : 'flex',
+                        ].join(' ')}
+                      >
+                        {getRaceSupplyInitials(displayName)}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col p-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h4 className="text-base font-semibold text-gray-900">
+                          {getRaceSupplyDisplayName(item, t)}
+                        </h4>
+                        <p className="mt-1 text-xs text-gray-500">
+                          {item.brand_name
+                            ? t('supplies.brand', { brand: item.brand_name })
+                            : t('supplies.generic')}
+                        </p>
+
+                        {rule ? (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            <span
+                              className={[
+                                'rounded-full px-2 py-0.5 text-xs font-semibold',
+                                isDurable
+                                  ? 'bg-blue-100 text-blue-700'
+                                  : 'bg-emerald-100 text-emerald-700',
+                              ].join(' ')}
+                            >
+                              {isDurable ? t('supplies.durableReusable') : t('supplies.consumable')}
+                            </span>
+
+                            {rule.key === 'race_jersey_complete' ? (
+                              <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">
+                                {t('supplies.mandatoryStages')}
+                              </span>
+                            ) : null}
+
+                            {rule.key === 'rain_jackets' ? (
+                              <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-semibold text-sky-700">
+                                {t('supplies.weatherProtection')}
+                              </span>
+                            ) : null}
+                          </div>
+                        ) : null}
+                      </div>
+
+                      <div className="flex shrink-0 items-center gap-2">
+                        {rule ? <RaceSupplyInfoTooltip rule={rule} /> : null}
+
+                        <span
+                          className={[
+                            'rounded-full px-2 py-0.5 text-xs font-medium',
+                            getStockBadgeClass(stockStatus),
+                          ].join(' ')}
+                        >
+                          {stockStatus}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 grid grid-cols-4 gap-3 text-sm">
+                      <div>
+                        <div className="text-[11px] font-semibold uppercase tracking-wide text-emerald-600">
+                          {t('supplies.inStock')}
+                        </div>
+                        <div className="mt-1 text-lg font-bold text-gray-900">
+                          {item.quantity_available}
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-xs text-gray-400">Purchased</div>
+                        <div className="font-semibold text-gray-900">
+                          {item.total_purchased}
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-xs text-gray-400">Used</div>
+                        <div className="font-semibold text-gray-900">
+                          {item.total_used}
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-xs text-gray-400">Unit price</div>
+                        <div className="font-semibold text-gray-900">
+                          {formatMoney(item.base_price_cash ?? 0)}
+                        </div>
+                      </div>
+                    </div>
+
+
+                    <div className="mt-auto pt-5">
+                      <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                        {t('supplies.newOrder')}
+                      </div>
+                      <div className="flex gap-2">
+                      <input
+                        type="number"
+                        min={0}
+                        max={rule?.maxPurchaseQuantity ?? 999}
+                        value={getPurchaseInputValue(purchaseQuantity)}
+                        placeholder="0"
+                        onChange={(event) => {
+                          const rawValue = event.target.value
+
+                          setQuantities((current) => ({
+                            ...current,
+                            [item.supply_key]: rawValue.trim() === ''
+                              ? 0
+                              : normalizePurchaseQuantity(
+                                  Number(rawValue),
+                                  rule ?? {
+                                    key: item.supply_key as RaceSupplyKey,
+                                    useType: 'consumable',
+                                    defaultPurchaseQuantity: 1,
+                                    minPurchaseQuantity: 1,
+                                    maxPurchaseQuantity: 999,
+                                    stockLowThreshold: 20,
+                                    displayNameKey: 'supplies.generic',
+                                    stageRuleKey: 'supplies.generic',
+                                    durabilityRuleKey: 'supplies.generic',
+                                    positiveEffectKeys: [],
+                                    negativeEffectKeys: [],
+                                  },
+                                ),
+                          }))
+                        }}
+                        className="w-28 rounded border border-gray-200 px-3 py-2 text-sm"
+                      />
+
+                      <button
+                        type="button"
+                        disabled={actionLoadingKey === item.supply_key || purchaseQuantity <= 0}
+                        onClick={() => void handleBuy(item)}
+                        className="flex-1 rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                      >
+                        {actionLoadingKey === item.supply_key
+                          ? t('supplies.buying')
+                          : isDurable
+                            ? t('supplies.buyUnits')
+                            : t('supplies.buy')}
+                      </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+
+          <DurableSupplyOverviewPanel items={sortedItems} />
+        </div>
+      )}
+    </div>
+  )
+}

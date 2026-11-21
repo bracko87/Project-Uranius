@@ -1,0 +1,348 @@
+/**
+ * Sidebar.tsx
+ * Retractable left navigation for the in-game dashboard.
+ */
+
+import React, { useEffect, useState } from 'react'
+import { NavLink, useNavigate, useLocation } from 'react-router'
+import { useTranslation } from 'react-i18next'
+import {
+  Home,
+  Users,
+  Calendar,
+  List,
+  Grid,
+  Bike,
+  ShoppingCart,
+  BarChart2,
+  LineChart,
+  DollarSign,
+  LogOut,
+  ClipboardCheck,
+  Sparkles,
+  Trophy,
+  GraduationCap,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react'
+import { supabase } from '../../lib/supabase'
+import BugReportButton from '../dashboard/BugReportButton'
+
+interface SidebarProps {
+  collapsed?: boolean
+  onToggle?: () => void
+}
+
+interface NavItem {
+  to: string
+  labelKey: string
+  descriptionKey: string
+  icon: React.ComponentType<{ size?: number; className?: string }>
+  aliases?: string[]
+}
+
+const GAME_LOGO_URL =
+  '/assets/uranius-placeholders/square.png?id=3ff7216f6ba1ddbb'
+
+const navItems: NavItem[] = [
+  {
+    to: '/dashboard/overview',
+    labelKey: 'overview',
+    descriptionKey: 'descriptions.overview',
+    icon: Home,
+  },
+  {
+    to: '/dashboard/squad',
+    labelKey: 'squad',
+    descriptionKey: 'descriptions.squad',
+    icon: Users,
+  },
+  {
+    to: '/dashboard/training',
+    labelKey: 'training',
+    descriptionKey: 'descriptions.training',
+    icon: List,
+  },
+  {
+    to: '/dashboard/calendar',
+    labelKey: 'calendar',
+    descriptionKey: 'descriptions.calendar',
+    icon: Calendar,
+  },
+  {
+    to: '/dashboard/race-preparation',
+    aliases: ['/dashboard/team-schedule'],
+    labelKey: 'racePreparation',
+    descriptionKey: 'descriptions.racePreparation',
+    icon: ClipboardCheck,
+  },
+  {
+    to: '/dashboard/team-ranking',
+    labelKey: 'teamRanking',
+    descriptionKey: 'descriptions.teamRanking',
+    icon: BarChart2,
+  },
+  {
+    to: '/dashboard/equipment',
+    labelKey: 'equipment',
+    descriptionKey: 'descriptions.equipment',
+    icon: Bike,
+  },
+  {
+    to: '/dashboard/infrastructure',
+    labelKey: 'infrastructure',
+    descriptionKey: 'descriptions.infrastructure',
+    icon: Grid,
+  },
+  {
+    to: '/dashboard/finance',
+    labelKey: 'finance',
+    descriptionKey: 'descriptions.finance',
+    icon: DollarSign,
+  },
+  {
+    to: '/dashboard/transfers',
+    labelKey: 'transfers',
+    descriptionKey: 'descriptions.transfers',
+    icon: ShoppingCart,
+  },
+  {
+    to: '/dashboard/national-ranking',
+    labelKey: 'nationalRanking',
+    descriptionKey: 'descriptions.nationalRanking',
+    icon: Trophy,
+  },
+  {
+    to: '/dashboard/national-association',
+    aliases: ['/dashboard/world-nations', '/dashboard/nations-competition'],
+    labelKey: 'nationalAssociation',
+    descriptionKey: 'descriptions.nationalAssociation',
+    icon: Users,
+  },
+  {
+    to: '/dashboard/statistics',
+    labelKey: 'statistics',
+    descriptionKey: 'descriptions.statistics',
+    icon: LineChart,
+  },
+  {
+    to: '/dashboard/youth-academy',
+    labelKey: 'youthAcademy',
+    descriptionKey: 'descriptions.youthAcademy',
+    icon: GraduationCap,
+  },
+  {
+    to: '/dashboard/premium-center',
+    labelKey: 'premiumCenter',
+    descriptionKey: 'descriptions.premiumCenter',
+    icon: Sparkles,
+  },
+]
+
+function isPathActive(pathname: string, item: NavItem): boolean {
+  const paths = [item.to, ...(item.aliases ?? [])]
+  return paths.some(path => pathname === path || pathname.startsWith(`${path}/`))
+}
+
+export default function Sidebar({
+  collapsed = false,
+  onToggle,
+}: SidebarProps): JSX.Element {
+  const { t } = useTranslation('navigation')
+  const navigate = useNavigate()
+  const location = useLocation()
+  const [isPremium, setIsPremium] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    let alive = true
+
+    const loadPremiumStatus = async (): Promise<void> => {
+      const { data, error } = await supabase.rpc('get_my_premium_status')
+
+      if (!alive) return
+
+      if (error) {
+        console.warn('Could not load Premium status for sidebar:', error)
+        setIsPremium(false)
+        return
+      }
+
+      const rows = Array.isArray(data) ? data : data ? [data] : []
+      setIsPremium(rows[0]?.is_premium === true)
+    }
+
+    void loadPremiumStatus()
+
+    const handlePremiumStatusChanged = (): void => {
+      void loadPremiumStatus()
+    }
+
+    window.addEventListener('premium-status-changed', handlePremiumStatusChanged)
+
+    return () => {
+      alive = false
+      window.removeEventListener('premium-status-changed', handlePremiumStatusChanged)
+    }
+  }, [])
+
+  const currentNavItem = navItems.find(item =>
+    isPathActive(location.pathname, item),
+  )
+
+  const currentPageLabel = currentNavItem
+    ? t(currentNavItem.labelKey)
+    : location.pathname
+
+  const signOut = async (): Promise<void> => {
+    await supabase.auth.signOut()
+    navigate('/')
+  }
+
+  const linkClass = (isActive: boolean): string =>
+    [
+      'rounded-md transition-colors w-full',
+      collapsed
+        ? 'flex items-center justify-center px-2 py-3'
+        : 'flex items-start gap-3 px-3 py-3',
+      isActive
+        ? 'bg-yellow-400/20 text-yellow-400'
+        : 'text-white/90 hover:bg-white/5',
+    ].join(' ')
+
+  return (
+    <aside
+      className={`relative flex-shrink-0 bg-[#0b0f14] text-white ${
+        collapsed ? 'w-24' : 'w-80'
+      } transition-all duration-300`}
+    >
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-label={collapsed ? t('expandSidebar') : t('collapseSidebar')}
+        title={collapsed ? t('expandSidebar') : t('collapseSidebar')}
+        className="absolute -right-4 top-3 z-40 flex h-8 w-8 items-center justify-center rounded-full bg-[#080d14] text-white shadow-md hover:bg-[#172335] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300"
+      >
+        {collapsed ? <ChevronRight size={18} strokeWidth={2.8} /> : <ChevronLeft size={18} strokeWidth={2.8} />}
+      </button>
+      <div className="h-full flex flex-col">
+        <div className="px-4 py-6 flex items-center border-b border-white/5">
+          <div
+            className={`flex items-center ${
+              collapsed ? 'justify-center w-full' : 'gap-3'
+            }`}
+          >
+            <div className="h-12 w-12 rounded-md overflow-hidden bg-black flex items-center justify-center">
+              <img
+                src={GAME_LOGO_URL}
+                alt="ProPeloton Manager"
+                className="h-full w-full object-contain"
+              />
+            </div>
+
+            {!collapsed && (
+              <div className="min-w-0">
+                <div className="text-lg font-bold text-white leading-tight">
+                  ProPeloton Manager
+                </div>
+                <div className="text-xs text-white/60">
+                  {t('subtitle')}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <nav className="p-4 space-y-2">
+          {navItems.map(item => {
+            const Icon = item.icon
+            const active = isPathActive(location.pathname, item)
+            const premiumLocked =
+              (item.to === '/dashboard/premium-center' ||
+                item.to === '/dashboard/youth-academy') &&
+              isPremium !== true
+
+            if (premiumLocked) {
+              return (
+                <div
+                  key={item.to}
+                  aria-disabled="true"
+                  className={[
+                    'w-full cursor-not-allowed rounded-md text-white/35 opacity-60',
+                    collapsed
+                      ? 'flex items-center justify-center px-2 py-3'
+                      : 'flex items-start gap-3 px-3 py-3',
+                  ].join(' ')}
+                >
+                  <Icon size={18} className="mt-0.5 flex-shrink-0" />
+
+                  {!collapsed && (
+                    <div className="min-w-0">
+                      <div className="text-base font-semibold leading-tight">
+                        {t(item.labelKey)}
+                      </div>
+                      <div className="mt-1 text-xs leading-tight text-white/30">
+                        {t(item.descriptionKey)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            }
+
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                title={collapsed ? t(item.labelKey) : undefined}
+                className={linkClass(active)}
+              >
+                <Icon size={18} className="mt-0.5 flex-shrink-0" />
+
+                {!collapsed && (
+                  <div className="min-w-0">
+                    <div className="text-base font-semibold leading-tight">
+                      {t(item.labelKey)}
+                    </div>
+                    <div className="text-xs text-white/55 mt-1 leading-tight">
+                      {t(item.descriptionKey)}
+                    </div>
+                  </div>
+                )}
+              </NavLink>
+            )
+          })}
+
+        </nav>
+
+        <div className="mt-auto p-4 border-t border-white/5 space-y-3">
+          <button
+            onClick={() => {
+              void signOut()
+            }}
+            aria-label={t('signOut')}
+            className={`w-full rounded-md font-semibold transition-colors ${
+              collapsed
+                ? 'flex items-center justify-center px-3 py-3 bg-yellow-400 text-black hover:bg-yellow-300'
+                : 'flex items-center gap-3 px-3 py-3 bg-yellow-400 text-black hover:bg-yellow-300'
+            }`}
+          >
+            <LogOut size={16} />
+            {!collapsed && <span>{t('signOut')}</span>}
+          </button>
+
+          <BugReportButton
+            collapsed={collapsed}
+            currentPageLabel={currentPageLabel}
+            currentPath={location.pathname}
+          />
+
+          {!collapsed && (
+            <div className="text-xs text-white/60">
+              ProPeloton Manager • Version 1.0.3
+            </div>
+          )}
+        </div>
+      </div>
+    </aside>
+  )
+}

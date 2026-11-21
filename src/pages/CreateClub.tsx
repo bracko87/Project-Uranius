@@ -1,0 +1,1562 @@
+/**
+ * CreateClub.tsx
+ * Premium team creation page with live badge preview and full-bleed background image.
+ *
+ * Purpose:
+ * - Load selectable countries from public.countries and store countryCode.
+ * - Generate the selected badge preview as an SVG logo.
+ * - Rasterize generated SVG into PNG for consistent transparency rendering.
+ * - Upload that generated logo into Supabase Storage (club-logos) as PNG.
+ * - Create the club only through public.create_club(...).
+ * - Do not perform direct public.clubs inserts from the frontend.
+ * - Do not create finance rows, membership rows, wallet rows, or other infra rows from the frontend.
+ * - UI uses "team" language, while backend table still uses the existing club naming.
+ *
+ * NOTE: Referral insert is intentionally non-blocking:
+ * try {
+ *   await applyPendingReferral(...)
+ * } catch (referralError) {
+ *   console.warn('Unable to save referral', referralError)
+ * }
+ * If it fails, you will only see it in the browser console.
+ *
+ * UPDATE:
+ * - Removed the Badge Shape, Symbol, and Letter customization sections from the Create Club flow.
+ * - Users can now only change the interior pattern selection (interior layout).
+ * - Consolidated the interior pattern selector into the Team Preview area (removed bottom panel).
+ * - Cleaned up now-unused accordion code/state tied to the removed bottom panel.
+ * - FIX: Rasterize badge SVG to PNG before upload (image/png) for consistent transparent logo rendering.
+ * - DIAGNOSTICS: Logs when referral persistence is skipped due to missing referral code.
+ * - SVG MARKUP: Removed explicit transparent background rect prior to PNG rasterization to improve transparency handling.
+ * - BACKEND FLOW: Frontend uploads logo, then calls public.create_club(...) only.
+ * - SAFETY: Keeps best-effort logo cleanup for failed creation flow before club creation succeeds.
+ * - RPC FIX: Uses rpcCreatedClubId for the Supabase return value, then assigns into mutable createdClubId.
+ * - CUSTOM LOGO: Optional local upload (PNG/JPEG/BMP, max 2 MB) or external image URL.
+ * - CUSTOM LOGO PREVIEW: Selected custom logo replaces the generated badge in Team Preview immediately and can be scaled live.
+ * - CUSTOM LOGO STORAGE: Uploaded files use club-logos; URL logos are saved directly through p_logo_path.
+ */
+
+import React, { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router'
+import { supabase } from '../lib/supabase'
+import { useAuth } from '../context/AuthProvider'
+import { applyPendingReferral, getPendingReferralCode } from '../lib/referrals'
+import LanguageSelector from '../components/i18n/LanguageSelector'
+
+/**
+ * CountryOption
+ * Represents a single country option loaded from public.countries.
+ */
+interface CountryOption {
+  code: string
+  name: string
+}
+
+type BadgeShape =
+  | 'circle'
+  | 'shield'
+  | 'diamond'
+  | 'hexagon'
+  | 'triangle'
+  | 'square'
+  | 'banner'
+  | 'crest'
+  | 'octagon'
+  | 'pennant'
+
+type BadgePattern =
+  | 'solid'
+  | 'horizontal-band'
+  | 'double-horizontal'
+  | 'vertical-split'
+  | 'horizontal-split'
+  | 'diagonal-sash'
+  | 'diagonal-split'
+  | 'stripes-vertical'
+  | 'stripes-horizontal'
+  | 'chevron'
+  | 'center-band'
+  | 'quartered'
+
+type BadgeSymbol =
+  | 'none'
+  | 'star'
+  | 'bolt'
+  | 'crown'
+  | 'mountain'
+  | 'wheel'
+  | 'wing'
+  | 'flame'
+  | 'shield-mark'
+  | 'sword'
+  | 'anchor'
+  | 'heart'
+  | 'sun'
+  | 'moon'
+  | 'eagle'
+  | 'wolf'
+  | 'leaf'
+  | 'cross'
+  | 'clover'
+  | 'gem'
+  | 'torch'
+
+type OverlayMode = 'none' | 'symbol' | 'letter'
+
+const patternOptions: BadgePattern[] = [
+  'solid',
+  'horizontal-band',
+  'double-horizontal',
+  'vertical-split',
+  'horizontal-split',
+  'diagonal-sash',
+  'diagonal-split',
+  'stripes-vertical',
+  'stripes-horizontal',
+  'chevron',
+  'center-band',
+  'quartered',
+]
+
+const patternLabelKeys: Record<BadgePattern, string> = {
+  solid: 'patterns.solid',
+  'horizontal-band': 'patterns.band',
+  'double-horizontal': 'patterns.doubleBand',
+  'vertical-split': 'patterns.verticalSplit',
+  'horizontal-split': 'patterns.horizontalSplit',
+  'diagonal-sash': 'patterns.diagonalSash',
+  'diagonal-split': 'patterns.diagonalSplit',
+  'stripes-vertical': 'patterns.verticalStripes',
+  'stripes-horizontal': 'patterns.horizontalStripes',
+  chevron: 'patterns.chevron',
+  'center-band': 'patterns.centerStripe',
+  quartered: 'patterns.quartered',
+}
+
+const GENERIC_TEAM_KITS = [
+  '/assets/uranius-placeholders/square.png?id=4cb3c7aff936681b',
+  '/assets/uranius-placeholders/square.png?id=af4b5a43b62c89c2',
+  '/assets/uranius-placeholders/square.png?id=c44b215a581b8222',
+  '/assets/uranius-placeholders/square.png?id=5ac0803b40e58c6a',
+  '/assets/uranius-placeholders/square.png?id=bee5e98958c4944b',
+  '/assets/uranius-placeholders/square.png?id=ab10d49e86cf4989',
+  '/assets/uranius-placeholders/square.png?id=500d3a827487319d',
+  '/assets/uranius-placeholders/square.png?id=08f46c7ceb629320',
+  '/assets/uranius-placeholders/square.png?id=d0888e77e2aea128',
+  '/assets/uranius-placeholders/square.png?id=b4a4ec4333639651',
+  '/assets/uranius-placeholders/square.png?id=9b3bdcea6b529b85',
+  '/assets/uranius-placeholders/square.png?id=e4a2777eea815a14',
+  '/assets/uranius-placeholders/square.png?id=636533fb4474b430',
+  '/assets/uranius-placeholders/square.png?id=f1c76f8d1985672f',
+  '/assets/uranius-placeholders/square.png?id=3219826cd3fbbb97',
+  '/assets/uranius-placeholders/square.png?id=202dece3828c3adf',
+  '/assets/uranius-placeholders/square.png?id=bff32e246baf602e',
+  '/assets/uranius-placeholders/square.png?id=56dd87dfec95d953',
+  '/assets/uranius-placeholders/square.png?id=b5da37c3aff158d9',
+  '/assets/uranius-placeholders/square.png?id=498dd7de1007b7ad',
+  '/assets/uranius-placeholders/square.png?id=675ebc325561fe91',
+  '/assets/uranius-placeholders/square.png?id=2d4d85dc8919c348',
+  '/assets/uranius-placeholders/square.png?id=e78e1fd0433f01a5',
+  '/assets/uranius-placeholders/square.png?id=bcc71af9810bb190',
+  '/assets/uranius-placeholders/square.png?id=9ddd660ef6d37a0a',
+  '/assets/uranius-placeholders/square.png?id=845d72d2627a3a4f',
+  '/assets/uranius-placeholders/square.png?id=3caacb426e7a681c',
+  '/assets/uranius-placeholders/square.png?id=1ba50f3b64c37edc',
+  '/assets/uranius-placeholders/square.png?id=94ce6e25b28188a6',
+  '/assets/uranius-placeholders/square.png?id=e580491d6459dc92',
+  '/assets/uranius-placeholders/square.png?id=7c63f9e74cfdc3a9',
+  '/assets/uranius-placeholders/square.png?id=95b978273f30cd7f',
+  '/assets/uranius-placeholders/square.png?id=bcdf7c1585f885ee',
+  '/assets/uranius-placeholders/square.png?id=a790de1b1fabf717',
+  '/assets/uranius-placeholders/square.png?id=760bbea2adb53a4e',
+  '/assets/uranius-placeholders/square.png?id=c8d02fc5d128576f',
+  '/assets/uranius-placeholders/square.png?id=bb256f41a6c7cd6f',
+  '/assets/uranius-placeholders/square.png?id=0ec4be621dfb622f',
+  '/assets/uranius-placeholders/square.png?id=c7f43179f0e61812',
+  '/assets/uranius-placeholders/square.png?id=11f61e63b9ba02ae',
+  '/assets/uranius-placeholders/square.png?id=9e323402185b7f14',
+  '/assets/uranius-placeholders/square.png?id=3bbdd2370768f440',
+  '/assets/uranius-placeholders/square.png?id=6c69380b9acbae46',
+  '/assets/uranius-placeholders/square.png?id=bf6abdef980ca980',
+  '/assets/uranius-placeholders/square.png?id=c0983ac6e4d24dce',
+  '/assets/uranius-placeholders/square.png?id=bac4fa83157da893',
+  '/assets/uranius-placeholders/square.png?id=f5160145ebb91c80',
+  '/assets/uranius-placeholders/square.png?id=837f7770c084331b',
+  '/assets/uranius-placeholders/square.png?id=fe4057749d82835c',
+  '/assets/uranius-placeholders/square.png?id=45f4f19af4d398cd',
+  '/assets/uranius-placeholders/square.png?id=e7e4c5eabecfb8c3',
+  '/assets/uranius-placeholders/square.png?id=3e65970d16db0a3a',
+  '/assets/uranius-placeholders/square.png?id=24d1ed53a4c51814',
+  '/assets/uranius-placeholders/square.png?id=518f8e846b88e682',
+  '/assets/uranius-placeholders/square.png?id=7e4e391a758d3809',
+  '/assets/uranius-placeholders/square.png?id=e6ea4de932ed4be8',
+  '/assets/uranius-placeholders/square.png?id=cfcab4e6611dac5c',
+  '/assets/uranius-placeholders/square.png?id=8c8a13a620e089b8',
+  '/assets/uranius-placeholders/square.png?id=f4c2d06c83edfe73',
+  '/assets/uranius-placeholders/square.png?id=b3250e78dc842700',
+  '/assets/uranius-placeholders/square.png?id=a166747907863c84',
+]
+
+const MAX_CUSTOM_LOGO_BYTES = 2 * 1024 * 1024
+const ALLOWED_CUSTOM_LOGO_TYPES = new Set([
+  'image/png',
+  'image/jpeg',
+  'image/bmp',
+  'image/x-ms-bmp',
+])
+
+type CustomLogoSource = 'generated' | 'file' | 'url'
+
+function getFileExtension(file: File): string {
+  const fromName = file.name.split('.').pop()?.trim().toLowerCase()
+
+  if (fromName === 'png' || fromName === 'jpg' || fromName === 'jpeg' || fromName === 'bmp') {
+    return fromName === 'jpeg' ? 'jpg' : fromName
+  }
+
+  if (file.type === 'image/png') return 'png'
+  if (file.type === 'image/jpeg') return 'jpg'
+  if (file.type === 'image/bmp' || file.type === 'image/x-ms-bmp') return 'bmp'
+
+  return 'png'
+}
+
+function getImageDimensionsFromSource(src: string): Promise<{ width: number; height: number }> {
+  return new Promise((resolve, reject) => {
+    const image = new Image()
+
+    image.onload = () => {
+      resolve({
+        width: image.naturalWidth,
+        height: image.naturalHeight,
+      })
+    }
+
+    image.onerror = () => {
+      reject(new Error('The logo image could not be loaded.'))
+    }
+
+    image.src = src
+  })
+}
+
+function getImageDimensionsFromFile(file: File): Promise<{ width: number; height: number }> {
+  return new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file)
+
+    getImageDimensionsFromSource(objectUrl)
+      .then(resolve)
+      .catch(reject)
+      .finally(() => URL.revokeObjectURL(objectUrl))
+  })
+}
+
+/**
+ * rasterizeBadgeSvgToPng
+ * Converts a generated SVG string into a PNG Blob using an in-browser canvas.
+ * This improves consistent transparent rendering in downstream usage (e.g. header logo).
+ */
+function rasterizeBadgeSvgToPng(svg: string, size = 512): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const svgBlob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
+    const objectUrl = URL.createObjectURL(svgBlob)
+    const image = new Image()
+
+    image.onload = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = size
+      canvas.height = size
+
+      const context = canvas.getContext('2d')
+      if (!context) {
+        URL.revokeObjectURL(objectUrl)
+        reject(new Error('Failed to render badge image.'))
+        return
+      }
+
+      context.clearRect(0, 0, size, size)
+      context.drawImage(image, 0, 0, size, size)
+
+      canvas.toBlob(
+        blob => {
+          URL.revokeObjectURL(objectUrl)
+
+          if (!blob) {
+            reject(new Error('Failed to export badge image.'))
+            return
+          }
+
+          resolve(blob)
+        },
+        'image/png',
+        1,
+      )
+    }
+
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl)
+      reject(new Error('Failed to load generated badge image.'))
+    }
+
+    image.src = objectUrl
+  })
+}
+
+/**
+ * getBadgeClipPath
+ * Returns the CSS clip-path for each badge style.
+ */
+function getBadgeClipPath(shape: BadgeShape): string {
+  switch (shape) {
+    case 'circle':
+      return 'circle(50% at 50% 50%)'
+    case 'shield':
+      return 'polygon(50% 4%, 88% 18%, 82% 58%, 50% 96%, 18% 58%, 12% 18%)'
+    case 'diamond':
+      return 'polygon(50% 4%, 96% 50%, 50% 96%, 4% 50%)'
+    case 'hexagon':
+      return 'polygon(25% 8%, 75% 8%, 96% 50%, 75% 92%, 25% 92%, 4% 50%)'
+    case 'triangle':
+      return 'polygon(50% 6%, 96% 92%, 4% 92%)'
+    case 'square':
+      return 'polygon(8% 8%, 92% 8%, 92% 92%, 8% 92%)'
+    case 'banner':
+      return 'polygon(12% 8%, 88% 8%, 88% 72%, 50% 92%, 12% 72%)'
+    case 'crest':
+      return 'polygon(50% 4%, 90% 22%, 76% 92%, 24% 92%, 10% 22%)'
+    case 'octagon':
+      return 'polygon(30% 4%, 70% 4%, 96% 30%, 96% 70%, 70% 96%, 30% 96%, 4% 70%, 4% 30%)'
+    case 'pennant':
+      return 'polygon(14% 8%, 86% 8%, 86% 58%, 66% 58%, 66% 80%, 50% 94%, 34% 80%, 34% 58%, 14% 58%)'
+    default:
+      return 'circle(50% at 50% 50%)'
+  }
+}
+
+/**
+ * flagEmojiFromCode
+ * Fallback if the remote flag image fails.
+ */
+function flagEmojiFromCode(code: string): string {
+  const clean = code.trim().toUpperCase()
+  if (!/^[A-Z]{2}$/.test(clean)) return '🏳️'
+  return clean.replace(/./g, char => String.fromCodePoint(127397 + char.charCodeAt(0)))
+}
+
+/**
+ * slugify
+ * Safe text for file names.
+ */
+function slugify(value: string): string {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+}
+
+/**
+ * escapeXml
+ * Makes text safe inside generated SVG.
+ */
+function escapeXml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;')
+}
+
+/**
+ * getSvgShapeMarkup
+ * Returns SVG markup for outer and inner badge shapes.
+ */
+function getSvgShapeMarkup(shape: BadgeShape, fill: string, inset = false): string {
+  switch (shape) {
+    case 'circle':
+      return inset
+        ? `<circle cx="128" cy="128" r="102" fill="${fill}" />`
+        : `<circle cx="128" cy="128" r="118" fill="${fill}" />`
+
+    case 'shield':
+      return inset
+        ? `<polygon points="128,24 214,56 202,150 128,226 54,150 42,56" fill="${fill}" />`
+        : `<polygon points="128,10 228,44 212,156 128,244 44,156 28,44" fill="${fill}" />`
+
+    case 'diamond':
+      return inset
+        ? `<polygon points="128,24 224,128 128,232 32,128" fill="${fill}" />`
+        : `<polygon points="128,10 246,128 128,246 10,128" fill="${fill}" />`
+
+    case 'hexagon':
+      return inset
+        ? `<polygon points="72,30 184,30 228,128 184,226 72,226 28,128" fill="${fill}" />`
+        : `<polygon points="58,14 198,14 244,128 198,242 58,242 12,128" fill="${fill}" />`
+
+    case 'triangle':
+      return inset
+        ? `<polygon points="128,28 222,222 34,222" fill="${fill}" />`
+        : `<polygon points="128,10 246,246 10,246" fill="${fill}" />`
+
+    case 'square':
+      return inset
+        ? `<rect x="28" y="28" width="200" height="200" fill="${fill}" rx="4" />`
+        : `<rect x="10" y="10" width="236" height="236" fill="${fill}" rx="4" />`
+
+    case 'banner':
+      return inset
+        ? `<polygon points="44,28 212,28 212,178 128,228 44,178" fill="${fill}" />`
+        : `<polygon points="30,12 226,12 226,190 128,246 30,190" fill="${fill}" />`
+
+    case 'crest':
+      return inset
+        ? `<polygon points="128,24 218,62 192,228 64,228 38,62" fill="${fill}" />`
+        : `<polygon points="128,10 236,54 206,246 50,246 20,54" fill="${fill}" />`
+
+    case 'octagon':
+      return inset
+        ? `<polygon points="82,24 174,24 232,82 232,174 174,232 82,232 24,174 24,82" fill="${fill}" />`
+        : `<polygon points="72,10 184,10 246,72 246,184 184,246 72,246 10,184 10,72" fill="${fill}" />`
+
+    case 'pennant':
+      return inset
+        ? `<polygon points="44,26 212,26 212,148 162,148 162,190 128,224 94,190 94,148 44,148" fill="${fill}" />`
+        : `<polygon points="28,12 228,12 228,164 176,164 176,208 128,246 80,208 80,164 28,164" fill="${fill}" />`
+
+    default:
+      return `<circle cx="128" cy="128" r="118" fill="${fill}" />`
+  }
+}
+
+/**
+ * getPatternSvgMarkup
+ * Returns SVG markup for interior color layout clipped inside the badge.
+ */
+function getPatternSvgMarkup(pattern: BadgePattern, _primary: string, secondary: string): string {
+  switch (pattern) {
+    case 'solid':
+      return ''
+
+    case 'horizontal-band':
+      return `<rect x="0" y="104" width="256" height="48" fill="${secondary}" />`
+
+    case 'double-horizontal':
+      return `
+        <rect x="0" y="76" width="256" height="34" fill="${secondary}" />
+        <rect x="0" y="146" width="256" height="34" fill="${secondary}" />
+      `
+
+    case 'vertical-split':
+      return `<rect x="128" y="0" width="128" height="256" fill="${secondary}" />`
+
+    case 'horizontal-split':
+      return `<rect x="0" y="128" width="256" height="128" fill="${secondary}" />`
+
+    case 'diagonal-sash':
+      return `<rect x="-46" y="104" width="348" height="34" fill="${secondary}" transform="rotate(-18 128 128)" />`
+
+    case 'diagonal-split':
+      return `<polygon points="256,0 256,256 0,256" fill="${secondary}" />`
+
+    case 'stripes-vertical':
+      return `
+        <rect x="0" y="0" width="34" height="256" fill="${secondary}" />
+        <rect x="68" y="0" width="34" height="256" fill="${secondary}" />
+        <rect x="136" y="0" width="34" height="256" fill="${secondary}" />
+        <rect x="204" y="0" width="34" height="256" fill="${secondary}" />
+      `
+
+    case 'stripes-horizontal':
+      return `
+        <rect x="0" y="0" width="256" height="34" fill="${secondary}" />
+        <rect x="0" y="68" width="256" height="34" fill="${secondary}" />
+        <rect x="0" y="136" width="256" height="34" fill="${secondary}" />
+        <rect x="0" y="204" width="256" height="34" fill="${secondary}" />
+      `
+
+    case 'chevron':
+      return `<polygon points="48,64 128,158 208,64 230,84 128,200 26,84" fill="${secondary}" />`
+
+    case 'center-band':
+      return `<rect x="92" y="0" width="72" height="256" fill="${secondary}" />`
+
+    case 'quartered':
+      return `
+        <rect x="128" y="0" width="128" height="128" fill="${secondary}" />
+        <rect x="0" y="128" width="128" height="128" fill="${secondary}" />
+      `
+
+    default:
+      return ''
+  }
+}
+
+/**
+ * buildBadgeSvg
+ * Builds the generated team badge as SVG text so it can be rasterized then uploaded as PNG.
+ *
+ * Shape/overlay are fixed in this page (no customization UI).
+ *
+ * NOTE: Explicit transparent background rect removed to improve transparency after rasterization.
+ */
+function buildBadgeSvg(
+  shape: BadgeShape,
+  pattern: BadgePattern,
+  overlayMode: OverlayMode,
+  badgeSymbol: BadgeSymbol,
+  badgeLetter: string,
+  primary: string,
+  secondary: string,
+): string {
+  const outerShape = getSvgShapeMarkup(shape, secondary, false)
+  const innerShape = getSvgShapeMarkup(shape, primary, true)
+  const patternMarkup = getPatternSvgMarkup(pattern, primary, secondary)
+  const cleanLetter = badgeLetter.trim().toUpperCase().slice(0, 1)
+  const safeLetter = cleanLetter ? escapeXml(cleanLetter) : ''
+
+  let overlayMarkup = ''
+
+  // (Overlay is fixed to "none" in this page, but kept for compatibility.)
+  if (overlayMode === 'symbol' && badgeSymbol !== 'none') {
+    overlayMarkup = `
+      <g clip-path="url(#innerClip)">
+        <circle cx="128" cy="128" r="54" fill="#000000" opacity="0.12" />
+        <circle cx="128" cy="128" r="46" fill="#ffffff" opacity="0.12" />
+      </g>
+    `
+  }
+
+  if (overlayMode === 'letter' && safeLetter) {
+    overlayMarkup = `
+      <g clip-path="url(#innerClip)">
+        <circle cx="128" cy="128" r="54" fill="#000000" opacity="0.12" />
+        <circle cx="128" cy="128" r="46" fill="#ffffff" opacity="0.10" />
+        <text
+          x="128"
+          y="148"
+          text-anchor="middle"
+          font-size="78"
+          font-family="Inter, Arial, sans-serif"
+          font-weight="800"
+          fill="#ffffff"
+        >
+          ${safeLetter}
+        </text>
+      </g>
+    `
+  }
+
+  return `
+    <svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+      <defs>
+        <clipPath id="innerClip">
+          ${getSvgShapeMarkup(shape, '#ffffff', true)}
+        </clipPath>
+      </defs>
+
+      ${outerShape}
+      ${innerShape}
+
+      <g clip-path="url(#innerClip)">
+        ${patternMarkup}
+        <rect
+          x="-20"
+          y="38"
+          width="124"
+          height="42"
+          fill="#ffffff"
+          opacity="0.15"
+          transform="rotate(-12 42 59)"
+        />
+      </g>
+
+      ${overlayMarkup}
+    </svg>
+  `.trim()
+}
+
+/**
+ * PatternOverlay
+ * Renders interior pattern layers in the live preview.
+ */
+function PatternOverlay({ pattern, secondary }: { pattern: BadgePattern; secondary: string }): JSX.Element | null {
+  const fill = { backgroundColor: secondary } as React.CSSProperties
+
+  switch (pattern) {
+    case 'solid':
+      return null
+
+    case 'horizontal-band':
+      return <div className="absolute left-0 right-0 top-[42%] h-[18%]" style={fill} />
+
+    case 'double-horizontal':
+      return (
+        <>
+          <div className="absolute left-0 right-0 top-[28%] h-[13%]" style={fill} />
+          <div className="absolute left-0 right-0 top-[60%] h-[13%]" style={fill} />
+        </>
+      )
+
+    case 'vertical-split':
+      return <div className="absolute top-0 bottom-0 right-0 w-1/2" style={fill} />
+
+    case 'horizontal-split':
+      return <div className="absolute left-0 right-0 bottom-0 h-1/2" style={fill} />
+
+    case 'diagonal-sash':
+      return <div className="absolute left-[-12%] top-[40%] h-[16%] w-[124%] -rotate-[18deg]" style={fill} />
+
+    case 'diagonal-split':
+      return (
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `linear-gradient(135deg, transparent 0 49%, ${secondary} 49% 100%)`,
+          }}
+        />
+      )
+
+    case 'stripes-vertical':
+      return (
+        <>
+          <div className="absolute top-0 bottom-0 left-0 w-[14%]" style={fill} />
+          <div className="absolute top-0 bottom-0 left-[28%] w-[14%]" style={fill} />
+          <div className="absolute top-0 bottom-0 left-[56%] w-[14%]" style={fill} />
+          <div className="absolute top-0 bottom-0 left-[84%] w-[14%]" style={fill} />
+        </>
+      )
+
+    case 'stripes-horizontal':
+      return (
+        <>
+          <div className="absolute left-0 right-0 top-0 h-[14%]" style={fill} />
+          <div className="absolute left-0 right-0 top-[28%] h-[14%]" style={fill} />
+          <div className="absolute left-0 right-0 top-[56%] h-[14%]" style={fill} />
+          <div className="absolute left-0 right-0 top-[84%] h-[14%]" style={fill} />
+        </>
+      )
+
+    case 'chevron':
+      return (
+        <>
+          <div className="absolute left-[14%] top-[34%] h-[14%] w-[38%] -rotate-45" style={fill} />
+          <div className="absolute right-[14%] top-[34%] h-[14%] w-[38%] rotate-45" style={fill} />
+        </>
+      )
+
+    case 'center-band':
+      return <div className="absolute top-0 bottom-0 left-[36%] w-[28%]" style={fill} />
+
+    case 'quartered':
+      return (
+        <>
+          <div className="absolute top-0 right-0 h-1/2 w-1/2" style={fill} />
+          <div className="absolute bottom-0 left-0 h-1/2 w-1/2" style={fill} />
+        </>
+      )
+
+    default:
+      return null
+  }
+}
+
+/**
+ * BadgePreview
+ * Renders a flexible preview badge using selected shape + pattern.
+ */
+function BadgePreview({
+  shape,
+  pattern,
+  primary,
+  secondary,
+  size = 'large',
+}: {
+  shape: BadgeShape
+  pattern: BadgePattern
+  primary: string
+  secondary: string
+  size?: 'large' | 'small'
+}): JSX.Element {
+  const clipPath = getBadgeClipPath(shape)
+  const outerSize = size === 'large' ? 'w-56 h-56' : 'w-12 h-12'
+  const innerInset = size === 'large' ? 'inset-[10px]' : 'inset-[3px]'
+
+  return (
+    <div className={`relative ${outerSize}`} aria-hidden="true">
+      <div className="absolute inset-0" style={{ backgroundColor: secondary, clipPath } as React.CSSProperties} />
+      <div className={`absolute ${innerInset} overflow-hidden`} style={{ clipPath } as React.CSSProperties}>
+        <div className="absolute inset-0" style={{ backgroundColor: primary }} />
+        <PatternOverlay pattern={pattern} secondary={secondary} />
+        <div className="absolute -left-[8%] top-[14%] h-[18%] w-[48%] -rotate-12 bg-white/15" />
+      </div>
+    </div>
+  )
+}
+
+type GenericKitSelectorProps = {
+  selectedKitUrl: string | null
+  onSelect: (url: string) => void
+  scrollerRef: React.RefObject<HTMLDivElement>
+  onScrollLeft: () => void
+  onScrollRight: () => void
+  disabled?: boolean
+}
+
+/**
+ * GenericKitSelector
+ * Lets the user choose one starter jersey from the predefined generic kit pool.
+ */
+function GenericKitSelector({
+  selectedKitUrl,
+  onSelect,
+  scrollerRef,
+  onScrollLeft,
+  onScrollRight,
+  disabled = false,
+}: GenericKitSelectorProps): JSX.Element {
+  const { t } = useTranslation('createClub')
+
+  return (
+    <div className="w-full min-w-0 max-w-full space-y-5 overflow-hidden rounded-xl border border-emerald-200 bg-emerald-50/40 p-6 min-h-[360px]">
+      <div>
+        <label className="block text-sm font-medium text-gray-700">{t('jersey.title')}</label>
+        <p className="mt-1 text-xs text-gray-500">
+          {t('jersey.description')}
+        </p>
+      </div>
+
+      <div className="flex w-full min-w-0 items-center justify-center gap-5 overflow-hidden pt-3">
+        <button
+          type="button"
+          onClick={onScrollLeft}
+          disabled={disabled}
+          className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-gray-300 bg-white text-4xl font-bold text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+          aria-label={t('jersey.scrollLeft')}
+        >
+          ‹
+        </button>
+
+        <div
+          ref={scrollerRef}
+          className="flex h-[250px] max-w-[560px] min-w-0 flex-1 gap-6 overflow-x-hidden scroll-smooth whitespace-nowrap rounded-2xl border border-gray-200 bg-white/90 p-5"
+        >
+          {GENERIC_TEAM_KITS.map((kitUrl, index) => {
+            const isSelected = selectedKitUrl === kitUrl
+
+            return (
+              <button
+                key={kitUrl}
+                type="button"
+                onClick={() => onSelect(kitUrl)}
+                disabled={disabled}
+                className={[
+                  'inline-flex h-52 w-44 shrink-0 items-center justify-center rounded-2xl border bg-white p-5 shadow-sm transition',
+                  isSelected
+                    ? 'border-emerald-500 ring-2 ring-emerald-400 ring-offset-2'
+                    : 'border-gray-200 hover:border-emerald-300 hover:shadow-md',
+                  disabled ? 'cursor-not-allowed opacity-60' : '',
+                ].join(' ')}
+                aria-label={t('jersey.select', { index: index + 1 })}
+                aria-pressed={isSelected}
+              >
+                <img
+                  src={kitUrl}
+                  alt={t('jersey.alt', { index: index + 1 })}
+                  className="h-full w-full object-contain"
+                  draggable={false}
+                />
+              </button>
+            )
+          })}
+        </div>
+
+        <button
+          type="button"
+          onClick={onScrollRight}
+          disabled={disabled}
+          className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-gray-300 bg-white text-4xl font-bold text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+          aria-label={t('jersey.scrollRight')}
+        >
+          ›
+        </button>
+      </div>
+
+      {!selectedKitUrl ? (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
+          {t('jersey.required')}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+/**
+ * CreateClubPage
+ * Team creation form with backend RPC integration.
+ */
+export default function CreateClubPage(): JSX.Element {
+  const { t, i18n } = useTranslation('createClub')
+  const navigate = useNavigate()
+  const { user } = useAuth()
+
+  const [form, setForm] = useState({
+    name: '',
+    countryCode: '',
+    primary: '#FFC400',
+    secondary: '#111827',
+    motto: '',
+  })
+
+  const [countries, setCountries] = useState<CountryOption[]>([])
+  const [loadingCountries, setLoadingCountries] = useState<boolean>(true)
+  const [submitting, setSubmitting] = useState<boolean>(false)
+  const [error, setError] = useState<string | null>(null)
+  const [flagImageError, setFlagImageError] = useState(false)
+
+  const [customLogoSource, setCustomLogoSource] =
+    useState<CustomLogoSource>('generated')
+  const [customLogoFile, setCustomLogoFile] = useState<File | null>(null)
+  const [customLogoPreviewUrl, setCustomLogoPreviewUrl] = useState<string | null>(null)
+  const [customLogoUrlInput, setCustomLogoUrlInput] = useState('')
+  const [appliedCustomLogoUrl, setAppliedCustomLogoUrl] = useState<string | null>(null)
+  const [customLogoError, setCustomLogoError] = useState<string | null>(null)
+  const [applyingLogoUrl, setApplyingLogoUrl] = useState(false)
+  const [customLogoScale, setCustomLogoScale] = useState(100)
+  const customLogoInputRef = useRef<HTMLInputElement | null>(null)
+
+  // Only customization left: interior pattern (in Team Preview panel)
+  const [badgePattern, setBadgePattern] = useState<BadgePattern>('horizontal-band')
+  const [selectedKitUrl, setSelectedKitUrl] = useState<string | null>(null)
+  const kitScrollerRef = useRef<HTMLDivElement | null>(null)
+
+  // Fixed badge visuals for this page
+  const badgeShape: BadgeShape = 'shield'
+  const overlayMode: OverlayMode = 'none'
+  const badgeSymbol: BadgeSymbol = 'none'
+  const badgeLetter = ''
+
+  function updateField(key: keyof typeof form, value: string): void {
+    setForm(prev => ({ ...prev, [key]: value }))
+  }
+
+  function clearCustomLogoPreviewObjectUrl(): void {
+    if (customLogoPreviewUrl?.startsWith('blob:')) {
+      URL.revokeObjectURL(customLogoPreviewUrl)
+    }
+  }
+
+  function useGeneratedBadge(): void {
+    clearCustomLogoPreviewObjectUrl()
+    setCustomLogoSource('generated')
+    setCustomLogoFile(null)
+    setCustomLogoPreviewUrl(null)
+    setAppliedCustomLogoUrl(null)
+    setCustomLogoUrlInput('')
+    setCustomLogoError(null)
+    setCustomLogoScale(100)
+
+    if (customLogoInputRef.current) {
+      customLogoInputRef.current.value = ''
+    }
+  }
+
+  async function handleCustomLogoFile(file: File | null): Promise<void> {
+    if (!file) return
+
+    setCustomLogoError(null)
+
+    const normalizedType = file.type.toLowerCase()
+    const extension = file.name.split('.').pop()?.toLowerCase()
+
+    const supportedExtension =
+      extension === 'png' ||
+      extension === 'jpg' ||
+      extension === 'jpeg' ||
+      extension === 'bmp'
+
+    if (!ALLOWED_CUSTOM_LOGO_TYPES.has(normalizedType) && !supportedExtension) {
+      setCustomLogoError(t('errors.invalidType'))
+      if (customLogoInputRef.current) customLogoInputRef.current.value = ''
+      return
+    }
+
+    if (file.size > MAX_CUSTOM_LOGO_BYTES) {
+      setCustomLogoError(t('errors.tooLarge'))
+      if (customLogoInputRef.current) customLogoInputRef.current.value = ''
+      return
+    }
+
+    clearCustomLogoPreviewObjectUrl()
+
+    const previewUrl = URL.createObjectURL(file)
+    setCustomLogoFile(file)
+    setCustomLogoPreviewUrl(previewUrl)
+    setCustomLogoSource('file')
+    setAppliedCustomLogoUrl(null)
+    setCustomLogoUrlInput('')
+    setCustomLogoScale(100)
+  }
+
+  async function applyCustomLogoUrl(): Promise<void> {
+    const rawUrl = customLogoUrlInput.trim()
+    setCustomLogoError(null)
+
+    if (!rawUrl) {
+      setCustomLogoError(t('errors.pasteUrl'))
+      return
+    }
+
+    let parsedUrl: URL
+
+    try {
+      parsedUrl = new URL(rawUrl)
+    } catch {
+      setCustomLogoError(t('errors.invalidUrl'))
+      return
+    }
+
+    if (parsedUrl.protocol !== 'https:' && parsedUrl.protocol !== 'http:') {
+      setCustomLogoError(t('errors.httpUrl'))
+      return
+    }
+
+    setApplyingLogoUrl(true)
+
+    try {
+      // Confirm that the URL resolves to an image before applying it.
+      await getImageDimensionsFromSource(parsedUrl.toString())
+
+      clearCustomLogoPreviewObjectUrl()
+      setCustomLogoFile(null)
+      setCustomLogoPreviewUrl(parsedUrl.toString())
+      setAppliedCustomLogoUrl(parsedUrl.toString())
+      setCustomLogoSource('url')
+      setCustomLogoScale(100)
+
+      if (customLogoInputRef.current) {
+        customLogoInputRef.current.value = ''
+      }
+    } catch {
+      setCustomLogoError(t('errors.loadUrl'))
+    } finally {
+      setApplyingLogoUrl(false)
+    }
+  }
+
+  async function cleanupFailedLogoUpload(logoPath: string | null): Promise<void> {
+    if (!logoPath) return
+    await Promise.allSettled([supabase.storage.from('club-logos').remove([logoPath])])
+  }
+
+  function scrollGenericKits(direction: 'left' | 'right'): void {
+    const el = kitScrollerRef.current
+    if (!el) return
+
+    el.scrollBy({
+      left: direction === 'left' ? -288 : 288,
+      behavior: 'smooth',
+    })
+  }
+
+  async function saveSelectedHomeKit(clubId: string, kitUrl: string): Promise<void> {
+    const { error: kitError } = await supabase.rpc('save_club_home_kit_v1', {
+      p_club_id: clubId,
+      p_image_url: kitUrl,
+    })
+
+    if (kitError) {
+      throw kitError
+    }
+  }
+
+  useEffect(() => {
+    setFlagImageError(false)
+  }, [form.countryCode])
+
+  useEffect(() => {
+    return () => {
+      if (customLogoPreviewUrl?.startsWith('blob:')) {
+        URL.revokeObjectURL(customLogoPreviewUrl)
+      }
+    }
+  }, [customLogoPreviewUrl])
+
+  useEffect(() => {
+    let mounted = true
+
+    ;(async () => {
+      setLoadingCountries(true)
+
+      const { data, error: countriesError } = await supabase
+        .from('countries')
+        .select('code, name')
+        .eq('is_selectable', true)
+        .order('name', { ascending: true })
+
+      if (!mounted) return
+
+      if (countriesError) {
+        setError(t('errors.countries'))
+        setCountries([])
+      } else {
+        const options = (data ?? []) as CountryOption[]
+        setCountries(options)
+
+        if (options.length > 0) {
+          setForm(prev => ({
+            ...prev,
+            countryCode: prev.countryCode || options[0].code,
+          }))
+        }
+      }
+
+      setLoadingCountries(false)
+    })()
+
+    return () => {
+      mounted = false
+    }
+  }, [t])
+
+  async function handleSubmit(e: React.FormEvent): Promise<void> {
+    e.preventDefault()
+    setError(null)
+
+    if (!form.name.trim()) {
+      setError(t('errors.nameRequired'))
+      return
+    }
+
+    if (!form.countryCode) {
+      setError(t('errors.countryRequired'))
+      return
+    }
+
+    if (!selectedKitUrl) {
+      setError(t('errors.jerseyRequired'))
+      return
+    }
+
+    if (!user) {
+      setError(t('errors.signIn'))
+      return
+    }
+
+    const selectedKitForSubmit = selectedKitUrl
+
+    setSubmitting(true)
+
+    let uploadedLogoPath: string | null = null
+    let createdClubId: string | null = null
+
+    try {
+      const safeName = slugify(form.name) || 'team'
+      let logoPathForClub: string
+
+      if (customLogoSource === 'file' && customLogoFile) {
+        const extension = getFileExtension(customLogoFile)
+        uploadedLogoPath = `${user.id}/${Date.now()}-${safeName}-custom-logo.${extension}`
+
+        const { error: uploadError } = await supabase.storage
+          .from('club-logos')
+          .upload(uploadedLogoPath, customLogoFile, {
+            contentType: customLogoFile.type || undefined,
+            upsert: false,
+          })
+
+        if (uploadError) {
+          const message = /bucket not found/i.test(uploadError.message ?? '')
+            ? t('errors.bucketMissing')
+            : uploadError.message || t('errors.uploadLogo')
+
+          setError(message)
+          return
+        }
+
+        logoPathForClub = uploadedLogoPath
+      } else if (customLogoSource === 'url' && appliedCustomLogoUrl) {
+        logoPathForClub = appliedCustomLogoUrl
+      } else {
+        const svg = buildBadgeSvg(
+          badgeShape,
+          badgePattern,
+          overlayMode,
+          badgeSymbol,
+          badgeLetter,
+          form.primary,
+          form.secondary,
+        )
+
+        const pngBlob = await rasterizeBadgeSvgToPng(svg)
+
+        uploadedLogoPath = `${user.id}/${Date.now()}-${safeName}-badge.png`
+
+        const { error: uploadError } = await supabase.storage
+          .from('club-logos')
+          .upload(uploadedLogoPath, pngBlob, {
+            contentType: 'image/png',
+            upsert: false,
+          })
+
+        if (uploadError) {
+          const message = /bucket not found/i.test(uploadError.message ?? '')
+            ? t('errors.bucketMissing')
+            : uploadError.message || t('errors.saveBadge')
+
+          setError(message)
+          return
+        }
+
+        logoPathForClub = uploadedLogoPath
+      }
+
+      const { data: rpcCreatedClubId, error: rpcError } = await supabase.rpc('create_club', {
+        p_name: form.name.trim(),
+        p_country_code: form.countryCode,
+        p_primary_color: form.primary,
+        p_secondary_color: form.secondary,
+        p_logo_path: logoPathForClub,
+        p_motto: form.motto.trim() || null,
+      })
+
+      if (rpcError || !rpcCreatedClubId) {
+        if (uploadedLogoPath) {
+          await supabase.storage.from('club-logos').remove([uploadedLogoPath])
+        }
+
+        setError(rpcError?.message ?? t('errors.create'))
+        return
+      }
+
+      createdClubId = rpcCreatedClubId as string
+
+      await saveSelectedHomeKit(createdClubId, selectedKitForSubmit)
+
+      // ---- Referral persistence (diagnostic logging retained) ----
+      const pendingReferralCode = getPendingReferralCode()
+
+      if (pendingReferralCode) {
+        // Intentionally non-blocking: if this fails, user should still proceed.
+        try {
+          await applyPendingReferral({
+            referralCode: pendingReferralCode,
+            referredClubId: createdClubId,
+          })
+        } catch (referralError) {
+          console.warn('Unable to save referral', referralError)
+        }
+      } else {
+        console.info('No pending referral code found at club creation time.')
+      }
+      // -----------------------------------------------------------
+
+      navigate('/dashboard/overview')
+    } catch (err: any) {
+      if (!createdClubId) {
+        await cleanupFailedLogoUpload(uploadedLogoPath)
+      }
+      console.error('Create team failed', err)
+      setError(t('errors.unexpected'))
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const selectedCountry = countries.find(c => c.code === form.countryCode) ?? null
+  const isTeamNameValid = form.name.trim().length >= 3
+  const canCreateTeam = Boolean(isTeamNameValid && form.countryCode && selectedKitUrl && !loadingCountries && !submitting)
+  const flagUrl = form.countryCode ? `/assets/uranius-placeholders/card.png?id=e135a045bf2b08b4` : ''
+  const countryDisplayNames = React.useMemo(() => {
+    const language = i18n.resolvedLanguage ?? i18n.language
+    const locale = language.startsWith('sr')
+      ? 'sr-Latn-RS'
+      : language.startsWith('de')
+        ? 'de-DE'
+        : 'en-GB'
+
+    try {
+      return new Intl.DisplayNames([locale], { type: 'region' })
+    } catch {
+      return null
+    }
+  }, [i18n.language, i18n.resolvedLanguage])
+
+  return (
+    <div className="relative isolate min-h-screen bg-[#081224] flex items-center justify-center p-6 overflow-hidden">
+      <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
+        <img
+          src="/assets/uranius-placeholders/square.png?id=97f6249ac148e829"
+          alt={t('page.backgroundAlt')}
+          className="object-cover w-full h-full"
+          style={
+            {
+              opacity: 0.92,
+              WebkitMaskImage:
+                'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 42%, rgba(0,0,0,0.78) 72%, rgba(0,0,0,0) 100%)',
+              maskImage:
+                'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 42%, rgba(0,0,0,0.78) 72%, rgba(0,0,0,0) 100%)',
+            } as React.CSSProperties
+          }
+        />
+
+        <div
+          className="absolute inset-0"
+          style={
+            {
+              background:
+                'linear-gradient(to bottom, rgba(12,38,95,0.50) 0%, rgba(12,38,95,0.50) 38%, rgba(8,18,36,0.72) 74%, rgba(8,18,36,0.96) 100%)',
+            } as React.CSSProperties
+          }
+        />
+      </div>
+
+      <div className="relative z-10 max-w-7xl w-full bg-white rounded-xl shadow-2xl overflow-hidden p-6 lg:p-8 space-y-4">
+        <div className="flex justify-end">
+          <LanguageSelector
+            compact
+            className="rounded-lg border border-slate-200 bg-white px-2 py-1 shadow-sm"
+            selectClassName="border-0 bg-transparent text-slate-800 shadow-none focus:ring-1"
+          />
+        </div>
+        <div className="rounded-xl border-2 border-emerald-400 bg-white/95 overflow-hidden">
+          <div className="grid min-w-0 grid-cols-1 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+            <div className="min-w-0 p-8 lg:p-10 flex flex-col h-full">
+              <h2 className="text-2xl font-bold text-gray-900">{t('page.title')}</h2>
+              <p className="text-sm text-gray-600 mt-2">{t('page.subtitle')}</p>
+
+              <form id="create-club-form" onSubmit={handleSubmit} className="mt-8 flex flex-col flex-1">
+                <div className="space-y-5">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">{t('page.teamName')}</label>
+                    <input
+                      value={form.name}
+                      onChange={e => updateField('name', e.target.value)}
+                      className="mt-1 block w-full border rounded-md px-3 py-2"
+                      placeholder={t('page.teamNamePlaceholder')}
+                      required
+                      disabled={submitting}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">{t('page.teamCountry')}</label>
+                    <div className="mt-1 flex items-center gap-3">
+                      <div className="w-7 h-5 rounded-md border border-gray-300 bg-white overflow-hidden flex items-center justify-center shrink-0">
+                        {!flagImageError && flagUrl ? (
+                          <img
+                            src={flagUrl}
+                            alt={t('page.countryFlag')}
+                            className="w-full h-full object-cover"
+                            onError={() => setFlagImageError(true)}
+                          />
+                        ) : (
+                          <span className="text-2xl">{flagEmojiFromCode(form.countryCode)}</span>
+                        )}
+                      </div>
+
+                      <select
+                        value={form.countryCode}
+                        onChange={e => updateField('countryCode', e.target.value)}
+                        className="block w-full border rounded-md px-3 py-2"
+                        disabled={loadingCountries || submitting}
+                      >
+                        {countries.length === 0 ? (
+                          <option value="">{t('page.noCountries')}</option>
+                        ) : (
+                          countries.map(c => (
+                            <option key={c.code} value={c.code}>
+                              {countryDisplayNames?.of(c.code.toUpperCase()) || c.name}
+                            </option>
+                          ))
+                        )}
+                      </select>
+                    </div>
+
+                    {loadingCountries ? <div className="text-xs text-gray-500 mt-1">{t('page.loadingCountries')}</div> : null}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex items-center gap-3">
+                      <label className="min-w-[88px] text-sm font-medium text-gray-700">{t('page.primaryColor')}</label>
+                      <input
+                        type="color"
+                        value={form.primary}
+                        onChange={e => updateField('primary', e.target.value)}
+                        className="h-10 w-20 rounded border p-0"
+                        disabled={submitting}
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <label className="min-w-[106px] text-sm font-medium text-gray-700">{t('page.secondaryColor')}</label>
+                      <input
+                        type="color"
+                        value={form.secondary}
+                        onChange={e => updateField('secondary', e.target.value)}
+                        className="h-10 w-20 rounded border p-0"
+                        disabled={submitting}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">{t('page.motto')}</label>
+                    <input
+                      value={form.motto}
+                      onChange={e => updateField('motto', e.target.value)}
+                      className="mt-1 block w-full border rounded-md px-3 py-2"
+                      placeholder={t('page.mottoPlaceholder')}
+                      disabled={submitting}
+                    />
+                  </div>
+
+                  <GenericKitSelector
+                    selectedKitUrl={selectedKitUrl}
+                    onSelect={setSelectedKitUrl}
+                    scrollerRef={kitScrollerRef}
+                    onScrollLeft={() => scrollGenericKits('left')}
+                    onScrollRight={() => scrollGenericKits('right')}
+                    disabled={submitting}
+                  />
+                </div>
+
+                <div className="mt-auto pt-8">
+                  {error ? (
+                    <div
+                      className="rounded-md px-4 py-3 text-sm font-medium bg-red-50 border border-red-200 text-red-700"
+                      role="alert"
+                    >
+                      {error}
+                    </div>
+                  ) : null}
+                </div>
+              </form>
+            </div>
+
+            <div className="min-w-0 border-t lg:border-t-0 lg:border-l border-gray-200 bg-gradient-to-b from-slate-50 to-white p-8 lg:p-10 h-full">
+              <div className="flex flex-col items-center justify-start text-center">
+                <h3 className="text-2xl font-bold text-gray-900">{t('preview.title')}</h3>
+                <p className="text-sm text-gray-600 mt-2">{t('preview.description')}</p>
+
+                <div className="mt-6 flex h-56 w-56 items-center justify-center overflow-hidden">
+                  {customLogoSource !== 'generated' && customLogoPreviewUrl ? (
+                    <img
+                      src={customLogoPreviewUrl}
+                      alt={t('preview.customLogoAlt')}
+                      className="object-contain transition-all duration-150"
+                      style={{
+                        width: `${Math.round(180 * (customLogoScale / 100))}px`,
+                        height: `${Math.round(180 * (customLogoScale / 100))}px`,
+                      }}
+                    />
+                  ) : (
+                    <BadgePreview
+                      shape={badgeShape}
+                      pattern={badgePattern}
+                      primary={form.primary}
+                      secondary={form.secondary}
+                      size="large"
+                    />
+                  )}
+                </div>
+
+                <div className="mt-4 text-lg font-semibold text-gray-900">
+                  {form.name || t('preview.defaultTeam')}
+                </div>
+
+                {customLogoSource !== 'generated' && customLogoPreviewUrl ? (
+                  <div className="mt-4 w-full max-w-sm rounded-lg border border-gray-200 bg-white px-4 py-3 text-left">
+                    <div className="flex items-center justify-between gap-3">
+                      <label
+                        htmlFor="custom-logo-scale"
+                        className="text-xs font-semibold text-gray-700"
+                      >
+                        {t('preview.logoSize')}
+                      </label>
+                      <span className="text-xs font-medium text-gray-500">
+                        {customLogoScale}%
+                      </span>
+                    </div>
+
+                    <input
+                      id="custom-logo-scale"
+                      type="range"
+                      min="50"
+                      max="120"
+                      step="5"
+                      value={customLogoScale}
+                      onChange={event =>
+                        setCustomLogoScale(Number(event.target.value))
+                      }
+                      className="mt-2 w-full"
+                      disabled={submitting}
+                    />
+
+                    <div className="mt-1 flex justify-between text-[11px] text-gray-400">
+                      <span>{t('preview.smaller')}</span>
+                      <span>{t('preview.larger')}</span>
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* Consolidated Interior Style selector into the Team Preview area */}
+                <div
+                  className={[
+                    'mt-8 w-full rounded-xl border border-emerald-200 bg-emerald-50/40 p-4 text-left',
+                    customLogoSource !== 'generated' ? 'opacity-50' : '',
+                  ].join(' ')}
+                >
+                  <div className="text-sm font-semibold text-gray-900">{t('patterns.title')}</div>
+                  <div className="mt-1 text-xs text-gray-500">
+                    {customLogoSource === 'generated'
+                      ? t('patterns.description')
+                      : t('patterns.customDescription')}
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-4 gap-2">
+                    {patternOptions.map(pattern => {
+                      const patternLabel = t(patternLabelKeys[pattern])
+
+                      return (
+                        <button
+                          key={pattern}
+                          type="button"
+                          onClick={() => setBadgePattern(pattern)}
+                          disabled={customLogoSource !== 'generated' || submitting}
+                          className={`rounded-lg border p-2 flex flex-col items-center justify-center transition ${
+                            badgePattern === pattern
+                              ? 'border-blue-500 bg-blue-50'
+                              : 'border-gray-200 bg-white hover:border-gray-300'
+                          }`}
+                          aria-label={t('patterns.select', { pattern: patternLabel })}
+                          title={patternLabel}
+                        >
+                          <BadgePreview
+                            shape={badgeShape}
+                            pattern={pattern}
+                            primary={form.primary}
+                            secondary={form.secondary}
+                            size="small"
+                          />
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                <div className="mt-6 w-full rounded-xl border border-gray-200 bg-white p-4 text-left">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-semibold text-gray-900">{t('logo.title')}</div>
+                      <div className="mt-1 text-xs text-gray-500">
+                        {t('logo.description')}
+                      </div>
+                    </div>
+
+                    {customLogoSource !== 'generated' ? (
+                      <button
+                        type="button"
+                        onClick={useGeneratedBadge}
+                        disabled={submitting}
+                        className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {t('logo.useGenerated')}
+                      </button>
+                    ) : null}
+                  </div>
+
+                  <div className="mt-4">
+                    <input
+                      ref={customLogoInputRef}
+                      type="file"
+                      accept=".png,.jpg,.jpeg,.bmp,image/png,image/jpeg,image/bmp,image/x-ms-bmp"
+                      onChange={event => {
+                        void handleCustomLogoFile(event.target.files?.[0] ?? null)
+                      }}
+                      disabled={submitting}
+                      className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 file:mr-3 file:rounded-md file:border-0 file:bg-slate-900 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-white hover:file:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      {t('logo.fileHelp')}
+                    </p>
+                  </div>
+
+                  <div className="my-4 flex items-center gap-3">
+                    <div className="h-px flex-1 bg-gray-200" />
+                    <span className="text-[11px] font-medium uppercase tracking-wide text-gray-400">{t('logo.orUrl')}</span>
+                    <div className="h-px flex-1 bg-gray-200" />
+                  </div>
+
+                  <div className="flex gap-2">
+                    <input
+                      type="url"
+                      value={customLogoUrlInput}
+                      onChange={event => setCustomLogoUrlInput(event.target.value)}
+                      onKeyDown={event => {
+                        if (event.key === 'Enter') {
+                          event.preventDefault()
+                          void applyCustomLogoUrl()
+                        }
+                      }}
+                      placeholder={t('logo.urlPlaceholder')}
+                      disabled={submitting || applyingLogoUrl}
+                      className="min-w-0 flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void applyCustomLogoUrl()
+                      }}
+                      disabled={submitting || applyingLogoUrl || !customLogoUrlInput.trim()}
+                      className="rounded-md border border-slate-300 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-800 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {applyingLogoUrl ? t('logo.applying') : t('logo.apply')}
+                    </button>
+                  </div>
+
+                  {customLogoError ? (
+                    <div className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
+                      {customLogoError}
+                    </div>
+                  ) : null}
+
+                  {customLogoSource === 'file' && customLogoFile ? (
+                    <div className="mt-3 text-xs font-medium text-emerald-700">
+                      {t('logo.uploaded', { name: customLogoFile.name })}
+                    </div>
+                  ) : null}
+
+                  {customLogoSource === 'url' && appliedCustomLogoUrl ? (
+                    <div className="mt-3 truncate text-xs font-medium text-emerald-700">
+                      {t('logo.urlApplied')}
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="mt-4 flex w-full justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => navigate('/')}
+                    className="rounded-md border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled={submitting}
+                  >
+                    {t('page.cancel')}
+                  </button>
+
+                  <button
+                    type="submit"
+                    form="create-club-form"
+                    className="rounded-md bg-yellow-400 px-6 py-2 font-semibold text-gray-950 shadow-sm transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500 disabled:shadow-none"
+                    disabled={!canCreateTeam}
+                    title={!selectedKitUrl ? t('page.chooseJerseyFirst') : undefined}
+                  >
+                    {submitting ? t('page.creating') : t('page.createTeam')}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* Removed the separate lower “Interior Style” panel entirely */}
+      </div>
+    </div>
+  )
+}

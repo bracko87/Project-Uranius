@@ -1,0 +1,894 @@
+{
+  "page": {
+    "title": "Teampersonal",
+    "subtitle": "Verwalten Sie verschiedene Personalrollen über eigene Rollen-Tabs und separate Mitarbeiterlisten.",
+    "loading": "Personal wird geladen...",
+    "explainPositions": "Alle Personalpositionen erklären",
+    "loadFailed": "Die Personalseite konnte nicht geladen werden. Bitte versuchen Sie es erneut."
+  },
+  "summary": {
+    "weeklyWages": "Wöchentliche Personalkosten",
+    "weeklyWagesSubtext": "Aktuelle gesamte Gehaltssumme",
+    "openSlots": "Freie Personalplätze",
+    "openSlotsSubtext": "Aktuell freie Plätze über alle Personalrollen hinweg",
+    "totalCapacity": "Gesamte Personalkapazität",
+    "totalCapacitySubtext": "Aktuelle Rollenlimits aus dem Backend",
+    "warnings": "Warnungen",
+    "warningsSubtext": "Die Einrichtungsstufe kann einige Boni begrenzen"
+  },
+  "rolesSection": {
+    "title": "Personalrollen",
+    "subtitle": "Wählen Sie eine Rolle aus, um zugewiesene Mitarbeiter, das aktuelle Rollenlimit und eine Zusammenfassung ihres Beitrags zu sehen.",
+    "staffList": "Mitarbeiterliste: {{role}}",
+    "assigned": "{{count}}/{{limit}} für diese Rolle zugewiesen.",
+    "assignedCompact": "Zugewiesen {{count}}/{{limit}}",
+    "noAssigned": "Kein {{role}} zugewiesen",
+    "usage": "Aktuelle Belegung dieser Rolle: {{count}}/{{limit}}. Verpflichten Sie Personal über den Personalmarkt, um diese Rolle zu besetzen.",
+    "findStaff": "Personal suchen"
+  },
+  "roles": {
+    "headCoach": {
+      "label": "Cheftrainer",
+      "subtitle": "Leitet Coaching, Trainingsplanung und langfristige Fahrerentwicklung."
+    },
+    "trainer": {
+      "label": "Trainer",
+      "subtitle": "Verbessert die tägliche Trainingsleistung und unterstützt die Pläne des Cheftrainers."
+    },
+    "teamDoctor": {
+      "label": "Teamarzt",
+      "subtitle": "Leitet medizinische Erholung, Diagnose und Verletzungsprävention."
+    },
+    "physio": {
+      "label": "Physiotherapeut",
+      "subtitle": "Konzentriert sich auf Rehabilitation, Erholungsgeschwindigkeit und die Rückkehr zur vollen Fitness."
+    },
+    "nutritionist": {
+      "label": "Ernährungsberater",
+      "subtitle": "Unterstützt Erholung, konstante Fitness und die Arbeit des medizinischen Personals."
+    },
+    "mechanic": {
+      "label": "Mechaniker",
+      "subtitle": "Fahrrad-Setup, effiziente Wartung und mechanische Zuverlässigkeit am Renntag."
+    },
+    "sportDirector": {
+      "label": "Sportdirektor",
+      "subtitle": "Plant Renntaktik, Moral, Teamarbeit und Helferunterstützung."
+    },
+    "scoutAnalyst": {
+      "label": "Scout / Analyst",
+      "subtitle": "Scouting-Qualität, Sichtbarkeit von Talenten und Transferinformationen."
+    },
+    "u23HeadCoach": {
+      "label": "U23-Cheftrainer",
+      "subtitle": "Plant Training des Entwicklungsteams und taktische Unterstützung bei U23-Rennen."
+    },
+    "youthAcademyDirector": {
+      "label": "Leiter der Jugendakademie",
+      "subtitle": "Leitet das U16-Akademieprogramm, Budget, delegierte Rekrutierung und operative Anfragen."
+    },
+    "u16HeadCoach": {
+      "label": "U16-Cheftrainer",
+      "subtitle": "Steuert U16-Training, Belastung, Entwicklungsschwerpunkte und Rennauswahl."
+    },
+    "youthScout": {
+      "label": "Jugendscout",
+      "subtitle": "Findet und bewertet U16-Talente innerhalb des finanzierten Scouting-Gebiets der Jugendakademie."
+    }
+  },
+  "impactAreas": {
+    "regularTraining": "Reguläres Training",
+    "trainingCamps": "Trainingslager",
+    "riderDevelopment": "Fahrerentwicklung",
+    "dailyTraining": "Tägliches Training",
+    "trainingQuality": "Trainingsqualität",
+    "recoverySpeed": "Erholungsgeschwindigkeit",
+    "injuryPrevention": "Verletzungsprävention",
+    "medicalCaseHandling": "Behandlung medizinischer Fälle",
+    "returnToFitness": "Rückkehr zur Fitness",
+    "fatigueRecovery": "Erholung von Ermüdung",
+    "recoverySupport": "Erholungsunterstützung",
+    "fitnessConsistency": "Konstante Fitness",
+    "racePreparation": "Rennvorbereitung",
+    "equipmentSetup": "Ausrüstungs-Setup",
+    "maintenanceEfficiency": "Wartungseffizienz",
+    "mechanicalReliability": "Mechanische Zuverlässigkeit",
+    "raceTactics": "Renntaktik",
+    "teamMorale": "Teammoral",
+    "domestiqueSupport": "Helferunterstützung",
+    "scoutingAccuracy": "Scouting-Genauigkeit",
+    "prospectDiscovery": "Talentsuche",
+    "transferIntelligence": "Transferinformationen",
+    "u23Training": "U23-Training",
+    "youthDevelopment": "Nachwuchsentwicklung",
+    "u23RaceTactics": "U23-Renntaktik",
+    "academyBudget": "Akademiebudget",
+    "recruitmentManagement": "Rekrutierungsmanagement",
+    "youthProgramme": "Jugendprogramm",
+    "u16Training": "U16-Training",
+    "workloadManagement": "Belastungssteuerung",
+    "raceSelection": "Rennauswahl",
+    "youthScouting": "Jugendscouting",
+    "talentAssessment": "Talentbewertung",
+    "recruitmentReach": "Rekrutierungsreichweite"
+  },
+  "common": {
+    "close": "Schließen",
+    "cancel": "Abbrechen",
+    "unknown": "Unbekannt",
+    "age": "Alter",
+    "ageUnknown": "Alter unbekannt",
+    "ageYears": "{{age}} Jahre",
+    "born": "Geboren: {{date}}",
+    "scope": "Bereich: {{scope}}",
+    "firstTeam": "erste Mannschaft",
+    "u23": "U23",
+    "all": "alle",
+    "weeklyWage": "Wochengehalt",
+    "contract": "Vertrag",
+    "currentAssignment": "Aktuelle Zuweisung",
+    "activeEffects": "Aktive Effekte",
+    "staffAttributes": "Personalwerte",
+    "focus": "Schwerpunkt: {{value}}",
+    "duration": "Dauer: {{count}} Tage",
+    "cost": "Kosten: {{value}}",
+    "completed": "Abgeschlossen: {{date}}",
+    "youthAcademy": "Jugendakademie"
+  },
+  "assignment": {
+    "notAssigned": "Derzeit nicht zugewiesen",
+    "expiresToday": "Läuft heute aus",
+    "oneDayLeft": "Noch 1 Tag",
+    "daysLeft": "Noch {{count}} Tage",
+    "openProfile": "Mitarbeiterprofil öffnen"
+  },
+  "attributes": {
+    "training": "Training",
+    "recoveryPlanning": "Erholungsplanung",
+    "youthDevelopment": "Nachwuchsentwicklung",
+    "experience": "Erfahrung",
+    "leadership": "Führungsstärke",
+    "loyalty": "Loyalität",
+    "dailyTraining": "Tägliches Training",
+    "trainingEfficiency": "Trainingseffizienz",
+    "potentialGrowth": "Potenzialentwicklung",
+    "recovery": "Erholung",
+    "prevention": "Prävention",
+    "diagnosis": "Diagnose",
+    "rehabilitation": "Rehabilitation",
+    "recoverySpeed": "Erholungsgeschwindigkeit",
+    "nutrition": "Ernährung",
+    "consistency": "Konstanz",
+    "bikeSetup": "Fahrrad-Setup",
+    "reliability": "Zuverlässigkeit",
+    "racePlanning": "Rennplanung",
+    "teamControl": "Teamkontrolle",
+    "evaluation": "Bewertung",
+    "network": "Netzwerk",
+    "accuracy": "Genauigkeit"
+  },
+  "premium": {
+    "analysisTitle": "Premium-Personalanalyse",
+    "analysisDescription": "Sehen Sie den kombinierten Einfluss des Personals, durchschnittliche Fähigkeitsprofile und Ergebnisse abgeschlossener Kurse.",
+    "detailDescription": "Sehen Sie berechnete Coaching-Qualität, Infrastrukturgrenzen, Personalvergleiche und empfohlene Entwicklungspfade.",
+    "loading": "Premium-Zugang wird geladen"
+  },
+  "analysis": {
+    "averageSkillProfile": "Durchschnittliches Fähigkeitsprofil",
+    "averageSkillProfileSubtitle": "Durchschnittswerte der aktuell dieser Einflussgruppe zugewiesenen Mitarbeiter.",
+    "noStaff": "Dieser Einflussgruppe ist noch kein Personal zugewiesen, daher gibt es noch kein aktives Fähigkeitsprofil.",
+    "whereRoleHelps": "Wo diese Rolle hilft",
+    "whereRoleHelpsSubtitle": "Die wichtigsten Spielsysteme, die von dieser Rolle beeinflusst werden.",
+    "recentCourseResults": "Letzte Kursergebnisse",
+    "recentCourseResultsSubtitle": "Abgeschlossene Weiterbildungskurse und angewendete Attributsverbesserungen."
+  },
+  "quality": {
+    "facility": "Einrichtung",
+    "scoutingQuality": "Scouting-Qualität",
+    "scoutAbility": "Scout-Fähigkeit",
+    "currentReportQuality": "Aktuelle Berichtsqualität",
+    "reportTime": "Berichtsdauer",
+    "scoutingOffice": "Scouting-Büro",
+    "coachingQuality": "Coaching-Qualität",
+    "coachAbility": "Trainerfähigkeit",
+    "trainingQuality": "Trainingsqualität",
+    "developmentSupport": "Entwicklungsunterstützung",
+    "trainerAbility": "Trainerfähigkeit",
+    "sessionQuality": "Einheitenqualität",
+    "loadManagement": "Belastungssteuerung",
+    "medicalQuality": "Medizinische Qualität",
+    "medicalAbility": "Medizinische Fähigkeit",
+    "injuryPrevention": "Verletzungsprävention",
+    "returnToFitness": "Rückkehr zur Fitness",
+    "recoveryQuality": "Erholungsqualität",
+    "recoveryAbility": "Erholungsfähigkeit",
+    "rehabilitationQuality": "Rehabilitationsqualität",
+    "recoverySpeed": "Erholungsgeschwindigkeit",
+    "nutritionQuality": "Ernährungsqualität",
+    "nutritionAbility": "Ernährungsfähigkeit",
+    "recoverySupport": "Erholungsunterstützung",
+    "consistencySupport": "Unterstützung der Konstanz",
+    "technicalQuality": "Technische Qualität",
+    "technicalAbility": "Technische Fähigkeit",
+    "bikeSetupQuality": "Qualität des Fahrrad-Setups",
+    "reliabilitySupport": "Unterstützung der Zuverlässigkeit",
+    "tacticalQuality": "Taktische Qualität",
+    "directorAbility": "Fähigkeit des Sportdirektors",
+    "racePlanQuality": "Race Plan-Qualität",
+    "teamControl": "Teamkontrolle",
+    "raceEngineRole": "Rolle in der Race Engine",
+    "prepared": "Vorbereitet",
+    "youthCoachingQuality": "Qualität des Nachwuchscoachings",
+    "youthCoachAbility": "Fähigkeit des Nachwuchstrainers",
+    "talentDevelopment": "Talententwicklung",
+    "raceReadiness": "Rennbereitschaft"
+  },
+  "detail": {
+    "currentCourse": "Aktueller Kurs",
+    "courseInProgress": "Kurs läuft: {{course}}. Abschluss: {{date}}.",
+    "courseCannotCancel": "Dieser Kurs kann nach der Buchung nicht mehr abgebrochen werden. Personalboni dieser Rolle sind bis zum Abschluss pausiert.",
+    "lastCourseGains": "Verbesserungen aus dem letzten Kurs",
+    "extendContract": "Vertrag verlängern",
+    "courseInProgressButton": "Kurs läuft",
+    "sendOnCourse": "Zum Kurs schicken",
+    "release": "Freistellen",
+    "scoutingReports": "Scouting-Berichte",
+    "completionDate": "Abschluss: {{date}}"
+  },
+  "release": {
+    "title": "Mitarbeiter freistellen",
+    "subtitle": "Bestätigen Sie diese Personalentscheidung, bevor Sie fortfahren.",
+    "aboutToRelease": "Sie sind dabei, {{name}} freizustellen",
+    "role": "Rolle: {{role}}",
+    "weeklyWage": "Wochengehalt: {{value}}",
+    "age": "Alter: {{value}}",
+    "compensation": "Abfindung (6 Wochen): {{value}}",
+    "warning": "Der Mitarbeiter wird sofort aus dem Personal entfernt. Die Boni dieses Platzes entfallen, bis Sie einen Ersatz verpflichten.",
+    "payment": "Der Club zahlt einmalig eine Abfindung in Höhe von 6 Wochengehältern.",
+    "releasing": "Wird freigestellt...",
+    "confirm": "Freistellung bestätigen",
+    "successMessage": "{{name}} wurde als {{role}} entlassen. Gezahlt wurde eine Abfindung von {{amount}}.",
+    "failureMessage": "Der Mitarbeiter konnte nicht entlassen werden. Bitte versuchen Sie es erneut."
+  },
+  "contract": {
+    "title": "Vertrag verlängern",
+    "subtitle": "Verhandeln Sie einen neuen Personalvertrag für {{name}}.",
+    "currentSalary": "Aktuelles Gehalt",
+    "currentContract": "Aktueller Vertrag",
+    "extensionLength": "Vertragsverlängerung",
+    "oneSeason": "1 Saison",
+    "twoSeasons": "2 Saisons",
+    "loadingQuote": "Vertragsangebot wird geladen...",
+    "requestedSalary": "Gefordertes Gehalt",
+    "raiseRequest": "Geforderte Erhöhung: {{value}} %",
+    "minimumAcceptable": "Mindestens akzeptabel",
+    "newContractTarget": "Ziel des neuen Vertrags",
+    "staffInterest": "Interesse des Mitarbeiters",
+    "interestUnknown": "Interesse unbekannt",
+    "chanceRenew": "Chance auf Verlängerung",
+    "chanceUnknown": "Chance unbekannt",
+    "veryLikely": "Annahme sehr wahrscheinlich",
+    "possible": "Möglich, könnte aber mehr verlangen",
+    "unlikely": "Bei diesem Gehalt unwahrscheinlich",
+    "veryUnlikely": "Sehr unwahrscheinlich",
+    "noQuote": "Kein Angebot verfügbar.",
+    "salaryOffer": "Ihr Gehaltsangebot",
+    "salaryPlaceholder": "Wochengehalt eingeben",
+    "submitting": "Wird gesendet...",
+    "submit": "Angebot senden",
+    "extended": "Personalvertrag erfolgreich verlängert.",
+    "discussionCompleted": "Vertragsverhandlung abgeschlossen.",
+    "invalidWeeklySalary": "Bitte geben Sie ein gültiges Wochengehalt ein.",
+    "acceptedWithTerms": "{{name}} hat den neuen Vertrag angenommen: {{salary}} pro Woche bis Saison {{season}}.",
+    "countered": "{{name}} wünscht bessere Vertragsbedingungen.",
+    "rejected": "{{name}} hat das Angebot abgelehnt.",
+    "minimumWeeklySalary": "Das mindestens akzeptierte Wochengehalt beträgt {{salary}}.",
+    "wantsCloserTo": "{{name}} möchte ein Wochengehalt näher an {{salary}}.",
+    "offerFailed": "Die Vertragsverhandlung konnte nicht abgeschlossen werden. Bitte versuchen Sie es erneut.",
+    "quoteFailed": "Das Vertragsangebot konnte nicht geladen werden. Bitte versuchen Sie es erneut."
+  },
+  "course": {
+    "title": "Personalkurs",
+    "subtitle": "Planen Sie die Weiterbildung für {{name}}.",
+    "liveStart": "Kurs tatsächlich starten",
+    "liveStartText": "Beim Start eines Kurses wird ein echter Personalkurs angelegt. Attributsverbesserungen werden angewendet, wenn der Backend-Prozess den Kurs abschließt. Gebuchte Kurse können nicht abgebrochen werden. Personalboni dieser Rolle sind bis zum Kursabschluss pausiert.",
+    "staffAge": "Alter des Mitarbeiters",
+    "start": "Kurs starten",
+    "starting": "Wird gestartet...",
+    "none": "Für diese Personalrolle sind noch keine Kursoptionen konfiguriert. Dadurch wird verhindert, dass ein falscher Kurstyp gestartet wird, bevor die entsprechenden Backend-Kurscodes für diese Rolle hinzugefügt wurden.",
+    "back": "Zurück zum Personal",
+    "startedWithTarget": "{{name}} hat den Kurs {{course}} begonnen. Voraussichtlicher Abschluss: {{date}}.",
+    "started": "{{name}} hat eine Personalschulung begonnen.",
+    "startFailed": "Die Personalschulung konnte nicht gestartet werden. Bitte versuchen Sie es erneut."
+  },
+  "information": {
+    "title": "Personalpositionen erklärt",
+    "subtitle": "Aufgaben, wichtige Attribute und aktuelle Spielanbindung jeder Personalrolle.",
+    "close": "Informationen zu Personalpositionen schließen",
+    "importantAttributes": "Wichtige Attribute",
+    "gameplayConnection": "Anbindung ans Gameplay",
+    "live": "Aktiv",
+    "coreLive": "Kernfunktion aktiv",
+    "trainingLive": "Training aktiv",
+    "plannedConnection": "Geplante Anbindung"
+  },
+  "impactI18n": {
+    "assigned": "Zugewiesen",
+    "openSlotAvailable": "Freier Platz verfügbar",
+    "currentBasicCapReached": "Aktuelle Basisgrenze erreicht",
+    "forGroup": "Für diese Einflussgruppe",
+    "activeCourses": "Aktive Kurse",
+    "coursesPaused": "Boni sind teilweise pausiert, solange Mitarbeiter einen Kurs besuchen",
+    "fillVacancies": "Verwenden Sie Transfers → Personal, um freie Stellen zu besetzen",
+    "combinedTitle": "Kombinierter Teameinfluss",
+    "combinedMedical": "Kombinierte medizinische Unterstützung durch Teamarzt, Physiotherapeut und Ernährungsberater.",
+    "combinedCoach": "Vom Backend angewendeter Coaching-Effekt von {{name}}.",
+    "combinedCurrent": "Aktueller kombinierter Einfluss des aktiven Personals in dieser Gruppe.",
+    "coachingTitle": "Kombinierter Einfluss des Trainerpersonals",
+    "medicalTitle": "Kombinierter Einfluss des medizinischen Personals",
+    "mechanicTitle": "Einfluss der Mechaniker",
+    "directorTitle": "Einfluss des Sportdirektors",
+    "u23Title": "Einfluss des U23-Trainerpersonals",
+    "scoutingTitle": "Einfluss des Scouting-Personals",
+    "youthTitle": "Einfluss des Jugendakademie-Personals"
+  },
+  "scoutingExplainer": {
+    "title": "So funktioniert Scout-Qualität",
+    "body": "Die Attribute eines Scouts bestimmen seine tatsächliche Fähigkeit. Das Scouting-Büro kann die endgültige Berichtsqualität begrenzen. Daher kann selbst ein starker Scout nur Basisberichte erstellen, solange das Büro nicht ausgebaut wurde.",
+    "abilityLevels": "Stufen der Scout-Fähigkeit",
+    "reportLevels": "Stufen der Berichtsqualität",
+    "levelScale": "Basis → Solide → Stark → Elite",
+    "thresholds": "Grenzwerte der Scout-Fähigkeit",
+    "thresholdValues": "Basis: unter 55 · Solide: 55–69 · Stark: 70–84 · Elite: 85+",
+    "upgrade": "Ein besseres Scouting-Büro ermöglicht eine höhere Berichtsqualität. Aktuelle Stufe: Lv {{level}}.",
+    "upgradeNoLevel": "Ein besseres Scouting-Büro ermöglicht eine höhere Berichtsqualität.",
+    "limited": "Begrenzt durch Scouting-Büro Lv {{level}}.",
+    "basicWithScore": "Basis ({{score}})",
+    "solidWithScore": "Solide ({{score}})",
+    "strongWithScore": "Stark ({{score}})",
+    "eliteWithScore": "Elite ({{score}})"
+  },
+  "effectText": {
+    "scoutingAccuracy": "+{{value}} % Scouting-Genauigkeit",
+    "prospectVisibility": "+{{value}} % Talentsichtbarkeit",
+    "combinedScoutingAccuracy": "+{{value}} % kombinierte Scouting-Genauigkeit",
+    "combinedProspectVisibility": "+{{value}} % kombinierte Talentsichtbarkeit",
+    "futureTransferYouth": "Zukünftig: Transferinformationen und Nachwuchsberichte",
+    "futureBroaderTransferYouth": "Zukünftig: umfassendere Transfer- und Nachwuchsinformationen",
+    "scoutingOfficeCap": "Scouting-Büro Lv {{level}} begrenzt einen Teil der Scout- und Analystenboni."
+  },
+  "courseOptions": {
+    "coach_elite_methodology": {
+      "title": "Elite Methodologie Kurs",
+      "description": "Verbessert die Trainingsstruktur und die Gesamtqualität der Fahrleistung.",
+      "focus": "Ausbildung und Entwicklung"
+    },
+    "coach_recovery_planning": {
+      "title": "Seminar zur Wiederherstellung der Wirtschaftslage",
+      "description": "Schwerpunkt ist die Lastausgleichs-, Ermüdungs- und Mikrozyklusplanung.",
+      "focus": "Sanierungsplan"
+    },
+    "coach_youth_programme": {
+      "title": "Programm zur Entwicklung der Jugend",
+      "description": "Spezialkurs zur Verbesserung der Arbeit mit jungen und sich entwickelnden Fahrern.",
+      "focus": "Jugendentwicklung"
+    },
+    "trainer_daily_training_methods": {
+      "title": "Tägliche Schulungsmethoden",
+      "description": "Verbessert die tägliche Trainingsbereitstellung, die Trainingsstruktur und die Konsistenz des Fahrtrainings.",
+      "focus": "Tägliche Schulung + Effizienz"
+    },
+    "trainer_load_management": {
+      "title": "Workshop zum Laden von Arbeitsgängen",
+      "description": "Schwerpunkt ist das Ausgleichen von Trainingslast, die Verringerung des Überlastrisikos und die Unterstützung einer besseren Erholung zwischen den Sitzungen.",
+      "focus": "Effizienz + Erfahrung"
+    },
+    "trainer_potential_growth": {
+      "title": "Potenzielles Wachstumsprogramm",
+      "description": "Spezialisierter Trainerkurs zur Verbesserung der langfristigen Fahrerentwicklung und der potenziellen Wachstumsunterstützung.",
+      "focus": "Potenzielles Wachstum + tägliches Training"
+    },
+    "doctor_sports_medicine": {
+      "title": "Sportmedizin Kurs",
+      "description": "Verbessert die Diagnosequalität und athletisch-spezifische Behandlungsentscheidungen.",
+      "focus": "Diagnose + Erholung"
+    },
+    "doctor_prevention_lab": {
+      "title": "Labor für die Verhütung von Verletzungen",
+      "description": "Schwerpunkt ist Risikovorsorge und Präventionsprotokolle.",
+      "focus": "Prävention"
+    },
+    "doctor_rehab_acceleration": {
+      "title": "Programm zur Beschleunigung der Reha-Beschleunigung",
+      "description": "Erweiterte Reha-Planung für kürzere Rücklaufzeiten.",
+      "focus": "Wiederherstellungsgeschwindigkeit"
+    },
+    "physio_rehab_methods": {
+      "title": "Rehabilitationsmethoden",
+      "description": "Verbessert die Planung der Reha, die Geschwindigkeit der Erholung und die Unterstützung für die Rückkehr in die Anpassung.",
+      "focus": "Rehabilitation + Erholungsgeschwindigkeit"
+    },
+    "physio_load_recovery": {
+      "title": "Workshop zur Ladungswiederherstellung",
+      "description": "Schwerpunkt ist die Verringerung der Ermüdungsbelastung und die Verbesserung der Erholung nach dem Training.",
+      "focus": "Wiederherstellungsgeschwindigkeit + Erfahrung"
+    },
+    "physio_injury_return": {
+      "title": "Rückkehr zum Fitness-Programm",
+      "description": "Spezialisiertes Programm zur besseren Erholung der Fahrer von Verletzungen.",
+      "focus": "Rehabilitation + Erfahrung"
+    },
+    "nutritionist_race_nutrition": {
+      "title": "Planung der Rassenernährung",
+      "description": "Verbessert die Pläne für die Race-Nahrung, die Konsistenz des Fahrers und die Unterstützung der Erholung.",
+      "focus": "Ernährungsplan + Konsistenz"
+    },
+    "nutritionist_recovery_diet": {
+      "title": "Erholung Diät Workshop",
+      "description": "Fokussiert auf Ernährungsroutinen, die die tägliche Ermüdung Erholung unterstützen.",
+      "focus": "Erholungsunterstützung + Ernährung"
+    },
+    "nutritionist_endurance_fueling": {
+      "title": "Programm zur Ausdauerung der Kraftstoffe",
+      "description": "Erweiterte Ernährungsplanung für Langzeit-Fahrer Ausdauer und Trainingsqualität.",
+      "focus": "Ernährung + langfristige Unterstützung"
+    },
+    "mechanic_tt_setup": {
+      "title": "Zeiterprobungs-Einrichtungskurs",
+      "description": "Erweiterte aerodynamische Montage und TT-Positionsoptimierung.",
+      "focus": "Einrichtung"
+    },
+    "mechanic_reliability": {
+      "title": "Zuverlässigkeitsworkshop",
+      "description": "Verbessert die Ausstattungskonsistenz und die Zuverlässigkeit der Renntage.",
+      "focus": "Zuverlässigkeit"
+    },
+    "mechanic_weather_adaptation": {
+      "title": "Wetteranpassungstraining",
+      "description": "Schwerpunkt ist die technische Unterstützung bei nassen und gemischten Bedingungen.",
+      "focus": "Bedingungen Unterstützung"
+    },
+    "director_tactics": {
+      "title": "Seminar für Rassentaktik",
+      "description": "Verbessert taktische Anrufe, Tempopläne und Entscheidungen für das Rennmanagement.",
+      "focus": "Taktik"
+    },
+    "director_leadership": {
+      "title": "Intensive Führungsqualität",
+      "description": "Stärkert Motivation, Führung und innerteaminterne Kommunikation.",
+      "focus": "Führung"
+    },
+    "director_stage_strategy": {
+      "title": "Programm für die Stufe der Strategie",
+      "description": "Spezialisierte taktische Planung für Etappenrennen und GC Unterstützung.",
+      "focus": "Stufe Strategie"
+    },
+    "u23_youth_development_methods": {
+      "title": "Methoden der Jugendentwicklung",
+      "description": "Verbesserung der Struktur der Jugendausbildung, der Entwicklungsplanung und des langfristigen Wachstums der Fahrer.",
+      "focus": "Jugendentwicklung + Jugendausbildung"
+    },
+    "u23_talent_pathway_programme": {
+      "title": "Talent-Pfad-Programm",
+      "description": "Schwerpunkt ist die Ermittlung von Entwicklungspfaden und die Verbesserung der potenziellen Wachstumsförderung.",
+      "focus": "Potenzielles Wachstum + Erfahrung"
+    },
+    "u23_race_readiness_course": {
+      "title": "U23-Rennbereitschaft",
+      "description": "Bereitet junge Fahrer auf die Renntagstruktur, Disziplin und taktische Entwicklung vor.",
+      "focus": "Jugendausbildung + Führung"
+    },
+    "scout_evaluation": {
+      "title": "Bewertungsgenauigkeit",
+      "description": "Verbessert die Bewertung und die Qualität der Berichte.",
+      "focus": "Bewertung"
+    },
+    "scout_networking": {
+      "title": "Scout-Networking",
+      "description": "Errichtet Verbindungen und verbessert die Abdeckung der Talentidentifikation.",
+      "focus": "Netzwerk"
+    },
+    "scout_data_analysis": {
+      "title": "Leistungsdatenanalyse",
+      "description": "Verbessert die analytische Überprüfung der Fahrer und Rennvorbereitungsberichte.",
+      "focus": "Genauigkeit + Analyse"
+    },
+    "youth_director_programme_management": {
+      "title": "Akademie-Programmmanagement",
+      "description": "Verbessert Führung und Effizienz im täglichen Akademiebetrieb.",
+      "focus": "Führung + Effizienz"
+    },
+    "youth_director_budget_pathways": {
+      "title": "Akademiebudget & Entwicklungswege",
+      "description": "Verbessert Planung, Management und kosteneffiziente Entwicklungswege.",
+      "focus": "Akademiemanagement + Effizienz"
+    },
+    "youth_director_recruitment_strategy": {
+      "title": "Jugend-Rekrutierungsstrategie",
+      "description": "Fortgeschrittenes Programm für Talentwege, Rekrutierungsplanung und Führung.",
+      "focus": "Talentwege + Führung"
+    },
+    "u16_development_methodology": {
+      "title": "U16-Entwicklungsmethodik",
+      "description": "Verbessert die wöchentliche Entwicklung und langfristige Förderung.",
+      "focus": "Jugendentwicklung + Potenzial"
+    },
+    "u16_workload_management": {
+      "title": "U16-Belastungssteuerung",
+      "description": "Verbessert Entscheidungen zu Ermüdung, Bereitschaft und Entwicklungsbelastung.",
+      "focus": "Effizienz + Erfahrung"
+    },
+    "u16_race_coaching": {
+      "title": "U16-Renncoaching",
+      "description": "Verbessert Rennauswahl, Coachingentscheidungen und Entwicklung am Renntag.",
+      "focus": "Renncoaching + Führung"
+    },
+    "youth_scout_talent_id": {
+      "title": "Jugend-Talenterkennung",
+      "description": "Verbessert Talentauswahl und Genauigkeit der Scouting-Bewertung.",
+      "focus": "Talenterkennung + Genauigkeit"
+    },
+    "youth_scout_network_building": {
+      "title": "Jugend-Scoutingnetzwerk",
+      "description": "Baut Scouting-Erfahrung und das Netzwerk zur Talentsuche aus.",
+      "focus": "Netzwerk + Erfahrung"
+    },
+    "youth_scout_assessment_accuracy": {
+      "title": "Genauigkeit der Jugendbewertung",
+      "description": "Fortgeschrittene Talentbewertung für verlässlichere Berichte.",
+      "focus": "Genauigkeit + Potenzial"
+    }
+  },
+  "additionalEffects": {
+    "trainingEfficiency": "{{value}}% Trainingseffizienz",
+    "developmentSupport": "{{value}}% Entwicklungsförderung",
+    "overloadRisk": "{{value}}% Überlastungsrisiko",
+    "dailyTrainingOutput": "{{value}}% tägliche Trainingsleistung",
+    "riderDevelopmentSupport": "{{value}}% Fahrerentwicklung",
+    "combinedDevelopmentSupport": "{{value}}% gemeinsame Entwicklungsförderung",
+    "combinedOverloadRisk": "{{value}}% gemeinsames Überlastungsrisiko",
+    "u16CoachingSupport": "{{value}}% U16-Trainerunterstützung",
+    "focusTrainingEfficiency": "{{value}}% Trainingseffizienz ({{focus}})",
+    "healthRiskContribution": "{{value}} Beitrag zum Verletzungs- und Krankheitsrisiko",
+    "returnToFitnessContribution": "{{value}} Beitrag zur Rückkehr in die Fitness",
+    "dailyRecoverySupport": "{{value}} tägliche Regenerationsunterstützung",
+    "fatigueFloorReduction": "{{value}} Müdigkeitsgrenze nach Erkrankungen",
+    "setupQuality": "{{value}} Setup-Qualitätsbonus",
+    "equipmentConditionLoss": "{{value}} Verlust des Ausrüstungszustands",
+    "mechanicalRisk": "{{value}} mechanisches Risiko",
+    "maintenanceSpeed": "{{value}} Wartungsgeschwindigkeit",
+    "maintenanceCost": "{{value}} Wartungskosten",
+    "youthProspectDiscovery": "{{value}} Entdeckung junger Talente",
+    "youthAssessment": "{{value}} Bewertungsqualität junger Talente",
+    "combinedTraining": "{{value}} kombinierte Trainingsleistung",
+    "combinedHealthRisk": "{{value}} kombiniertes Verletzungs- und Krankheitsrisiko",
+    "combinedFitnessSpeed": "{{value}} kombinierte Rückkehr-zur-Fitness-Geschwindigkeit",
+    "combinedDailyRecovery": "{{value}} kombinierte tägliche Regeneration",
+    "combinedSetup": "{{value}} kombinierter Setup-Bonus",
+    "combinedConditionLoss": "{{value}} kombinierter Zustandsverlust der Ausrüstung",
+    "combinedMechanicalRisk": "{{value}} kombiniertes mechanisches Risiko",
+    "combinedMaintenanceSpeed": "{{value}} kombinierte Wartungsgeschwindigkeit",
+    "combinedMaintenanceCost": "{{value}} kombinierte Wartungskosten",
+    "workloadPlanning": "{{value}} Unterstützung der Belastungsplanung",
+    "prospectDiscovery": "{{value}} Entdeckung von Talenten",
+    "assessmentSupport": "{{value}} Bewertungsunterstützung",
+    "mechanicPaused": "Mechanikereffekte sind bei Nichtverfügbarkeit pausiert.",
+    "requiresWorkshop": "Wartungsboni benötigen eine Mechanikerwerkstatt ab Stufe 1.",
+    "plannedTactics": "Geplant: Unterstützung der Taktikumsetzung",
+    "plannedTeamwork": "Geplant: Teamarbeit und Helferkoordination",
+    "plannedMorale": "Geplant: kleine Verbesserung der Moral",
+    "plannedU23Training": "Geplant: U23-Trainingsunterstützung",
+    "plannedU23Tactics": "Geplant: Renntaktik für das Entwicklungsteam",
+    "plannedYouthDevelopment": "Geplant: Förderung junger Fahrer",
+    "academyBudget": "Jugendakademie-Programm und Budgetverwaltung",
+    "delegatedRecruitment": "Delegierte Rekrutierungs- und Betriebsentscheidungen",
+    "noInfrastructure": "Keine Infrastrukturabhängigkeit in Version 1",
+    "u16Workload": "U16-Training und Belastungsmanagement",
+    "youthPlanning": "Planung der Entwicklung junger Fahrer",
+    "youthRaceSelection": "Auswahl des Jugendkaders bei Delegation",
+    "youthScoutingBudget": "Scouting-Reichweite wird aus dem Akademiebudget finanziert",
+    "noContribution": "Diese Rolle hat noch keinen aktiven Beitrag.",
+    "groupPaused": "Alle Mitarbeiter dieser Gruppe sind im Lehrgang; Beiträge sind pausiert.",
+    "futureTactics": "Zukünftig: bessere Taktik und Teamunterstützung.",
+    "futureMorale": "Zukünftig: kleiner Moralbonus.",
+    "futureU23": "Zukünftig: U23-Training und Nachwuchsförderung.",
+    "trainerBoost": "Der Cheftrainer erhöht Trainerbeiträge um +{{value}}%.",
+    "activeMechanics": "{{count}} aktive Mechaniker leisten technische Unterstützung."
+  },
+  "infrastructureWarnings": {
+    "trainingCenter": "Trainingszentrum Stufe 0 begrenzt einen Teil der Trainerboni.",
+    "medicalCenter": "Medizinzentrum Stufe 0 begrenzt einen Teil der medizinischen Boni.",
+    "mechanicsWorkshop": "Mechanikerwerkstatt Stufe 0 begrenzt Wartungsgeschwindigkeit und Rabatte. Die grundlegende Unterstützung bleibt aktiv.",
+    "scoutingOffice": "Scoutingbüro Stufe 0 begrenzt einen Teil der Scout- und Analystenboni."
+  },
+  "contractDisplay": {
+    "noDate": "Kein Vertragsdatum",
+    "missingDate": "Vertragsablaufdatum nicht verfügbar",
+    "expired": "Abgelaufen",
+    "seasonDate": "Saison {{season}} – {{date}}"
+  },
+  "roleInfo": {
+    "capacityFallback": "Kapazität richtet sich nach der aktuellen Rollenbegrenzung.",
+    "head_coach": {
+      "purpose": "Leitet Coaching, Trainingsplanung und langfristige Fahrerentwicklung.",
+      "capacitySummary": "Für diese Position ist ein Platz vorgesehen.",
+      "attributes": [
+        "Wichtiger Wert: Training.",
+        "Wichtiger Wert: Erholungsplanung.",
+        "Wichtiger Wert: Nachwuchsentwicklung.",
+        "Wichtiger Wert: Erfahrung.",
+        "Wichtiger Wert: Führungsstärke."
+      ],
+      "gameplay": [
+        "Wirkt sich aus auf: Reguläres Training, Trainingslager, Fahrerentwicklung.",
+        "Die Fähigkeiten und Verfügbarkeit dieser Person bestimmen den tatsächlichen Beitrag.",
+        "Fortbildungen und überschneidende Aufgaben können den Beitrag vorübergehend begrenzen."
+      ]
+    },
+    "trainer": {
+      "purpose": "Verbessert die tägliche Trainingsleistung und unterstützt die Pläne des Cheftrainers.",
+      "capacitySummary": "Bis zu fünf Trainer unterstützen die erste Mannschaft.",
+      "attributes": [
+        "Wichtiger Wert: Tägliches Training.",
+        "Wichtiger Wert: Trainingseffizienz.",
+        "Wichtiger Wert: Potenzialentwicklung.",
+        "Wichtiger Wert: Erfahrung.",
+        "Wichtiger Wert: Führungsstärke."
+      ],
+      "gameplay": [
+        "Wirkt sich aus auf: Tägliches Training, Trainingsqualität, Fahrerentwicklung.",
+        "Die Fähigkeiten und Verfügbarkeit dieser Person bestimmen den tatsächlichen Beitrag.",
+        "Fortbildungen und überschneidende Aufgaben können den Beitrag vorübergehend begrenzen."
+      ]
+    },
+    "team_doctor": {
+      "purpose": "Leitet medizinische Erholung, Diagnose und Verletzungsprävention.",
+      "capacitySummary": "Kapazität richtet sich nach der aktuellen Rollenbegrenzung.",
+      "attributes": [
+        "Wichtiger Wert: Erholung.",
+        "Wichtiger Wert: Prävention.",
+        "Wichtiger Wert: Diagnose.",
+        "Wichtiger Wert: Führungsstärke."
+      ],
+      "gameplay": [
+        "Wirkt sich aus auf: Erholungsgeschwindigkeit, Verletzungsprävention, Behandlung medizinischer Fälle.",
+        "Die Fähigkeiten und Verfügbarkeit dieser Person bestimmen den tatsächlichen Beitrag.",
+        "Fortbildungen und überschneidende Aufgaben können den Beitrag vorübergehend begrenzen."
+      ]
+    },
+    "physio": {
+      "purpose": "Konzentriert sich auf Rehabilitation, Erholungsgeschwindigkeit und die Rückkehr zur vollen Fitness.",
+      "capacitySummary": "Kapazität richtet sich nach der aktuellen Rollenbegrenzung.",
+      "attributes": [
+        "Wichtiger Wert: Rehabilitation.",
+        "Wichtiger Wert: Erholungsgeschwindigkeit.",
+        "Wichtiger Wert: Erfahrung.",
+        "Wichtiger Wert: Loyalität."
+      ],
+      "gameplay": [
+        "Wirkt sich aus auf: Rückkehr zur Fitness, Erholungsgeschwindigkeit, Erholung von Ermüdung.",
+        "Die Fähigkeiten und Verfügbarkeit dieser Person bestimmen den tatsächlichen Beitrag.",
+        "Fortbildungen und überschneidende Aufgaben können den Beitrag vorübergehend begrenzen."
+      ]
+    },
+    "nutritionist": {
+      "purpose": "Unterstützt Erholung, konstante Fitness und die Arbeit des medizinischen Personals.",
+      "capacitySummary": "Kapazität richtet sich nach der aktuellen Rollenbegrenzung.",
+      "attributes": [
+        "Wichtiger Wert: Ernährung.",
+        "Wichtiger Wert: Erholung.",
+        "Wichtiger Wert: Konstanz.",
+        "Wichtiger Wert: Erfahrung."
+      ],
+      "gameplay": [
+        "Wirkt sich aus auf: Erholungsunterstützung, Konstante Fitness, Rennvorbereitung.",
+        "Die Fähigkeiten und Verfügbarkeit dieser Person bestimmen den tatsächlichen Beitrag.",
+        "Fortbildungen und überschneidende Aufgaben können den Beitrag vorübergehend begrenzen."
+      ]
+    },
+    "mechanic": {
+      "purpose": "Fahrrad-Setup, effiziente Wartung und mechanische Zuverlässigkeit am Renntag.",
+      "capacitySummary": "Kapazität richtet sich nach der aktuellen Rollenbegrenzung.",
+      "attributes": [
+        "Wichtiger Wert: Fahrrad-Setup.",
+        "Wichtiger Wert: Zuverlässigkeit.",
+        "Wichtiger Wert: Erfahrung.",
+        "Wichtiger Wert: Loyalität."
+      ],
+      "gameplay": [
+        "Wirkt sich aus auf: Ausrüstungs-Setup, Wartungseffizienz, Mechanische Zuverlässigkeit.",
+        "Die Fähigkeiten und Verfügbarkeit dieser Person bestimmen den tatsächlichen Beitrag.",
+        "Fortbildungen und überschneidende Aufgaben können den Beitrag vorübergehend begrenzen."
+      ]
+    },
+    "sport_director": {
+      "purpose": "Plant Renntaktik, Moral, Teamarbeit und Helferunterstützung.",
+      "capacitySummary": "Kapazität richtet sich nach der aktuellen Rollenbegrenzung.",
+      "attributes": [
+        "Wichtiger Wert: Rennplanung.",
+        "Wichtiger Wert: Teamkontrolle.",
+        "Wichtiger Wert: Führungsstärke.",
+        "Wichtiger Wert: Erfahrung."
+      ],
+      "gameplay": [
+        "Wirkt sich aus auf: Renntaktik, Teammoral, Helferunterstützung.",
+        "Die Fähigkeiten und Verfügbarkeit dieser Person bestimmen den tatsächlichen Beitrag.",
+        "Fortbildungen und überschneidende Aufgaben können den Beitrag vorübergehend begrenzen."
+      ]
+    },
+    "scout_analyst": {
+      "purpose": "Scouting-Qualität, Sichtbarkeit von Talenten und Transferinformationen.",
+      "capacitySummary": "Kapazität richtet sich nach der aktuellen Rollenbegrenzung.",
+      "attributes": [
+        "Wichtiger Wert: Bewertung.",
+        "Wichtiger Wert: Netzwerk.",
+        "Wichtiger Wert: Genauigkeit.",
+        "Wichtiger Wert: Erfahrung."
+      ],
+      "gameplay": [
+        "Wirkt sich aus auf: Scouting-Genauigkeit, Talentsuche, Transferinformationen.",
+        "Die Fähigkeiten und Verfügbarkeit dieser Person bestimmen den tatsächlichen Beitrag.",
+        "Fortbildungen und überschneidende Aufgaben können den Beitrag vorübergehend begrenzen."
+      ]
+    },
+    "u23_head_coach": {
+      "purpose": "Plant Training des Entwicklungsteams und taktische Unterstützung bei U23-Rennen.",
+      "capacitySummary": "Für diese Position ist ein Platz vorgesehen.",
+      "attributes": [
+        "Wichtiger Wert: Training.",
+        "Wichtiger Wert: Nachwuchsentwicklung.",
+        "Wichtiger Wert: Führungsstärke.",
+        "Wichtiger Wert: Erfahrung.",
+        "Wichtiger Wert: Loyalität."
+      ],
+      "gameplay": [
+        "Wirkt sich aus auf: U23-Training, Nachwuchsentwicklung, U23-Renntaktik.",
+        "Die Fähigkeiten und Verfügbarkeit dieser Person bestimmen den tatsächlichen Beitrag.",
+        "Fortbildungen und überschneidende Aufgaben können den Beitrag vorübergehend begrenzen."
+      ]
+    },
+    "youth_academy_director": {
+      "purpose": "Leitet das U16-Akademieprogramm, Budget, delegierte Rekrutierung und operative Anfragen.",
+      "capacitySummary": "Für diese Position ist ein Platz vorgesehen.",
+      "attributes": [
+        "Wichtiger Wert: Teamkontrolle.",
+        "Wichtiger Wert: Erfahrung.",
+        "Wichtiger Wert: Führungsstärke.",
+        "Wichtiger Wert: Loyalität."
+      ],
+      "gameplay": [
+        "Wirkt sich aus auf: Akademiebudget, Rekrutierungsmanagement, Jugendprogramm.",
+        "Die Fähigkeiten und Verfügbarkeit dieser Person bestimmen den tatsächlichen Beitrag.",
+        "Fortbildungen und überschneidende Aufgaben können den Beitrag vorübergehend begrenzen."
+      ]
+    },
+    "u16_head_coach": {
+      "purpose": "Steuert U16-Training, Belastung, Entwicklungsschwerpunkte und Rennauswahl.",
+      "capacitySummary": "Für diese Position ist ein Platz vorgesehen.",
+      "attributes": [
+        "Wichtiger Wert: Tägliches Training.",
+        "Wichtiger Wert: Erholungsplanung.",
+        "Wichtiger Wert: Nachwuchsentwicklung.",
+        "Wichtiger Wert: Führungsstärke."
+      ],
+      "gameplay": [
+        "Wirkt sich aus auf: U16-Training, Belastungssteuerung, Rennauswahl.",
+        "Die Fähigkeiten und Verfügbarkeit dieser Person bestimmen den tatsächlichen Beitrag.",
+        "Fortbildungen und überschneidende Aufgaben können den Beitrag vorübergehend begrenzen."
+      ]
+    },
+    "youth_scout": {
+      "purpose": "Findet und bewertet U16-Talente innerhalb des finanzierten Scouting-Gebiets der Jugendakademie.",
+      "capacitySummary": "Für diese Position ist ein Platz vorgesehen.",
+      "attributes": [
+        "Wichtiger Wert: Bewertung.",
+        "Wichtiger Wert: Netzwerk.",
+        "Wichtiger Wert: Genauigkeit.",
+        "Wichtiger Wert: Erfahrung."
+      ],
+      "gameplay": [
+        "Wirkt sich aus auf: Jugendscouting, Talentbewertung, Rekrutierungsreichweite.",
+        "Die Fähigkeiten und Verfügbarkeit dieser Person bestimmen den tatsächlichen Beitrag.",
+        "Fortbildungen und überschneidende Aufgaben können den Beitrag vorübergehend begrenzen."
+      ]
+    }
+  },
+  "qualityExplanation": {
+    "coachingTitle": "So funktioniert die Trainerqualität",
+    "coachingBody": "Die Qualität des Cheftrainers hängt von Training, Regenerationsplanung, Jugendförderung und Führungsstärke ab. Gute Qualität verbessert Training, Entwicklung und Belastungssteuerung.",
+    "overallCoaching": "Gesamtes Trainerprofil",
+    "dailyOutput": "Tägliche Trainingsleistung",
+    "longTermGrowth": "Langfristige Fahrerentwicklung",
+    "trainerTitle": "So funktioniert die Qualität der Trainer",
+    "trainerBody": "Die Trainerqualität basiert auf täglichem Training, Effizienz, Potenzialförderung und Erfahrung. Trainer unterstützen den Cheftrainer beim regulären Training.",
+    "trainerProfile": "Gesamtes Trainerprofil",
+    "dailyDelivery": "Durchführung des täglichen Trainings",
+    "workloadSupport": "Unterstützung bei Ermüdung und Belastung",
+    "medicalTitle": "So funktioniert medizinische Qualität",
+    "recoveryTitle": "So funktioniert Regenerationsqualität",
+    "nutritionTitle": "So funktioniert Ernährungsqualität",
+    "medicalBody": "Die Qualität des medizinischen Personals beeinflusst Verletzungs- und Krankheitsrisiko, Genesungsdauer, tägliche Regeneration und Ermüdung. Teamarzt, Physio und Ernährungsberater wirken zusammen.",
+    "injuryPrevention": "Vorbeugung von Verletzungen und Krankheiten",
+    "recoveryDuration": "Unterstützung der Genesungsdauer",
+    "fatigueRecovery": "Erholung bei Ermüdung",
+    "technicalTitle": "So funktioniert technische Qualität",
+    "technicalBody": "Die Mechanikerqualität wirkt sich durch Setup, Zuverlässigkeit, Innovation und Erfahrung auf Ausrüstung, Wartung, Verschleiß und Defektrisiken aus.",
+    "mechanicProfile": "Gesamtes Mechanikerprofil",
+    "raceSetup": "Unterstützung für das Rennsetup",
+    "mechanicalPrevention": "Vermeidung mechanischer Probleme",
+    "repairSupport": "Reparaturgeschwindigkeit und Kosten nach Werkstattstufe",
+    "tacticalTitle": "So funktioniert taktische Qualität",
+    "tacticalBody": "Die Qualität des Sportdirektors basiert auf Taktik, Motivation, Organisation und Erfahrung. Sie unterstützt Rennvorbereitung, Moral und Koordination.",
+    "raceLeadership": "Gesamte Rennführung",
+    "tacticalPreparation": "Taktische Vorbereitung",
+    "moraleOrganization": "Moral und Organisation",
+    "youthTitle": "So funktioniert U23-Trainerqualität",
+    "youthBody": "Die Qualität des U23-Cheftrainers basiert auf Jugendtraining, Förderung, Führungsstärke und Erfahrung. Sie unterstützt die Entwicklung und Rennbereitschaft.",
+    "youthProfile": "Gesamtes U23-Trainerprofil",
+    "youngProgression": "Fortschritt junger Fahrer",
+    "youthRacePreparation": "U23-Rennvorbereitung",
+    "thresholds": "Qualitätsschwellen",
+    "thresholdScale": "Basis: unter 55 · Solide: 55–69 · Stark: 70–84 · Elite: ab 85",
+    "maintenanceSupport": "Wartungsunterstützung",
+    "riskControl": "Risikokontrolle",
+    "facilityCap": "{{facility}} begrenzt einen Teil der Personalboni. Aktuelle Stufe: {{level}}.",
+    "maintenanceCap": "{{facility}} begrenzt Wartungstempo und Rabatte. Aktuelle Stufe: {{level}}."
+  },
+  "specializations": {
+    "general": "Allgemein"
+  },
+  "facilityNames": {
+    "trainingCenter": "Trainingszentrum",
+    "medicalCenter": "Medizinzentrum",
+    "mechanicsWorkshop": "Mechanikerwerkstatt",
+    "scoutingOffice": "Scoutingbüro"
+  },
+  "legacyUi": {
+    "unlockDevelopingTeam": "Schalte zuerst das Entwicklungsteam in den Einstellungen frei."
+  },
+  "courseGainLabels": {
+    "academyManagement": "Akademieleitung",
+    "assessmentAccuracy": "Bewertungsgenauigkeit",
+    "budgetEfficiency": "Budgeteffizienz",
+    "communication": "Kommunikation",
+    "discipline": "Disziplin",
+    "discoveryNetwork": "Talentsichtungsnetzwerk",
+    "innovation": "Innovation",
+    "longTermPlanning": "Langfristige Planung",
+    "longTermVision": "Langfristige Vision",
+    "motivation": "Motivation",
+    "potential": "Potenzial",
+    "prospectSense": "Talentgespür",
+    "raceSelection": "Rennauswahl",
+    "talentSense": "Talenterkennung",
+    "u16Training": "U16-Training",
+    "workloadManagement": "Belastungssteuerung",
+    "youthEvaluation": "Nachwuchsbewertung",
+    "youthTraining": "Nachwuchstraining"
+  },
+  "hireAccess": {
+    "intro": "Alle 12 Personalrollen sind sichtbar, auch wenn sie erst später freigeschaltet werden. Wählen Sie eine Rolle, um die Voraussetzungen zu sehen.",
+    "states": {
+      "eligible": "Einstellung möglich",
+      "locked": "Noch gesperrt",
+      "full": "Aktuelle Plätze belegt",
+      "unknown": "Verfügbarkeit ungeprüft"
+    },
+    "candidatesNote": "Ein Personalplatz ist frei. Zusätzlich muss ein passender Kandidat auf dem Personalmarkt verfügbar sein.",
+    "paidPremium": "Bezahltes Premium erforderlich. Die kostenlose Premium-Testphase reicht nicht aus.",
+    "developingTeam": "U23-Entwicklungsteam aktivieren und verlängern (nach 60 Spieltagen, 50 Münzen pro Saison).",
+    "youthAcademy": "U16-Jugendakademie aktivieren und verlängern (nach 90 Spieltagen, 50 Münzen pro Saison).",
+    "youthRenewal": "Jugendakademie für die aktuelle Spielsaison verlängern (50 Münzen).",
+    "clubHouse": "Clubhaus",
+    "youthInfrastructure": "Jugendakademie-Infrastruktur",
+    "facilityRequired": "{{facility}} Stufe {{level}} erforderlich.",
+    "fullCapacity": "Alle derzeitigen Personalplätze sind belegt ({{assigned}}/{{limit}}).",
+    "nextSlot": "Nächster Platz bei: {{requirement}}",
+    "unverified": "Die Einstellungsvoraussetzungen für diese Rolle konnten nicht geprüft werden.",
+    "otherRestriction": "Die Einstellung ist durch die aktuellen Vereinsregeln gesperrt.",
+    "viewPremium": "Premium-Angebote ansehen",
+    "showDetails": "Details anzeigen",
+    "hideDetails": "Details ausblenden",
+    "slotCount": "{{assigned}} von {{limit}} Personalstellen besetzt"
+  }
+}

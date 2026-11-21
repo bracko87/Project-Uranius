@@ -1,0 +1,1597 @@
+import React, { useEffect, useMemo, useState } from 'react'
+import { Loader2 } from 'lucide-react'
+import { Link, useLocation } from 'react-router'
+import { useTranslation } from 'react-i18next'
+import { supabase } from '../../lib/supabase'
+import NationalAssociationHeader from '../../components/nations/NationalAssociationHeader'
+import NationalAssociationCustomization from '../../components/nations/NationalAssociationCustomization'
+
+type AssociationData = {
+  eligible: boolean
+  reason?: string
+  country_code?: string
+  club_id?: string
+  club_name?: string
+  association_exists?: boolean
+  association_id?: string
+  association_name?: string
+  association_status?: string
+  is_member?: boolean
+  membership_id?: string | null
+  member_count?: number
+  minimum_members?: number
+  activation_coin_target?: number
+  activation_coin_contributed?: number
+  activation_coin_remaining?: number
+  my_activation_coin_contribution?: number
+  coin_balance?: number
+  activation_ready?: boolean
+  renewal_coin_target?: number
+  renewal_paid_through_season?: number | null
+  renewal_target_season?: number | null
+  renewal_coin_contributed?: number
+  renewal_coin_remaining?: number
+  my_renewal_coin_contribution?: number
+  renewal_window_open?: boolean
+  renewal_window_opens_on?: string | null
+  renewal_deadline?: string | null
+  association_valid_until?: string | null
+  coach?: {
+    term_id: string
+    user_id: string
+    club_id?: string | null
+    club_name?: string | null
+    season_number: number
+    term_kind: string
+    starts_on?: string | null
+    ends_on?: string | null
+  } | null
+}
+
+type OverallRange = {
+  min: number
+  max: number
+}
+
+type RiderIdentity = {
+  id: string
+  first_name?: string | null
+  last_name?: string | null
+  display_name?: string | null
+  country_code?: string | null
+  role?: string | null
+}
+
+type CoachRider = {
+  rider_id: string
+  rider_name: string
+  country_code: string
+  role?: string | null
+  age_years?: number | null
+  club_id?: string | null
+  club_name?: string | null
+  availability_status?: string | null
+  fatigue?: number | null
+  national_rank?: number | null
+  overall_range?: OverallRange | null
+  national_championship?: {
+    is_current_champion?: boolean
+    final_rank?: number | null
+  } | null
+}
+
+type CoachDashboard = {
+  allowed: boolean
+  season_number: number
+  current_game_date: string
+  riders?: CoachRider[]
+}
+
+type Callup = {
+  callup_id: string
+  rider_id: string
+  rider_name: string
+  rider_country_code?: string | null
+  rider_role?: string | null
+  club_id?: string | null
+  club_name?: string | null
+  club_country_code?: string | null
+  status: string
+  sent_on?: string | null
+  response_deadline?: string | null
+  responded_on?: string | null
+  can_respond?: boolean
+}
+
+type CoachCallupData = {
+  allowed: boolean
+  association_id?: string
+  season_number?: number
+  cycle_key?: string
+  callups?: Callup[]
+  squad?: {
+    squad_id: string
+    status: string
+    squad_size: number
+    confirmed_on?: string | null
+    duty_start_date?: string | null
+    duty_end_date?: string | null
+    members?: Array<{
+      rider_id: string
+      rider_name: string
+      club_id?: string | null
+      club_name?: string | null
+      squad_role?: string | null
+    }>
+  } | null
+}
+
+type Lineup = {
+  lineup_id: string
+  race_day: number
+  race_type: string
+  status: string
+  submitted_on?: string | null
+  riders: Array<{
+    rider_id: string
+    rider_name: string
+    club_name?: string | null
+  }>
+}
+
+type LineupData = {
+  allowed: boolean
+  squad_id?: string
+  lineups?: Lineup[]
+}
+
+type NationsCycle = {
+  state: string
+  cycle_key?: string | null
+  round_label?: string | null
+  group_label?: string | null
+  day1_date?: string | null
+  day2_date?: string | null
+  day3_date?: string | null
+}
+
+type OverviewSquad = {
+  squad_id: string
+  cycle_key: string
+  status: string
+  squad_size: number
+  confirmed_on?: string | null
+  duty_start_date?: string | null
+  duty_end_date?: string | null
+  members?: Array<{
+    rider_id: string
+    rider_name: string
+    club_id?: string | null
+    club_name?: string | null
+    squad_role?: string | null
+  }>
+}
+
+type OverviewLineup = {
+  lineup_id: string
+  status: string
+  race_day: number
+  race_type: string
+  riders?: Array<{
+    rider_id: string
+    rider_name: string
+    club_id?: string | null
+    club_name?: string | null
+    squad_role?: string | null
+  }>
+}
+
+type OverviewEvent = {
+  event_id: string
+  event_type: string
+  event_date: string
+  race_day?: number | null
+  race_type?: string | null
+  round_label?: string | null
+  group_label?: string | null
+  cycle_key?: string | null
+  label: string
+  status?: string | null
+  host_country_code?: string | null
+  host_city?: string | null
+  lineup?: OverviewLineup | null
+  squad?: OverviewSquad | null
+}
+
+
+type AssociationMemberRow = {
+  user_id: string
+  club_id?: string | null
+  username: string
+  club_name: string
+  club_country_code?: string | null
+  membership_status: string
+  joined_on_game_date?: string | null
+  joined_season_number?: number | null
+  activation_contribution?: number | null
+  is_national_coach?: boolean
+}
+
+type AssociationMemberDirectory = {
+  association_id?: string | null
+  total: number
+  limit: number
+  offset: number
+  members: AssociationMemberRow[]
+}
+
+type OverviewData = {
+  available: boolean
+  association_exists?: boolean
+  season_number?: number
+  current_game_date?: string
+  stats?: {
+    member_count?: number
+    active_callups?: number
+    selected_riders?: number
+    national_champion?: string | null
+    last_world_nations_rank?: number | null
+    last_world_nations_points?: number | null
+  }
+  upcoming_events?: OverviewEvent[]
+  current_squad?: {
+    squad_id: string
+    cycle_key: string
+    status: string
+    squad_size: number
+    confirmed_on?: string | null
+    duty_start_date?: string | null
+    duty_end_date?: string | null
+    members?: Array<{
+      rider_id: string
+      rider_name: string
+      club_id?: string | null
+      club_name?: string | null
+      squad_role?: string | null
+    }>
+  } | null
+}
+
+function humanize(value?: string | null): string {
+  if (!value) return '—'
+  return value.replaceAll('_', ' ').replace(/\b\w/g, letter => letter.toUpperCase())
+}
+
+function countryFlagUrl(code?: string | null): string | null {
+  const normalized = code?.trim().toLowerCase()
+  return normalized && /^[a-z]{2}$/.test(normalized)
+    ? `/assets/uranius-placeholders/card.png?id=13608b2d8e99129c`
+    : null
+}
+
+function formatGameDate(value?: string | null): string {
+  if (!value) return '—'
+  const date = new Date(`${value}T00:00:00Z`)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleDateString(undefined, {
+    day: '2-digit',
+    month: 'short',
+    timeZone: 'UTC',
+  })
+}
+
+const EMPTY_OVERVIEW_EVENTS: OverviewEvent[] = []
+const EMPTY_OVERVIEW_LINEUP_RIDERS: NonNullable<OverviewLineup['riders']> = []
+
+function statusClasses(status?: string | null): string {
+  if (status === 'active' || status === 'completed' || status === 'accepted' || status === 'auto_accepted') {
+    return 'bg-emerald-100 text-emerald-800'
+  }
+  if (status === 'forming' || status === 'pending' || status === 'confirmed' || status === 'on_duty') {
+    return 'bg-amber-100 text-amber-800'
+  }
+  if (status === 'inactive' || status === 'declined' || status === 'expired') {
+    return 'bg-rose-100 text-rose-700'
+  }
+  return 'bg-slate-100 text-slate-700'
+}
+
+export default function NationalAssociationPage(): JSX.Element {
+  const { t } = useTranslation('nations')
+  const location = useLocation()
+  const requestedCycleKey = useMemo(() => {
+    const requested = new URLSearchParams(location.search).get('cycle')?.trim()
+    return requested || null
+  }, [location.search])
+
+  const [association, setAssociation] = useState<AssociationData | null>(null)
+  const [overview, setOverview] = useState<OverviewData | null>(null)
+  const [dashboard, setDashboard] = useState<CoachDashboard | null>(null)
+  const [nationsCycle, setNationsCycle] = useState<NationsCycle | null>(null)
+  const [coachCallups, setCoachCallups] = useState<CoachCallupData | null>(null)
+  const [myCallups, setMyCallups] = useState<Callup[]>([])
+  const [lineupData, setLineupData] = useState<LineupData | null>(null)
+  const [lineupDrafts, setLineupDrafts] = useState<Record<number, string[]>>({})
+  const [selectedSquad, setSelectedSquad] = useState<string[]>([])
+  const [riderSearch, setRiderSearch] = useState('')
+  const [coinContributionInput, setCoinContributionInput] = useState('')
+  const [renewalContributionInput, setRenewalContributionInput] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [busyKey, setBusyKey] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [message, setMessage] = useState<string | null>(null)
+  const [selectedOverviewEventId, setSelectedOverviewEventId] = useState<string | null>(null)
+  const [selectedRiderIdentities, setSelectedRiderIdentities] = useState<Record<string, RiderIdentity>>({})
+  const [memberPage, setMemberPage] = useState(1)
+  const [memberDirectory, setMemberDirectory] = useState<AssociationMemberDirectory | null>(null)
+  const [membersLoading, setMembersLoading] = useState(false)
+
+  const detectedCycleKey =
+    nationsCycle?.state === 'active_cycle' ? nationsCycle.cycle_key ?? null : null
+  const cycleKey = requestedCycleKey || detectedCycleKey || 'season_main'
+  const isNationsCycle = cycleKey.startsWith('nations:')
+
+  const load = async (): Promise<void> => {
+    setLoading(true)
+    setError(null)
+
+    try {
+      const [associationResponse, overviewResponse, dashboardResponse, myCallupsResponse, cycleResponse] =
+        await Promise.all([
+          supabase.rpc('get_my_national_association_v1'),
+          supabase.rpc('get_my_national_association_overview_v2'),
+          supabase.rpc('get_national_coach_dashboard_v1'),
+          supabase.rpc('get_my_national_team_callups_v1'),
+          supabase.rpc('get_my_current_nations_cycle_v1'),
+        ])
+
+      if (associationResponse.error) throw associationResponse.error
+      if (overviewResponse.error) throw overviewResponse.error
+      if (dashboardResponse.error) throw dashboardResponse.error
+      if (myCallupsResponse.error) throw myCallupsResponse.error
+      if (cycleResponse.error) throw cycleResponse.error
+
+      const nextAssociation = (associationResponse.data ?? null) as AssociationData | null
+      const nextOverview = (overviewResponse.data ?? null) as OverviewData | null
+      const nextDashboard = (dashboardResponse.data ?? null) as CoachDashboard | null
+      const nextMyCallups = (myCallupsResponse.data ?? []) as Callup[]
+      const nextCycle = (cycleResponse.data ?? null) as NationsCycle | null
+      const resolvedCycleKey =
+        requestedCycleKey ||
+        (nextCycle?.state === 'active_cycle' ? nextCycle.cycle_key ?? null : null) ||
+        'season_main'
+
+      setAssociation(nextAssociation)
+      setOverview(nextOverview)
+      setDashboard(nextDashboard)
+      setMyCallups(nextMyCallups)
+      setNationsCycle(nextCycle)
+
+      const coachCallupsResponse = await supabase.rpc('get_my_national_coach_callups_v1', {
+        p_cycle_key: resolvedCycleKey,
+      })
+      if (coachCallupsResponse.error) throw coachCallupsResponse.error
+
+      const nextCoachCallups = (coachCallupsResponse.data ?? null) as CoachCallupData | null
+      setCoachCallups(nextCoachCallups)
+
+      if (nextCoachCallups?.squad?.members?.length) {
+        setSelectedSquad(nextCoachCallups.squad.members.map(member => member.rider_id))
+      } else {
+        setSelectedSquad([])
+      }
+
+      if (nextCoachCallups?.squad?.squad_id) {
+        const lineupResponse = await supabase.rpc('get_my_national_team_lineups_v1', {
+          p_squad_id: nextCoachCallups.squad.squad_id,
+        })
+        if (lineupResponse.error) throw lineupResponse.error
+        const nextLineups = (lineupResponse.data ?? null) as LineupData | null
+        setLineupData(nextLineups)
+
+        const drafts: Record<number, string[]> = {}
+        for (const lineup of nextLineups?.lineups ?? []) {
+          drafts[lineup.race_day] = lineup.riders.map(rider => rider.rider_id)
+        }
+        setLineupDrafts(drafts)
+      } else {
+        setLineupData(null)
+        setLineupDrafts({})
+      }
+    } catch (caught: any) {
+      setError(caught?.message ?? t('association.errors.load'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    void load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requestedCycleKey])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadMembers(): Promise<void> {
+      setMembersLoading(true)
+      const { data, error: memberError } = await supabase.rpc(
+        'get_my_national_association_members_v1',
+        {
+          p_limit: 20,
+          p_offset: (memberPage - 1) * 20,
+        },
+      )
+
+      if (!cancelled) {
+        if (memberError) {
+          console.error('Failed to load National Association members:', memberError)
+          setMemberDirectory(null)
+        } else {
+          setMemberDirectory((data ?? null) as AssociationMemberDirectory | null)
+        }
+        setMembersLoading(false)
+      }
+    }
+
+    void loadMembers()
+
+    return () => {
+      cancelled = true
+    }
+  }, [memberPage, association?.association_id])
+
+  const perform = async (key: string, action: () => Promise<void>): Promise<void> => {
+    try {
+      setBusyKey(key)
+      setMessage(null)
+      setError(null)
+      await action()
+      await load()
+    } catch (caught: any) {
+      setError(caught?.message ?? t('association.errors.action'))
+    } finally {
+      setBusyKey(null)
+    }
+  }
+
+  const joinAssociation = async (): Promise<void> => {
+    await perform('join', async () => {
+      const { error: rpcError } = await supabase.rpc('join_my_national_association_v1')
+      if (rpcError) throw rpcError
+      setMessage(t('association.messages.joined'))
+    })
+  }
+
+  const leaveAssociation = async (): Promise<void> => {
+    await perform('leave', async () => {
+      const { error: rpcError } = await supabase.rpc('leave_my_national_association_v1')
+      if (rpcError) throw rpcError
+      setMessage(t('association.messages.left'))
+    })
+  }
+
+  const contributeActivationCoins = async (amount: number): Promise<void> => {
+    const requested = Math.floor(Number(amount))
+    if (!Number.isFinite(requested) || requested <= 0) return
+
+    await perform('contribute-coins', async () => {
+      const { data, error: rpcError } = await supabase.rpc(
+        'contribute_national_association_activation_coins_v1',
+        { p_amount: requested },
+      )
+      if (rpcError) throw rpcError
+
+      const appliedAmount = Number((data as any)?.applied_amount ?? 0)
+      setCoinContributionInput('')
+      window.dispatchEvent(new Event('coin-balance-changed'))
+      setMessage(
+        appliedAmount > 0
+          ? t('association.activation.message', { amount: appliedAmount })
+          : t('association.activation.alreadyFunded'),
+      )
+    })
+  }
+
+  const contributeRenewalCoins = async (amount: number): Promise<void> => {
+    const requested = Math.floor(Number(amount))
+    if (!Number.isFinite(requested) || requested <= 0) return
+
+    await perform('contribute-renewal-coins', async () => {
+      const { data, error: rpcError } = await supabase.rpc(
+        'contribute_national_association_renewal_coins_v1',
+        { p_amount: requested },
+      )
+      if (rpcError) throw rpcError
+
+      const appliedAmount = Number((data as any)?.applied_amount ?? 0)
+      setRenewalContributionInput('')
+      window.dispatchEvent(new Event('coin-balance-changed'))
+      setMessage(
+        appliedAmount > 0
+          ? t('association.renewal.message', { amount: appliedAmount })
+          : t('association.renewal.alreadyFunded'),
+      )
+    })
+  }
+
+  const respondCallup = async (callup: Callup, accept: boolean): Promise<void> => {
+    await perform(`respond:${callup.callup_id}`, async () => {
+      const { error: rpcError } = await supabase.rpc('respond_to_national_team_callup_v1', {
+        p_callup_id: callup.callup_id,
+        p_accept: accept,
+        p_note: null,
+      })
+      if (rpcError) throw rpcError
+      setMessage(
+        accept
+          ? t('association.messages.callupAccepted', { rider: callup.rider_name })
+          : t('association.messages.callupDeclined', { rider: callup.rider_name }),
+      )
+    })
+  }
+
+  const sendCallup = async (rider: CoachRider): Promise<void> => {
+    await perform(`callup:${rider.rider_id}`, async () => {
+      const { error: rpcError } = await supabase.rpc('send_national_team_callup_v1', {
+        p_rider_id: rider.rider_id,
+        p_cycle_key: cycleKey,
+      })
+      if (rpcError) throw rpcError
+      setMessage(t('association.messages.calledUp', { rider: rider.rider_name }))
+    })
+  }
+
+  const confirmSquad = async (): Promise<void> => {
+    await perform('confirm-squad', async () => {
+      const { error: rpcError } = await supabase.rpc('confirm_national_team_squad_v1', {
+        p_cycle_key: cycleKey,
+        p_rider_ids: selectedSquad,
+      })
+      if (rpcError) throw rpcError
+      setMessage(t('association.messages.squadConfirmed'))
+    })
+  }
+
+  const submitLineup = async (raceDay: number): Promise<void> => {
+    const squadId = coachCallups?.squad?.squad_id
+    const riderIds = lineupDrafts[raceDay] ?? []
+    if (!squadId) return
+
+    await perform(`lineup:${raceDay}`, async () => {
+      const { error: rpcError } = await supabase.rpc('submit_national_team_lineup_v1', {
+        p_squad_id: squadId,
+        p_race_day: raceDay,
+        p_rider_ids: riderIds,
+      })
+      if (rpcError) throw rpcError
+      setMessage(t('association.messages.lineupConfirmed', { day: raceDay }))
+    })
+  }
+
+  const acceptedRiderIds = useMemo(
+    () =>
+      new Set(
+        (coachCallups?.callups ?? [])
+          .filter(callup => callup.status === 'accepted' || callup.status === 'auto_accepted')
+          .map(callup => callup.rider_id),
+      ),
+    [coachCallups],
+  )
+
+  const existingCallupByRider = useMemo(
+    () => new Map((coachCallups?.callups ?? []).map(callup => [callup.rider_id, callup])),
+    [coachCallups],
+  )
+
+  const filteredRiders = useMemo(() => {
+    const search = riderSearch.trim().toLowerCase()
+    const riders = dashboard?.riders ?? []
+    if (!search) return riders
+
+    return riders.filter(rider =>
+      [rider.rider_name, rider.club_name, rider.role]
+        .filter(Boolean)
+        .some(value => String(value).toLowerCase().includes(search)),
+    )
+  }, [dashboard?.riders, riderSearch])
+
+  const isCoach = dashboard?.allowed === true
+  const upcomingEvents = overview?.upcoming_events ?? EMPTY_OVERVIEW_EVENTS
+  const selectedOverviewEvent =
+    upcomingEvents.find(event => event.event_id === selectedOverviewEventId) ??
+    upcomingEvents[0] ??
+    null
+  const selectedEventLineup = selectedOverviewEvent?.lineup ?? null
+  const selectedEventMembers = selectedEventLineup?.riders ?? EMPTY_OVERVIEW_LINEUP_RIDERS
+
+  useEffect(() => {
+    let cancelled = false
+
+    const riderIds = Array.from(
+      new Set(selectedEventMembers.map(member => member.rider_id).filter(Boolean)),
+    )
+
+    if (!riderIds.length) {
+      setSelectedRiderIdentities(current =>
+        Object.keys(current).length > 0 ? {} : current,
+      )
+      return () => {
+        cancelled = true
+      }
+    }
+
+    const loadSelectedRiderIdentities = async (): Promise<void> => {
+      const { data, error: riderError } = await supabase
+        .from('riders')
+        .select('id, first_name, last_name, display_name, country_code, role')
+        .in('id', riderIds)
+
+      if (cancelled) return
+
+      if (riderError) {
+        console.warn('Could not load selected National Team rider identities:', riderError.message)
+        setSelectedRiderIdentities({})
+        return
+      }
+
+      const next: Record<string, RiderIdentity> = {}
+      for (const rider of (data ?? []) as RiderIdentity[]) {
+        next[rider.id] = rider
+      }
+      setSelectedRiderIdentities(next)
+    }
+
+    void loadSelectedRiderIdentities()
+
+    return () => {
+      cancelled = true
+    }
+  }, [selectedEventMembers])
+
+  const overviewEventGroups = useMemo(() => {
+    const groups = new Map<
+      string,
+      {
+        key: string
+        roundLabel: string
+        groupLabel: string
+        events: OverviewEvent[]
+      }
+    >()
+
+    for (const event of upcomingEvents) {
+      const key =
+        event.cycle_key ||
+        `${event.round_label ?? 'World Nations'}:${event.group_label ?? 'National Team'}`
+      const existing = groups.get(key)
+      if (existing) {
+        existing.events.push(event)
+      } else {
+        groups.set(key, {
+          key,
+          roundLabel: event.round_label ?? 'World Nations',
+          groupLabel: event.group_label ?? 'National Team',
+          events: [event],
+        })
+      }
+    }
+
+    return Array.from(groups.values())
+      .map(group => ({
+        ...group,
+        events: [...group.events].sort(
+          (a, b) =>
+            (a.race_day ?? 99) - (b.race_day ?? 99) ||
+            a.event_date.localeCompare(b.event_date),
+        ),
+      }))
+      .sort((a, b) =>
+        (a.events[0]?.event_date ?? '').localeCompare(b.events[0]?.event_date ?? ''),
+      )
+  }, [upcomingEvents])
+
+  useEffect(() => {
+    if (!upcomingEvents.length) {
+      if (selectedOverviewEventId !== null) {
+        setSelectedOverviewEventId(null)
+      }
+      return
+    }
+
+    if (
+      !selectedOverviewEventId ||
+      !upcomingEvents.some(event => event.event_id === selectedOverviewEventId)
+    ) {
+      const nextEventId = upcomingEvents[0]?.event_id ?? null
+      if (nextEventId !== selectedOverviewEventId) {
+        setSelectedOverviewEventId(nextEventId)
+      }
+    }
+  }, [selectedOverviewEventId, upcomingEvents])
+
+  if (loading && !association) {
+    return (
+      <div className="flex min-h-[420px] items-center justify-center">
+        <div className="flex items-center gap-3 text-sm text-slate-500">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          {t('association.loading')}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="w-full space-y-6">
+      <NationalAssociationHeader
+        association={association}
+        isCoach={isCoach}
+        loading={loading}
+        onRefresh={() => void load()}
+      />
+
+      <div className="flex justify-end">
+        <Link
+          to="/dashboard/manual?section=national-association-world-nations"
+          className="inline-flex items-center rounded bg-slate-900 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-800"
+        >
+          {t('association.openGuide')}
+        </Link>
+      </div>
+
+      {error ? (
+        <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      ) : null}
+
+      {message ? (
+        <div className="rounded border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          {message}
+        </div>
+      ) : null}
+
+      {!association?.eligible ? (
+        <section className="rounded bg-white p-5 shadow">
+          <h3 className="text-base font-semibold text-slate-900">
+            {t('association.ineligibleTitle')}
+          </h3>
+          <p className="mt-2 text-sm text-slate-600">{t('association.ineligibleText')}</p>
+        </section>
+      ) : (
+        <>
+          <section data-tutorial-target="national-association-page" className="overflow-hidden rounded bg-white shadow">
+            <div className="grid gap-px bg-slate-200 md:grid-cols-4">
+              <div className="bg-white p-4">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  {t('association.summary.association')}
+                </div>
+                <div className="mt-2 text-lg font-semibold text-slate-900">
+                  {association.association_exists
+                    ? t(`status.${association.association_status}`, {
+                        defaultValue: humanize(association.association_status),
+                      })
+                    : t('common.notCreated')}
+                </div>
+                {association.association_status ? (
+                  <span className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${statusClasses(association.association_status)}`}>
+                    {t(`status.${association.association_status}`, {
+                      defaultValue: humanize(association.association_status),
+                    })}
+                  </span>
+                ) : null}
+              </div>
+
+              <div className="bg-white p-4">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  {t('association.summary.members')}
+                </div>
+                <div className="mt-2 text-lg font-semibold text-slate-900">
+                  {association.member_count ?? 0} / {association.minimum_members ?? 5}
+                </div>
+                <p className="mt-1 text-xs text-slate-500">
+                  {t('association.summary.membersHint')}
+                </p>
+              </div>
+
+              <div className="bg-white p-4 md:col-span-2">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      {t('association.activation.title')}
+                    </div>
+                    <div className="mt-2 text-lg font-semibold text-slate-900">
+                      {association.activation_coin_contributed ?? 0} / {association.activation_coin_target ?? 50} {t('association.activation.coins')}
+                    </div>
+                  </div>
+                  <div className="text-right text-xs text-slate-500">
+                    <div>{t('association.activation.remaining')}</div>
+                    <strong className="text-sm text-slate-900">
+                      {association.activation_coin_remaining ?? association.activation_coin_target ?? 50} {t('association.activation.coins')}
+                    </strong>
+                  </div>
+                </div>
+
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
+                  <div
+                    className="h-full rounded-full bg-yellow-400"
+                    style={{
+                      width: `${Math.min(
+                        100,
+                        Math.max(
+                          0,
+                          ((association.activation_coin_contributed ?? 0) /
+                            Math.max(association.activation_coin_target ?? 50, 1)) *
+                            100,
+                        ),
+                      )}%`,
+                    }}
+                  />
+                </div>
+
+                {(association.activation_coin_remaining ?? 0) > 0 && association.is_member ? (
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    {[1, 5, 10].map(amount => (
+                      <button
+                        key={amount}
+                        type="button"
+                        disabled={
+                          busyKey === 'contribute-coins' ||
+                          amount > (association.coin_balance ?? 0)
+                        }
+                        onClick={() => void contributeActivationCoins(amount)}
+                        className="rounded bg-slate-900 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-40"
+                      >
+                        +{amount}
+                      </button>
+                    ))}
+                    <input
+                      type="number"
+                      min={1}
+                      max={Math.max(association.activation_coin_remaining ?? 1, 1)}
+                      value={coinContributionInput}
+                      onChange={event => setCoinContributionInput(event.target.value)}
+                      placeholder={t('association.activation.custom')}
+                      className="w-24 rounded border border-slate-300 bg-white px-2 py-1.5 text-xs outline-none focus:border-yellow-500"
+                    />
+                    <button
+                      type="button"
+                      disabled={
+                        busyKey === 'contribute-coins' ||
+                        !coinContributionInput ||
+                        Number(coinContributionInput) <= 0 ||
+                        Number(coinContributionInput) > (association.coin_balance ?? 0)
+                      }
+                      onClick={() => void contributeActivationCoins(Number(coinContributionInput))}
+                      className="rounded bg-yellow-400 px-3 py-1.5 text-xs font-semibold text-black hover:bg-yellow-300 disabled:opacity-40"
+                    >
+                      {t('association.activation.giveCoins')}
+                    </button>
+                    <span className="text-xs text-slate-500">
+                      {t('association.activation.balanceShort', {
+                        balance: association.coin_balance ?? 0,
+                      })}
+                    </span>
+                  </div>
+                ) : (association.activation_coin_remaining ?? 0) <= 0 ? (
+                  <div className="mt-3 space-y-3">
+                    <p className="text-xs font-semibold text-emerald-700">
+                      {t('association.activation.funded')}
+                    </p>
+
+                    {association.association_valid_until ? (
+                      <div className="flex flex-wrap items-center justify-between gap-3 rounded border border-emerald-200 bg-emerald-50 px-3 py-2.5">
+                        <div>
+                          <div className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                            {t('association.renewal.validityTitle')}
+                          </div>
+                          <div className="mt-0.5 text-sm font-semibold text-emerald-950">
+                            {t('association.renewal.validUntil', {
+                              date: formatGameDate(association.association_valid_until),
+                              season: association.renewal_target_season ?? '—',
+                            })}
+                          </div>
+                        </div>
+                        <div className="text-right text-xs text-emerald-800">
+                          {t('association.renewal.cost', {
+                            coins: association.renewal_coin_target ?? 30,
+                          })}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {association.renewal_window_open ? (
+                      <div className="rounded border border-amber-200 bg-amber-50 p-3">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <div className="text-xs font-semibold uppercase tracking-wide text-amber-700">
+                              {t('association.renewal.title', {
+                                season: association.renewal_target_season ?? '—',
+                              })}
+                            </div>
+                            <div className="mt-1 text-sm font-semibold text-slate-900">
+                              {association.renewal_coin_contributed ?? 0} / {association.renewal_coin_target ?? 30} {t('association.activation.coins')}
+                            </div>
+                            <div className="mt-1 text-xs text-slate-600">
+                              {t('association.renewal.deadline', {
+                                date: formatGameDate(association.renewal_deadline),
+                              })}
+                            </div>
+                          </div>
+                          <div className="text-right text-xs text-slate-500">
+                            {t('association.activation.remaining')}
+                            <div className="mt-0.5 text-sm font-semibold text-slate-900">
+                              {association.renewal_coin_remaining ?? association.renewal_coin_target ?? 30} {t('association.activation.coins')}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 h-2 overflow-hidden rounded-full bg-amber-100">
+                          <div
+                            className="h-full rounded-full bg-yellow-400"
+                            style={{
+                              width: `${Math.min(
+                                100,
+                                Math.max(
+                                  0,
+                                  ((association.renewal_coin_contributed ?? 0) /
+                                    Math.max(association.renewal_coin_target ?? 30, 1)) *
+                                    100,
+                                ),
+                              )}%`,
+                            }}
+                          />
+                        </div>
+
+                        {(association.renewal_coin_remaining ?? 0) > 0 && association.is_member ? (
+                          <div className="mt-3 flex flex-wrap items-center gap-2">
+                            {[1, 5, 10].map(amount => (
+                              <button
+                                key={amount}
+                                type="button"
+                                disabled={
+                                  busyKey === 'contribute-renewal-coins' ||
+                                  amount > (association.coin_balance ?? 0)
+                                }
+                                onClick={() => void contributeRenewalCoins(amount)}
+                                className="rounded bg-slate-900 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-40"
+                              >
+                                +{amount}
+                              </button>
+                            ))}
+                            <input
+                              type="number"
+                              min={1}
+                              max={Math.max(association.renewal_coin_remaining ?? 1, 1)}
+                              value={renewalContributionInput}
+                              onChange={event => setRenewalContributionInput(event.target.value)}
+                              placeholder={t('association.activation.custom')}
+                              className="w-24 rounded border border-slate-300 bg-white px-2 py-1.5 text-xs outline-none focus:border-yellow-500"
+                            />
+                            <button
+                              type="button"
+                              disabled={
+                                busyKey === 'contribute-renewal-coins' ||
+                                !renewalContributionInput ||
+                                Number(renewalContributionInput) <= 0 ||
+                                Number(renewalContributionInput) > (association.coin_balance ?? 0)
+                              }
+                              onClick={() => void contributeRenewalCoins(Number(renewalContributionInput))}
+                              className="rounded bg-yellow-400 px-3 py-1.5 text-xs font-semibold text-black hover:bg-yellow-300 disabled:opacity-40"
+                            >
+                              {t('association.renewal.renew')}
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : association.renewal_window_opens_on ? (
+                      <p className="text-xs text-slate-500">
+                        {t('association.renewal.opens', {
+                          date: formatGameDate(association.renewal_window_opens_on),
+                          season: association.renewal_target_season ?? '—',
+                        })}
+                      </p>
+                    ) : null}
+                  </div>
+                ) : (
+                  <p className="mt-3 text-xs text-slate-500">
+                    {t('association.activation.joinFirst')}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-4 py-4">
+              <p className="text-xs leading-5 text-slate-500">
+                {t('association.activation.requirements', {
+                  members: association.minimum_members ?? 5,
+                  coins: association.activation_coin_target ?? 50,
+                })}
+              </p>
+
+              {!association.is_member ? (
+                <button
+                  type="button"
+                  disabled={busyKey === 'join'}
+                  onClick={() => void joinAssociation()}
+                  className="inline-flex items-center gap-2 rounded bg-yellow-400 px-4 py-2 text-sm font-semibold text-black hover:bg-yellow-300 disabled:opacity-50"
+                >
+                  {busyKey === 'join' ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                  {t('association.join')}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  disabled={busyKey === 'leave'}
+                  onClick={() => void leaveAssociation()}
+                  className="rounded border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                >
+                  {t('association.leave')}
+                </button>
+              )}
+            </div>
+          </section>
+
+          <section className="rounded bg-white shadow">
+            <div className="border-b border-slate-200 p-4">
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                {t('association.dashboard.eyebrow')}
+              </div>
+              <h3 className="mt-1 text-lg font-semibold text-slate-900">
+                {t('association.dashboard.title')}
+              </h3>
+              <p className="mt-1 text-sm text-slate-500">
+                {t('association.dashboard.description')}
+              </p>
+            </div>
+
+            <div className="grid gap-px bg-slate-200 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="bg-white p-4">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  {t('association.dashboard.season')}
+                </div>
+                <div className="mt-2 text-xl font-semibold text-slate-900">
+                  {overview?.season_number ?? dashboard?.season_number ?? '—'}
+                </div>
+                <div className="mt-1 text-xs text-slate-500">
+                  {formatGameDate(overview?.current_game_date ?? dashboard?.current_game_date)}
+                </div>
+              </div>
+              <div className="bg-white p-4">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  {t('association.dashboard.activeCallups')}
+                </div>
+                <div className="mt-2 text-xl font-semibold text-slate-900">
+                  {overview?.stats?.active_callups ?? 0}
+                </div>
+                <div className="mt-1 text-xs text-slate-500">
+                  {t('association.dashboard.activeCallupsHelp')}
+                </div>
+              </div>
+              <div className="bg-white p-4">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  {t('association.dashboard.selectedRiders')}
+                </div>
+                <div className="mt-2 text-xl font-semibold text-slate-900">
+                  {selectedEventMembers.length} / 7
+                </div>
+                <div className="mt-1 text-xs text-slate-500">
+                  {selectedOverviewEvent
+                    ? selectedOverviewEvent.label
+                    : t('association.dashboard.noSquad')}
+                </div>
+              </div>
+              <div className="bg-white p-4">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  {t('association.dashboard.lastWorldNations')}
+                </div>
+                <div className="mt-2 text-xl font-semibold text-slate-900">
+                  {overview?.stats?.last_world_nations_rank
+                    ? `#${overview.stats.last_world_nations_rank}`
+                    : '—'}
+                </div>
+                <div className="mt-1 text-xs text-slate-500">
+                  {overview?.stats?.last_world_nations_points
+                    ? t('association.dashboard.points', {
+                        points: overview.stats.last_world_nations_points,
+                      })
+                    : t('association.dashboard.noWorldResult')}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-6 p-4 xl:grid-cols-2">
+              <div>
+                <div className="flex items-center justify-between gap-3">
+                  <h4 className="font-semibold text-slate-900">
+                    {t('association.dashboard.upcomingEvents')}
+                  </h4>
+                  <Link
+                    to="/dashboard/national-association/world-nations"
+                    className="text-xs font-semibold text-yellow-700 hover:underline"
+                  >
+                    {t('association.dashboard.openWorldNations')}
+                  </Link>
+                </div>
+
+                <div className="mt-3 space-y-3">
+                  {overviewEventGroups.length === 0 ? (
+                    <div className="rounded border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+                      {t('association.dashboard.noUpcomingEvents')}
+                    </div>
+                  ) : (
+                    overviewEventGroups.map(group => (
+                      <div
+                        key={group.key}
+                        className="overflow-hidden rounded border border-slate-200 bg-white"
+                      >
+                        <div className="border-b border-slate-200 bg-slate-50 px-3 py-2.5">
+                          <div className="text-sm font-semibold text-slate-900">
+                            {group.roundLabel === 'Final Qualification' ? t('world.finalQualification') : group.roundLabel === 'World Nations Final' ? t('world.worldFinal') : group.roundLabel} · {group.groupLabel.replace(/Group ([A-Z])/i, (_, letter: string) => t('associationExtra.groupLabel', { letter }))}
+                          </div>
+                          <div className="mt-0.5 text-xs text-slate-500">
+                            {t('associationExtra.scheduledDays', { count: group.events.length })}
+                          </div>
+                        </div>
+
+                        <div className="divide-y divide-slate-200">
+                          {group.events.map(event => {
+                            const selected =
+                              selectedOverviewEvent?.event_id === event.event_id
+                            return (
+                              <div
+                                key={event.event_id}
+                                className={[
+                                  'flex min-w-0 flex-col gap-3 bg-white px-3 py-3 sm:flex-row sm:items-center sm:justify-between',
+                                  selected ? 'ring-2 ring-inset ring-yellow-400' : '',
+                                ].join(' ')}
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedOverviewEventId(event.event_id)}
+                                  className="min-w-0 flex-1 text-left"
+                                >
+                                  <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                                    {t('common.dayRace', { day: event.race_day ?? '—', race: t(`raceTypes.${event.race_type}`, { defaultValue: humanize(event.race_type) }) })}
+                                  </div>
+                                  <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs">
+                                    <span className="font-semibold text-slate-900">
+                                      {formatGameDate(event.event_date)}
+                                    </span>
+                                    <span className="text-slate-300">·</span>
+                                    <span className="font-medium text-slate-500">
+                                      {t('common.seasonNumber', { season: overview?.season_number ?? dashboard?.season_number ?? '—' })}
+                                    </span>
+                                    <span className="text-slate-300">·</span>
+                                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusClasses(event.status)}`}>
+                                      {t(`status.${event.status || 'scheduled'}`, { defaultValue: event.status ? humanize(event.status) : t('associationExtra.scheduled') })}
+                                    </span>
+                                  </div>
+                                  {event.host_country_code || event.host_city ? (
+                                    <div className="mt-2 flex items-center gap-2 text-xs text-slate-600">
+                                      {countryFlagUrl(event.host_country_code) ? (
+                                        <img
+                                          src={countryFlagUrl(event.host_country_code) ?? undefined}
+                                          alt={event.host_country_code ?? ''}
+                                          className="h-4 w-6 shrink-0 rounded-sm border border-slate-200 object-cover"
+                                        />
+                                      ) : event.host_country_code ? (
+                                        <span className="inline-flex h-4 min-w-6 items-center justify-center rounded-sm border border-slate-200 bg-slate-50 px-1 text-[8px] font-semibold text-slate-500">
+                                          {event.host_country_code}
+                                        </span>
+                                      ) : null}
+                                      <span className="font-medium text-slate-700">
+                                        {event.host_city ?? t('associationExtra.noHostCity')}
+                                      </span>
+                                    </div>
+                                  ) : null}
+                                </button>
+
+                                <Link
+                                  to={`/dashboard/national-association/world-nations/events/${event.event_id}`}
+                                  className="inline-flex shrink-0 self-start rounded-lg bg-yellow-400 px-2.5 py-1.5 text-[11px] font-semibold text-black shadow-sm hover:bg-yellow-300 sm:self-center"
+                                >
+                                  {t('world.openRace')}
+                                </Link>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h4 className="font-semibold text-slate-900">
+                      {t('association.dashboard.selectedRiders')}
+                    </h4>
+                    {selectedOverviewEvent ? (
+                      <div className="mt-0.5 text-xs text-slate-500">
+                        {[
+                          selectedOverviewEvent.round_label === 'Final Qualification'
+                            ? t('world.finalQualification')
+                            : selectedOverviewEvent.round_label === 'World Nations Final'
+                              ? t('world.worldFinal')
+                              : selectedOverviewEvent.round_label || t('world.title'),
+                          selectedOverviewEvent.group_label?.replace(/Group ([A-Z])/i, (_match, letter: string) =>
+                            t('associationExtra.groupLabel', { letter }),
+                          ),
+                          selectedOverviewEvent.race_type
+                            ? t(`raceTypes.${selectedOverviewEvent.race_type}`, { defaultValue: humanize(selectedOverviewEvent.race_type) })
+                            : null,
+                        ].filter(Boolean).join(' · ')}
+                      </div>
+                    ) : null}
+                  </div>
+                  {isCoach ? (
+                    <span className="rounded-full bg-yellow-100 px-2.5 py-1 text-xs font-semibold text-yellow-900">
+                      {t('association.userStatus.nationalCoach')}
+                    </span>
+                  ) : null}
+                </div>
+
+                <div className="mt-3">
+                  {!selectedOverviewEvent ? (
+                    <div className="rounded border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+                      {t('associationExtra.noAssignedRace')}
+                    </div>
+                  ) : !selectedEventMembers.length ? (
+                    <div className="rounded border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+                      {t('associationExtra.noLineup')}
+                    </div>
+                  ) : (
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {selectedEventMembers.map(member => {
+                        const riderIdentity = selectedRiderIdentities[member.rider_id]
+                        const fullName = [
+                          riderIdentity?.first_name?.trim(),
+                          riderIdentity?.last_name?.trim(),
+                        ]
+                          .filter(Boolean)
+                          .join(' ')
+                        const countryCode =
+                          riderIdentity?.country_code?.trim().toUpperCase() ?? ''
+                        const countryFlag = countryFlagUrl(countryCode)
+                        const role = riderIdentity?.role ?? member.squad_role ?? null
+
+                        return (
+                          <div
+                            key={member.rider_id}
+                            className="rounded border border-slate-200 bg-slate-50 px-3 py-2.5"
+                          >
+                            <div className="flex items-start gap-2.5">
+                              {countryFlag ? (
+                                <img
+                                  src={countryFlag}
+                                  alt={countryCode}
+                                  className="mt-0.5 h-4 w-6 shrink-0 rounded-sm border border-slate-200 object-cover"
+                                />
+                              ) : (
+                                <div className="mt-0.5 flex h-4 w-6 shrink-0 items-center justify-center rounded-sm border border-slate-200 bg-white text-[8px] font-semibold text-slate-400">
+                                  {countryCode || '—'}
+                                </div>
+                              )}
+
+                              <div className="min-w-0 flex-1">
+                                <div className="text-sm font-semibold text-slate-900">
+                                  {fullName || riderIdentity?.display_name || member.rider_name}
+                                </div>
+                                <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-slate-500">
+                                  {countryCode ? (
+                                    <>
+                                      <span>{countryCode}</span>
+                                      <span className="text-slate-300">·</span>
+                                    </>
+                                  ) : null}
+                                  <span className="font-medium text-slate-600">
+                                    {role ? humanize(role) : 'Role not set'}
+                                  </span>
+                                </div>
+                                <div className="mt-0.5 text-xs text-slate-500">
+                                  {member.club_name ?? t('common.freeAgent')}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </section>
+
+
+          <details className="rounded bg-white shadow">
+            <summary className="cursor-pointer list-none border-b border-slate-200 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    {t('association.members.eyebrow')}
+                  </div>
+                  <h3 className="mt-1 text-lg font-semibold text-slate-900">
+                    {t('association.members.title')}
+                  </h3>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {t('association.members.description')}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-semibold text-slate-900">
+                    {t('association.members.count', { count: memberDirectory?.total ?? 0 })}
+                  </div>
+                  <div className="mt-0.5 text-xs text-slate-500">
+                    {t('association.members.oldestFirst')}
+                  </div>
+                </div>
+              </div>
+            </summary>
+
+            <div className="overflow-x-auto">
+              <table className="min-w-[900px] w-full text-sm">
+                <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <tr>
+                    <th className="px-4 py-3">{t('association.members.joined')}</th>
+                    <th className="px-4 py-3">{t('association.members.player')}</th>
+                    <th className="px-4 py-3">{t('association.members.team')}</th>
+                    <th className="px-4 py-3 text-center">{t('association.members.activationFund')}</th>
+                    <th className="px-4 py-3">{t('association.members.status')}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {membersLoading ? (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center text-sm text-slate-500">
+                        {t('association.members.loading')}
+                      </td>
+                    </tr>
+                  ) : (memberDirectory?.members ?? []).length ? (
+                    (memberDirectory?.members ?? []).map(member => {
+                      const teamFlag = countryFlagUrl(member.club_country_code)
+                      return (
+                        <tr key={member.user_id} className="bg-white">
+                          <td className="px-4 py-3 align-top">
+                            <div className="font-medium text-slate-900">
+                              {formatGameDate(member.joined_on_game_date)}
+                            </div>
+                            <div className="mt-0.5 text-xs text-slate-500">
+                              {t('association.members.season', { season: member.joined_season_number ?? '—' })}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 align-top">
+                            <div className="font-semibold text-slate-900">
+                              {member.username}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 align-top">
+                            <div className="flex items-center gap-2">
+                              {teamFlag ? (
+                                <img
+                                  src={teamFlag}
+                                  alt={member.club_country_code ?? ''}
+                                  className="h-4 w-6 rounded-sm border border-slate-200 object-cover"
+                                />
+                              ) : null}
+                              <span className="font-medium text-slate-700">
+                                {member.club_name}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-center align-top">
+                            <span className="font-semibold text-slate-900">
+                              {t('association.members.coins', { count: member.activation_contribution ?? 0 })}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 align-top">
+                            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                              member.is_national_coach
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-slate-100 text-slate-700'
+                            }`}>
+                              {member.is_national_coach ? t('association.members.nationalCoach') : t('association.members.member')}
+                            </span>
+                          </td>
+                        </tr>
+                      )
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center text-sm text-slate-500">
+                        {t('association.members.empty')}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {(memberDirectory?.total ?? 0) > 20 ? (
+              <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
+                <div className="text-xs text-slate-500">
+                  {t('association.members.showing', {
+                    from: (memberPage - 1) * 20 + 1,
+                    to: Math.min(memberPage * 20, memberDirectory?.total ?? 0),
+                    total: memberDirectory?.total ?? 0,
+                  })}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    disabled={memberPage <= 1}
+                    onClick={() => setMemberPage(page => Math.max(1, page - 1))}
+                    className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40"
+                  >
+                    {t('association.members.previous')}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={memberPage * 20 >= (memberDirectory?.total ?? 0)}
+                    onClick={() => setMemberPage(page => page + 1)}
+                    className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40"
+                  >
+                    {t('association.members.next')}
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </details>
+
+          <NationalAssociationCustomization />
+
+          {myCallups.length > 0 ? (
+            <section className="rounded bg-white shadow">
+              <div className="border-b border-slate-200 p-4">
+                <h3 className="font-semibold text-slate-900">
+                  {t('association.dashboard.yourCallups')}
+                </h3>
+                <p className="mt-1 text-sm text-slate-500">
+                  {t('association.dashboard.yourCallupsHelp')}
+                </p>
+              </div>
+              <div className="divide-y divide-slate-200">
+                {myCallups.map(callup => {
+                  const riderFlag = countryFlagUrl(callup.rider_country_code)
+                  const clubFlag = countryFlagUrl(callup.club_country_code)
+
+                  return (
+                    <div
+                      key={callup.callup_id}
+                      className="grid gap-3 p-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center"
+                    >
+                      <div className="min-w-0">
+                        <div className="flex min-w-0 items-center gap-2.5">
+                          {riderFlag ? (
+                            <img
+                              src={riderFlag}
+                              alt={callup.rider_country_code ?? ''}
+                              className="h-4 w-6 shrink-0 rounded-sm border border-slate-200 object-cover"
+                            />
+                          ) : null}
+                          <Link
+                            to={`/dashboard/external-riders/${callup.rider_id}`}
+                            className="truncate font-semibold text-slate-900 hover:text-yellow-700 hover:underline"
+                          >
+                            {callup.rider_name}
+                          </Link>
+                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+                            {humanize(callup.rider_role)}
+                          </span>
+                        </div>
+
+                        <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
+                          <span className="inline-flex items-center gap-1.5">
+                            {clubFlag ? (
+                              <img
+                                src={clubFlag}
+                                alt={callup.club_country_code ?? ''}
+                                className="h-3.5 w-5 rounded-sm border border-slate-200 object-cover"
+                              />
+                            ) : null}
+                            <span>{callup.club_name ?? t('common.freeAgent')}</span>
+                          </span>
+                          <span className="text-slate-300">·</span>
+                          <span>{t('common.deadline')} {formatGameDate(callup.response_deadline)}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2 md:justify-end">
+                        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusClasses(callup.status)}`}>
+                          {t(`status.${callup.status}`, { defaultValue: humanize(callup.status) })}
+                        </span>
+                        {callup.can_respond ? (
+                          <>
+                            <button
+                              type="button"
+                              disabled={busyKey === `respond:${callup.callup_id}`}
+                              onClick={() => void respondCallup(callup, true)}
+                              className="rounded bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
+                            >
+                              {t('common.accept')}
+                            </button>
+                            <button
+                              type="button"
+                              disabled={busyKey === `respond:${callup.callup_id}`}
+                              onClick={() => void respondCallup(callup, false)}
+                              className="rounded border border-rose-300 bg-white px-3 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-50"
+                            >
+                              {t('common.decline')}
+                            </button>
+                          </>
+                        ) : null}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </section>
+          ) : null}
+
+          {isCoach ? (
+            <section className="rounded bg-white p-4 shadow">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    {t('association.dashboard.coachWorkspaceEyebrow')}
+                  </div>
+                  <h3 className="mt-1 font-semibold text-slate-900">
+                    {t('association.squad.selectedTenTitle')}
+                  </h3>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {t('association.dashboard.squadMovedHelp')}
+                  </p>
+                </div>
+                <Link
+                  to="/dashboard/national-association/squad"
+                  className="rounded bg-yellow-400 px-4 py-2 text-sm font-semibold text-black hover:bg-yellow-300"
+                >
+                  {t('association.dashboard.openSquad')}
+                </Link>
+              </div>
+            </section>
+          ) : null}
+
+          <details className="rounded border border-slate-200 bg-white shadow">
+            <summary className="cursor-pointer list-none p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    {t('association.guide.eyebrow')}
+                  </div>
+                  <h3 className="mt-1 font-semibold text-slate-900">
+                    {t('association.guide.title')}
+                  </h3>
+                </div>
+                <span className="text-sm font-semibold text-yellow-700">
+                  {t('association.guide.expand')}
+                </span>
+              </div>
+            </summary>
+
+            <div className="grid gap-4 border-t border-slate-200 p-4 md:grid-cols-2 xl:grid-cols-3">
+              {[
+                ['membership', t('association.guide.membershipTitle'), t('association.guide.membershipText')],
+                ['activation', t('association.guide.activationTitle'), t('association.guide.activationText')],
+                ['elections', t('association.guide.electionsTitle'), t('association.guide.electionsText')],
+                ['selection', t('association.guide.selectionTitle'), t('association.guide.selectionText')],
+                ['equipment', t('association.guide.equipmentTitle'), t('association.guide.equipmentText')],
+                ['competition', t('association.guide.competitionTitle'), t('association.guide.competitionText')],
+                ['chat', t('association.guide.chatTitle'), t('association.guide.chatText')],
+                ['history', t('association.guide.historyTitle'), t('association.guide.historyText')],
+              ].map(([key, title, body]) => (
+                <div key={key} className="rounded border border-slate-200 bg-slate-50 p-4">
+                  <h4 className="font-semibold text-slate-900">{title}</h4>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{body}</p>
+                </div>
+              ))}
+            </div>
+          </details>
+        </>
+      )}
+    </div>
+  )
+}

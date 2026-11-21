@@ -1,0 +1,327 @@
+{
+  "title": "Nationale Meisterschaft - {{country}}",
+  "eyebrow": "Nationaler Wettbewerb",
+  "description": "Nationale Einzelrangliste der Fahrer mit Meisterschaftsqualifikation, National Duty und individueller Rennvorbereitung. Die Team-Ranglistenpunkte werden nicht beeinflusst.",
+  "country": "Land",
+  "loading": "Nationale Meisterschaft wird geladen…",
+  "errors": {
+    "unavailable": "Daten zur nationalen Meisterschaft sind nicht verfügbar.",
+    "load": "Die nationale Meisterschaft konnte nicht geladen werden.",
+    "save": "Der Fahrerplan konnte nicht gespeichert werden."
+  },
+  "cards": {
+    "freeze": "Ranglisten-Stichtag",
+    "frozen": "Rangliste für diese Austragung eingefroren",
+    "live": "Live-Rangliste verändert sich noch",
+    "qualification": "Qualifikation",
+    "notRequired": "Nicht erforderlich",
+    "heatPlaces": "{{heats}} Qualifikationsgruppe(n) · {{places}} Finalplätze",
+    "directField": "Das Feld passt direkt ins Finale",
+    "final": "Nationales Finale",
+    "targetField": "Zielfeld {{count}} · {{status}}",
+    "preparation": "Vorbereitung",
+    "riderControlled": "Vom Fahrer-Manager steuerbar",
+    "prepDescription": "Nur Ausrüstung und individuelle Taktik. Personal, Fahrzeuge und Verpflegung stellt der Veranstalter.",
+    "dutyWindow": "National-Duty-Zeitraum",
+    "noTeamCost": "Keine Teamkosten",
+    "hostRoute": "Finalstrecke",
+    "hostPending": "Strecke noch nicht bereit",
+    "hostPendingHelp": "Die Meisterschaft wartet, bis zwei geeignete Strecken verfügbar sind."
+  },
+  "duty": {
+    "title": "Meine National Duty",
+    "description": "Diese Fahrer werden automatisch gemeldet. Sie steuern nur die Ausrüstung und die individuelle Rennstrategie jedes Fahrers.",
+    "locked": "Einzelrennen — keine Teamtaktik. Personal, Fahrzeuge und Club-Verpflegung sind nicht verfügbar.",
+    "directQualifier": "Direkt qualifiziert",
+    "qualificationHeat": "Qualifikationsgruppe {{number}}",
+    "noPlan": "Für diesen Fahrer ist derzeit kein bearbeitbarer National-Duty-Plan offen.",
+    "empty": "Keiner Ihrer Fahrer hat aktuell eine Einladung zum Nationaldienst für diese Meisterschaft."
+  },
+  "organizer": {
+    "title": "Rennpaket des Veranstalters",
+    "bidons": "{{count}} Bidons",
+    "gels": "{{count}} Gels",
+    "nutrition": "{{count}} Verpflegungspakete",
+    "kit": "Meisterschaftstrikot wird gestellt",
+    "rain": "Regenschutz wird bei Bedarf gestellt"
+  },
+  "plan": {
+    "qualificationHeat": "Qualifikationsgruppe {{number}}",
+    "final": "Finale der nationalen Straßenmeisterschaft",
+    "openRace": "Rennen öffnen",
+    "individualBadge": "Einzelrennen — keine Teamtaktik",
+    "equipment": "Fahrerausrüstung",
+    "organizerEquipment": "Standardausrüstung des Veranstalters",
+    "equipmentHelp": "Sie können Club-Ausrüstung wählen; andernfalls wird die Standardausrüstung des Veranstalters verwendet. Personal, Fahrzeuge und Rennverpflegung bleiben durch den Veranstalter vorgegeben.",
+    "strategy": "Individuelle Rennstrategie",
+    "phaseStart": "Start",
+    "phaseEarly": "Früh / Mitte",
+    "phaseLate": "Späte Rennphase",
+    "phaseFinish": "Finale",
+    "save": "Fahrerplan speichern",
+    "saved": "{{rider}}: Plan für {{event}} gespeichert."
+  },
+  "event": {
+    "qualification": "Qualifikation",
+    "final": "Finale"
+  },
+  "tactics": {
+    "rideNaturally": "Natürlich fahren",
+    "conserveEnergy": "Energie sparen",
+    "stayNearFront": "Vorne bleiben",
+    "joinBreakaway": "In die Ausreißergruppe gehen",
+    "attack": "Attackieren",
+    "chaseBreakaway": "Ausreißer verfolgen",
+    "climbHard": "Anstiege hart fahren",
+    "sprint": "Sprinten",
+    "avoidRisks": "Risiken vermeiden"
+  },
+  "heats": {
+    "title": "Qualifikationsgruppen",
+    "heat": "Gruppe {{number}}",
+    "summary": "{{riders}} Fahrer · die besten {{places}} kommen weiter",
+    "open": "Lauf öffnen"
+  },
+  "ranking": {
+    "frozen": "Eingefrorene nationale Rangliste",
+    "live": "Live-Nationalrangliste",
+    "description": "Basierend auf Rennpunkten der Fahrer mit Aktualitätsgewichtung. Meisterschaftsboni zählen nur für Fahrer.",
+    "refresh": "Aktualisieren",
+    "rank": "Rang",
+    "rider": "Fahrer",
+    "weighted": "Gewichtete Punkte",
+    "raw": "Rohpunkte",
+    "latest": "Letztes Ergebnis",
+    "overall": "Gesamt",
+    "team": "Team",
+    "qualificationStatus": "Qualifikationsstatus",
+    "freeAgent": "Vereinslos",
+    "pageRange": "{{from}}–{{to}} von {{total}}",
+    "perPage": "{{count}} pro Seite",
+    "previous": "Zurück",
+    "next": "Weiter",
+    "page": "Seite {{page}} von {{pages}}",
+    "directFinal": "Direkt im Finale",
+    "qualificationHeat": "Qualifikationsgruppe {{number}}",
+    "qualifiedFinal": "Für das Finale qualifiziert",
+    "eliminated": "Ausgeschieden",
+    "withdrawn": "Nimmt nicht teil"
+  },
+  "results": {
+    "title": "Meisterschaftsergebnisse",
+    "pending": "Die Finalergebnisse erscheinen automatisch nach der Berechnung der Meisterschaft.",
+    "independent": "Unabhängig"
+  },
+  "champions": {
+    "title": "Bisherige Meister",
+    "season": "Saison {{number}}",
+    "first": "Der erste Meister wird hier automatisch eingetragen.",
+    "badge": "Nationaler Meister",
+    "history": "Meisterschaftshistorie",
+    "titles": "{{count}} nationale Titel"
+  },
+  "common": {
+    "club": "Verein",
+    "national": "National"
+  },
+  "status": {
+    "planned": "Geplant",
+    "ranking_frozen": "Rangliste eingefroren",
+    "qualification_pending": "Qualifikation ausstehend",
+    "qualification_completed": "Qualifikation abgeschlossen",
+    "final_ready": "Finale bereit",
+    "completed": "Abgeschlossen",
+    "cancelled": "Abgesagt",
+    "ready": "Bereit",
+    "direct_qualified": "Direkt qualifiziert",
+    "qualification_assigned": "Qualifikation zugeteilt",
+    "qualified": "Qualifiziert",
+    "eliminated": "Ausgeschieden",
+    "withdrawn": "Zurückgezogen",
+    "finalist": "Finalist"
+  },
+  "availability": {
+    "climateTitle": "Kein geeignetes Klimafenster",
+    "climateUnavailable": "In den aktuellen Klimadaten gibt es kein Meisterschaftsfenster über 20 °C. Wärmstes geeignetes wöchentliches Maximum: {{temperature}} °C.",
+    "routeTitle": "Meisterschaftsstrecke benötigt",
+    "routeMissing": "Für dieses Land gibt es derzeit keine geeignete Straßenetappe für die nationale Meisterschaft. Die Meisterschaft bleibt pausiert, bis mindestens zwei geeignete Straßenetappen vorhanden sind.",
+    "singleRoute": "Für dieses Land gibt es derzeit nur eine geeignete Straßenetappe für die nationale Meisterschaft. Die Meisterschaft bleibt pausiert, bis eine zweite geeignete Route vorhanden ist, damit Qualifikation und Finale unterschiedliche Strecken nutzen.",
+    "windowTitle": "National-Duty-Zeitraum:",
+    "windowDates": "{{start}}–{{end}} · erwartetes Maximum im Warmwetterfenster {{temperature}} °C · keine Teamkosten."
+  },
+  "decision": {
+    "title": "Teilnahme an der National Duty",
+    "blockedWindow": "Dieser Fahrer ist vom {{start}} bis {{end}} vorläufig für Club-Aufgaben gesperrt.",
+    "deadline": "Entscheidungsfrist: {{date}}",
+    "approve": "National Duty bestätigen",
+    "reject": "Ablehnen · beim Club behalten",
+    "rejectWarning": "Eine Ablehnung storniert die geplante National-Duty-Teilnahme dieses Fahrers und kostet ihn 2 Moralpunkte.",
+    "participationBenefit": "Bei Teilnahme gelten normale Rennmüdigkeit und Skill-Entwicklung; für das Beenden eines National-Championship-Rennens erhält der Fahrer zusätzlich +1 Moral.",
+    "error": "Die National-Duty-Entscheidung konnte nicht gespeichert werden.",
+    "approvedMessage": "{{rider}} nimmt an der National Duty teil.",
+    "rejectedMessage": "{{rider}} bleibt beim Club und hat den Moralabzug für die Ablehnung erhalten.",
+    "status": {
+      "pending": "Club-Entscheidung ausstehend",
+      "approved": "Vom Club bestätigt",
+      "auto_approved": "Automatisch bestätigt",
+      "rejected": "Teilnahme abgelehnt"
+    }
+  },
+  "header": {
+    "subtitle": "Nationale Fahrer, Qualifikation und Meisterschaftspflichten"
+  },
+  "draw": {
+    "title": "Meisterschaftsauslosung",
+    "confirmed": "Bestätigte Meisterschaftsstruktur",
+    "projected": "Prognose auf Basis der aktuellen nationalen Rangliste bis zum Ranglisten-Stichtag",
+    "qualificationHeat": "Qualifikationsgruppe {{number}}",
+    "final": "Nationales Finale",
+    "routePending": "Austragungsstrecke noch offen",
+    "ridersCount": "{{count}} Fahrer",
+    "advanceCount": "Top {{count}} kommen weiter",
+    "finalFieldCount": "{{count}} Fahrer im Finale"
+  },
+  "tabs": {
+    "ranking": "Rangliste",
+    "duty": "Meine National Duty",
+    "history": "Historie"
+  },
+  "info": {
+    "title": "Information zur Meisterschaft",
+    "description": "Nationale Meisterschaften sind Einzelrennen. Es gibt keine Teamtaktik, kein Personal, keine Fahrzeuge und keine Club-Verpflegung. Der Veranstalter übernimmt Logistik und Kosten; Sie steuern nur die Ausrüstung und die individuellen Taktiken jedes eingeladenen Fahrers.",
+    "openGuide": "Vollständigen Leitfaden zu Nationaler Rangliste & Meisterschaft öffnen"
+  },
+  "summary": {
+    "title": "Zeitplan der nationalen Meisterschaft",
+    "subtitle": "Wichtige Termine, Zeitraum des Nationaldienstes und Austragungsstrecke für die Meisterschaft Ihres Landes."
+  },
+  "host": {
+    "openRace": "Rennseite öffnen"
+  },
+  "eventPage": {
+    "invalid": "Dieses nationale Meisterschaftsereignis ist nicht verfügbar.",
+    "back": "Zurück zur nationalen Rangliste",
+    "qualificationTitle": "{{country}} – Nationale Qualifikation, Gruppe {{number}}",
+    "finalTitle": "{{country}} – Finale der nationalen Meisterschaft",
+    "nationalEvent": "Nationale Meisterschaft",
+    "group": "Gruppe {{number}}",
+    "subtitle": "Individuelles nationales Rennen. Keine Teamtaktik, keine Teamanmeldung und keine Club-Rennkosten.",
+    "date": "Datum",
+    "startTime": "Start",
+    "startTimeTbd": "Startzeit wird bei Erstellung des Rennens festgelegt",
+    "riders": "Fahrer",
+    "qualifyingPlaces": "Qualifikationsplätze",
+    "finalField": "Finalfeld",
+    "route": "Strecke",
+    "stageProfile": "Streckenprofil",
+    "distance": "Distanz",
+    "terrain": "Terrain",
+    "elevation": "Höhenmeter",
+    "expectedTemperature": "Erwartete Höchsttemperatur",
+    "profileNote": "Für nationale Meisterschaftsrennen werden nur Start, Ziel und das Streckenprofil verwendet. Es gibt keine KOM- oder Zwischensprint-Wertungen.",
+    "profileChartAlt": "Höhenprofil der nationalen Meisterschaftsstrecke",
+    "profileDescription": "Nationale Meisterschaft auf dem ausgewählten Streckenprofil des Gastgeberlandes.",
+    "terrainTypes": {
+      "flat": "Flach",
+      "hilly": "Hügelig",
+      "mountain": "Bergig",
+      "cobbled": "Kopfsteinpflaster"
+    },
+    "oneDayRace": "Eintagesrennen",
+    "raceDateLine": "Renndatum: {{date}} — {{place}}",
+    "noTeamCost": "Keine Teamkosten",
+    "stages": "Etappen",
+    "stageOne": "Etappe 1",
+    "replayAfterGeneration": "Die Wiederholung ist über das normale Rennwiedergabe-System verfügbar, nachdem dieses nationale Meisterschaftsrennen erstellt und berechnet wurde.",
+    "raceInformation": "Renninformationen",
+    "ridersResults": "Fahrer & Ergebnisse",
+    "results": "Ergebnisse",
+    "finalRidersPending": "Die Finalteilnehmer stehen nach Abschluss der Qualifikationsgruppen fest.",
+    "noRiders": "Diesem Rennen sind derzeit keine Fahrer zugeordnet.",
+    "jersey": "Trikot",
+    "rider": "Fahrer",
+    "team": "Team",
+    "time": "Zeit",
+    "gap": "Rückstand",
+    "status": "Status",
+    "resultsPending": "Die Ergebnisse werden hier nach Abschluss des Rennens veröffentlicht.",
+    "refresh": "Aktualisieren",
+    "finished": "Rennen beendet",
+    "ready": "Rennen bereit",
+    "planned": "Geplant"
+  },
+  "world": {
+    "winnerQualifies": "Der Sieger qualifiziert sich automatisch für die Straßen-Weltmeisterschaft",
+    "title": "Straßen-Weltmeisterschaft",
+    "grandFinale": "Großes Finale",
+    "warmHost": "Gastgeber mit warmem Klima",
+    "championsQualified": "{{count}} Meister qualifiziert",
+    "confirmedCount": "{{count}} bestätigt",
+    "openChampionship": "Weltmeisterschaft öffnen →",
+    "scheduledDescription": "Seit Saisonbeginn geplant. Landesmeister werden automatisch hinzugefügt.",
+    "scheduledNotice": "Das Finale der Straßen-Weltmeisterschaft ist für diese Saison geplant.",
+    "invitation": "Einladung zur Straßen-Weltmeisterschaft",
+    "nationalChampionLabel": "Landesmeister aus {{country}}",
+    "unavailable": "Nicht verfügbar",
+    "decisionDeadline": "Entscheidungsfrist",
+    "dutyEffects": "Dieser Fahrer ist für die Weltmeisterschaft reserviert. Der Veranstalter übernimmt die Kosten. Eine Zusage gibt +10 Moral, eine Absage -15. Ermüdung und andere Renneffekte gelten weiterhin.",
+    "openRace": "WM-Rennseite öffnen",
+    "allowRider": "Fahrer zulassen",
+    "refuse": "Ablehnen",
+    "secondConfirmation": "Zweite Bestätigung - WM-Finale",
+    "secondConfirmationHelp": "Du hast die Einladung angenommen. Bestätige den Fahrer vor dem großen Finale erneut.",
+    "finalDeadline": "Frist für die endgültige Bestätigung",
+    "status": "Status",
+    "confirmAgain": "Erneut bestätigen",
+    "refuseFinal": "Finale ablehnen",
+    "phase": {
+      "planned": "Geplant",
+      "completed": "Abgeschlossen",
+      "finalConfirmations": "Endgültige Bestätigungen",
+      "startlistConfirmed": "Startliste bestätigt",
+      "invitationsOpen": "Einladungen offen",
+      "championsQualifying": "Landesmeister qualifizieren sich"
+    },
+    "decision": {
+      "pending": "Ausstehend",
+      "approved": "Genehmigt",
+      "auto_approved": "Automatisch genehmigt",
+      "rejected": "Abgelehnt",
+      "not_open": "Noch nicht offen"
+    },
+    "toasts": {
+      "accepted": "{{rider}} fährt beim WM-Finale. Moral +10.",
+      "refused": "{{rider}} fährt nicht beim WM-Finale. Moral -15.",
+      "participationError": "WM-Teilnahme konnte nicht aktualisiert werden.",
+      "nationalConfirmed": "{{rider}} wurde erneut für das nationale Finale bestätigt.",
+      "nationalRefused": "{{rider}} nimmt nicht am nationalen Finale teil.",
+      "nationalError": "Zweite Bestätigung des nationalen Finales fehlgeschlagen.",
+      "worldConfirmed": "{{rider}} ist für die Weltmeisterschaft endgültig bestätigt.",
+      "worldWithdrawn": "{{rider}} wurde von der Weltmeisterschaft zurückgezogen. Moral -15.",
+      "worldError": "Finalbestätigung zur Weltmeisterschaft fehlgeschlagen.",
+      "withdrawnNational": "{{rider}} wurde vom nationalen Finale zurückgezogen und erhielt die Moralstrafe für die Absage.",
+      "withdrawError": "Der Rückzug aus dem nationalen Finale ist fehlgeschlagen."
+    }
+  },
+  "dutyExtra": {
+    "decisionsOnly": "Nur Teilnahmeentscheidungen",
+    "decisionsHelp": "Hier kannst du den Nationalmeisterschaftseinsatz erlauben oder ablehnen. Bestätigte Fahrer werden automatisch zur richtigen Qualifikationsgruppe oder Finalstartliste hinzugefügt. Ausrüstung und Einzeltaktik werden in der Rennvorbereitung festgelegt.",
+    "openPreparation": "Rennvorbereitung öffnen",
+    "secondConfirmation": "Zweite Bestätigung - nationales Finale",
+    "secondConfirmationHelp": "Dieser Fahrer hat das nationale Finale erreicht. Der Manager muss die Teilnahme gesondert bestätigen oder ablehnen.",
+    "final": "Finale",
+    "confirmFinal": "Finalteilnahme bestätigen",
+    "synced": "{{rider}} wurde bestätigt und automatisch zu {{race}} hinzugefügt. Ausrüstung und Einzeltaktik werden in der Rennvorbereitung verwaltet."
+  },
+  "historyExtra": {
+    "raceName": "Finale der nationalen Meisterschaft - {{country}}",
+    "myRiders": "Deine Fahrer außerhalb der Top 10"
+  },
+  "terrain": {
+    "flat": "Flach",
+    "hilly": "Hügelig",
+    "mountain": "Bergig",
+    "cobbles": "Kopfsteinpflaster",
+    "time_trial": "Zeitfahren"
+  }
+}

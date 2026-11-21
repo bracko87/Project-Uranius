@@ -1,0 +1,889 @@
+{
+  "page": {
+    "title": "Infrastruktur",
+    "description": "Gebäude nutzen nun realistische Bauzeiten in der Spielzeit. Infrastruktur steuert Personalkapazität, Grenzen für Personaleffekte, Scouting-Limits und zukünftige Ausrüstungssysteme.",
+    "loading": "Infrastruktur wird geladen...",
+    "noData": "Keine Infrastrukturdaten gefunden.",
+    "refresh": "Aktualisieren",
+    "refreshing": "Wird aktualisiert...",
+    "facilities": "Einrichtungen",
+    "assets": "Fahrzeuge & Assets",
+    "currentGameDate": "Aktuelles Spieldatum:",
+    "staffContextError": "Infrastruktur wurde geladen, aber der Kontext der Personalauswirkungen konnte nicht geladen werden:"
+  },
+  "common": {
+    "close": "Schließen",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "saving": "Wird gespeichert…",
+    "starting": "Wird gestartet...",
+    "repair": "Reparieren",
+    "sell": "Verkaufen",
+    "available": "Verfügbar",
+    "assigned": "Zugewiesen",
+    "inRepair": "In Reparatur",
+    "condition": "Zustand",
+    "support": "Unterstützung",
+    "acquired": "Erworben",
+    "currentStatus": "Aktueller Status",
+    "cost": "Kosten",
+    "duration": "Dauer",
+    "delivery": "Lieferung",
+    "owned": "Im Besitz",
+    "pending": "Ausstehend",
+    "quantity": "Menge",
+    "completes": "Abschluss",
+    "costPaid": "Bezahlte Kosten",
+    "premium": "Premium",
+    "unlockPremium": "Mit Premium freischalten",
+    "unlocking": "Wird freigeschaltet…",
+    "garageFull": "Garage voll",
+    "acquire": "Anschaffen",
+    "potentialTier": "Mögliche Stufe",
+    "bestSupport": "Beste Unterstützung",
+    "garageSize": "Garagengröße",
+    "garageSlots": "Garagenplätze",
+    "pendingDelivery": "Ausstehende Lieferung",
+    "conditionTracked": "Zustand wird verfolgt",
+    "level": "Level",
+    "built": "Gebaut",
+    "notBuilt": "Nicht gebaut",
+    "inProgress": "In Bau",
+    "upgrade": "Ausbauen",
+    "build": "Bauen",
+    "maxLevel": "Max. Level",
+    "slotsFull": "Plätze voll",
+    "configMissing": "Konfiguration fehlt",
+    "prerequisiteRequired": "Voraussetzung erforderlich",
+    "deliveryStatus": "Lieferung",
+    "details": "Details",
+    "allClear": "Alles in Ordnung",
+    "currentCoinBalance": "Aktuelles Coin-Guthaben:",
+    "noValue": "k. A.",
+    "none": "Keine",
+    "gameDay": "{{count}} Spieltag",
+    "gameDays": "{{count}} Spieltage",
+    "tbd": "Noch offen"
+  },
+  "facilities": {
+    "activeJobs": "Aktive Bauprojekte",
+    "noJobs": "Keine Bauprojekte für Einrichtungen in Arbeit",
+    "constructionSlots": "Bauplätze für Einrichtungen:",
+    "active": "aktiv",
+    "open": "frei",
+    "jobsInProgress": "{{count}} Infrastrukturprojekte in Arbeit",
+    "jobInProgress": "{{count}} Infrastrukturprojekt in Arbeit",
+    "gameDuration": "Spieldauer:",
+    "paid": "Bezahlt:",
+    "realTimeRemaining": "Verbleibende reale Zeit:",
+    "refundNow": "Aktuelle Rückerstattung",
+    "refundPercent": "Rückerstattungsanteil",
+    "cancellationCost": "Kosten der Stornierung",
+    "cancelling": "Wird storniert...",
+    "cancelJob": "Projekt abbrechen",
+    "detailsTitle": "Infrastrukturdetails",
+    "imagePlaceholder": "Bildplatzhalter",
+    "addImageLater": "Bild für {{name}} kann hier später hinzugefügt werden.",
+    "currentStatus": "Aktueller Status",
+    "status": "Status:",
+    "currentImpact": "Aktuell verbundener Effekt",
+    "nextLevel": "Nächstes Level",
+    "unlock": "Freischaltung:",
+    "effect": "Effekt:",
+    "constructionTime": "Bauzeit",
+    "estimatedCompletion": "Voraussichtlicher Abschluss",
+    "jobProgress": "Projekt in Arbeit",
+    "fallbackRemaining": "Verbleibende reale Fallback-Zeit:",
+    "lockedDuringConstruction": "Diese Einrichtung ist während der Bauarbeiten gesperrt.",
+    "costCharged": "Die Baukosten werden sofort beim Start des Projekts belastet.",
+    "noUpgrade": "Derzeit ist kein Ausbau verfügbar.",
+    "currentLevel": "Aktuelles Level: {{level}} / {{max}}",
+    "nextLevelValue": "Nächstes Level: {{level}}",
+    "queuedUpgrade": "Ausbau auf Level {{level}} vorgemerkt",
+    "upgradingTo": "Ausbau auf Level {{level}}",
+    "impactLevel": "Level {{level}} {{kind}} trägt zur clubweiten Infrastruktur bei.",
+    "staffCapacityImpact": "Personalkapazität und Grenzen für Personaleffekte skalieren mit diesem Einrichtungslevel.",
+    "coachingImpact": "Training und Entwicklung durch den Cheftrainer werden anhand dieser Einrichtung beeinflusst.",
+    "medicalImpact": "Medizinische Erholung und Verletzungsschutz werden anhand dieser Einrichtung beeinflusst.",
+    "upgradeStarted": "Ausbau/Bau von {{name}} gestartet.",
+    "jobCancelled": "Infrastrukturprojekt abgebrochen und Rückerstattung verarbeitet."
+  },
+  "facilityTypes": {
+    "club": "Club",
+    "coaching": "Training",
+    "medical": "Medizin",
+    "youth": "Nachwuchs",
+    "mechanics": "Mechanik",
+    "scouting": "Scouting"
+  },
+  "facilityNames": {
+    "clubHouse": "Clubhaus",
+    "trainingCenter": "Trainingszentrum",
+    "sprintPerformanceCircuit": "Sprint-Leistungsrundkurs",
+    "climbingPerformanceCenter": "Kletter-Leistungszentrum",
+    "teamTimeTrialCenter": "Mannschaftszeitfahrzentrum",
+    "medicalCenter": "Medizinzentrum",
+    "youthAcademy": "Nachwuchsakademie",
+    "teamResidentialCampus": "Team-Wohncampus",
+    "mechanicsWorkshop": "Mechanikerwerkstatt",
+    "scoutingOffice": "Scouting-Büro"
+  },
+  "facilityDescriptions": {
+    "clubHouseShort": "Zentrale Verwaltungsbasis Ihres Radsportteams.",
+    "clubHouseLong": "Das Clubhaus ist die zentrale operative Basis des Teams. Es unterstützt Verwaltung, Cluborganisation und zukünftiges wirtschaftliches Wachstum. Höhere Level helfen, eine größere Personalstruktur und zukünftige Managementsysteme freizuschalten.",
+    "trainingCenterShort": "Zentrale Trainingsbasis für Fahrerentwicklung und tägliche Trainerarbeit.",
+    "trainingCenterLong": "Das Trainingszentrum verbessert die Wirksamkeit des Trainerpersonals und unterstützt Trainingsqualität, Fahrerentwicklung und die Kontrolle von Überlastungsrisiken. Höhere Level erweitern außerdem die Trainerkapazität.",
+    "sprintPerformanceCircuitShort": "Geschlossener Hochgeschwindigkeitskurs für Beschleunigungs-, Sprint- und Antrittstraining.",
+    "sprintPerformanceCircuitLong": "Voraussetzung: Trainingszentrum Level 2. Verbessert die sprintorientierte Entwicklung um 4 % bei Fahrern der ersten Mannschaft, 8 % bei U23-Fahrern und 12 % bei U16-Fahrern. Die sprintbezogene Rennentwicklung von U23 und U16 erhält zusätzlich 5 %.",
+    "climbingPerformanceCenterShort": "Spezialisiertes Kletterlabor für kontrolliertes Steigungstraining.",
+    "climbingPerformanceCenterLong": "Voraussetzung: Trainingszentrum Level 2. Verbessert die kletterorientierte Entwicklung um 4 % bei Fahrern der ersten Mannschaft, 8 % bei U23-Fahrern und 12 % bei U16-Fahrern. Die kletterbezogene Rennentwicklung von U23 und U16 erhält zusätzlich 5 %.",
+    "teamTimeTrialCenterShort": "Indoor-Aerokurs für Tempoarbeit, Ablösungen und Formation im Mannschaftszeitfahren.",
+    "teamTimeTrialCenterLong": "Voraussetzung: Trainingszentrum Level 2. Verbessert die zeitfahrorientierte Entwicklung um 4 % bei Fahrern der ersten Mannschaft, 7 % bei U23-Fahrern und 10 % bei U16-Fahrern, erhöht die TTT-Rennentwicklung von U23 und U16 um 5 % und verbessert die Effizienz der Mannschaftszeitfahr-Formation um 5 %.",
+    "medicalCenterShort": "Medizinische Einrichtung für Prävention, Behandlung, Erholung und Fahrergesundheit.",
+    "medicalCenterLong": "Das Medizinzentrum unterstützt Teamärzte, Physiotherapeuten und Ernährungsberater. Es reduziert starke medizinische Begrenzungen, verbessert Verletzungsprävention und Erholung und erweitert die medizinische Personalkapazität.",
+    "youthAcademyShort": "Langfristige Entwicklungseinrichtung für zukünftige Fahrer und Nachwuchsförderung.",
+    "youthAcademyLong": "Die Nachwuchsakademie ist eine strategische langfristige Investition für die U23- und U16-Entwicklung. Sie schaltet die Rolle des U23-Cheftrainers frei, verbessert Training und Rennentwicklung des Entwicklungsteams und stärkt zusätzlich Training, Rennentwicklung und Cheftrainer-Wirkung der U16-Akademie.",
+    "teamResidentialCampusShort": "Dauerhafte Unterkunft am Teamstandort für Fahrer und festes Personal des gesamten Clubs.",
+    "teamResidentialCampusLong": "Voraussetzung: Nachwuchsakademie Level 1. Bietet club-eigene Unterkunft am Heimatstandort für erste Mannschaft, U23, U16 und festes Personal. Unterkunftskosten am Heimatstandort entfallen; Hotels bei Rennen und Trainingslagern bleiben kostenpflichtig. Die Erholungseffektivität von U16 und U23 steigt um 5 %.",
+    "mechanicsWorkshopShort": "Technische Basis für Wartung und Ausrüstungsunterstützung.",
+    "mechanicsWorkshopLong": "Die Mechanikerwerkstatt verbessert die technische Unterstützungskapazität und bereitet den Club auf tiefere Ausrüstungssysteme, schnellere Reparaturen und geringere Wartungskosten vor. Höhere Level schalten zusätzliche Mechanikerplätze frei.",
+    "scoutingOfficeShort": "Scouting- und Analysezentrum für Berichte, Marktinformationen und Talentsuche.",
+    "scoutingOfficeLong": "Das Scouting-Büro steuert die maximale Qualität von Scouting-Berichten, die Scouting-Kapazität und spätere Marktanalysesysteme. Höhere Level schalten mehr Scout-Plätze und höhere Qualitätsgrenzen für Berichte frei."
+  },
+  "assets": {
+    "teamCars": "Teamfahrzeuge",
+    "teamCar": "Teamfahrzeug",
+    "teamCarFleet": "Teamfahrzeug-Flotte",
+    "teamBus": "Teambus",
+    "teamBusGarage": "Teambus-Garage",
+    "equipmentVan": "Ausrüstungstransporter",
+    "equipmentVans": "Ausrüstungstransporter",
+    "equipmentVanGarage": "Garage für Ausrüstungstransporter",
+    "mobileWorkshop": "Mobile Werkstatt",
+    "mobileWorkshops": "Mobile Werkstätten",
+    "mobileWorkshopGarage": "Garage für mobile Werkstätten",
+    "medicalVan": "Medizintransporter",
+    "medicalVans": "Medizintransporter",
+    "medicalVanGarage": "Garage für Medizintransporter",
+    "teamCarDescription": "Teamfahrzeuge bieten Rennunterstützung, taktische Kommunikation, Verpflegungsabdeckung und Ermüdungsreduzierung an Renntagen. Verwalten Sie die Garage nach Plätzen, starten Sie neue Lieferungen, reparieren Sie verschlissene Fahrzeuge oder verkaufen Sie verfügbare Fahrzeuge.",
+    "teamBusDescription": "Teambusse verbessern Reisekomfort, Erholung, Ermüdungskontrolle und Logistik bei Etappenrennen. Verwalten Sie die Garage nach Plätzen, starten Sie neue Lieferungen, reparieren Sie verschlissene Busse oder verkaufen Sie verfügbare Busse.",
+    "equipmentVanDescription": "Ausrüstungstransporter unterstützen Fahrradtransport, Ersatzteilabdeckung, Rennlogistik und allgemeine Einsatzbereitschaft. Verwalten Sie die Garage nach Plätzen, starten Sie Lieferungen, reparieren Sie verschlissene Transporter oder verkaufen Sie verfügbare Fahrzeuge.",
+    "mobileWorkshopDescription": "Mobile Werkstätten ermöglichen technische Reparaturen vor Ort, schnellere Reaktion auf Probleme, Mechanikerabdeckung und zusätzliche Servicekapazität. Verwalten Sie die Garage nach Plätzen, starten Sie Lieferungen, reparieren Sie verschlissene Werkstätten oder verkaufen Sie verfügbare Einheiten.",
+    "medicalVanDescription": "Medizintransporter unterstützen medizinische Reaktion am Renntag, Zugang zur Behandlung, Verletzungskontrolle und medizinische Abdeckung. Verwalten Sie die Garage nach Plätzen, starten Sie Lieferungen, reparieren Sie verschlissene Transporter oder verkaufen Sie verfügbare Fahrzeuge.",
+    "acquireTeamCar": "Teamfahrzeug bestellen",
+    "acquireTeamBus": "Teambus bestellen",
+    "acquireEquipmentVan": "Ausrüstungstransporter bestellen",
+    "acquireMobileWorkshop": "Mobile Werkstatt bestellen",
+    "acquireMedicalVan": "Medizintransporter bestellen",
+    "teamCarAcquireDescription": "Wählen Sie eine Stufe für das Teamfahrzeug. Die Lieferung wird in die Garagenwarteschlange aufgenommen und nach der konfigurierten Spielzeit abgeschlossen.",
+    "teamBusAcquireDescription": "Wählen Sie eine Stufe für den Teambus. Die Lieferung wird in die Garagenwarteschlange aufgenommen und nach der konfigurierten Spielzeit abgeschlossen.",
+    "equipmentVanAcquireDescription": "Wählen Sie eine Stufe für den Ausrüstungstransporter. Die Lieferung wird in die Garagenwarteschlange aufgenommen und nach der konfigurierten Spielzeit abgeschlossen.",
+    "mobileWorkshopAcquireDescription": "Wählen Sie eine Stufe für die mobile Werkstatt. Die Lieferung wird in die Garagenwarteschlange aufgenommen und nach der konfigurierten Spielzeit abgeschlossen.",
+    "medicalVanAcquireDescription": "Wählen Sie eine Stufe für den Medizintransporter. Die Lieferung wird in die Garagenwarteschlange aufgenommen und nach der konfigurierten Spielzeit abgeschlossen.",
+    "garageFullDescription": "Die Garagenkapazität ist voll. Stornieren Sie eine ausstehende Lieferung, verkaufen Sie ein verfügbares Asset oder warten Sie auf zukünftige Kapazitätserweiterungen, bevor Sie eine weitere Lieferung starten.",
+    "noTiers": "Für diesen Asset-Typ sind noch keine Anschaffungsstufen konfiguriert.",
+    "startDelivery": "Zur Lieferung bestellen",
+    "garageSupportTitle": "Garagenunterstützung vs. tatsächliche Rennzuweisung",
+    "teamCarAssignment": "Die Garage zeigt, was Ihrem Club gehört und was geliefert wird. Tatsächliche Rennboni sollten weiterhin nur von Fahrzeugen kommen, die einem bestimmten Event zugewiesen sind. Eine starke Garage vergrößert Ihre Auswahl, aber nur zugewiesene und berechtigte Fahrzeuge dürfen ein Rennergebnis beeinflussen.",
+    "teamBusAssignment": "Die Garage zeigt, was Ihrem Club gehört und was geliefert wird. Tatsächliche Rennboni sollten weiterhin nur von Bussen kommen, die einem bestimmten Event oder einer Rundfahrt zugewiesen sind. Eine stärkere Garage verbessert die verfügbaren Logistikoptionen, aber nur zugewiesene und berechtigte Busse dürfen Renntag- oder Rundfahrteffekte beeinflussen.",
+    "equipmentVanAssignment": "Die Garage zeigt, was Ihrem Club gehört und was geliefert wird. Tatsächliche Renn- oder Eventboni sollten weiterhin von Ausrüstungstransportern kommen, die einem bestimmten Event zugewiesen sind. Nur zugewiesene und berechtigte Transporter dürfen Eventberechnungen beeinflussen.",
+    "mobileWorkshopAssignment": "Die Garage zeigt, was Ihrem Club gehört und was geliefert wird. Tatsächliche technische Boni sollten weiterhin von mobilen Werkstätten kommen, die einem bestimmten Event zugewiesen sind. Nur zugewiesene und berechtigte Werkstätten dürfen Berechnungen am Renntag beeinflussen.",
+    "medicalVanAssignment": "Die Garage zeigt, was Ihrem Club gehört und was geliefert wird. Tatsächliche medizinische Boni sollten weiterhin von Medizintransportern kommen, die einem bestimmten Event zugewiesen sind. Nur zugewiesene und berechtigte Transporter dürfen medizinische Berechnungen am Renntag beeinflussen.",
+    "garageSlotsTeamCar": "Eigene Fahrzeuge erscheinen zuerst, ausstehende Lieferungen füllen die nächsten freien Plätze, und offene Plätze bleiben für zukünftige Anschaffungen verfügbar.",
+    "garageSlotsGeneric": "Eigene Assets erscheinen zuerst, ausstehende Lieferungen füllen die nächsten freien Plätze, und offene Plätze bleiben für zukünftige Anschaffungen verfügbar.",
+    "freePremiumMax": "Kostenlos {{free}} · Premium {{premium}} · Max. {{max}}",
+    "ownedPending": "Im Besitz {{owned}} · Ausstehend {{pending}}",
+    "activeMaximum": "{{active}} aktive von maximal {{max}} Plätzen",
+    "slot": "Platz #{{slot}}",
+    "slots": "{{count}} Plätze",
+    "slotOne": "{{count}} Platz",
+    "deliveryItem": "Lieferung {{current}} von {{total}}",
+    "cancelDelivery": "Lieferung stornieren",
+    "emptyTeamCar": "Freier Teamfahrzeug-Platz für eine neue Lieferung.",
+    "emptyTeamBus": "Freier Teambus-Platz für eine neue Lieferung.",
+    "emptyEquipmentVan": "Freier Platz für einen neuen Ausrüstungstransporter.",
+    "emptyMobileWorkshop": "Freier Platz für eine neue mobile Werkstatt.",
+    "emptyMedicalVan": "Freier Platz für einen neuen Medizintransporter.",
+    "premiumSlotDescription": "Automatisch verfügbar, solange Premium aktiv ist, oder dauerhaft mit Coins.",
+    "additionalTeamCarCapacity": "Zusätzliche dauerhafte Garagenkapazität für Teamfahrzeuge.",
+    "additionalCapacity": "Zusätzliche dauerhafte Garagenkapazität.",
+    "unlockCoins": "Dauerhaft freischalten · {{coins}} Coins",
+    "condition100": "Dieses Asset hat bereits 100 % Zustand.",
+    "alreadyRepair": "Dieses Asset befindet sich bereits in Reparatur.",
+    "assignedLocked": "Dieses Asset ist derzeit zugewiesen und gesperrt.",
+    "renameTeamCar": "Teamfahrzeug umbenennen",
+    "rename": "{{name}} umbenennen",
+    "enterName": "Geben Sie einen Namen für {{asset}} ein.",
+    "inRepairUntil": "In Reparatur bis {{date}}",
+    "inUse": "In Verwendung: {{assignment}}",
+    "inUseUntil": "In Verwendung: {{assignment}} bis {{date}}",
+    "assignedEvent": "Event zugewiesen",
+    "mechanicalResponse": "Mechanische Reaktion",
+    "mechanicalResponseDescription": "Bester Unterstützungswert eigener Fahrzeuge für Service und technische Reaktion am Renntag.",
+    "feedingSupport": "Verpflegungsunterstützung",
+    "feedingSupportDescription": "Reduzierung der Rennermüdung auf Garagenebene aus der aktuellen Teamfahrzeug-Flotte.",
+    "tacticalComms": "Taktische Kommunikation",
+    "tacticalCommsDescription": "Höchste aktuelle Unterstützungsstufe aus eigenen Teamfahrzeugen und deren Zustand.",
+    "teamCarPotential": "Höchste konfigurierte Teamfahrzeug-Stufe, die über das Garagensystem angeschafft werden kann.",
+    "travelComfort": "Reisekomfort",
+    "travelComfortDescription": "Bester Unterstützungswert eigener Busse für Fahrerkomfort und Logistik des Rennprogramms.",
+    "riderRecovery": "Fahrererholung",
+    "riderRecoveryDescription": "Eintägige Ermüdungsreduzierung auf Garagenebene aus der aktuellen Teambus-Zusammenfassung.",
+    "tourFatigueCover": "Ermüdungsabdeckung bei Rundfahrten",
+    "tourFatigueDescription": "Höchste aktuelle Unterstützungsstufe aus eigenen Teambussen und deren Zustand.",
+    "teamBusPotential": "Höchste konfigurierte Teambus-Stufe, die über das Garagensystem angeschafft werden kann.",
+    "equipmentLogistics": "Ausrüstungslogistik",
+    "equipmentLogisticsDescription": "Bester Unterstützungswert eigener Transporter für Fahrradtransport und Ersatzteilabdeckung.",
+    "raceReadiness": "Rennbereitschaft",
+    "equipmentReadinessDescription": "Ausrüstungs- oder Logistikunterstützung auf Garagenebene aus der aktuellen Ausrüstungstransporter-Zusammenfassung.",
+    "equipmentCover": "Ausrüstungsabdeckung",
+    "equipmentCoverDescription": "Höchste aktuelle Unterstützungsstufe aus eigenen Ausrüstungstransportern und deren Zustand.",
+    "equipmentVanPotential": "Höchste konfigurierte Ausrüstungstransporter-Stufe, die über das Garagensystem angeschafft werden kann.",
+    "technicalService": "Technischer Service",
+    "technicalServiceDescription": "Bester Unterstützungswert eigener Werkstätten für Vor-Ort-Service und mechanische Reaktion.",
+    "repairResponse": "Reparaturreaktion",
+    "repairResponseDescription": "Technische Reaktion oder Reparaturunterstützung auf Garagenebene aus der aktuellen Zusammenfassung der mobilen Werkstätten.",
+    "workshopCover": "Werkstattabdeckung",
+    "workshopCoverDescription": "Höchste aktuelle Unterstützungsstufe aus eigenen mobilen Werkstätten und deren Zustand.",
+    "workshopPotential": "Höchste konfigurierte Stufe einer mobilen Werkstatt, die über das Garagensystem angeschafft werden kann.",
+    "medicalResponse": "Medizinische Reaktion",
+    "medicalResponseDescription": "Bester Unterstützungswert eigener Medizintransporter für Behandlung am Renntag und Notfallreaktion.",
+    "healthCoverage": "Gesundheitsabdeckung",
+    "healthCoverageDescription": "Medizinische Reaktion, Behandlung, Erholung oder Gesundheitsunterstützung auf Garagenebene aus der aktuellen Medizintransporter-Zusammenfassung.",
+    "medicalCover": "Medizinische Abdeckung",
+    "medicalCoverDescription": "Höchste aktuelle Unterstützungsstufe aus eigenen Medizintransportern und deren Zustand.",
+    "medicalVanPotential": "Höchste konfigurierte Medizintransporter-Stufe, die über das Garagensystem angeschafft werden kann.",
+    "deliveryCancelled": "Lieferung storniert. Vollständige Rückerstattung an den Club.",
+    "deliveryStarted": "Lieferung für {{asset}} Level {{level}} gestartet.",
+    "serviceUnavailable": "Asset-Lieferservice nicht verfügbar",
+    "serviceUnavailableMessage": "Der Asset-Lieferservice konnte nicht kontaktiert werden. Bitte versuchen Sie es erneut.",
+    "acquisitionBlocked": "Asset-Anschaffung gesperrt",
+    "cannotAcquire": "Dieses Asset kann derzeit nicht angeschafft werden.",
+    "renameFailed": "{{asset}} konnte nicht umbenannt werden."
+  },
+  "assetModal": {
+    "closeAria": "Dialog für Asset-Aktion schließen",
+    "repairAsset": "Asset reparieren",
+    "sellAsset": "Asset verkaufen",
+    "levelAsset": "Stufe {{level}} · {{asset}}",
+    "calculating": "Angebot wird berechnet...",
+    "repairQuote": "Reparaturangebot",
+    "currentCondition": "Aktueller Zustand",
+    "repairCost": "Reparaturkosten",
+    "repairTime": "Reparaturzeit",
+    "saleQuote": "Verkaufsangebot",
+    "purchaseCost": "Anschaffungskosten",
+    "moneyReceived": "Erhaltener Betrag",
+    "sellingNotice": "Beim Verkauf wird dieses Asset aus der Garage entfernt und der Verkaufswert dem Club-Bargeld gutgeschrieben.",
+    "startingRepair": "Reparatur wird gestartet...",
+    "selling": "Wird verkauft...",
+    "confirmRepair": "Reparatur bestätigen",
+    "confirmSale": "Verkauf bestätigen",
+    "repairStarted": "Reparatur von {{name}} gestartet.",
+    "sold": "{{name}} verkauft und aus der Garage entfernt."
+  },
+  "staffRoles": {
+    "headCoach": "Cheftrainer",
+    "trainer": "Trainer",
+    "u23HeadCoach": "U23-Cheftrainer",
+    "teamDoctor": "Teamarzt",
+    "physio": "Physiotherapeut",
+    "nutritionist": "Ernährungsberater",
+    "mechanic": "Mechaniker",
+    "sportDirector": "Sportdirektor",
+    "scoutAnalyst": "Scout / Analyst"
+  },
+  "tutorial": {
+    "welcomeTitle": "Benötigen Sie Hilfe mit der Infrastruktur?",
+    "welcomeBody": "Wir zeigen Ihnen, wie Einrichtungen und Team-Assets funktionieren, einschließlich Ausbauten, Personallimits, Fahrzeuge, Boni und Bauprojekte.",
+    "start": "Tutorial starten",
+    "noThanks": "Nein, danke",
+    "facilitiesTitle": "Einrichtungen",
+    "facilitiesBody": "Dies ist die Infrastrukturseite.\n\nDie Registerkarte Einrichtungen zeigt die Gebäude, die Ihr Club besitzen und ausbauen kann. Jedes Team startet mit einem einfachen Clubhaus auf Level 1.\n\nSpäter können Sie wichtige Einrichtungen wie Trainingszentrum, Medizinzentrum, Nachwuchsakademie, Mechanikerwerkstatt und Scouting-Büro bauen und ausbauen.\n\nEinrichtungen sind wichtig, weil sie Ihren Club verbessern und außerdem festlegen können, wie viele Mitarbeiter Sie beschäftigen dürfen.",
+    "projectsTitle": "Bau, Ausbau und Rückerstattungen",
+    "projectsBody": "Wenn Sie die Details einer Einrichtung öffnen, sehen Sie die Kosten des nächsten Levels, die Bauzeit und welche Boni oder Freischaltungen es bringt.\n\nSie können ein Bau- oder Ausbauprojekt starten, wenn Ihr Club genügend Geld und freie Projektkapazität besitzt.\n\nSie können ein Infrastrukturprojekt auch abbrechen. Bei sofortigem Abbruch erhalten Sie eine volle Rückerstattung; später kann sie geringer ausfallen.",
+    "assetsTitle": "Team-Assets",
+    "assetsBody": "Die Registerkarte Assets zeigt Fahrzeuge und Unterstützungs-Assets Ihres Teams.\n\nDazu gehören Teamfahrzeuge, Teambusse, Ausrüstungstransporter, mobile Werkstätten und Medizintransporter. Diese Assets können Ihr Team bei Rennen, Reisen, Vorbereitung und Trainingslagern unterstützen.\n\nJedes Asset kann unterschiedliche Level, Kosten, Zustände, Boni und Grenzen besitzen. Öffnen Sie die Details, um zu verstehen, welchen Nutzen es bringt.\n\nFür einige erweiterte Funktionen, Managementoptionen oder zusätzliche Werkzeuge kann ein Premium-Konto oder ein Coin-Kauf erforderlich sein.",
+    "next": "Weiter",
+    "continueCalendar": "Weiter zum Kalender",
+    "finish": "Für jetzt beenden",
+    "skip": "Tutorial überspringen",
+    "close": "Tutorial schließen"
+  },
+  "assetStatus": {
+    "available": "Verfügbar",
+    "assigned": "Zugewiesen",
+    "inRepair": "In Reparatur",
+    "sold": "Verkauft"
+  },
+  "assetCondition": {
+    "excellent": "Ausgezeichnet",
+    "good": "Gut",
+    "fair": "Ordentlich",
+    "poor": "Schlecht",
+    "tracked": "Zustand wird verfolgt"
+  },
+  "supportTiers": {
+    "none": "Keine",
+    "basic": "Basis",
+    "solid": "Solide",
+    "strong": "Stark",
+    "elite": "Elite"
+  },
+  "assetTiers": {
+    "team_car": {
+      "level1": {
+        "name": "Basis-Clubfahrzeug",
+        "effect": "Bietet grundlegende Rennunterstützung, mechanische Reaktion und Verpflegungsunterstützung."
+      },
+      "level2": {
+        "name": "Zuverlässiges Supportfahrzeug",
+        "effect": "Verbessert mechanische Reaktion, Logistik am Renntag und grundlegenden Ermüdungsschutz."
+      },
+      "level3": {
+        "name": "Professionelles Teamfahrzeug",
+        "effect": "Verbessert Rennunterstützung, taktische Kommunikation, Verpflegung und Reaktion auf Zwischenfälle."
+      },
+      "level4": {
+        "name": "Elite-Supportfahrzeug",
+        "effect": "Bietet starke mechanische Reaktion, taktische Unterstützung, Sturz-/Zwischenfallreaktion und Schutz vor Rennermüdung."
+      },
+      "level5": {
+        "name": "Weltklasse-Rennsupportfahrzeug",
+        "effect": "Bietet maximale Qualität bei Rennunterstützung, mechanischer Reaktion, taktischer Kommunikation und Zwischenfallunterstützung."
+      }
+    },
+    "team_bus": {
+      "level1": {
+        "name": "Basis-Teambus",
+        "effect": "Kleine Ermüdungsreduzierung bei Rundfahrten. Geringer Effekt bei Eintagesrennen."
+      },
+      "level2": {
+        "name": "Recovery-Teambus",
+        "effect": "Gute Ermüdungsreduzierung bei Etappenrennen und langen Reiseblöcken."
+      },
+      "level3": {
+        "name": "Elite-Tourbus",
+        "effect": "Stärkste Bus-Ermüdungsreduzierung auf langen Rundfahrten; begrenzter Effekt bei Eintagesrennen."
+      }
+    },
+    "equipment_van": {
+      "level1": {
+        "name": "Basis-Ausrüstungstransporter",
+        "effect": "Kleiner Bonus auf Ausrüstungsbereitschaft vor der Etappe und geringe Reduzierung von Zeitverlusten bei mechanischen Zwischenfällen."
+      },
+      "level2": {
+        "name": "Service-Ausrüstungstransporter",
+        "effect": "Mittlerer Bonus auf Ersatzradreaktion, Bereitschaft vor der Etappe und Reduzierung des Zustandsverlusts von Ausrüstung."
+      },
+      "level3": {
+        "name": "Pro-Ausrüstungstransporter",
+        "effect": "Starker Bonus auf Ersatzradreaktion, Unterstützung beim Laufradwechsel und Ausrüstungsbereitschaft bei Etappenrennen."
+      }
+    },
+    "mobile_workshop": {
+      "level1": {
+        "name": "Mobile Werkstatt",
+        "effect": "Verbessert Reparaturgeschwindigkeit, senkt Reparaturkosten und unterstützt die Mechanikerreaktion bei Rennen und Rundfahrten."
+      },
+      "level2": {
+        "name": "Pro Mobile Werkstatt",
+        "effect": "Starker Bonus auf Reparaturgeschwindigkeit, stärkere Kostensenkung und bessere Zustandswiederherstellung nach Rennen."
+      }
+    },
+    "medical_van": {
+      "level1": {
+        "name": "Basis-Medizintransporter",
+        "effect": "Kleiner Bonus auf medizinische Reaktion, geringe Reduzierung des Risikos kleiner Verletzungen und grundlegende Erholungsunterstützung nach Etappen."
+      },
+      "level2": {
+        "name": "Recovery-Medizintransporter",
+        "effect": "Mittlerer Bonus auf medizinische Reaktion, stärkere Reduzierung des Risikos kleiner Verletzungen, Flüssigkeitsunterstützung und bessere Erholung nach Etappen."
+      },
+      "level3": {
+        "name": "Pro-Medizineinheit",
+        "effect": "Starker Bonus auf medizinische Reaktion, beste Reduzierung kleiner Verletzungen, Hitze-/Flüssigkeitsunterstützung und stärkste Erholung nach Etappen."
+      }
+    }
+  },
+  "facilityUpgrades": {
+    "club_house": {
+      "level2": {
+        "unlock": "Schaltet einen Platz für den Sportdirektor frei.",
+        "effect": "Verbessert die Verwaltungsbasis des Clubs und bereitet zukünftige Sponsoren-/Vertragssysteme vor."
+      },
+      "level3": {
+        "unlock": "Verbessert Clubverwaltung, Sponsorenabläufe und Vertragsinfrastruktur.",
+        "effect": "Zukünftige Sponsoren-, Vertrags- und Organisationsboni können von diesem Level skalieren."
+      },
+      "level4": {
+        "unlock": "Unterstützt eine größere professionelle Cluborganisation.",
+        "effect": "Zukünftige kommerzielle und Personalmanagementsysteme können von diesem Level skalieren."
+      },
+      "level5": {
+        "unlock": "Elite-Clubabläufe.",
+        "effect": "Maximale HQ-Basis für zukünftige Elite-Boni bei Sponsoren, Verträgen und Organisation."
+      }
+    },
+    "mechanics_workshop": {
+      "level1": {
+        "unlock": "Entfernt die starke Mechanikerbegrenzung und schaltet den zweiten Mechanikerplatz frei.",
+        "effect": "Verbessert die technische Unterstützungsbasis für zukünftige Ausrüstungs- und Rennservicesysteme."
+      },
+      "level2": {
+        "unlock": "Schaltet den dritten Mechanikerplatz plus 10 % schnellere Ausrüstungsreparatur frei.",
+        "effect": "Zukünftige Ausrüstungsreparaturen werden schneller, sobald das Ausrüstungssystem diesen Effekt anwendet."
+      },
+      "level3": {
+        "unlock": "Schaltet den vierten Mechanikerplatz plus 20 % schnellere und 20 % günstigere Ausrüstungsreparatur frei.",
+        "effect": "Zukünftige Ausrüstungsreparaturen werden schneller und günstiger."
+      },
+      "level4": {
+        "unlock": "Schaltet den fünften Mechanikerplatz plus 30 % schnellere und 30 % günstigere Ausrüstungsreparatur frei.",
+        "effect": "Maximale Unterstützung der Mechanikerwerkstatt für Ausrüstungswartung."
+      }
+    },
+    "medical_center": {
+      "level1": {
+        "unlock": "Entfernt die starke medizinische Begrenzung von Level 0 und schaltet den zweiten Physiotherapeutenplatz frei.",
+        "effect": "Verbessert die Wirksamkeit des medizinischen Personals bei Verletzungsprävention, Erholungsdauer und Reduzierung der Ermüdungsuntergrenze."
+      },
+      "level2": {
+        "unlock": "Schaltet den Ernährungsberaterplatz plus Verletzungserholungsboni bis 3 % frei.",
+        "effect": "Ermöglicht den Beitrag des Ernährungsberaters und verbessert die Rückkehr zur Fitness."
+      },
+      "level3": {
+        "unlock": "Schaltet den dritten Physiotherapeutenplatz und den zweiten Teamarztplatz frei.",
+        "effect": "Verbessert medizinische Kapazität und ermöglicht stärkere kombinierte Gesundheits-/Erholungseffekte."
+      },
+      "level4": {
+        "unlock": "Schaltet den vierten Physiotherapeutenplatz plus Verletzungserholungsboni bis 5 % frei.",
+        "effect": "Verbessert Erholungsgeschwindigkeit und medizinische Tiefe für hochklassige Kader."
+      },
+      "level5": {
+        "unlock": "Schaltet den fünften Physiotherapeutenplatz plus Verletzungserholungsboni bis 8 % frei.",
+        "effect": "Elite-Medizinzentrum mit maximaler Erholungs- und Präventionsunterstützung."
+      }
+    },
+    "scouting_office": {
+      "level1": {
+        "unlock": "Grundlegendes Scouting-Setup plus zweiter Scout-/Analystenplatz.",
+        "effect": "Behält die Basisgrenze der Berichtsqualität bei, verbessert aber die Scouting-Kapazität."
+      },
+      "level2": {
+        "unlock": "Schaltet den dritten Scout-/Analystenplatz plus solide Berichtsqualität frei.",
+        "effect": "Hebt die maximale Qualität von Scouting-Berichten auf Solide."
+      },
+      "level3": {
+        "unlock": "Schaltet den vierten Scout-/Analystenplatz plus starke Berichtsqualität frei.",
+        "effect": "Hebt die maximale Qualität von Scouting-Berichten auf Stark."
+      },
+      "level4": {
+        "unlock": "Schaltet den fünften Scout-/Analystenplatz plus Elite-Berichtsqualität frei.",
+        "effect": "Hebt die maximale Qualität von Scouting-Berichten auf Elite."
+      }
+    },
+    "training_center": {
+      "level1": {
+        "unlock": "Entfernt die starke Coaching-Begrenzung von Level 0.",
+        "effect": "Ermöglicht dem Trainerpersonal einen wirksameren Beitrag zu Training, Entwicklung und Kontrolle des Überlastungsrisikos."
+      },
+      "level2": {
+        "unlock": "Verbessert den Beitrag der Trainer.",
+        "effect": "Erhöht die effektive Coaching-Grenze für Training und Entwicklungsunterstützung."
+      },
+      "level3": {
+        "unlock": "Schaltet den zweiten Trainerplatz frei.",
+        "effect": "Ermöglicht mehr Trainerpersonal und einen stärkeren kombinierten Effekt auf Training und Entwicklung."
+      },
+      "level4": {
+        "unlock": "Trainingsinfrastruktur auf hohem Niveau.",
+        "effect": "Erhöht die Grenze für Coaching-Effekte bei fortgeschrittenen Clubs."
+      },
+      "level5": {
+        "unlock": "Elite-Trainings- und Entwicklungszentrum.",
+        "effect": "Maximale Coaching-Grenze für Training, Fahrerentwicklung und Reduzierung des Überlastungsrisikos."
+      }
+    },
+    "youth_academy": {
+      "level1": {
+        "unlock": "Schaltet den Platz für den U23-Cheftrainer frei.",
+        "effect": "U23: reguläre Trainingsentwicklung +6%; Rennentwicklungsfortschritt +5%. U16: reguläre Entwicklung +8%; Rennentwicklungsfortschritt +6%."
+      },
+      "level2": {
+        "unlock": "Bessere Unterstützung der Nachwuchsentwicklung.",
+        "effect": "U23: reguläre Trainingsentwicklung +12%; Rennentwicklung +10%; Entwicklungseffekt des U23-Cheftrainers +10%; Abbau außerhalb des Trainingsfokus -20%. U16: reguläre Entwicklung +15%; Rennentwicklung +12%; Entwicklungseffekt des U16-Cheftrainers +12%."
+      }
+    }
+  },
+  "legacyUi": {
+    "teamBusGarage": "Teambus-Garage",
+    "teamBusGarageDescription": "Teambusse verbessern Reisekomfort, Erholung, Ermüdungskontrolle und Logistik bei Etappenrennen. Verwalten Sie die Garage nach Plätzen, starten Sie neue Lieferungen, reparieren Sie verschlissene Busse oder verkaufen Sie verfügbare Busse.",
+    "equipmentVanGarage": "Garage für Ausrüstungstransporter",
+    "equipmentVanGarageDescription": "Ausrüstungstransporter unterstützen Fahrradtransport, Ersatzteilabdeckung, Rennlogistik und allgemeine Einsatzbereitschaft. Verwalten Sie die Garage nach Plätzen, starten Sie Lieferungen, reparieren Sie verschlissene Transporter oder verkaufen Sie verfügbare Fahrzeuge.",
+    "mobileWorkshopGarageDescription": "Mobile Werkstätten ermöglichen technische Reparaturen vor Ort, schnellere Reaktion auf Probleme, Mechanikerabdeckung und zusätzliche Servicekapazität. Verwalten Sie die Garage nach Plätzen, starten Sie Lieferungen, reparieren Sie verschlissene Werkstätten oder verkaufen Sie verfügbare Einheiten.",
+    "medicalVanGarageDescription": "Medizintransporter unterstützen medizinische Reaktion am Renntag, Zugang zur Behandlung, Verletzungskontrolle und medizinische Abdeckung. Verwalten Sie die Garage nach Plätzen, starten Sie Lieferungen, reparieren Sie verschlissene Transporter oder verkaufen Sie verfügbare Fahrzeuge."
+  },
+  "facilityGuide": {
+    "title": "Übersicht der Einrichtungslevel",
+    "whatEveryLevelProvides": "Leistungen aller Level",
+    "currentPanelTitle": "Aktuelles Level {{level}}",
+    "nextPanelTitle": "Nächstes Level {{level}}",
+    "activeNow": "Aktuell aktiv",
+    "unlocks": "Freischaltungen:",
+    "effects": "Effekte:",
+    "monthlyMaintenance": "Monatliche Wartung:",
+    "perGameMonth": "/ Spielmonat",
+    "upgradeCost": "Ausbaukosten",
+    "constructionTime": "Bauzeit",
+    "estimatedCompletion": "Vorauss. Abschluss",
+    "levelLabel": "Level {{level}}",
+    "currentLevel": "Aktuelles Level",
+    "unlocked": "Freigeschaltet",
+    "futureLevel": "Zukünftiges Level",
+    "upgradeToThisLevel": "Ausbau auf dieses Level: {{cost}} · {{duration}}",
+    "maximumReached": "Maximales Einrichtungslevel erreicht.",
+    "levelBadge": "Level {{level}} / {{max}}",
+    "imageAlt": "{{name}} — Level {{level}} von {{max}}",
+    "noAdditionalUnlock": "Keine zusätzliche Freischaltung auf diesem Level.",
+    "noAdditionalEffect": "Für dieses Level ist kein zusätzlicher Effekt konfiguriert."
+  },
+  "facilityLevelDetails": {
+    "club_house": {
+      "level0": {
+        "unlock": "Nur grundlegende Clubverwaltung.",
+        "effect": "Kein finanzieller Bonus des Clubhauses ist aktiv."
+      },
+      "level1": {
+        "unlock": "Keine neue Personalrolle.",
+        "effect": "Personalkosten -2%. Berechtigte wiederkehrende Betriebskosten erhalten 1% Kostenoptimierungsrabatt."
+      },
+      "level2": {
+        "unlock": "Schaltet einen Platz für den Sportdirektor frei.",
+        "effect": "Personalkosten -4%. Fahrergehälter -1%. Berechtigte wiederkehrende Betriebskosten erhalten 2% Kostenoptimierungsrabatt. Monatlicher Steuerrabatt 2%."
+      },
+      "level3": {
+        "unlock": "Keine neue Freischaltung.",
+        "effect": "Personalkosten -6%. Fahrergehälter -2%. Berechtigte wiederkehrende Betriebskosten erhalten 3% Kostenoptimierungsrabatt. Monatlicher Steuerrabatt 4%."
+      },
+      "level4": {
+        "unlock": "Keine neue Freischaltung.",
+        "effect": "Personalkosten -8%. Fahrergehälter -3%. Berechtigte wiederkehrende Betriebskosten erhalten 5% Kostenoptimierungsrabatt. Monatlicher Steuerrabatt 6%."
+      },
+      "level5": {
+        "unlock": "Keine neue Freischaltung.",
+        "effect": "Personalkosten -10%. Fahrergehälter -4%. Berechtigte wiederkehrende Betriebskosten erhalten 7% Kostenoptimierungsrabatt. Monatlicher Steuerrabatt 10%."
+      }
+    },
+    "training_center": {
+      "level0": {
+        "unlock": "Nur grundlegende Trainingseinrichtungen.",
+        "effect": "Kein Bonus des Trainingszentrums für Entwicklung, Trainerwirksamkeit, Ermüdungsbelastung oder Trainingsrisiko ist aktiv."
+      },
+      "level1": {
+        "unlock": "Keine neue Freischaltung.",
+        "effect": "Reguläre Trainingsentwicklung +3%; Risiko von Trainingsüberlastung und Unfällen -5%; gilt für Erste Mannschaft und U23-Fahrer."
+      },
+      "level2": {
+        "unlock": "Keine neue Freischaltung.",
+        "effect": "Reguläre Trainingsentwicklung +6%; Trainingsbonus von Cheftrainer und Trainer +5% Wirksamkeit; Risiko von Trainingsüberlastung und Unfällen -10%; gilt für Erste Mannschaft und U23-Fahrer."
+      },
+      "level3": {
+        "unlock": "Schaltet einen zweiten Trainerplatz frei.",
+        "effect": "Reguläre Trainingsentwicklung +9%; Trainingsbonus von Cheftrainer und Trainer +10% Wirksamkeit; Ermüdungsbelastung durch reguläres Training -1 Punkt; Risiko von Trainingsüberlastung und Unfällen -15%; gilt für Erste Mannschaft und U23-Fahrer."
+      },
+      "level4": {
+        "unlock": "Keine neue Freischaltung.",
+        "effect": "Reguläre Trainingsentwicklung +12%; Trainingsbonus von Cheftrainer und Trainer +15% Wirksamkeit; Ermüdungsbelastung durch reguläres Training -1 Punkt; Risiko von Trainingsüberlastung und Unfällen -20%; gilt für Erste Mannschaft und U23-Fahrer."
+      },
+      "level5": {
+        "unlock": "Schaltet einen dritten Trainerplatz frei.",
+        "effect": "Reguläre Trainingsentwicklung +15%; Trainingsbonus von Cheftrainer und Trainer +20% Wirksamkeit; Ermüdungsbelastung durch reguläres Training -2 Punkte; Risiko von Trainingsüberlastung und Unfällen -25%; gilt für Erste Mannschaft und U23-Fahrer."
+      }
+    },
+    "medical_center": {
+      "level0": {
+        "unlock": "Medizinische Basiseinrichtung; ein Platz für Teamarzt und ein Platz für Physiotherapeut sind verfügbar, sobald der Personalbetrieb freigeschaltet ist.",
+        "effect": "Kein Bonus des Medizinzentrums für Prävention, Erholungsdauer oder Rehabilitations-Ermüdungsuntergrenze ist aktiv."
+      },
+      "level1": {
+        "unlock": "Schaltet einen zweiten Physiotherapeutenplatz frei.",
+        "effect": "Vermeidbares Verletzungs- und Krankheitsrisiko -3%; Erholungsdauer bei Gesundheitsfällen -4%; Ermüdungsuntergrenze in der Rehabilitation -1 Punkt; gilt für Erste Mannschaft und U23-Fahrer."
+      },
+      "level2": {
+        "unlock": "Schaltet einen Platz für den Ernährungsberater frei.",
+        "effect": "Vermeidbares Verletzungs- und Krankheitsrisiko -6%; Erholungsdauer bei Gesundheitsfällen -8%; Ermüdungsuntergrenze in der Rehabilitation -2 Punkte; gilt für Erste Mannschaft und U23-Fahrer."
+      },
+      "level3": {
+        "unlock": "Schaltet einen zweiten Teamarztplatz und einen dritten Physiotherapeutenplatz frei.",
+        "effect": "Vermeidbares Verletzungs- und Krankheitsrisiko -9%; Erholungsdauer bei Gesundheitsfällen -12%; Ermüdungsuntergrenze in der Rehabilitation -3 Punkte; gilt für Erste Mannschaft und U23-Fahrer."
+      },
+      "level4": {
+        "unlock": "Schaltet einen vierten Physiotherapeutenplatz frei.",
+        "effect": "Vermeidbares Verletzungs- und Krankheitsrisiko -12%; Erholungsdauer bei Gesundheitsfällen -16%; Ermüdungsuntergrenze in der Rehabilitation -4 Punkte; gilt für Erste Mannschaft und U23-Fahrer."
+      },
+      "level5": {
+        "unlock": "Schaltet einen fünften Physiotherapeutenplatz frei.",
+        "effect": "Vermeidbares Verletzungs- und Krankheitsrisiko -15%; Erholungsdauer bei Gesundheitsfällen -20%; Ermüdungsuntergrenze in der Rehabilitation -5 Punkte; gilt für Erste Mannschaft und U23-Fahrer."
+      }
+    },
+    "youth_academy": {
+      "level0": {
+        "unlock": "Keine eigene U23-Akademieinfrastruktur und kein Platz für einen U23-Cheftrainer.",
+        "effect": "Kein akademiespezifischer Bonus für U23- oder U16-Training bzw. -Entwicklung ist aktiv."
+      },
+      "level1": {
+        "unlock": "Schaltet einen Platz für den U23-Cheftrainer frei.",
+        "effect": "U23: reguläre Trainingsentwicklung +6%; Rennentwicklungsfortschritt +5%. U16: reguläre Entwicklung +8%; Rennentwicklungsfortschritt +6%."
+      },
+      "level2": {
+        "unlock": "Elite-Entwicklungsprogramm der Akademie; kein zusätzlicher Personalplatz.",
+        "effect": "U23: reguläre Trainingsentwicklung +12%; Rennentwicklungsfortschritt +10%; Entwicklungseffekt des U23-Cheftrainers +10% Wirksamkeit; Abbau außerhalb des Trainingsfokus -20%. U16: reguläre Entwicklung +15%; Rennentwicklungsfortschritt +12%; Entwicklungseffekt des U16-Cheftrainers +12%."
+      }
+    },
+    "mechanics_workshop": {
+      "level0": {
+        "unlock": "Nur grundlegende technische Unterstützung; zusätzliche Mechanikerkapazität bleibt gesperrt.",
+        "effect": "Kein werkstattbasierter Bonus auf Reparaturgeschwindigkeit oder Wartungskosten ist aktiv."
+      },
+      "level1": {
+        "unlock": "Schaltet einen zweiten Mechanikerplatz frei.",
+        "effect": "Mechanikerkapazität 2; Reparaturgeschwindigkeit der Ausrüstung +5%; Zustandsverlust der Ausrüstung -3%; mechanisches Risiko -2%"
+      },
+      "level2": {
+        "unlock": "Schaltet einen dritten Mechanikerplatz frei.",
+        "effect": "Mechanikerkapazität 3; Reparaturgeschwindigkeit der Ausrüstung +12%; Reparaturkosten der Ausrüstung -8%; Zustandsverlust der Ausrüstung -6%; mechanisches Risiko -4%"
+      },
+      "level3": {
+        "unlock": "Schaltet einen vierten Mechanikerplatz frei.",
+        "effect": "Mechanikerkapazität 4; Reparaturgeschwindigkeit der Ausrüstung +22%; Reparaturkosten der Ausrüstung -16%; Zustandsverlust der Ausrüstung -10%; mechanisches Risiko -7%"
+      },
+      "level4": {
+        "unlock": "Schaltet einen fünften Mechanikerplatz frei.",
+        "effect": "Mechanikerkapazität 5; Reparaturgeschwindigkeit der Ausrüstung +35%; Reparaturkosten der Ausrüstung -25%; Zustandsverlust der Ausrüstung -15%; mechanisches Risiko -10%"
+      }
+    },
+    "scouting_office": {
+      "level0": {
+        "unlock": "Nur grundlegendes Scouting; zusätzliche Scout-Kapazität und höhere Berichtsstufen bleiben gesperrt.",
+        "effect": "Die Qualität von Scouting-Berichten bleibt auf die Basisgrenze der Einrichtung begrenzt."
+      },
+      "level1": {
+        "unlock": "Schaltet einen zweiten Scout-/Analystenplatz frei.",
+        "effect": "Scout-Kapazität 2; Basisgrenze für Berichtsqualität; Attribute werden in Bereichen von ungefähr 10 Punkten angezeigt"
+      },
+      "level2": {
+        "unlock": "Schaltet einen dritten Scout-/Analystenplatz sowie solide Berichtsqualität frei.",
+        "effect": "Scout-Kapazität 3; Obergrenze für solide Berichtsqualität; Attribute werden in Bereichen von ungefähr 5 Punkten angezeigt"
+      },
+      "level3": {
+        "unlock": "Schaltet einen vierten Scout-/Analystenplatz sowie starke Berichtsqualität frei.",
+        "effect": "Scout-Kapazität 4; Obergrenze für starke Berichtsqualität; Attribute werden in Bereichen von ungefähr 3 Punkten angezeigt"
+      },
+      "level4": {
+        "unlock": "Schaltet einen fünften Scout-/Analystenplatz sowie Elite-Berichtsqualität frei.",
+        "effect": "Scout-Kapazität 5; Obergrenze für Elite-Berichtsqualität; Scouts mit Elite-Qualität können exakte Werte anzeigen"
+      }
+    },
+    "sprint_performance_circuit": {
+      "level0": {
+        "unlock": "Keine zusätzlichen Freischaltungen.",
+        "effect": "Auf dieser Stufe ist kein Bonus aktiv."
+      },
+      "level1": {
+        "unlock": "Erfordert Trainingszentrum Stufe 2.",
+        "effect": "Sprinttraining +4% Profiteam, +8% U23, +12% U16; sprintbezogene Rennentwicklung U23/U16 +5%."
+      }
+    },
+    "climbing_performance_center": {
+      "level0": {
+        "unlock": "Keine zusätzlichen Freischaltungen.",
+        "effect": "Auf dieser Stufe ist kein Bonus aktiv."
+      },
+      "level1": {
+        "unlock": "Erfordert Trainingszentrum Stufe 2.",
+        "effect": "Bergtraining +4% Profiteam, +8% U23, +12% U16; bergbezogene Rennentwicklung U23/U16 +5%."
+      }
+    },
+    "team_time_trial_center": {
+      "level0": {
+        "unlock": "Keine zusätzlichen Freischaltungen.",
+        "effect": "Auf dieser Stufe ist kein Bonus aktiv."
+      },
+      "level1": {
+        "unlock": "Erfordert Trainingszentrum Stufe 2.",
+        "effect": "Zeitfahrtraining +4% Profiteam, +7% U23, +10% U16; TTT-Rennentwicklung U23/U16 +5%; Effizienz beim Mannschaftszeitfahren +5%."
+      }
+    },
+    "team_residential_campus": {
+      "level0": {
+        "unlock": "Keine zusätzlichen Freischaltungen.",
+        "effect": "Auf dieser Stufe ist kein Bonus aktiv."
+      },
+      "level1": {
+        "unlock": "Erfordert Jugendakademie Stufe 1.",
+        "effect": "Unterkunft am Vereinssitz für Profiteam, U23, U16 und feste Mitarbeiter kostenlos; Erholungseffizienz U23/U16 +5%; Hotels bei Auswärtsrennen und Trainingslagern bleiben kostenpflichtig."
+      }
+    }
+  },
+  "assetDetailCopy": {
+    "conditionWear": "Zustand und Verschleiß",
+    "conditionOwnWear": "Zustand und Fahrzeugverschleiß",
+    "vehicleWearExplanation": "Verschleiß wird nach jeder Etappe berechnet und skaliert mit der Distanz (60–160 % der 120-km-Referenz). Etwa {{stages}} Referenzetappen verbleiben bis zur Einsatzgrenze von {{threshold}}.",
+    "vehicleRepairExplanation": "Eine abgeschlossene Reparatur stellt 100 % Zustand wieder her. Pro Spieltag werden {{speed}} Zustandspunkte repariert; das Fahrzeug muss verfügbar sein.",
+    "equipmentRiskExplanation": "Mechanische Zuverlässigkeit beeinflusst Defekte. Ausrüstungsschutz verringert normalen Verschleiß und Schäden durch Zwischenfälle.",
+    "conditionEffectivenessScale": "Wirksamkeit: 90–100 % = 100 %; 75–89 % = 95 %; 60–74 % = 85 %; 45–59 % = 70 %; 30–44 % = 50 %. Unter 30 % ist kein Einsatz möglich.",
+    "medicalTitle": "Medizinische Rennbetreuung und Erholung",
+    "medicalBadge": "Gesundheit, Ermüdung und Erholung",
+    "medicalCurrentEffect": "Aktueller Renneffekt",
+    "medicalFatigueEngine": "Ermüdungs- und Erholungssystem",
+    "medicalWearRepair": "Verschleiß und Reparatur",
+    "medicalReferenceWear": "Verschleiß pro 120 km",
+    "medicalRiskExplanation": "Zwischenfälle können weiterhin auftreten, doch das Risiko bleibender Verletzungen ist reduziert.",
+    "medicalAssignmentRule": "Pro Rennen darf nur ein Medizinwagen eingesetzt werden. Boni werden bei Abgabe des Rennplans festgelegt.",
+    "medicalRepairSpeed": "{{value}} Zustandspunkte pro Spieltag",
+    "statusLabel": "Status",
+    "yourCars": "Ihre Teamfahrzeuge",
+    "yourBuses": "Ihre Teambusse",
+    "yourMedicalVans": "Ihre Medizinwagen",
+    "ownedEquipmentVans": "Eigene Materialtransporter",
+    "ownedWorkshops": "Eigene mobile Werkstätten",
+    "openCarDetails": "Details zu Boni, Renneinsätzen und Fahrzeugaktionen öffnen.",
+    "openBusDetails": "Details zu zustandsabhängigen Boni und Wartungskosten dieses Busses öffnen.",
+    "noCars": "Noch keine Teamfahrzeuge vorhanden.",
+    "noBuses": "Noch keine Teambusse vorhanden.",
+    "cataloguePrice": "Aktueller Katalogpreis",
+    "originalPurchaseValue": "Ursprünglicher Kaufwert",
+    "purchaseValue": "Kaufwert",
+    "catalogueShort": "Katalog",
+    "originalPurchase": "Ursprünglicher Kauf",
+    "raceDaysUsed": "Renntage im Einsatz",
+    "raceDays": "Renntage",
+    "distanceCovered": "Zurückgelegte Strecke",
+    "distance": "Strecke",
+    "lastUsed": "Zuletzt verwendet",
+    "currentCondition": "Aktueller Zustand",
+    "currentEffectiveness": "Aktuelle Wirksamkeit",
+    "effectiveness": "Wirksamkeit",
+    "raceReadyMinimum": "Mindestzustand für Rennen",
+    "wearPerStage": "Verschleiß pro Etappe",
+    "shortStageFloor": "Untergrenze kurzer Etappen",
+    "longStageCeiling": "Obergrenze langer Etappen",
+    "maintenance": "Wartung",
+    "maintenanceDelivery": "Wartung und Lieferung",
+    "repairPerCondition": "Reparatur pro Zustandspunkt",
+    "repairPerPoint": "Reparatur pro Punkt",
+    "currentRepairEstimate": "Aktuelle Gesamtreparaturkosten",
+    "repairEstimate": "Gesamtreparaturkosten",
+    "currentRepairTime": "Aktuelle Reparaturdauer",
+    "repairTime": "Reparaturdauer",
+    "newDeliveryTime": "Neue Lieferzeit",
+    "newDelivery": "Neue Lieferung",
+    "racePlanBenefits": "Boni im Rennplan",
+    "raceBenefits": "Rennboni",
+    "productionRaceBenefits": "Produktive Rennboni",
+    "productionRaceEngineValues": "Werte der Rennsimulation",
+    "productionEngine": "Produktionssystem",
+    "currentCarStatus": "Aktueller Fahrzeugstatus",
+    "productionDescription": "Diese Werte fließen in die Boni der Rennplanung ein.",
+    "teamCarLevelSupport": "Unterstützung durch Teamfahrzeuge nach Stufe",
+    "teamBusLevelSupport": "Busunterstützung bei Ermüdung und Erholung",
+    "equipmentVanBenefits": "Vorteile des Materialtransporters",
+    "workshopBenefits": "Vorteile der mobilen Werkstatt",
+    "configuredEffects": "Konfigurierte Effekte",
+    "fatigue": "Ermüdung",
+    "fatigueControl": "Ermüdungskontrolle",
+    "recovery": "Erholung",
+    "recoverySupport": "Erholungsunterstützung",
+    "health": "Gesundheit",
+    "healthProtection": "Gesundheitsschutz",
+    "mechanicalReliability": "Mechanische Zuverlässigkeit",
+    "equipmentProtection": "Ausrüstungsschutz",
+    "fieldRecovery": "Ausrüstungswiederherstellung unterwegs",
+    "medicalInfo": "Medizinwagen verwenden echten Zustand, Verschleiß und Rennboni. Pro Rennen kann nur ein Wagen zugeteilt werden.",
+    "teamBusInfo": "Nur ein Teambus kann einem Rennen zugeteilt werden. Ermüdungsschutz stärkt die Ermüdungskontrolle, Erholungskomfort stärkt die Erholung. Es gelten teamweite Grenzen.",
+    "equipmentVanInfo": "Materialtransporter erhöhen die mechanische Zuverlässigkeit und schützen zugeteilte Ausrüstung vor normalem Verschleiß und Schäden.",
+    "mobileWorkshopInfo": "Mobile Werkstätten bieten technischen Renndienst und stellen Ausrüstungszustand wieder her. Die Werkstatt am Vereinssitz bleibt für reguläre Wartung zuständig.",
+    "noRaceUsage": "Noch keine Rennnutzung aufgezeichnet.",
+    "loadingRaceHistory": "Rennverlauf wird geladen…",
+    "reference120": "Referenz für 120 km",
+    "workshopWear": "Werkstattverschleiß bei 120 km",
+    "vanWear": "Transporterverschleiß bei 120 km",
+    "usedRaces": "Letzte fünf Renneinsätze",
+    "physicalProtection": "Schutz der physischen Ausrüstung",
+    "mechanicalRisk": "Risiko technischer Defekte",
+    "mechanicalTimeLoss": "Zeitverlust bei Defekten",
+    "repairPointLabel": "Reparatur pro Punkt:",
+    "upToThreeCars": "Bis zu 3 Fahrzeuge pro Rennen",
+    "oneBus": "1 Bus pro Rennen",
+    "fullValueActive": "Voller Wert aktiv",
+    "shortNoRepair": "Keine Reparatur erforderlich",
+    "currentBenefit": "Aktuell: {{value}}",
+    "busByLevel": "Busunterstützung nach Stufe",
+    "equipmentByLevel": "Materialtransporter-Unterstützung nach Stufe",
+    "workshopByLevel": "Mobile Werkstatt-Unterstützung nach Stufe",
+    "medicalByLevel": "Medizinwagen-Unterstützung nach Stufe",
+    "busByLevelHint": "Genaue Werte für Ermüdung, Erholung, Verschleiß und Wartung.",
+    "equipmentByLevelHint": "Genaue Werte für Zuverlässigkeit, Ausrüstungsschutz, Verschleiß und Wartung.",
+    "workshopByLevelHint": "Genaue Werte für Service, Ausrüstungsreparatur, Verschleiß und Wartung.",
+    "medicalByLevelHint": "Genaue Werte für Gesundheitsschutz, Ermüdung, Erholung, Verschleiß und Wartung.",
+    "oneVan": "1 Transporter je Rennen",
+    "oneWorkshop": "1 Werkstatt je Rennen",
+    "oneMedical": "1 Medizinwagen je Rennen",
+    "exactConfigured": "Genaue konfigurierte Boni, Verschleiß- und Wartungswerte.",
+    "raceProductionContext": "Diese Werte fließen in die Ermüdungskontrolle und Erholungsunterstützung ein.",
+    "raceBenefitsContext": "Die folgenden Werte fließen in die Rennplan-Bonuskette ein.",
+    "deliveryDayValue": "Lieferung: {{days}} Spieltage",
+    "wear120Value": "Verschleiß auf 120 km: {{wear}}",
+    "repairPointValue": "Reparatur: {{cost}} pro Zustandspunkt",
+    "levelLabel": "Stufe {{level}}",
+    "effectiveBadge": "{{percent}} Wirksamkeit",
+    "benefitsCurrent": "Aktuell: {{value}}",
+    "healthRiskLabel": "Risikofaktor gesundheitlicher Folgen:",
+    "stageEnergy": "Energiefaktor innerhalb der Etappe:",
+    "postFatigue": "Ermüdungsfaktor nach der Etappe:",
+    "bonusRecovery": "Erholungsbonus:",
+    "repairSpeed": "Reparaturgeschwindigkeit:",
+    "repairNow": "Jetzt auf 100 % reparieren:",
+    "physicalProtectionContext": "Der Schutz gilt für eingesetzte Rahmen, Laufräder, Reifen, Schaltungen, Helme und Schuhe der Fahrer. Der Verschleiß des Transporters selbst bleibt unverändert.",
+    "fullEffectiveness": "Volle Wirksamkeit",
+    "slightlyReduced": "Leicht reduziert",
+    "poorLimited": "Schwach / eingeschränkt",
+    "notRaceReady": "Nicht rennbereit",
+    "inRepairStatus": "In Reparatur",
+    "assignedToRace": "Rennen zugewiesen",
+    "availableCarText": "Dieses Fahrzeug steht in der Garage bereit und kann bei Erfüllung der Voraussetzungen eingesetzt, repariert oder verkauft werden.",
+    "assetStatusGeneric": "Aktueller Fahrzeugstatus der Garage.",
+    "noRaceHistoryError": "Rennverlauf konnte nicht geladen werden.",
+    "notUsedYet": "Noch nicht eingesetzt",
+    "currentStatus": "Aktueller Fahrzeugstatus",
+    "effectivenessBandsCar": "Wirksamkeit: 80–100% = 100%; 60–79% = 90%; 40–59% = 75%; 30–39% = 60%; unter 30% keine Zuweisung möglich.",
+    "effectivenessBandsBus": "Wirksamkeit: 70–100% = 100%; 50–69% = 85%; 30–49% = 65%; unter 30% weder Zuweisung noch neue Boni möglich.",
+    "noRepairNeeded": "Keine Reparatur erforderlich",
+    "referenceStageLine": "Abgeschlossene Renneinsätze dieses Fahrzeugs.",
+    "technicalSupportSummary": "Technischer Renndienst: Zuverlässigkeit beeinflusst Defekte, Ausrüstungswiederherstellung gleicht Zustandseinbußen aus.",
+    "workshopOnePerEvent": "Nur eine mobile Werkstatt pro Rennen. Der Bonus wird bei Abgabe des Rennplans für reproduzierbare Ergebnisse eingefroren."
+  },
+  "assetBonusText": {
+    "medicalResponse": "Medizinische Versorgung {{value}}",
+    "minorInjuryRisk": "Risiko leichter Verletzungen {{value}}",
+    "hydration": "Flüssigkeitsversorgung {{value}}",
+    "heatHydration": "Hitze/Flüssigkeitsversorgung {{value}}",
+    "medicalRecovery": "Erholung {{value}}",
+    "tourFatigueProtection": "Ermüdungsschutz bei Rundfahrten {{value}}",
+    "recoveryComfort": "Erholungskomfort {{value}}",
+    "raceSupportCoverage": "Rennunterstützung {{value}}",
+    "feedingSupport": "Verpflegungsunterstützung {{value}}",
+    "mechanicalResponse": "Mechanischer Einsatz {{value}}",
+    "tacticalCommunication": "Taktische Kommunikation {{value}}",
+    "incidentResponse": "Unfallhilfe {{value}}",
+    "raceFatigueProtection": "Ermüdungsschutz im Rennen {{value}}",
+    "raceSupportQuality": "Qualität der Rennunterstützung {{value}}",
+    "mechanicalReliability": "Mechanische Zuverlässigkeit {{value}}",
+    "equipmentProtection": "Ausrüstungsschutz {{value}}",
+    "fieldEquipmentRecovery": "Ausrüstungswiederherstellung im Einsatz {{value}}",
+    "healthProtection": "Gesundheitsschutz {{value}}",
+    "fatigueControl": "Ermüdungskontrolle {{value}}",
+    "recoverySupport": "Erholungsunterstützung {{value}}"
+  }
+}

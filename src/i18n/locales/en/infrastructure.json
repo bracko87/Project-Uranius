@@ -1,0 +1,889 @@
+{
+  "page": {
+    "title": "Infrastructure",
+    "description": "Buildings now use realistic game-time construction. Infrastructure controls staff capacity, staff-effect caps, scouting limits, and future equipment systems.",
+    "loading": "Loading infrastructure...",
+    "noData": "No infrastructure data found.",
+    "refresh": "Refresh",
+    "refreshing": "Refreshing...",
+    "facilities": "Facilities",
+    "assets": "Assets",
+    "currentGameDate": "Current game date:",
+    "staffContextError": "Infrastructure loaded, but staff impact context could not be loaded:"
+  },
+  "common": {
+    "close": "Close",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving…",
+    "starting": "Starting...",
+    "repair": "Repair",
+    "sell": "Sell",
+    "available": "Available",
+    "assigned": "Assigned",
+    "inRepair": "In repair",
+    "condition": "Condition",
+    "support": "Support",
+    "acquired": "Acquired",
+    "currentStatus": "Current status",
+    "cost": "Cost",
+    "duration": "Duration",
+    "delivery": "Delivery",
+    "owned": "Owned",
+    "pending": "Pending",
+    "quantity": "Quantity",
+    "completes": "Completes",
+    "costPaid": "Cost paid",
+    "premium": "Premium",
+    "unlockPremium": "Unlock with Premium",
+    "unlocking": "Unlocking…",
+    "garageFull": "Garage full",
+    "acquire": "Acquire",
+    "potentialTier": "Potential tier",
+    "bestSupport": "Best support",
+    "garageSize": "Garage size",
+    "garageSlots": "Garage slots",
+    "pendingDelivery": "Pending delivery",
+    "conditionTracked": "Condition tracked",
+    "level": "Level",
+    "built": "Built",
+    "notBuilt": "Not Built",
+    "inProgress": "In Progress",
+    "upgrade": "Upgrade",
+    "build": "Build",
+    "maxLevel": "Max Level",
+    "slotsFull": "Slots Full",
+    "configMissing": "Config Missing",
+    "prerequisiteRequired": "Prerequisite Required",
+    "deliveryStatus": "Delivery",
+    "details": "Details",
+    "allClear": "All clear",
+    "currentCoinBalance": "Current coin balance:",
+    "noValue": "N/A",
+    "none": "None",
+    "gameDay": "{{count}} game day",
+    "gameDays": "{{count}} game days",
+    "tbd": "TBD"
+  },
+  "facilities": {
+    "activeJobs": "Active Jobs",
+    "noJobs": "No facility construction jobs in progress",
+    "constructionSlots": "Facility construction slots:",
+    "active": "active",
+    "open": "open",
+    "jobsInProgress": "{{count}} infrastructure jobs in progress",
+    "jobInProgress": "{{count}} infrastructure job in progress",
+    "gameDuration": "Game duration:",
+    "paid": "Paid:",
+    "realTimeRemaining": "Real-time remaining:",
+    "refundNow": "Refund now",
+    "refundPercent": "Refund percent",
+    "cancellationCost": "Cancellation cost",
+    "cancelling": "Cancelling...",
+    "cancelJob": "Cancel Job",
+    "detailsTitle": "Infrastructure Details",
+    "imagePlaceholder": "Image placeholder",
+    "addImageLater": "Add {{name}} image here later.",
+    "currentStatus": "Current status",
+    "status": "Status:",
+    "currentImpact": "Current connected impact",
+    "nextLevel": "Next level",
+    "unlock": "Unlock:",
+    "effect": "Effect:",
+    "constructionTime": "Construction time",
+    "estimatedCompletion": "Estimated completion",
+    "jobProgress": "Job in progress",
+    "fallbackRemaining": "Real-time fallback remaining:",
+    "lockedDuringConstruction": "This facility is locked while construction is in progress.",
+    "costCharged": "Construction cost is charged immediately when the job starts.",
+    "noUpgrade": "No upgrade is currently available.",
+    "currentLevel": "Current level: {{level}} / {{max}}",
+    "nextLevelValue": "Next level: {{level}}",
+    "queuedUpgrade": "Queued upgrade to Level {{level}}",
+    "upgradingTo": "Upgrading to Level {{level}}",
+    "impactLevel": "Level {{level}} {{kind}} contributes to your club-wide infrastructure.",
+    "staffCapacityImpact": "Staff capacity and effect caps scale with this facility level.",
+    "coachingImpact": "Head coach training and development effects are applied based on this facility.",
+    "medicalImpact": "Medical recovery and injury protection effects are applied based on this facility.",
+    "upgradeStarted": "{{name}} upgrade/build started.",
+    "jobCancelled": "Infrastructure job cancelled and refund processed."
+  },
+  "facilityTypes": {
+    "club": "club",
+    "coaching": "coaching",
+    "medical": "medical",
+    "youth": "youth",
+    "mechanics": "mechanics",
+    "scouting": "scouting"
+  },
+  "facilityNames": {
+    "clubHouse": "Club House",
+    "trainingCenter": "Training Center",
+    "sprintPerformanceCircuit": "Sprint Performance Circuit",
+    "climbingPerformanceCenter": "Climbing Performance Center",
+    "teamTimeTrialCenter": "Team Time Trial Center",
+    "medicalCenter": "Medical Center",
+    "youthAcademy": "Youth Academy",
+    "teamResidentialCampus": "Team Residential Campus",
+    "mechanicsWorkshop": "Mechanics Workshop",
+    "scoutingOffice": "Scouting Office"
+  },
+  "facilityDescriptions": {
+    "clubHouseShort": "Main administrative headquarters of your cycling team.",
+    "clubHouseLong": "The Club House is the core operational base of the team. It supports administration, club organization, and future business growth. Higher levels help unlock broader staff structure and future management systems.",
+    "trainingCenterShort": "Core training base for rider development and daily coaching work.",
+    "trainingCenterLong": "The Training Center improves the effectiveness of coaching staff and supports rider training quality, development support, and overload-risk management. Higher levels also expand trainer capacity.",
+    "sprintPerformanceCircuitShort": "Closed high-speed circuit for acceleration, sprint and launch training.",
+    "sprintPerformanceCircuitLong": "Requires Training Center Level 2. Boosts Sprint-focused development by 4% for First Team riders, 8% for U23 riders and 12% for U16 riders. U23 and U16 sprint-related race development receives an additional 5% boost.",
+    "climbingPerformanceCenterShort": "Specialist climbing laboratory for controlled gradient training.",
+    "climbingPerformanceCenterLong": "Requires Training Center Level 2. Boosts Climbing-focused development by 4% for First Team riders, 8% for U23 riders and 12% for U16 riders. U23 and U16 climbing-related race development receives an additional 5% boost.",
+    "teamTimeTrialCenterShort": "Indoor aero circuit for TTT pacing, rotation and formation work.",
+    "teamTimeTrialCenterLong": "Requires Training Center Level 2. Boosts Time Trial-focused development by 4% for First Team riders, 7% for U23 riders and 10% for U16 riders, adds 5% U23/U16 TTT race-development progress, and improves Team Time Trial pacing efficiency by 5%.",
+    "medicalCenterShort": "Medical facility for prevention, treatment, recovery, and rider health.",
+    "medicalCenterLong": "The Medical Center supports Team Doctors, Physios, and Nutritionists. It reduces harsh medical limitations, improves injury prevention and recovery support, and expands medical staff capacity.",
+    "youthAcademyShort": "Long-term development facility for future riders and youth progression.",
+    "youthAcademyLong": "The Youth Academy is a strategic long-term investment for both U23 and U16 development. It unlocks the U23 Head Coach role, improves Developing Team training and race development, and also strengthens U16 Academy training, race development and Head Coach effectiveness.",
+    "teamResidentialCampusShort": "Permanent home-base accommodation for riders and staff across the club.",
+    "teamResidentialCampusLong": "Requires Youth Academy Level 1. Provides club-owned home-base accommodation for First Team, U23 and U16 riders plus permanent staff, waiving home-base accommodation costs while leaving race and Training Camp hotels chargeable. U16 and U23 recovery effectiveness improves by 5%.",
+    "mechanicsWorkshopShort": "Technical operations base for equipment maintenance and support.",
+    "mechanicsWorkshopLong": "The Mechanics Workshop improves technical support capacity and prepares the club for deeper equipment systems, repair speed, and maintenance cost reductions. Higher levels unlock additional mechanic slots.",
+    "scoutingOfficeShort": "Scouting and intelligence center for reports, market information, and talent discovery.",
+    "scoutingOfficeLong": "The Scouting Office controls scouting report quality cap, scouting capacity, and later market intelligence systems. Higher levels unlock more scout slots and better report-quality ceilings."
+  },
+  "assets": {
+    "teamCars": "Team Cars",
+    "teamCar": "Team Car",
+    "teamCarFleet": "Team Car Fleet",
+    "teamBus": "Team Bus",
+    "teamBusGarage": "Team Bus Garage",
+    "equipmentVan": "Equipment Van",
+    "equipmentVans": "Equipment Vans",
+    "equipmentVanGarage": "Equipment Van Garage",
+    "mobileWorkshop": "Mobile Workshop",
+    "mobileWorkshops": "Mobile Workshops",
+    "mobileWorkshopGarage": "Mobile Workshop Garage",
+    "medicalVan": "Medical Van",
+    "medicalVans": "Medical Vans",
+    "medicalVanGarage": "Medical Van Garage",
+    "teamCarDescription": "Team Cars provide race support, tactical communication, feeding coverage, and fatigue reduction on race days. Manage the garage by slot, start new deliveries, repair worn cars, or sell available cars.",
+    "teamBusDescription": "Team Buses improve rider travel comfort, recovery, fatigue control, and stage-race logistics. Manage the garage by slot, start new deliveries, repair worn buses, or sell available buses.",
+    "equipmentVanDescription": "Equipment Vans support bike transport, spare parts coverage, race equipment logistics, and broader event readiness. Manage the garage by slot, start new deliveries, repair worn vans, or sell available vans.",
+    "mobileWorkshopDescription": "Mobile Workshops support on-site technical repairs, faster issue response, mechanic coverage, and equipment service capacity. Manage the garage by slot, start new deliveries, repair worn workshops, or sell available workshops.",
+    "medicalVanDescription": "Medical Vans support race-day health response, rider treatment access, injury control, and medical coverage. Manage the garage by slot, start new deliveries, repair worn vans, or sell available vans.",
+    "acquireTeamCar": "Order Team Car",
+    "acquireTeamBus": "Order Team Bus",
+    "acquireEquipmentVan": "Order Equipment Van",
+    "acquireMobileWorkshop": "Order Mobile Workshop",
+    "acquireMedicalVan": "Order Medical Van",
+    "teamCarAcquireDescription": "Choose a Team Car tier. The delivery will enter the garage queue and complete after the configured game-time duration.",
+    "teamBusAcquireDescription": "Choose a Team Bus tier. The delivery will enter the garage queue and complete after the configured game-time duration.",
+    "equipmentVanAcquireDescription": "Choose an Equipment Van tier. The delivery will enter the garage queue and complete after the configured game-time duration.",
+    "mobileWorkshopAcquireDescription": "Choose a Mobile Workshop tier. The delivery will enter the garage queue and complete after the configured game-time duration.",
+    "medicalVanAcquireDescription": "Choose a Medical Van tier. The delivery will enter the garage queue and complete after the configured game-time duration.",
+    "garageFullDescription": "Garage capacity is full. Cancel a pending delivery, sell an available asset, or wait for future capacity upgrades before starting another delivery.",
+    "noTiers": "No acquisition tiers are configured for this asset type yet.",
+    "startDelivery": "Order for delivery",
+    "garageSupportTitle": "Garage support vs actual race assignment",
+    "teamCarAssignment": "The garage shows what your club owns and what is being delivered. Actual race bonuses should still come from the cars assigned to a specific event. A strong garage increases your available options, but only assigned and eligible cars should affect a race result.",
+    "teamBusAssignment": "The garage shows what your club owns and what is being delivered. Actual race bonuses should still come from the buses assigned to a specific event or tour. A stronger garage improves available logistics options, but only assigned and eligible buses should affect race-day or tour effects.",
+    "equipmentVanAssignment": "The garage shows what your club owns and what is being delivered. Actual race or event bonuses should still come from Equipment Vans assigned to a specific event. A stronger garage improves available logistics options, but only assigned and eligible vans should affect event calculations.",
+    "mobileWorkshopAssignment": "The garage shows what your club owns and what is being delivered. Actual technical bonuses should still come from Mobile Workshops assigned to a specific event. A stronger garage improves service options, but only assigned and eligible workshops should affect race-day calculations.",
+    "medicalVanAssignment": "The garage shows what your club owns and what is being delivered. Actual medical bonuses should still come from Medical Vans assigned to a specific event. A stronger garage improves available health-response options, but only assigned and eligible vans should affect race-day medical calculations.",
+    "garageSlotsTeamCar": "Owned cars appear first, pending deliveries fill the next empty slots, and open slots remain available for future acquisitions.",
+    "garageSlotsGeneric": "Owned assets appear first, pending deliveries fill the next empty slots, and open slots remain available for future acquisitions.",
+    "freePremiumMax": "Free {{free}} · Premium {{premium}} · Max {{max}}",
+    "ownedPending": "Owned {{owned}} · Pending {{pending}}",
+    "activeMaximum": "{{active}} active of {{max}} maximum slots",
+    "slot": "Slot #{{slot}}",
+    "slots": "{{count}} slots",
+    "slotOne": "{{count}} slot",
+    "deliveryItem": "Delivery item {{current}} of {{total}}",
+    "cancelDelivery": "Cancel delivery",
+    "emptyTeamCar": "Empty Team Car slot available for a new delivery.",
+    "emptyTeamBus": "Empty Team Bus slot available for a new delivery.",
+    "emptyEquipmentVan": "Empty Equipment Van slot available for a new delivery.",
+    "emptyMobileWorkshop": "Empty Mobile Workshop slot available for a new delivery.",
+    "emptyMedicalVan": "Empty Medical Van slot available for a new delivery.",
+    "premiumSlotDescription": "Available automatically while Premium is active, or permanently with coins.",
+    "additionalTeamCarCapacity": "Additional permanent Team Car garage capacity.",
+    "additionalCapacity": "Additional permanent garage capacity.",
+    "unlockCoins": "Unlock permanently · {{coins}} coins",
+    "condition100": "This asset is already at 100% condition.",
+    "alreadyRepair": "This asset is already in repair.",
+    "assignedLocked": "This asset is currently assigned and locked.",
+    "renameTeamCar": "Rename Team Car",
+    "rename": "Rename {{name}}",
+    "enterName": "Enter a {{asset}} name.",
+    "inRepairUntil": "In repair until {{date}}",
+    "inUse": "In use: {{assignment}}",
+    "inUseUntil": "In use: {{assignment}} until {{date}}",
+    "assignedEvent": "Assigned to event",
+    "mechanicalResponse": "Mechanical response",
+    "mechanicalResponseDescription": "Best owned car support value available for race-day service and technical response.",
+    "feedingSupport": "Feeding support",
+    "feedingSupportDescription": "Garage-level race fatigue reduction from the current Team Car fleet summary.",
+    "tacticalComms": "Tactical comms",
+    "tacticalCommsDescription": "Highest current support tier available from owned Team Cars and their condition.",
+    "teamCarPotential": "Highest configured Team Car tier that can be acquired through the garage system.",
+    "travelComfort": "Travel comfort",
+    "travelComfortDescription": "Best owned bus support value available for rider comfort and race-program logistics.",
+    "riderRecovery": "Rider recovery",
+    "riderRecoveryDescription": "Garage-level one-day fatigue reduction from the current Team Bus summary.",
+    "tourFatigueCover": "Tour fatigue cover",
+    "tourFatigueDescription": "Highest current support tier available from owned Team Buses and their condition.",
+    "teamBusPotential": "Highest configured Team Bus tier that can be acquired through the garage system.",
+    "equipmentLogistics": "Equipment logistics",
+    "equipmentLogisticsDescription": "Best owned van support value available for bike transport and spare equipment coverage.",
+    "raceReadiness": "Race readiness",
+    "equipmentReadinessDescription": "Garage-level equipment or logistics support from the current Equipment Van summary.",
+    "equipmentCover": "Equipment cover",
+    "equipmentCoverDescription": "Highest current support tier available from owned Equipment Vans and their condition.",
+    "equipmentVanPotential": "Highest configured Equipment Van tier that can be acquired through the garage system.",
+    "technicalService": "Technical service",
+    "technicalServiceDescription": "Best owned workshop support value available for on-site service and mechanical response.",
+    "repairResponse": "Repair response",
+    "repairResponseDescription": "Garage-level technical response or repair support from the current Mobile Workshop summary.",
+    "workshopCover": "Workshop cover",
+    "workshopCoverDescription": "Highest current support tier available from owned Mobile Workshops and their condition.",
+    "workshopPotential": "Highest configured Mobile Workshop tier that can be acquired through the garage system.",
+    "medicalResponse": "Medical response",
+    "medicalResponseDescription": "Best owned van support value available for race-day treatment access and emergency response.",
+    "healthCoverage": "Health coverage",
+    "healthCoverageDescription": "Garage-level medical response, treatment, recovery, or health support from the current Medical Van summary.",
+    "medicalCover": "Medical cover",
+    "medicalCoverDescription": "Highest current support tier available from owned Medical Vans and their condition.",
+    "medicalVanPotential": "Highest configured Medical Van tier that can be acquired through the garage system.",
+    "deliveryCancelled": "Delivery cancelled. Full refund returned to the club.",
+    "deliveryStarted": "{{asset}} Level {{level}} delivery started.",
+    "serviceUnavailable": "Asset delivery service unavailable",
+    "serviceUnavailableMessage": "Could not contact the asset delivery service. Please try again.",
+    "acquisitionBlocked": "Asset acquisition blocked",
+    "cannotAcquire": "This asset cannot be acquired right now.",
+    "renameFailed": "Failed to rename {{asset}}."
+  },
+  "assetModal": {
+    "closeAria": "Close asset action modal",
+    "repairAsset": "Repair Asset",
+    "sellAsset": "Sell Asset",
+    "levelAsset": "Level {{level}} · {{asset}}",
+    "calculating": "Calculating quote...",
+    "repairQuote": "Repair quote",
+    "currentCondition": "Current condition",
+    "repairCost": "Repair cost",
+    "repairTime": "Repair time",
+    "saleQuote": "Sale quote",
+    "purchaseCost": "Purchase cost",
+    "moneyReceived": "Money received",
+    "sellingNotice": "Selling removes this asset from the garage and returns the sale value to club cash.",
+    "startingRepair": "Starting repair...",
+    "selling": "Selling...",
+    "confirmRepair": "Confirm repair",
+    "confirmSale": "Confirm sale",
+    "repairStarted": "{{name}} repair started.",
+    "sold": "{{name}} sold and removed from garage."
+  },
+  "staffRoles": {
+    "headCoach": "Head Coach",
+    "trainer": "Trainer",
+    "u23HeadCoach": "U23 Head Coach",
+    "teamDoctor": "Team Doctor",
+    "physio": "Physio",
+    "nutritionist": "Nutritionist",
+    "mechanic": "Mechanic",
+    "sportDirector": "Sport Director",
+    "scoutAnalyst": "Scout / Analyst"
+  },
+  "tutorial": {
+    "welcomeTitle": "Need help with Infrastructure?",
+    "welcomeBody": "We can show you how facilities and team assets work, including upgrades, staff limits, vehicles, bonuses, and construction projects.",
+    "start": "Start tutorial",
+    "noThanks": "No thanks",
+    "facilitiesTitle": "Facilities",
+    "facilitiesBody": "This is the Infrastructure page.\n\nThe Facilities tab shows the buildings your club can own and upgrade. Every team starts with a basic Level 1 Clubhouse.\n\nLater, you can build and upgrade important facilities such as the Training Center, Medical Center, Youth Academy, Mechanics Workshop, and Scouting Office.\n\nFacilities are important because they improve your club and can also define how many staff members you are allowed to have.",
+    "projectsTitle": "Builds, Upgrades and Refunds",
+    "projectsBody": "When you open the details for a facility, you can see what the next level costs, how long construction takes, and what bonuses or unlocks it will bring.\n\nYou can start a build or upgrade project when your club has enough money and available project capacity.\n\nYou can also cancel an infrastructure project. If you cancel immediately, you receive a full refund. If you cancel later, the refund can be smaller.",
+    "assetsTitle": "Team Assets",
+    "assetsBody": "The Assets tab shows vehicles and support assets your team can use.\n\nThis includes team cars, team buses, equipment vans, mobile workshops, and medical vans. These assets can support your team during races, travel, preparation, and training camps.\n\nEach asset can have different levels, costs, condition, bonuses, and limits. Open the details for each asset to understand what it brings and how it can help your team perform better.\n\nTo use this page fully, some advanced functions, management options, or extended tools may require a Premium account or coin purchase.",
+    "next": "Next",
+    "continueCalendar": "Continue to Calendar",
+    "finish": "Finish for now",
+    "skip": "Skip tutorial",
+    "close": "Close tutorial"
+  },
+  "assetStatus": {
+    "available": "Available",
+    "assigned": "Assigned",
+    "inRepair": "In repair",
+    "sold": "Sold"
+  },
+  "assetCondition": {
+    "excellent": "Excellent",
+    "good": "Good",
+    "fair": "Fair",
+    "poor": "Poor",
+    "tracked": "Condition tracked"
+  },
+  "supportTiers": {
+    "none": "None",
+    "basic": "Basic",
+    "solid": "Solid",
+    "strong": "Strong",
+    "elite": "Elite"
+  },
+  "assetTiers": {
+    "team_car": {
+      "level1": {
+        "name": "Basic Club Car",
+        "effect": "Provides basic race support coverage, mechanical response and feeding support."
+      },
+      "level2": {
+        "name": "Reliable Support Car",
+        "effect": "Improves mechanical response, race-day logistics and basic fatigue protection."
+      },
+      "level3": {
+        "name": "Professional Team Car",
+        "effect": "Improves race support coverage, tactical communication, feeding support and incident response."
+      },
+      "level4": {
+        "name": "Elite Support Car",
+        "effect": "Provides high mechanical response, tactical support, crash/incident response and race-fatigue protection."
+      },
+      "level5": {
+        "name": "World-Class Race Support Car",
+        "effect": "Provides maximum race support quality, mechanical response, tactical communication and incident support."
+      }
+    },
+    "team_bus": {
+      "level1": {
+        "name": "Basic Team Bus",
+        "effect": "Small fatigue reduction on tours. Minor effect on one-day races."
+      },
+      "level2": {
+        "name": "Recovery Team Bus",
+        "effect": "Good fatigue reduction during stage races and long travel blocks."
+      },
+      "level3": {
+        "name": "Elite Tour Bus",
+        "effect": "Strongest bus fatigue reduction on long tours; limited effect on one-day races."
+      }
+    },
+    "equipment_van": {
+      "level1": {
+        "name": "Basic Equipment Van",
+        "effect": "Small boost to pre-stage equipment readiness and small reduction to mechanical incident time loss."
+      },
+      "level2": {
+        "name": "Service Equipment Van",
+        "effect": "Medium boost to spare-bike response, pre-stage readiness, and equipment condition-loss reduction."
+      },
+      "level3": {
+        "name": "Pro Equipment Van",
+        "effect": "Strong boost to spare-bike response, wheel-change support, and stage-race equipment readiness."
+      }
+    },
+    "mobile_workshop": {
+      "level1": {
+        "name": "Mobile Workshop",
+        "effect": "Improves repair speed, lowers repair costs, and supports mechanic response during races and tours."
+      },
+      "level2": {
+        "name": "Pro Mobile Workshop",
+        "effect": "Strong repair speed bonus, stronger repair-cost reduction, and better post-race condition recovery."
+      }
+    },
+    "medical_van": {
+      "level1": {
+        "name": "Basic Medical Van",
+        "effect": "Small medical response bonus, small minor-injury risk reduction, and basic post-stage recovery support."
+      },
+      "level2": {
+        "name": "Recovery Medical Van",
+        "effect": "Medium medical response bonus, stronger minor-injury risk reduction, hydration support, and better recovery after stages."
+      },
+      "level3": {
+        "name": "Pro Medical Unit",
+        "effect": "Strong medical response bonus, best minor-injury risk reduction, heat/hydration support, and strongest post-stage recovery support."
+      }
+    }
+  },
+  "facilityUpgrades": {
+    "club_house": {
+      "level2": {
+        "unlock": "Unlocks Sport Director slot.",
+        "effect": "Improves club administration foundation and prepares future sponsor/contract systems."
+      },
+      "level3": {
+        "unlock": "Improves club administration, sponsor operations and contract infrastructure.",
+        "effect": "Future sponsor, contract and organization bonuses can scale from this level."
+      },
+      "level4": {
+        "unlock": "Supports a larger professional club organization.",
+        "effect": "Future commercial and staff-management systems can scale from this level."
+      },
+      "level5": {
+        "unlock": "Elite club operations.",
+        "effect": "Maximum HQ foundation for future elite sponsor, contract and organization bonuses."
+      }
+    },
+    "mechanics_workshop": {
+      "level1": {
+        "unlock": "Removes harsh mechanic cap and unlocks second Mechanic slot.",
+        "effect": "Improves technical support foundation for future equipment and race-service systems."
+      },
+      "level2": {
+        "unlock": "Unlocks third Mechanic slot plus 10% faster equipment repair.",
+        "effect": "Future equipment repairs become faster once the equipment system applies this effect."
+      },
+      "level3": {
+        "unlock": "Unlocks fourth Mechanic slot plus 20% faster and 20% cheaper equipment repair.",
+        "effect": "Future equipment repairs become faster and cheaper."
+      },
+      "level4": {
+        "unlock": "Unlocks fifth Mechanic slot plus 30% faster and 30% cheaper equipment repair.",
+        "effect": "Maximum mechanics-workshop support for equipment maintenance."
+      }
+    },
+    "medical_center": {
+      "level1": {
+        "unlock": "Removes harsh Lv 0 medical cap and unlocks second Physio slot.",
+        "effect": "Improves medical staff effectiveness for injury prevention, recovery duration and fatigue-floor reduction."
+      },
+      "level2": {
+        "unlock": "Unlocks Nutritionist slot plus injury recovery bonuses up to 3%.",
+        "effect": "Allows Nutritionist contribution and improves return-to-fitness support."
+      },
+      "level3": {
+        "unlock": "Unlocks third Physio slot and second Team Doctor slot.",
+        "effect": "Improves medical capacity and allows stronger combined health/recovery effects."
+      },
+      "level4": {
+        "unlock": "Unlocks fourth Physio slot plus injury recovery bonuses up to 5%.",
+        "effect": "Improves recovery speed and medical depth for high-level squads."
+      },
+      "level5": {
+        "unlock": "Unlocks fifth Physio slot plus injury recovery bonuses up to 8%.",
+        "effect": "Elite medical center with maximum recovery and prevention support."
+      }
+    },
+    "scouting_office": {
+      "level1": {
+        "unlock": "Basic scouting setup plus unlocks second Scout / Analyst slot.",
+        "effect": "Keeps Basic report-quality cap but improves scouting capacity."
+      },
+      "level2": {
+        "unlock": "Unlocks third Scout / Analyst slot plus Solid report quality.",
+        "effect": "Raises scouting report cap to Solid."
+      },
+      "level3": {
+        "unlock": "Unlocks fourth Scout / Analyst slot plus Strong report quality.",
+        "effect": "Raises scouting report cap to Strong."
+      },
+      "level4": {
+        "unlock": "Unlocks fifth Scout / Analyst slot plus Elite report quality.",
+        "effect": "Raises scouting report cap to Elite."
+      }
+    },
+    "training_center": {
+      "level1": {
+        "unlock": "Removes harsh Lv 0 coaching cap.",
+        "effect": "Allows coaching staff to contribute more effectively to training output, development and overload-risk control."
+      },
+      "level2": {
+        "unlock": "Improves trainer contribution.",
+        "effect": "Raises the effective coaching cap for training output and development support."
+      },
+      "level3": {
+        "unlock": "Unlocks second Trainer slot.",
+        "effect": "Allows deeper coaching staff and stronger combined training/development impact."
+      },
+      "level4": {
+        "unlock": "High-level training infrastructure.",
+        "effect": "Raises coaching effect cap for advanced clubs."
+      },
+      "level5": {
+        "unlock": "Elite training and development center.",
+        "effect": "Maximum coaching cap for training output, rider development and overload-risk reduction."
+      }
+    },
+    "youth_academy": {
+      "level1": {
+        "unlock": "Unlocks U23 Head Coach slot.",
+        "effect": "U23 regular-training development +6%; U23 race-development progress +5%; U16 regular development +8%; U16 race-development progress +6%."
+      },
+      "level2": {
+        "unlock": "Better youth development support.",
+        "effect": "U23 regular-training development +12%; U23 race-development progress +10%; U23 Head Coach development effect +10%; U23 off-focus training decay -20%; U16 regular development +15%; U16 race-development progress +12%; U16 Head Coach development effectiveness +12%."
+      }
+    }
+  },
+  "legacyUi": {
+    "teamBusGarage": "Team Bus Garage",
+    "teamBusGarageDescription": "Team Buses improve rider travel comfort, recovery, fatigue control, and stage-race logistics. Manage the garage by slot, start new deliveries, repair worn buses, or sell available buses.",
+    "equipmentVanGarage": "Equipment Van Garage",
+    "equipmentVanGarageDescription": "Equipment Vans support bike transport, spare parts coverage, race equipment logistics, and broader event readiness. Manage the garage by slot, start new deliveries, repair worn vans, or sell available vans.",
+    "mobileWorkshopGarageDescription": "Mobile Workshops support on-site technical repairs, faster issue response, mechanic coverage, and equipment service capacity. Manage the garage by slot, start new deliveries, repair worn workshops, or sell available workshops.",
+    "medicalVanGarageDescription": "Medical Vans support race-day health response, rider treatment access, injury control, and medical coverage. Manage the garage by slot, start new deliveries, repair worn vans, or sell available vans."
+  },
+  "facilityGuide": {
+    "title": "Facility level guide",
+    "whatEveryLevelProvides": "What every level provides",
+    "currentPanelTitle": "Current Level {{level}}",
+    "nextPanelTitle": "Next Level {{level}}",
+    "activeNow": "Active now",
+    "unlocks": "Unlocks:",
+    "effects": "Effects:",
+    "monthlyMaintenance": "Monthly maintenance:",
+    "perGameMonth": "/ game month",
+    "upgradeCost": "Upgrade cost",
+    "constructionTime": "Construction time",
+    "estimatedCompletion": "Est. completion",
+    "levelLabel": "Level {{level}}",
+    "currentLevel": "Current level",
+    "unlocked": "Unlocked",
+    "futureLevel": "Future level",
+    "upgradeToThisLevel": "Upgrade to this level: {{cost}} · {{duration}}",
+    "maximumReached": "Maximum facility level reached.",
+    "levelBadge": "Level {{level}} / {{max}}",
+    "imageAlt": "{{name}} — Level {{level}} of {{max}}",
+    "noAdditionalUnlock": "No additional unlock at this level.",
+    "noAdditionalEffect": "No additional effect is configured for this level."
+  },
+  "facilityLevelDetails": {
+    "club_house": {
+      "level0": {
+        "unlock": "Basic club administration only.",
+        "effect": "No Club House financial bonus is active."
+      },
+      "level1": {
+        "unlock": "No new staff role.",
+        "effect": "Staff payroll -2%. Eligible recurring operating costs receive 1% cost-optimization rebate."
+      },
+      "level2": {
+        "unlock": "Unlocks Sport Director slot.",
+        "effect": "Staff payroll -4%. Rider payroll -1%. Eligible recurring operating costs receive 2% cost-optimization rebate. Monthly tax rebate 2%."
+      },
+      "level3": {
+        "unlock": "No new unlock.",
+        "effect": "Staff payroll -6%. Rider payroll -2%. Eligible recurring operating costs receive 3% cost-optimization rebate. Monthly tax rebate 4%."
+      },
+      "level4": {
+        "unlock": "No new unlock.",
+        "effect": "Staff payroll -8%. Rider payroll -3%. Eligible recurring operating costs receive 5% cost-optimization rebate. Monthly tax rebate 6%."
+      },
+      "level5": {
+        "unlock": "No new unlock.",
+        "effect": "Staff payroll -10%. Rider payroll -4%. Eligible recurring operating costs receive 7% cost-optimization rebate. Monthly tax rebate 10%."
+      }
+    },
+    "training_center": {
+      "level0": {
+        "unlock": "Basic training facilities only.",
+        "effect": "No Training Center development, coaching-effectiveness, fatigue-load or training-risk bonus is active."
+      },
+      "level1": {
+        "unlock": "No new unlock.",
+        "effect": "Regular training development +3%; training overload and accident risk -5%; applies to First Team and U23 riders."
+      },
+      "level2": {
+        "unlock": "No new unlock.",
+        "effect": "Regular training development +6%; Head Coach and Trainer training bonus +5% effectiveness; training overload and accident risk -10%; applies to First Team and U23 riders."
+      },
+      "level3": {
+        "unlock": "Unlocks second Trainer slot.",
+        "effect": "Regular training development +9%; Head Coach and Trainer training bonus +10% effectiveness; regular-training fatigue load -1 point; training overload and accident risk -15%; applies to First Team and U23 riders."
+      },
+      "level4": {
+        "unlock": "No new unlock.",
+        "effect": "Regular training development +12%; Head Coach and Trainer training bonus +15% effectiveness; regular-training fatigue load -1 point; training overload and accident risk -20%; applies to First Team and U23 riders."
+      },
+      "level5": {
+        "unlock": "Unlocks third Trainer slot.",
+        "effect": "Regular training development +15%; Head Coach and Trainer training bonus +20% effectiveness; regular-training fatigue load -2 points; training overload and accident risk -25%; applies to First Team and U23 riders."
+      }
+    },
+    "medical_center": {
+      "level0": {
+        "unlock": "Base medical facility; one Team Doctor and one Physio slot are available once staff operations are unlocked.",
+        "effect": "No Medical Center prevention, recovery-duration or rehabilitation fatigue-floor bonus is active."
+      },
+      "level1": {
+        "unlock": "Unlocks second Physio slot.",
+        "effect": "Preventable injury and illness risk -3%; health-case recovery duration -4%; rehabilitation fatigue floor -1 point; applies to First Team and U23 riders."
+      },
+      "level2": {
+        "unlock": "Unlocks Nutritionist slot.",
+        "effect": "Preventable injury and illness risk -6%; health-case recovery duration -8%; rehabilitation fatigue floor -2 points; applies to First Team and U23 riders."
+      },
+      "level3": {
+        "unlock": "Unlocks second Team Doctor slot and third Physio slot.",
+        "effect": "Preventable injury and illness risk -9%; health-case recovery duration -12%; rehabilitation fatigue floor -3 points; applies to First Team and U23 riders."
+      },
+      "level4": {
+        "unlock": "Unlocks fourth Physio slot.",
+        "effect": "Preventable injury and illness risk -12%; health-case recovery duration -16%; rehabilitation fatigue floor -4 points; applies to First Team and U23 riders."
+      },
+      "level5": {
+        "unlock": "Unlocks fifth Physio slot.",
+        "effect": "Preventable injury and illness risk -15%; health-case recovery duration -20%; rehabilitation fatigue floor -5 points; applies to First Team and U23 riders."
+      }
+    },
+    "youth_academy": {
+      "level0": {
+        "unlock": "No dedicated U23 academy infrastructure or U23 Head Coach slot.",
+        "effect": "No academy-specific U23 or U16 training/development bonus is active."
+      },
+      "level1": {
+        "unlock": "Unlocks U23 Head Coach slot.",
+        "effect": "U23 regular-training development +6%; U23 race-development progress +5%; U16 regular development +8%; U16 race-development progress +6%."
+      },
+      "level2": {
+        "unlock": "Elite academy development program; no additional staff slot.",
+        "effect": "U23 regular-training development +12%; U23 race-development progress +10%; U23 Head Coach development effect +10% effectiveness; U23 off-focus training decay -20%; U16 regular development +15%; U16 race-development progress +12%; U16 Head Coach development effectiveness +12%."
+      }
+    },
+    "mechanics_workshop": {
+      "level0": {
+        "unlock": "Basic technical support only; additional mechanic capacity remains locked.",
+        "effect": "No workshop-based repair speed or maintenance-cost bonus is active."
+      },
+      "level1": {
+        "unlock": "Unlocks second Mechanic slot.",
+        "effect": "Mechanic capacity 2; equipment repair speed +5%; equipment condition loss -3%; mechanical risk -2%"
+      },
+      "level2": {
+        "unlock": "Unlocks third Mechanic slot.",
+        "effect": "Mechanic capacity 3; equipment repair speed +12%; equipment repair cost -8%; equipment condition loss -6%; mechanical risk -4%"
+      },
+      "level3": {
+        "unlock": "Unlocks fourth Mechanic slot.",
+        "effect": "Mechanic capacity 4; equipment repair speed +22%; equipment repair cost -16%; equipment condition loss -10%; mechanical risk -7%"
+      },
+      "level4": {
+        "unlock": "Unlocks fifth Mechanic slot.",
+        "effect": "Mechanic capacity 5; equipment repair speed +35%; equipment repair cost -25%; equipment condition loss -15%; mechanical risk -10%"
+      }
+    },
+    "scouting_office": {
+      "level0": {
+        "unlock": "Basic scouting setup only; additional scout capacity and higher report tiers remain locked.",
+        "effect": "Scouting report quality remains at the basic facility cap."
+      },
+      "level1": {
+        "unlock": "Unlocks second Scout / Analyst slot.",
+        "effect": "Scout capacity 2; Basic report-quality cap; attributes are shown in approximately 10-point ranges"
+      },
+      "level2": {
+        "unlock": "Unlocks third Scout / Analyst slot plus Solid report quality.",
+        "effect": "Scout capacity 3; Solid report-quality cap; attributes are shown in approximately 5-point ranges"
+      },
+      "level3": {
+        "unlock": "Unlocks fourth Scout / Analyst slot plus Strong report quality.",
+        "effect": "Scout capacity 4; Strong report-quality cap; attributes are shown in approximately 3-point ranges"
+      },
+      "level4": {
+        "unlock": "Unlocks fifth Scout / Analyst slot plus Elite report quality.",
+        "effect": "Scout capacity 5; Elite report-quality cap; elite-quality scouts can reveal exact values"
+      }
+    },
+    "sprint_performance_circuit": {
+      "level0": {
+        "unlock": "No additional unlocks.",
+        "effect": "No active bonus at this level."
+      },
+      "level1": {
+        "unlock": "Requires Training Center Level 2.",
+        "effect": "Sprint-focused development +4% First Team, +8% U23, +12% U16; U23 and U16 sprint race-development progress +5%."
+      }
+    },
+    "climbing_performance_center": {
+      "level0": {
+        "unlock": "No additional unlocks.",
+        "effect": "No active bonus at this level."
+      },
+      "level1": {
+        "unlock": "Requires Training Center Level 2.",
+        "effect": "Climbing-focused development +4% First Team, +8% U23, +12% U16; U23 and U16 climbing race-development progress +5%."
+      }
+    },
+    "team_time_trial_center": {
+      "level0": {
+        "unlock": "No additional unlocks.",
+        "effect": "No active bonus at this level."
+      },
+      "level1": {
+        "unlock": "Requires Training Center Level 2.",
+        "effect": "Time Trial development +4% First Team, +7% U23, +10% U16; U23/U16 TTT race development +5%; team time trial pacing efficiency +5%."
+      }
+    },
+    "team_residential_campus": {
+      "level0": {
+        "unlock": "No additional unlocks.",
+        "effect": "No active bonus at this level."
+      },
+      "level1": {
+        "unlock": "Requires Youth Academy Level 1.",
+        "effect": "Accommodation for First Team, U23, U16 and permanent staff at club headquarters is covered; U23/U16 recovery effectiveness +5%; away-race and camp hotels are still charged."
+      }
+    }
+  },
+  "assetDetailCopy": {
+    "conditionWear": "Condition and wear",
+    "conditionOwnWear": "Condition and vehicle wear",
+    "vehicleWearExplanation": "Race wear is applied after each stage and scales with distance (60–160% of the 120 km reference). About {{stages}} reference stages remain before the {{threshold}} assignment threshold.",
+    "vehicleRepairExplanation": "A completed repair restores the vehicle to 100% condition. Repairs restore {{speed}} condition points per game day and can only begin when the vehicle is available.",
+    "equipmentRiskExplanation": "Mechanical reliability affects mechanical failures. Equipment protection reduces normal equipment wear and damage from incidents.",
+    "conditionEffectivenessScale": "Effectiveness: 90–100% = 100%; 75–89% = 95%; 60–74% = 85%; 45–59% = 70%; 30–44% = 50%. Below 30%, the vehicle cannot be assigned.",
+    "medicalTitle": "Race medical and recovery support",
+    "medicalBadge": "Health, fatigue and recovery",
+    "medicalCurrentEffect": "Current race effect",
+    "medicalFatigueEngine": "Fatigue and recovery engine",
+    "medicalWearRepair": "Wear and repair",
+    "medicalReferenceWear": "Wear per 120 km",
+    "medicalRiskExplanation": "Incidents can still occur, but the chance of a lasting injury is reduced.",
+    "medicalAssignmentRule": "Only one medical van may be assigned per event. Benefits are fixed when the race plan is submitted.",
+    "medicalRepairSpeed": "{{value}} points per game day",
+    "statusLabel": "Status",
+    "yourCars": "Your Team Cars",
+    "yourBuses": "Your Team Buses",
+    "yourMedicalVans": "Your Medical Vans",
+    "ownedEquipmentVans": "Owned Equipment Vans",
+    "ownedWorkshops": "Owned Mobile Workshops",
+    "openCarDetails": "Open Details to see current benefits, race history and asset actions.",
+    "openBusDetails": "Open Details to see condition-adjusted production benefits and maintenance values for an individual bus.",
+    "noCars": "No Team Cars owned yet.",
+    "noBuses": "No Team Buses owned yet.",
+    "cataloguePrice": "Current catalogue price",
+    "originalPurchaseValue": "Original purchase value",
+    "purchaseValue": "Purchase value",
+    "catalogueShort": "Catalogue",
+    "originalPurchase": "Original purchase",
+    "raceDaysUsed": "Race days used",
+    "raceDays": "Race days",
+    "distanceCovered": "Distance covered",
+    "distance": "Distance",
+    "lastUsed": "Last used",
+    "currentCondition": "Current condition",
+    "currentEffectiveness": "Current effectiveness",
+    "effectiveness": "Effectiveness",
+    "raceReadyMinimum": "Race-ready minimum",
+    "wearPerStage": "Wear per stage",
+    "shortStageFloor": "Short stage floor",
+    "longStageCeiling": "Long stage ceiling",
+    "maintenance": "Maintenance",
+    "maintenanceDelivery": "Maintenance & delivery",
+    "repairPerCondition": "Repair / condition point",
+    "repairPerPoint": "Repair / point",
+    "currentRepairEstimate": "Current full repair estimate",
+    "repairEstimate": "Full repair estimate",
+    "currentRepairTime": "Current repair time",
+    "repairTime": "Repair time",
+    "newDeliveryTime": "New delivery time",
+    "newDelivery": "New delivery",
+    "racePlanBenefits": "Race-plan benefits",
+    "raceBenefits": "Race Benefits",
+    "productionRaceBenefits": "Production race benefits",
+    "productionRaceEngineValues": "Production race-engine values",
+    "productionEngine": "Production engine",
+    "currentCarStatus": "Current car status",
+    "productionDescription": "Current values below are the values that feed the race-plan bonus pipeline.",
+    "teamCarLevelSupport": "Team Car race support by level",
+    "teamBusLevelSupport": "Team Bus fatigue & recovery support",
+    "equipmentVanBenefits": "Equipment Van benefits",
+    "workshopBenefits": "Mobile Workshop benefits",
+    "configuredEffects": "Configured effects",
+    "fatigue": "Fatigue",
+    "fatigueControl": "Fatigue Control",
+    "recovery": "Recovery",
+    "recoverySupport": "Recovery Support",
+    "health": "Health",
+    "healthProtection": "Health Protection",
+    "mechanicalReliability": "Mechanical Reliability",
+    "equipmentProtection": "Equipment Protection",
+    "fieldRecovery": "Field Equipment Recovery",
+    "medicalInfo": "Medical Vans now use their real production condition, wear and canonical race bonuses. Only one Medical Van can be assigned per event.",
+    "teamBusInfo": "Only one Team Bus can be assigned to an event. Fatigue Protection maps to Fatigue Control; Recovery Comfort maps to Recovery Support. Team-wide engine caps are applied after all preparation sources are combined.",
+    "equipmentVanInfo": "Equipment Vans are the race-equipment logistics asset: they add Mechanical Reliability and directly protect allocated physical race equipment from normal stage wear and incident damage.",
+    "mobileWorkshopInfo": "Mobile Workshops are race-event field-service assets. They improve Mechanical Reliability and recover part of stage equipment condition loss. Home-base maintenance speed and cost remain the job of the permanent Mechanics Workshop facility and mechanic staff.",
+    "noRaceUsage": "No race usage recorded yet.",
+    "loadingRaceHistory": "Loading race history…",
+    "reference120": "120 km reference",
+    "workshopWear": "120 km Workshop wear",
+    "vanWear": "120 km van wear",
+    "usedRaces": "Last 5 races used",
+    "physicalProtection": "Physical equipment protection",
+    "mechanicalRisk": "Mechanical incident risk",
+    "mechanicalTimeLoss": "Mechanical time loss",
+    "repairPointLabel": "Repair / point:",
+    "upToThreeCars": "Up to 3 cars per race",
+    "oneBus": "1 bus per event",
+    "fullValueActive": "Full value active",
+    "shortNoRepair": "No repair needed",
+    "currentBenefit": "Current: {{value}}",
+    "busByLevel": "Team Bus race support by level",
+    "equipmentByLevel": "Equipment Van race support by level",
+    "workshopByLevel": "Mobile Workshop race support by level",
+    "medicalByLevel": "Medical Van race support by level",
+    "busByLevelHint": "Exact fatigue, recovery, wear and maintenance values.",
+    "equipmentByLevelHint": "Exact mechanical reliability, equipment protection, wear and maintenance values.",
+    "workshopByLevelHint": "Exact field-service, equipment recovery, wear and maintenance values.",
+    "medicalByLevelHint": "Exact health protection, fatigue, recovery, wear and maintenance values.",
+    "oneVan": "1 van per event",
+    "oneWorkshop": "1 workshop per event",
+    "oneMedical": "1 medical van per event",
+    "exactConfigured": "Exact configured benefits, wear and maintenance values.",
+    "raceProductionContext": "These are the production values that feed canonical Fatigue Control and Recovery Support.",
+    "raceBenefitsContext": "Current values below are the values that feed the race-plan bonus pipeline.",
+    "deliveryDayValue": "Delivery: {{days}} game days",
+    "wear120Value": "120 km wear: {{wear}}",
+    "repairPointValue": "Repair: {{cost}} / condition point",
+    "levelLabel": "Level {{level}}",
+    "effectiveBadge": "{{percent}} effectiveness",
+    "benefitsCurrent": "Current: {{value}}",
+    "healthRiskLabel": "Health consequence risk multiplier:",
+    "stageEnergy": "In-stage energy multiplier:",
+    "postFatigue": "Post-stage fatigue multiplier:",
+    "bonusRecovery": "Recovery bonus:",
+    "repairSpeed": "Repair speed:",
+    "repairNow": "Repair to 100% now:",
+    "physicalProtectionContext": "Protection applies to the frames, wheelsets, tires, groupsets, helmets and shoes actually allocated to riders for the stage. It does not reduce this van's own wear.",
+    "fullEffectiveness": "Full effectiveness",
+    "slightlyReduced": "Slightly reduced",
+    "poorLimited": "Poor / limited",
+    "notRaceReady": "Not race-ready",
+    "inRepairStatus": "In repair",
+    "assignedToRace": "Assigned to race",
+    "availableCarText": "This car is currently free in the garage and can be assigned, repaired or sold when eligible.",
+    "assetStatusGeneric": "Current asset status from the Team Car garage.",
+    "noRaceHistoryError": "Race history could not be loaded.",
+    "notUsedYet": "Not used yet",
+    "currentStatus": "Current car status",
+    "effectivenessBandsCar": "Effectiveness bands: 80–100% = 100%; 60–79% = 90%; 40–59% = 75%; 30–39% = 60%; below 30% cannot be assigned.",
+    "effectivenessBandsBus": "Effectiveness bands: 70–100% = 100%; 50–69% = 85%; 30–49% = 65%; below 30% cannot be assigned and provides no new Race Plan benefit.",
+    "noRepairNeeded": "No repair needed",
+    "referenceStageLine": "Finished race usage for this exact car.",
+    "technicalSupportSummary": "This is event-side technical support. Mechanical Reliability affects race mechanicals; Field Equipment Recovery offsets part of the condition loss suffered by the physical equipment used on the stage.",
+    "workshopOnePerEvent": "Only one Mobile Workshop can be assigned to an event. Submitted Race Plans freeze the Workshop benefit at submission time for deterministic race replays."
+  },
+  "assetBonusText": {
+    "medicalResponse": "Medical response {{value}}",
+    "minorInjuryRisk": "Minor injury risk {{value}}",
+    "hydration": "Hydration {{value}}",
+    "heatHydration": "Heat/hydration {{value}}",
+    "medicalRecovery": "Recovery {{value}}",
+    "tourFatigueProtection": "Tour Fatigue Protection {{value}}",
+    "recoveryComfort": "Recovery Comfort {{value}}",
+    "raceSupportCoverage": "Race Support Coverage {{value}}",
+    "feedingSupport": "Feeding Support {{value}}",
+    "mechanicalResponse": "Mechanical Response {{value}}",
+    "tacticalCommunication": "Tactical Communication {{value}}",
+    "incidentResponse": "Incident Response {{value}}",
+    "raceFatigueProtection": "Race Fatigue Protection {{value}}",
+    "raceSupportQuality": "Race Support Quality {{value}}",
+    "mechanicalReliability": "Mechanical Reliability {{value}}",
+    "equipmentProtection": "Equipment Protection {{value}}",
+    "fieldEquipmentRecovery": "Field Equipment Recovery {{value}}",
+    "healthProtection": "Health Protection {{value}}",
+    "fatigueControl": "Fatigue Control {{value}}",
+    "recoverySupport": "Recovery Support {{value}}"
+  }
+}

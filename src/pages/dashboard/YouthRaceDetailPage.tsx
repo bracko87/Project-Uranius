@@ -1,0 +1,1153 @@
+import React, { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router'
+import { useTranslation } from 'react-i18next'
+import { supabase } from '@/lib/supabase'
+
+type CompetitionClass = 'regional' | 'continental' | 'world'
+type DetailTab = 'overview' | 'teams' | 'squad' | 'results'
+
+type YouthRaceDetailPayload = {
+  game_date: string
+  race: {
+    id: string
+    season_number: number
+    race_name: string
+    race_date: string
+    race_end_date: string
+    race_days: number
+    competition_class: CompetitionClass
+    division_code?: string | null
+    host_city?: string | null
+    host_country_code?: string | null
+    terrain_type: string
+    distance_km: number
+    entry_cost: number
+    entry_fee?: number
+    prize_fund_cash: number
+    lineup_size: number
+    team_limit: number
+    entries_count: number
+    status: 'scheduled' | 'completed' | 'cancelled'
+    results_published_at?: string | null
+    start_time_region_code?: string | null
+    planned_start_time_label?: string | null
+  }
+  stages: Array<{
+    id: string
+    stage_number: number
+    stage_date: string
+    stage_type: string
+    distance_km: number
+    planned_start_time_label?: string | null
+    start_time_region_code?: string | null
+    start_city?: string | null
+    finish_city?: string | null
+    sprint_points_total: number
+    mountain_points_total: number
+    time_trial_points_total: number
+    status: string
+    results: Array<{
+      position?: number | null
+      rider_id: string
+      rider_name: string
+      country_code: string
+      academy_id: string
+      academy_name: string
+      jersey_url?: string | null
+      result_status: string
+      gap_seconds?: number | null
+      time_seconds?: number | null
+      sprint_points: number
+      mountain_points: number
+      time_trial_points: number
+    }>
+  }>
+  my_entry: {
+    id: string
+    status: 'entered' | 'completed'
+    entered_on: string
+    entered_by: string
+    strategy: 'conservative' | 'balanced' | 'aggressive'
+    race_squad_decider: 'manager' | 'u16_head_coach'
+    entry_fee?: number
+    travel_cost_total?: number
+    accommodation_cost_total?: number
+    logistics_cost_total?: number
+    staff_accommodation_cost_total?: number
+    equipment_support_cost_total?: number
+    total_participation_cost?: number
+  }
+  teams: Array<{
+    academy_id: string
+    club_name: string
+    country_code: string
+    jersey_url?: string | null
+    is_ai: boolean
+    entry_status: string
+    lineup_count: number
+    is_mine: boolean
+    team_position?: number | null
+    prize_cash: number
+    logo_path?: string | null
+  }>
+  my_lineup: Array<{
+    rider_id: string
+    name: string
+    country_code: string
+    role: string
+    readiness: number
+    fatigue: number
+    status?: string
+    eligible?: boolean
+    eligibility_reason?: string | null
+  }>
+  eligible_riders: Array<{
+    rider_id: string
+    name: string
+    country_code: string
+    role: string
+    readiness: number
+    fatigue: number
+    eligible: boolean
+  }>
+  rider_results: Array<{
+    position?: number | null
+    rider_id: string
+    rider_name: string
+    country_code: string
+    academy_id: string
+    academy_name: string
+    jersey_url?: string | null
+    result_status: string
+    gap_seconds?: number | null
+    time_seconds?: number | null
+    general_points?: number
+    sprint_points?: number
+    mountain_points?: number
+    time_trial_points?: number
+    ranking_points?: number
+  }>
+  classifications: {
+    sprint: Array<{ rider_id: string; rider_name: string; country_code: string; academy_name: string; jersey_url?: string | null; points: number }>
+    mountain: Array<{ rider_id: string; rider_name: string; country_code: string; academy_name: string; jersey_url?: string | null; points: number }>
+    time_trial: Array<{ rider_id: string; rider_name: string; country_code: string; academy_name: string; jersey_url?: string | null; points: number }>
+  }
+  team_results: Array<{
+    team_position: number
+    academy_id: string
+    academy_name: string
+    country_code: string
+    jersey_url?: string | null
+    prize_cash: number
+    is_mine: boolean
+  }>
+}
+
+function money(value: number | null | undefined): string {
+  const amount = Math.round(Number(value ?? 0))
+  const sign = amount < 0 ? '-' : ''
+  return sign + String.fromCharCode(36) + Math.abs(amount).toLocaleString('en-US')
+}
+
+function shortDate(value: string | null | undefined): string {
+  if (!value) return '—'
+  const date = new Date(`${String(value).slice(0, 10)}T00:00:00Z`)
+  if (Number.isNaN(date.getTime())) return String(value)
+  return new Intl.DateTimeFormat(undefined, {
+    day: '2-digit',
+    month: 'short',
+    timeZone: 'UTC',
+  }).format(date)
+}
+
+function humanize(value: string | null | undefined): string {
+  if (!value) return '—'
+  return value
+    .toLowerCase()
+    .replaceAll('_', ' ')
+    .replace(/\b\w/g, char => char.toUpperCase())
+}
+
+function flagUrl(code: string | null | undefined): string | null {
+  const safe = String(code ?? '').trim().toLowerCase()
+  return /^[a-z]{2}$/.test(safe) ? `/assets/uranius-placeholders/card.png?id=4b88783f85443b16` : null
+}
+
+function JerseyThumb({ url, name }: { url?: string | null; name: string }): JSX.Element {
+  return (
+    <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-white">
+      {url ? (
+        <img src={url} alt={`${name} jersey`} className="h-full w-full object-contain p-0.5" />
+      ) : (
+        <span className="text-[9px] text-slate-400">Kit</span>
+      )}
+    </span>
+  )
+}
+
+function StageProfileIcon({ type }: { type: string }): JSX.Element {
+  const key = String(type ?? '').toLowerCase()
+  const points =
+    key.includes('time')
+      ? '4,21 18,21 28,18 42,18 54,20 70,20'
+      : key.includes('mountain')
+        ? '4,23 15,18 25,9 33,18 43,5 54,15 63,8 72,20'
+        : key.includes('hill')
+          ? '4,22 15,18 24,12 34,19 44,10 55,17 64,12 72,20'
+          : key.includes('mixed')
+            ? '4,22 16,21 26,14 36,19 46,8 58,18 72,14'
+            : '4,20 20,20 34,19 49,20 72,20'
+
+  return (
+    <span className="flex h-12 w-20 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white">
+      <svg viewBox="0 0 76 28" className="h-8 w-[72px]" aria-hidden="true">
+        <polyline
+          points={points}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="text-slate-700"
+        />
+        {key.includes('time') ? (
+          <circle cx="11" cy="10" r="5" fill="none" stroke="currentColor" strokeWidth="2" className="text-violet-600" />
+        ) : null}
+      </svg>
+    </span>
+  )
+}
+
+function classLabel(value: CompetitionClass): string {
+  if (value === 'world') return 'World Class'
+  if (value === 'continental') return 'Continental Class'
+  return 'Regional Class'
+}
+
+function classBadge(value: CompetitionClass): string {
+  if (value === 'world') return 'border-violet-200 bg-violet-50 text-violet-700'
+  if (value === 'continental') return 'border-orange-200 bg-orange-50 text-orange-700'
+  return 'border-sky-200 bg-sky-50 text-sky-700'
+}
+
+function statusInfo(
+  payload: YouthRaceDetailPayload
+): { label: string; className: string } {
+  const race = payload.race
+  const gameDate = String(payload.game_date ?? '').slice(0, 10)
+  const start = String(race.race_date ?? '').slice(0, 10)
+  const end = String(race.race_end_date ?? race.race_date ?? '').slice(0, 10)
+
+  if (race.status === 'completed' || (gameDate && gameDate > end)) {
+    return { label: 'Finished', className: 'bg-slate-100 text-slate-700' }
+  }
+
+  if (race.status === 'scheduled' && gameDate >= start && gameDate <= end) {
+    return { label: 'Active', className: 'bg-emerald-50 text-emerald-700' }
+  }
+
+  return { label: 'Scheduled', className: 'bg-amber-50 text-amber-800' }
+}
+
+function Section({
+  title,
+  children,
+  right,
+}: {
+  title: string
+  children: React.ReactNode
+  right?: React.ReactNode
+}): JSX.Element {
+  return (
+    <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
+        <h2 className="text-sm font-semibold text-slate-900">{title}</h2>
+        {right}
+      </div>
+      <div className="p-4">{children}</div>
+    </section>
+  )
+}
+
+
+type YouthStandingRow = {
+  rider_id: string
+  rider_name: string
+  country_code?: string | null
+  academy_name: string
+  jersey_url?: string | null
+  position?: number | null
+  result_status?: string
+  time_seconds?: number | null
+  gap_seconds?: number | null
+  points?: number | null
+}
+
+function youthTime(seconds: number | null | undefined): string {
+  if (seconds == null || !Number.isFinite(Number(seconds))) return '—'
+  const value = Math.max(0, Math.round(Number(seconds)))
+  const hours = Math.floor(value / 3600)
+  const minutes = Math.floor((value % 3600) / 60)
+  const remainder = value % 60
+  return [hours, minutes, remainder].map(part => String(part).padStart(2, '0')).join(':')
+}
+
+function youthCompactGap(seconds: number | null | undefined): string {
+  if (seconds == null || !Number.isFinite(Number(seconds))) return '—'
+  const total = Math.max(0, Math.round(Number(seconds)))
+  const hours = Math.floor(total / 3600)
+  const minutes = Math.floor((total % 3600) / 60)
+  const remainder = total % 60
+  if (hours > 0) return `+${hours}:${String(minutes).padStart(2, '0')}:${String(remainder).padStart(2, '0')}`
+  if (minutes > 0) return `+${minutes}:${String(remainder).padStart(2, '0')}`
+  return `+${remainder}s`
+}
+
+function YouthStandingTable({
+  rows,
+  pointsMode = false,
+}: {
+  rows: YouthStandingRow[]
+  pointsMode?: boolean
+}): JSX.Element {
+  const { t } = useTranslation('youthAcademy')
+  if (rows.length === 0) {
+    return <p className="p-4 text-sm text-slate-500">{t('raceDetail.waitingStageResults')}</p>
+  }
+  // Show actual elapsed-time differences rather than the legacy stage gap field,
+  // which can differ from the displayed elapsed times.
+  const leaderTime = !pointsMode
+    ? rows.find(row => row.result_status === 'finished' && row.time_seconds != null)?.time_seconds
+    : undefined
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[480px] border-collapse text-left text-sm">
+        <thead>
+          <tr className="border-b border-slate-200 bg-white text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <th className="px-3 py-3">#</th>
+            <th className="px-3 py-3">{t('raceDetail.rider')}</th>
+            <th className="w-[34%] px-3 py-3">{t('raceDetail.team')}</th>
+            <th className="px-3 py-3 text-right">{pointsMode ? t('raceDetail.points') : t('raceDetail.time')}</th>
+            {!pointsMode ? <th className="px-3 py-3 text-right">{t('raceDetail.gap')}</th> : null}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, index) => (
+            <tr key={row.rider_id + ':' + index} className="border-b border-slate-100 bg-white last:border-b-0 hover:bg-slate-50">
+              <td className="px-3 py-2 font-semibold text-slate-900">
+                {row.position ?? (row.result_status && row.result_status !== 'finished' ? row.result_status.toUpperCase() : index + 1)}
+              </td>
+              <td className="max-w-[220px] truncate px-3 py-2 font-medium text-slate-950" title={row.rider_name}>
+                {row.rider_name}
+              </td>
+              <td className="px-3 py-2">
+                <span className="relative block h-9 w-full min-w-[130px] max-w-[220px] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm" title={row.academy_name}>
+                  {row.jersey_url ? (
+                    <>
+                      <img
+                        src={row.jersey_url}
+                        alt={row.academy_name + ' jersey'}
+                        loading="lazy"
+                        className="pointer-events-none absolute inset-0 h-full w-full scale-[5] object-contain opacity-95"
+                        style={{ objectPosition: '50% 37%', transformOrigin: '50% 37%' }}
+                      />
+                      <span className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/5 via-transparent to-slate-950/5" />
+                    </>
+                  ) : (
+                    <span className="flex h-full items-center justify-center truncate px-2 text-xs text-slate-500">
+                      {row.academy_name}
+                    </span>
+                  )}
+                </span>
+              </td>
+              <td className="whitespace-nowrap px-3 py-2 text-right font-medium text-slate-900">
+                {pointsMode ? String(Math.max(0, Number(row.points ?? 0))) : row.result_status && row.result_status !== 'finished' ? '—' : youthTime(row.time_seconds)}
+              </td>
+              {!pointsMode ? (
+                <td className="whitespace-nowrap px-3 py-2 text-right text-slate-500">
+                  {row.result_status && row.result_status !== 'finished'
+                      ? '—'
+                      : (() => {
+                          const timeGap = row.time_seconds != null && leaderTime != null
+                            ? Math.max(0, Math.round(Number(row.time_seconds) - Number(leaderTime)))
+                            : row.gap_seconds
+                          if (timeGap == null) return '—'
+                          if (Number(timeGap) === 0) return index === 0 ? t('raceDetail.leader') : t('raceDetail.sameTime')
+                          return youthCompactGap(timeGap)
+                        })()}
+                </td>
+              ) : null}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+export default function YouthRaceDetailPage(): JSX.Element {
+  const { raceId } = useParams()
+  const navigate = useNavigate()
+  const { t } = useTranslation('youthAcademy')
+  const [payload, setPayload] = useState<YouthRaceDetailPayload | null>(null)
+  const [tab, setTab] = useState<DetailTab>('overview')
+  const [selectedRiders, setSelectedRiders] = useState<string[]>([])
+  const [strategy, setStrategy] =
+    useState<'conservative' | 'balanced' | 'aggressive'>('balanced')
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [selectedStageNumber, setSelectedStageNumber] = useState(1)
+  const [resultView, setResultView] = useState<'general' | 'sprint' | 'mountain'>('general')
+  const [stageResultView, setStageResultView] = useState<'stage_general' | 'stage_sprint' | 'stage_mountain'>('stage_general')
+  const [raceInfoExpanded, setRaceInfoExpanded] = useState(true)
+  const [raceInfoTab, setRaceInfoTab] = useState<'participants' | 'results'>('results')
+  const [fullStandingModal, setFullStandingModal] = useState<'race' | 'stage' | null>(null)
+  const [teamClassificationExpanded, setTeamClassificationExpanded] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const load = async (): Promise<void> => {
+    if (!raceId) return
+    setLoading(true)
+    setError(null)
+    try {
+      const { data, error: loadError } = await supabase.rpc(
+        'get_my_youth_race_detail_v1',
+        { p_race_id: raceId }
+      )
+      if (loadError) throw loadError
+      const next = data as YouthRaceDetailPayload
+      setPayload(next)
+      setSelectedRiders((next.my_lineup ?? []).map(rider => rider.rider_id))
+      setStrategy(next.my_entry?.strategy ?? 'balanced')
+      setSelectedStageNumber(current =>
+        (next.stages ?? []).some(stage => stage.stage_number === current)
+          ? current
+          : Number(next.stages?.[0]?.stage_number ?? 1)
+      )
+    } catch (loadError: any) {
+      console.error('Youth race detail load failed:', loadError)
+      setError(
+        loadError?.message ??
+          'This Youth race page is available only for races your Academy participates in.'
+      )
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    void load()
+  }, [raceId])
+
+  const canManageSquad =
+    payload?.my_entry?.status === 'entered' &&
+    payload?.my_entry?.race_squad_decider === 'manager' &&
+    payload?.race?.status === 'scheduled'
+
+  const status = useMemo(
+    () => (payload ? statusInfo(payload) : null),
+    [payload]
+  )
+
+  const toggleRider = (riderId: string, eligible: boolean): void => {
+    if (!eligible || !payload) return
+    setSelectedRiders(current => {
+      if (current.includes(riderId)) {
+        return current.filter(id => id !== riderId)
+      }
+      if (current.length >= Number(payload.race.lineup_size ?? 0)) {
+        return current
+      }
+      return [...current, riderId]
+    })
+  }
+
+  const saveLineup = async (): Promise<void> => {
+    if (!raceId || !payload || !canManageSquad || saving) return
+    if (
+      selectedRiders.length < 4 ||
+      selectedRiders.length > Number(payload.race.lineup_size ?? 0)
+    ) {
+      setError(
+        `Select between 4 and ${payload.race.lineup_size} riders for this Youth race.`
+      )
+      return
+    }
+
+    setSaving(true)
+    setError(null)
+    try {
+      const { error: saveError } = await supabase.rpc(
+        'save_my_youth_race_lineup_v1',
+        {
+          p_race_id: raceId,
+          p_rider_ids: selectedRiders,
+          p_strategy: strategy,
+        }
+      )
+      if (saveError) throw saveError
+      await load()
+    } catch (saveError: any) {
+      console.error('Youth race lineup save failed:', saveError)
+      setError(saveError?.message ?? 'Unable to save the Youth race squad.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) {
+    return <div className="p-6 text-sm text-slate-500">{t('raceDetail.loadingRace')}</div>
+  }
+
+  if (!payload || error && !payload) {
+    return (
+      <div className="space-y-4">
+        <button
+          type="button"
+          onClick={() => navigate('/dashboard/youth-academy?tab=calendar')}
+          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700"
+        >
+          {t('raceDetail.backToCalendar')}
+        </button>
+        <div className="rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">
+          {error ??
+            'This Youth race page is available only for races your Academy participates in.'}
+        </div>
+      </div>
+    )
+  }
+
+  const { race } = payload
+  const raceDays = Math.max(1, Number(race.race_days ?? 1))
+  const isFinished = race.status === 'completed'
+  // Completed races are immutable. Published rider results, not current roster
+  // or a stale selected-lineup count, determine the historical starters.
+  const publishedRidersByAcademy = new Map<string, YouthRaceDetailPayload['rider_results']>()
+  if (isFinished) {
+    for (const rider of payload.rider_results ?? []) {
+      const group = publishedRidersByAcademy.get(rider.academy_id) ?? []
+      if (!group.some(existing => existing.rider_id === rider.rider_id)) group.push(rider)
+      publishedRidersByAcademy.set(rider.academy_id, group)
+    }
+  }
+  const finishedTeamsWithResults = [...publishedRidersByAcademy.values()].filter(group => group.length > 0).length
+  const selectedResultStage = payload.stages.find(item => item.stage_number === selectedStageNumber)
+  const selectedStageHasSprint = Number(selectedResultStage?.sprint_points_total ?? 0) > 0
+  const selectedStageHasMountain = Number(selectedResultStage?.mountain_points_total ?? 0) > 0
+  const raceStandingRows: YouthStandingRow[] = resultView === 'general'
+    ? payload.rider_results.map(rider => ({
+        ...rider,
+        time_seconds: rider.time_seconds ?? null,
+      }))
+    : (payload.classifications?.[resultView] ?? []).map((rider, index) => ({
+        ...rider,
+        position: index + 1,
+        result_status: 'finished',
+      }))
+  const selectedStageStandingRows: YouthStandingRow[] = (() => {
+    const results = selectedResultStage?.status === 'completed' ? selectedResultStage.results : []
+    if (stageResultView === 'stage_general') return results
+    const key = stageResultView === 'stage_sprint' ? 'sprint_points' : 'mountain_points'
+    return [...results]
+      .filter(result => result.result_status === 'finished' && Number(result[key] ?? 0) > 0)
+      .sort((a, b) => Number(b[key] ?? 0) - Number(a[key] ?? 0) || Number(a.position ?? 9999) - Number(b.position ?? 9999))
+      .map((result, index) => ({ ...result, position: index + 1, points: Number(result[key] ?? 0) }))
+  })()
+  const stagePointsMode = stageResultView !== 'stage_general'
+
+  const invalidLineupRiders = payload.my_lineup.filter(rider => rider.eligible === false)
+  const isUpcomingYouthRace = race.status === 'scheduled' && String(payload.game_date).slice(0, 10) <= String(race.race_date).slice(0, 10)
+  const invalidSelectedRiders = invalidLineupRiders.filter(rider => selectedRiders.includes(rider.rider_id))
+  const showSquadEligibilityWarning = isUpcomingYouthRace && invalidLineupRiders.length > 0
+  const tabs: Array<{ key: DetailTab; label: string }> = [
+    { key: 'overview', label: t('raceDetail.overview') },
+    { key: 'teams', label: t('raceDetail.teamsCount', { count: payload.teams.length }) },
+    { key: 'squad', label: t('raceDetail.mySquad') },
+    { key: 'results', label: t('raceDetail.results') },
+  ]
+
+  return (
+    <div className="space-y-5">
+      <button
+        type="button"
+        onClick={() => navigate('/dashboard/youth-academy?tab=calendar')}
+        className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+      >
+        ← Back to Youth Calendar
+      </button>
+
+      {showSquadEligibilityWarning ? (
+        <div role="alert" className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <p className="font-semibold">
+            {t('raceDetail.lineupWarningTitle', { count: invalidLineupRiders.length })}
+          </p>
+          <p className="mt-1">{t('raceDetail.eligibilityRules')}
+            {payload.my_entry.race_squad_decider === 'manager'
+              ? t('raceDetail.managerReplaceHelp')
+              : t('raceDetail.coachReplaceHelp')}
+          </p>
+          <button type="button" onClick={() => setTab('squad')}
+            className="mt-2 rounded-lg border border-amber-400 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-amber-100">{t('raceDetail.reviewSquad')}</button>
+        </div>
+      ) : null}
+      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex min-w-0 gap-5">
+            <div className="flex min-w-[88px] flex-col items-center justify-center rounded-xl bg-slate-50 px-3 py-3 text-center">
+              <span className="text-sm font-semibold text-slate-950">
+                {shortDate(race.race_date)}
+              </span>
+              {race.race_end_date !== race.race_date ? (
+                <span className="mt-1 text-sm font-semibold text-slate-950">
+                  {shortDate(race.race_end_date)}
+                </span>
+              ) : null}
+            </div>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                {flagUrl(race.host_country_code) ? (
+                  <img
+                    src={flagUrl(race.host_country_code) ?? ''}
+                    alt=""
+                    className="h-4 w-6 rounded-sm object-cover"
+                  />
+                ) : null}
+                <h1 className="text-2xl font-semibold text-slate-950">
+                  {race.race_name}
+                </h1>
+              </div>
+              <p className="mt-2 text-sm text-slate-500">
+                {race.host_city ? `${race.host_city} · ` : ''}
+                {t(`raceDetail.terrain.${race.terrain_type}`, { defaultValue: humanize(race.terrain_type) })} · {race.distance_km} km
+                {raceDays > 1 ? t('raceDetail.perStage') : ''}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 xl:justify-end">
+            {status ? (
+              <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${status.className}`}>
+                {t(`raceDetail.status.${race.status === 'completed' ? 'finished' : race.status === 'active' ? 'active' : 'scheduled'}`, { defaultValue: status.label })}
+              </span>
+            ) : null}
+            <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${classBadge(race.competition_class)}`}>
+              {t(`calendar.competition.${race.competition_class}`, { defaultValue: classLabel(race.competition_class) })}
+            </span>
+            <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700">
+              {t('raceDetail.teamsRegistered', { registered: race.entries_count, capacity: race.team_limit })}
+            </span>
+            <span className="rounded-full border border-yellow-200 bg-yellow-50 px-2.5 py-1 text-xs font-medium text-yellow-800">
+              {t('raceDetail.prizeFundValue', { value: money(race.prize_fund_cash) })}
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <div className="inline-flex flex-wrap rounded-lg border border-gray-100 bg-white p-1 shadow-sm">
+        {tabs.map(item => (
+          <button
+            key={item.key}
+            type="button"
+            onClick={() => setTab(item.key)}
+            className={`rounded-md px-4 py-2 text-sm font-medium transition ${
+              tab === item.key
+                ? 'bg-yellow-400 text-black'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+
+      {error ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error}
+        </div>
+      ) : null}
+
+      {tab === 'overview' ? (
+        <Section title={t('raceDetail.raceInformation')}>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {[
+              [t('raceDetail.competition'), t(`calendar.competition.${race.competition_class}`, { defaultValue: classLabel(race.competition_class) })],
+              [t('raceDetail.dates'), race.race_end_date !== race.race_date
+                ? `${shortDate(race.race_date)} – ${shortDate(race.race_end_date)}`
+                : shortDate(race.race_date)],
+              [t('raceDetail.raceLength'), t('raceDetail.dayCount', { count: raceDays })],
+              [t('raceDetail.distance'), `${race.distance_km} km${raceDays > 1 ? t('raceDetail.perStage') : ''}`],
+              [t('raceDetail.teams'), `${race.entries_count} / ${race.team_limit}`],
+              [t('raceDetail.prizeFund'), money(race.prize_fund_cash)],
+              [t('raceDetail.entryFee'), money(race.entry_fee ?? race.entry_cost)],
+              [t('raceDetail.myEntry'), t(`raceDetail.entryStatus.${payload.my_entry.status}`, { defaultValue: humanize(payload.my_entry.status) })],
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-lg bg-slate-50 p-3">
+                <div className="text-xs text-slate-500">{label}</div>
+                <div className="mt-1 text-sm font-medium text-slate-900">{value}</div>
+              </div>
+            ))}
+          </div>
+          <p className="mt-4 text-xs leading-5 text-slate-500">
+            {t('raceDetail.prizeHelp')}
+          </p>
+
+          <div className="mt-5 border-t border-slate-100 pt-5">
+            <h3 className="text-sm font-semibold text-slate-900">{t('raceDetail.participationCost')}</h3>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {[
+                [t('raceDetail.entryFee'), money(payload.my_entry.entry_fee ?? race.entry_fee ?? race.entry_cost)],
+                [t('raceDetail.travel'), money(payload.my_entry.travel_cost_total)],
+                [t('raceDetail.riderAccommodation'), money(payload.my_entry.accommodation_cost_total)],
+                [t('raceDetail.staffAccommodation'), money(payload.my_entry.staff_accommodation_cost_total)],
+                [t('raceDetail.logistics'), money(payload.my_entry.logistics_cost_total)],
+                [t('raceDetail.equipmentSupport'), money(payload.my_entry.equipment_support_cost_total)],
+                [t('raceDetail.staffTravelling'), '2'],
+                [t('raceDetail.totalDeducted'), money(payload.my_entry.total_participation_cost ?? race.entry_cost)],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-lg bg-slate-50 p-3">
+                  <div className="text-xs text-slate-500">{label}</div>
+                  <div className="mt-1 text-sm font-medium text-slate-900">{value}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-5 border-t border-slate-100 pt-5">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h3 className="text-sm font-semibold text-slate-900">{t('raceDetail.stages')}</h3>
+              <span className="text-xs text-slate-500">{t('raceDetail.stageCount', { count: payload.stages.length })}</span>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {payload.stages.map(stage => (
+                <button
+                  key={stage.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedStageNumber(stage.stage_number)
+                    if (stage.status === 'completed') setTab('results')
+                  }}
+                  className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-left transition hover:border-slate-300 hover:bg-white"
+                >
+                  <div className="flex items-start gap-3">
+                    <StageProfileIcon type={stage.stage_type} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                            {t('raceDetail.stage', { number: stage.stage_number })} · {shortDate(stage.stage_date)}
+                          </div>
+                          <div className="mt-1 text-base font-semibold text-slate-900">
+                            {t('raceDetail.stageType', { type: t(`raceDetail.terrain.${stage.stage_type}`, { defaultValue: humanize(stage.stage_type) }) })}
+                          </div>
+                        </div>
+                        <span className="rounded-full border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-700">
+                          {t('raceDetail.startTime', { time: stage.planned_start_time_label ?? '—' })}
+                        </span>
+                      </div>
+
+                      <div className="mt-3 flex items-center gap-2 text-sm text-slate-700">
+                        <span className="text-slate-400">↗</span>
+                        <span className="truncate">
+                          {stage.start_city && stage.finish_city
+                            ? stage.start_city === stage.finish_city
+                              ? t('raceDetail.circuit', { city: stage.start_city })
+                              : `${stage.start_city} → ${stage.finish_city}`
+                            : race.host_city ?? t('raceDetail.routeUnknown')}
+                        </span>
+                      </div>
+
+                      <div className="mt-2 flex flex-wrap gap-2 text-[11px] font-medium">
+                        <span className="rounded-full bg-white px-2 py-1 text-slate-700">
+                          {stage.distance_km} km
+                        </span>
+                        <span className="rounded-full bg-white px-2 py-1 text-slate-700">
+                          {t(`raceDetail.terrain.${stage.stage_type}`, { defaultValue: humanize(stage.stage_type) })}
+                        </span>
+                        <span className={`rounded-full px-2 py-1 ${
+                          stage.status === 'completed'
+                            ? 'bg-emerald-50 text-emerald-700'
+                            : stage.status === 'active'
+                              ? 'bg-blue-50 text-blue-700'
+                              : 'bg-slate-100 text-slate-600'
+                        }`}>
+                          {t(`raceDetail.status.${stage.status}`, { defaultValue: humanize(stage.status) })}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </Section>
+      ) : null}
+
+      {tab === 'teams' ? (
+        <Section title={isFinished ? t('raceDetail.registeredTeamsTitle') : t('raceDetail.participatingTeams')}>
+          {isFinished ? (
+            <div className="mb-4 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-slate-700">
+              {t('raceDetail.registeredTeamsSummary', { teams: payload.teams.length, results: finishedTeamsWithResults, missing: Math.max(0, payload.teams.length-finishedTeamsWithResults) })}
+              <p className="mt-1 text-xs text-slate-600">{t('raceDetail.historicalEligibility')}</p>
+            </div>
+          ) : (
+            <p className="mb-3 text-xs text-slate-600">{t('raceDetail.minimumStarters')}</p>
+          )}
+          <div className="space-y-2">
+            {payload.teams.filter(team => isFinished || team.entry_status !== 'withdrawn').map((team, index) => {
+              const flag = flagUrl(team.country_code)
+              const actualRiders = publishedRidersByAcademy.get(team.academy_id) ?? []
+              const nationalLegacy = /(?:national|nacional)\s*team|team\s+national/i.test(team.club_name)
+              return (
+                <div
+                  key={team.academy_id}
+                  className={`rounded-lg border px-3 py-3 ${
+                    team.is_mine
+                      ? 'border-yellow-300 bg-yellow-50/60'
+                      : 'border-slate-200 bg-white'
+                  }`}
+                >
+                  <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="w-7 text-center text-xs font-semibold text-slate-500">
+                      {team.team_position ? `#${team.team_position}` : index + 1}
+                    </span>
+                    <JerseyThumb url={team.jersey_url} name={team.club_name} />
+                    {flag ? <img src={flag} alt="" className="h-4 w-6 rounded-sm object-cover" /> : null}
+                    <div className="min-w-0">
+                      {team.is_mine ? (
+                        <Link to={`/dashboard/youth-academy/teams/${team.academy_id}`} className="block truncate text-sm font-semibold text-sky-800 hover:underline">
+                          {team.club_name} · {t('raceDetail.myAcademy')}
+                        </Link>
+                      ) : (
+                        <span className="block truncate text-sm font-semibold text-slate-900">{team.club_name}</span>
+                      )}
+                      <div className="mt-0.5 text-xs text-slate-500">
+                        {isFinished ? (
+                          actualRiders.length > 0 ? t('raceDetail.recordedStarters', { count: actualRiders.length }) : t('raceDetail.noRecordedStarter')
+                        ) : team.entry_status === 'withdrawn' ? t('raceDetail.withdrawn')
+                          : t('raceDetail.ridersSelected', { selected: team.lineup_count, max: race.lineup_size })}
+                      </div>
+                      {isFinished && actualRiders.length > 0 && actualRiders.length < 4 ? (
+                        <div className="mt-1 text-xs font-semibold text-amber-700">{t('raceDetail.historicalFewStarters')}</div>
+                      ) : null}
+                      {isFinished && nationalLegacy ? (
+                        <div className="mt-1 text-xs font-semibold text-amber-700">{t('raceDetail.historicalNationalTeam')}</div>
+                      ) : null}
+                      {!isFinished && team.lineup_count < 4 ? (
+                        <div className="mt-1 text-xs text-amber-700">{t('raceDetail.notEligibleYet')}</div>
+                      ) : null}
+                    </div>
+                  </div>
+                  {isFinished && team.prize_cash > 0 ? (
+                    <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                      {money(team.prize_cash)}
+                    </span>
+                  ) : null}
+                  </div>
+                  {isFinished && actualRiders.length > 0 ? (
+                    <div className="mt-3 grid gap-2 border-t border-slate-100 pt-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {actualRiders.map(rider => (
+                        team.is_mine ? (
+                        <Link key={rider.rider_id} to={`/dashboard/youth-academy/riders/${rider.rider_id}`}
+                          className="flex min-w-0 items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2 text-sm text-sky-800 hover:bg-sky-50 hover:underline">
+                          <span className="min-w-0 truncate">{rider.rider_name}</span>
+                          <span className="shrink-0 text-xs text-slate-500">{rider.position ? `#${rider.position}` : rider.result_status.toUpperCase()}</span>
+                        </Link>
+                      ) : (
+                        <div key={rider.rider_id} className="flex min-w-0 items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                          <span className="min-w-0 truncate">{rider.rider_name}</span>
+                          <span className="shrink-0 text-xs text-slate-500">{rider.position ? `#${rider.position}` : rider.result_status.toUpperCase()}</span>
+                        </div>
+                      )
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              )
+            })}
+          </div>
+        </Section>
+      ) : null}
+
+      {tab === 'squad' ? (
+        <Section
+          title={t('raceDetail.youthSquadTitle')}
+          right={
+            <span className="text-xs text-slate-500">
+              {selectedRiders.length} / {race.lineup_size}
+            </span>
+          }
+        >
+          {canManageSquad ? (
+            <>
+              {showSquadEligibilityWarning ? (
+                <div role="alert" className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                  <p className="font-semibold">{t('raceDetail.replaceIneligible')}</p>
+                  <div className="mt-2 space-y-2">
+                    {invalidLineupRiders.map(rider => (
+                      <div key={rider.rider_id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white px-3 py-2">
+                        <span><strong>{rider.name}</strong>{' — '}
+                          {rider.eligibility_reason === 'turns_16_before_start' ? t('raceDetail.turns16BeforeStart')
+                          : rider.eligibility_reason === 'no_longer_in_academy' ? t('raceDetail.noLongerAcademy') : t('raceDetail.notEligibleRace')}
+                        </span>
+                        {selectedRiders.includes(rider.rider_id) ? (
+                          <button type="button" onClick={() => setSelectedRiders(current => current.filter(id => id !== rider.rider_id))}
+                            className="rounded-lg border border-amber-300 px-2 py-1 text-xs font-semibold hover:bg-amber-50">
+                            {t('raceDetail.removeSelection')}
+                          </button>
+                        ) : <span className="text-xs text-emerald-700">{t('raceDetail.removedSelection')}</span>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+              <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+                {payload.eligible_riders.map(rider => {
+                  const selected = selectedRiders.includes(rider.rider_id)
+                  const flag = flagUrl(rider.country_code)
+                  return (
+                    <button
+                      key={rider.rider_id}
+                      type="button"
+                      disabled={!rider.eligible}
+                      onClick={() => toggleRider(rider.rider_id, rider.eligible)}
+                      className={`flex items-center gap-3 rounded-lg border px-3 py-3 text-left ${
+                        !rider.eligible
+                          ? 'cursor-not-allowed border-slate-100 bg-slate-50 text-slate-400'
+                          : selected
+                            ? 'border-yellow-400 bg-yellow-50'
+                            : 'border-slate-200 bg-white hover:bg-slate-50'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        tabIndex={-1}
+                        readOnly
+                        checked={selected}
+                        disabled={!rider.eligible}
+                      />
+                      {flag ? <img src={flag} alt="" className="h-4 w-6 rounded-sm object-cover" /> : null}
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-medium">
+                          {rider.name}
+                        </span>
+                        <span className="block text-xs text-slate-500">
+                          {t(`scouting.roles.${rider.role}`, { defaultValue: humanize(rider.role) })} · {t('raceDetail.readinessFatigue', { readiness: rider.readiness, fatigue: rider.fatigue })}
+                        </span>
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+
+              <div className="mt-4 flex flex-wrap items-end gap-3 border-t border-slate-100 pt-4">
+                <label className="text-xs font-medium text-slate-600">
+                  {t('raceDetail.strategy')}
+                  <select
+                    value={strategy}
+                    onChange={event =>
+                      setStrategy(
+                        event.target.value as
+                          | 'conservative'
+                          | 'balanced'
+                          | 'aggressive'
+                      )
+                    }
+                    className="mt-1 block rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                  >
+                    <option value="conservative">{t('raceDetail.strategyConservative')}</option>
+                    <option value="balanced">{t('raceDetail.strategyBalanced')}</option>
+                    <option value="aggressive">{t('raceDetail.strategyAggressive')}</option>
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  disabled={
+                    saving ||
+                    selectedRiders.length < 4 ||
+                    selectedRiders.length > race.lineup_size ||
+                    invalidSelectedRiders.length > 0
+                  }
+                  onClick={() => void saveLineup()}
+                  className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                >
+                  {saving ? t('saving') : t('raceDetail.saveSquad')}
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="space-y-2">
+              {payload.my_lineup.length === 0 ? (
+                <p className="text-sm text-slate-500">
+                  {t('raceDetail.noSquadSelected')}
+                </p>
+              ) : (
+                payload.my_lineup.map((rider, index) => (
+                  <div
+                    key={rider.rider_id}
+                    className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 text-sm"
+                  >
+                    <span>{index + 1}. {rider.name}</span>
+                    <span className="text-xs text-slate-500">{t(`scouting.roles.${rider.role}`, { defaultValue: humanize(rider.role) })}</span>
+                  </div>
+                ))
+              )}
+              {payload.my_entry.race_squad_decider !== 'manager' ? (
+                <p className="pt-2 text-xs text-slate-500">
+                  {t('raceDetail.coachSelectsSquad')}
+                </p>
+              ) : null}
+            </div>
+          )}
+        </Section>
+      ) : null}
+
+      {tab === 'results' ? (
+        <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+          <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('raceDetail.raceInformation')}</div>
+              <h2 className="mt-1 text-lg font-semibold text-slate-950">{t('raceDetail.participantsResults')}</h2>
+            </div>
+            <button type="button" onClick={() => setRaceInfoExpanded(current => !current)}
+              className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700">
+              {raceInfoExpanded ? t('raceDetail.hide') : t('raceDetail.show')}
+            </button>
+          </div>
+          {raceInfoExpanded ? (
+          <div className="space-y-6 p-4 sm:p-6">
+            <div className="flex rounded-2xl bg-slate-100 p-1">
+              <button type="button" onClick={() => setRaceInfoTab('participants')}
+                className={'rounded-xl px-4 py-2 text-sm font-semibold ' + (raceInfoTab === 'participants' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500 hover:text-slate-900')}>
+                {t('raceDetail.teamsRiders')}
+              </button>
+              <button type="button" onClick={() => setRaceInfoTab('results')}
+                className={'rounded-xl px-4 py-2 text-sm font-semibold ' + (raceInfoTab === 'results' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500 hover:text-slate-900')}>
+                {t('raceDetail.results')}
+              </button>
+            </div>
+            {raceInfoTab === 'results' ? (
+            <div className="grid gap-6 xl:grid-cols-[minmax(0,11fr)_minmax(0,9fr)]">
+              <div className="min-w-0 rounded-2xl bg-slate-50 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h3 className="font-semibold text-slate-950">{t('raceDetail.raceClassifications')}</h3>
+                    <p className="mt-0.5 text-xs text-slate-500">{t('raceDetail.currentStandings')}</p>
+                  </div>
+                  <select value={resultView} onChange={event => setResultView(event.target.value as 'general' | 'sprint' | 'mountain')}
+                    className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
+                    <option value="general">{t('raceDetail.generalClassification')}</option>
+                    <option value="sprint">{t('raceDetail.sprintPoints')}</option>
+                    <option value="mountain">{t('raceDetail.mountainPoints')}</option>
+                  </select>
+                </div>
+                <div className="mt-4 overflow-hidden rounded-xl bg-white">
+                  <YouthStandingTable rows={raceStandingRows.slice(0, 15)} pointsMode={resultView !== 'general'} />
+                </div>
+                <div className="mt-4 flex justify-end">
+                  <button type="button" disabled={!raceStandingRows.length} onClick={() => setFullStandingModal('race')}
+                    className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-100 disabled:opacity-40">
+                    {t('raceDetail.fullRaceStanding')}
+                  </button>
+                </div>
+              </div>
+              <div className="min-w-0 rounded-2xl bg-slate-50 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h3 className="font-semibold text-slate-950">{t('raceDetail.stageResults', { stage: selectedStageNumber })}</h3>
+                  <div className="flex flex-wrap gap-2">
+                    <select value={selectedStageNumber} onChange={event => {
+                      setSelectedStageNumber(Number(event.target.value))
+                      setStageResultView('stage_general')
+                    }} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
+                      {payload.stages.map(stage => (
+                        <option value={stage.stage_number} key={stage.id}>
+                          {t('raceDetail.stage', { number: stage.stage_number })} · {shortDate(stage.stage_date)} · {t(`raceDetail.terrain.${stage.stage_type}`, { defaultValue: humanize(stage.stage_type) })}
+                        </option>
+                      ))}
+                    </select>
+                    <select value={stageResultView} onChange={event => setStageResultView(event.target.value as 'stage_general' | 'stage_sprint' | 'stage_mountain')}
+                      className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
+                      <option value="stage_general">{t('raceDetail.stageResult')}</option>
+                      {selectedStageHasSprint ? <option value="stage_sprint">{t('raceDetail.sprintPoints')}</option> : null}
+                      {selectedStageHasMountain ? <option value="stage_mountain">{t('raceDetail.mountainPoints')}</option> : null}
+                    </select>
+                  </div>
+                </div>
+                <div className="mt-4 overflow-hidden rounded-xl bg-white">
+                  <YouthStandingTable rows={selectedStageStandingRows.slice(0, 15)} pointsMode={stagePointsMode} />
+                </div>
+                <div className="mt-4 flex justify-end">
+                  <button type="button" disabled={!selectedStageStandingRows.length} onClick={() => setFullStandingModal('stage')}
+                    className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-100 disabled:opacity-40">
+                    {t('raceDetail.fullStageStanding')}
+                  </button>
+                </div>
+              </div>
+            </div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {payload.teams.map(team => (
+                  <div key={team.academy_id} className="flex items-center gap-3 rounded-2xl bg-slate-50 p-4">
+                    <JerseyThumb url={team.jersey_url} name={team.club_name} />
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-semibold text-slate-950">{team.club_name}</div>
+                      <div className="text-xs text-slate-500">{t('raceDetail.riderCount', { count: team.lineup_count })}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {isFinished && raceInfoTab === 'results' ? (
+              <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                <button
+                  type="button"
+                  aria-expanded={teamClassificationExpanded}
+                  onClick={() => setTeamClassificationExpanded(current => !current)}
+                  className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-semibold text-slate-900 hover:bg-slate-50"
+                >
+                  <span>{t('raceDetail.teamPrizes')}</span>
+                  <span className="text-xs font-medium text-slate-500">
+                    {teamClassificationExpanded ? t('raceDetail.hide') + ' ▲' : t('raceDetail.show') + ' ▼'}
+                  </span>
+                </button>
+                {teamClassificationExpanded ? (
+                <div className="space-y-2 border-t border-slate-100 p-4">
+                  {payload.team_results.map(team => (
+                    <div key={team.academy_id} className={'grid grid-cols-[48px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-3 py-2 text-sm ' + (team.is_mine ? 'bg-yellow-50' : 'bg-slate-50')}>
+                      <strong>#{team.team_position}</strong>
+                      <span className="flex min-w-0 items-center gap-2">
+                        <JerseyThumb url={team.jersey_url} name={team.academy_name} />
+                        <span className="truncate">{team.academy_name}</span>
+                      </span>
+                      <span className="font-medium text-emerald-700">{team.prize_cash > 0 ? money(team.prize_cash) : '—'}</span>
+                    </div>
+                  ))}
+                </div>
+                ) : null}
+              </section>
+            ) : null}
+          </div>
+          ) : null}
+          {fullStandingModal ? (
+            <div role="dialog" aria-modal="true" aria-label={fullStandingModal === 'race' ? t('raceDetail.fullRaceStanding') : t('raceDetail.fullStageStanding')}
+              className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/35 p-4 backdrop-blur-sm"
+              onMouseDown={event => { if (event.target === event.currentTarget) setFullStandingModal(null) }}>
+              <div className="flex max-h-[88vh] w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
+                <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+                  <h3 className="text-lg font-semibold text-slate-950">{fullStandingModal === 'race' ? t('raceDetail.fullRaceStanding') : t('raceDetail.fullStageStanding')}</h3>
+                  <button type="button" onClick={() => setFullStandingModal(null)} className="rounded-xl border border-slate-200 px-4 py-2 text-sm">{t('raceDetail.close')}</button>
+                </div>
+                <div className="overflow-y-auto p-5">
+                  <YouthStandingTable
+                    rows={fullStandingModal === 'race' ? raceStandingRows : selectedStageStandingRows}
+                    pointsMode={fullStandingModal === 'race' ? resultView !== 'general' : stagePointsMode}
+                  />
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </section>
+      ) : null}
+    </div>
+  )
+}

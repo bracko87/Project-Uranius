@@ -1,0 +1,173 @@
+{
+  "page": {
+    "subtitle": "Verwalten Sie den Kader Ihrer ersten Mannschaft und sehen Sie Saisonanalysen."
+  },
+  "common": {
+    "unknownRider": "Unbekannter Fahrer",
+    "notAuthenticated": "Nicht angemeldet.",
+    "noClub": "Für diesen Benutzer wurde kein Club gefunden."
+  },
+  "nav": {
+    "firstSquad": "Erste Mannschaft",
+    "developingTeam": "Entwicklungsteam",
+    "staff": "Personal",
+    "developingUnavailable": "Das Entwicklungsteam ist derzeit nicht verfügbar.",
+    "unlockDeveloping": "Schalten Sie das Entwicklungsteam zuerst in den Einstellungen frei."
+  },
+  "roster": {
+    "firstSquad": "Erste Mannschaft",
+    "riders": "Fahrer",
+    "squadFull": "Der Kader ist voll ({{max}} Fahrer). Transfers, Neuverpflichtungen und Beförderungen müssen die Kadergrenze einhalten.",
+    "loading": "Kader wird geladen…",
+    "loadFailed": "Kader konnte nicht geladen werden",
+    "noRiders": "Für diesen Club wurden noch keine Fahrer gefunden.",
+    "view": "Ansicht",
+    "generalView": "Allgemeine Ansicht",
+    "financialView": "Finanzansicht",
+    "skillsView": "Fähigkeiten",
+    "formDevelopment": "Form & Entwicklung",
+    "checkingPremium": "Premium-Zugang wird geprüft…",
+    "advancedPremium": "Finanz- und Skill-Ansichten benötigen Premium. Allgemein, Form und grundlegende Gesundheitsinfos sind Free.",
+    "viewPremium": "Premium ansehen",
+    "onlyPremium": "Finanz- und Skill-Ansichten sind Premium",
+    "premiumOnly": "Nur Premium"
+  },
+  "columns": {
+    "name": "Name",
+    "country": "Land",
+    "role": "Rolle",
+    "activity": "Aktivität",
+    "age": "Alter",
+    "overall": "Gesamt",
+    "status": "Status",
+    "move": "Verschieben",
+    "value": "Wert",
+    "wage": "Gehalt",
+    "contractExpires": "Vertragsende",
+    "potential": "Potenzial",
+    "morale": "Moral",
+    "fatigue": "Ermüdung",
+    "health": "Gesundheit",
+    "rider": "Fahrer",
+    "case": "Fall",
+    "stage": "Etappe",
+    "severity": "Schweregrad",
+    "expectedRecovery": "Voraussichtliche Genesung",
+    "result": "Ergebnis",
+    "internationalPoints": "Int. Pkt.",
+    "sharpness": "Race Sharpness"
+  },
+  "status": {
+    "fit": "Fit",
+    "injured": "Verletzt",
+    "sick": "Krank",
+    "notFullyFit": "Nicht vollständig fit",
+    "fresh": "Frisch",
+    "normal": "Normal",
+    "tired": "Müde",
+    "veryTired": "Sehr müde",
+    "exhausted": "Erschöpft",
+    "bad": "Schlecht",
+    "low": "Niedrig",
+    "okay": "Okay",
+    "good": "Gut",
+    "great": "Sehr gut",
+    "limited": "Begrenzt",
+    "average": "Durchschnittlich",
+    "promising": "Vielversprechend",
+    "high": "Hoch",
+    "elite": "Elite"
+  },
+  "activity": {
+    "race": "Rennen",
+    "trainingCamp": "Trainingslager",
+    "free": "Frei",
+    "stage": "Etappe {{number}}",
+    "until": "Bis {{date}}"
+  },
+  "movement": {
+    "windowClosed": "Das Wechselzeitfenster ist geschlossen.",
+    "windowClosedNext": "Das Wechselzeitfenster ist geschlossen. Nächstes Zeitfenster: {{window}}.",
+    "windowClosedNextNoPeriod": "Wechselzeitfenster geschlossen. Nächstes Zeitfenster: {{window}}",
+    "windowOpen": "Wechselzeitfenster ist jetzt geöffnet: {{window}}",
+    "currentWindow": "Aktuelles Zeitfenster",
+    "unknown": "Unbekannt",
+    "movedToDeveloping": "Fahrer wurde in das Entwicklungsteam verschoben.",
+    "couldNotMove": "Fahrer konnte nicht in das Entwicklungsteam verschoben werden.",
+    "ageLimit": "Nur Fahrer im Alter von 23 Jahren oder jünger können dem Entwicklungsteam beitreten.",
+    "moveToDeveloping": "Ins Entwicklungsteam verschieben"
+  },
+  "premium": {
+    "label": "Premium",
+    "unlock": "Mit Premium freischalten"
+  },
+  "healthReport": {
+    "title": "Gesundheitsbericht",
+    "subtitle": "Aktuell verletzte, kranke und sich erholende Fahrer der ersten Mannschaft",
+    "none": "Derzeit gibt es keine akuten gesundheitlichen Probleme im Kader.",
+    "lockedTitle": "Gesundheitsbericht des Kaders",
+    "lockedDescription": "Sehen Sie Verletzungen, Krankheiten und Genesungsinformationen des gesamten Kaders in einem zusammengefassten Bericht."
+  },
+  "season": {
+    "wins": "Saisonsiege",
+    "podiums": "Podiumsplätze der Saison",
+    "top10": "Top-10-Ergebnisse",
+    "bestGc": "Beste GC",
+    "performanceTitle": "Saisonleistungsübersicht",
+    "performanceDescription": "Schalten Sie Saisonsiege, Podiumsplätze, Top-10-Ergebnisse und die beste Leistung in der Gesamtwertung frei.",
+    "teamResults": "Teamergebnisse dieser Saison",
+    "teamResultsDescription": "Sehen Sie monatliche Trends der Teamleistung in der aktuellen Saison.",
+    "podiumsPlacings": "Podiumsplätze & Platzierungen",
+    "podiumsPlacingsDescription": "Analysieren Sie Siege, Podiumsplätze und die Verteilung der Zielplatzierungen.",
+    "raceType": "Überblick nach Renntyp",
+    "raceTypeDescription": "Vergleichen Sie Ihre Ergebnisse bei Klassikern, Bergetappen, Etappenankünften und Zeitfahren.",
+    "oneDayClassics": "Eintagesklassiker",
+    "stageFinishes": "Etappenankünfte",
+    "mountainDays": "Bergetappen",
+    "timeTrials": "Zeitfahren",
+    "winsChart": "Siege",
+    "second": "2.",
+    "third": "3.",
+    "top10Chart": "Top 10",
+    "top20Chart": "Top 20"
+  },
+  "races": {
+    "lastTeamRace": "Letztes Teamrennen",
+    "nextTeamRace": "Nächstes Teamrennen",
+    "noRace": "Noch kein Rennen gefunden",
+    "noFinished": "Für diesen Kader wurde noch keine vollständige Endklassifikation eines beendeten Rennens gefunden.",
+    "noNext": "Für diesen Kader wurde noch kein eingereichter Race Plan für ein noch nicht gestartetes Rennen gefunden.",
+    "stages": "{{count}} Etappen",
+    "noFinishedClassification": "Noch keine abgeschlossene Rennwertung vorhanden."
+  },
+  "transfer": {
+    "listed": "Fahrer steht auf der Transferliste"
+  },
+  "months": {
+    "Jan": "Jan",
+    "Feb": "Feb",
+    "Mar": "Mär",
+    "Apr": "Apr",
+    "May": "Mai",
+    "Jun": "Jun",
+    "Jul": "Jul",
+    "Aug": "Aug",
+    "Sep": "Sep",
+    "Oct": "Okt",
+    "Nov": "Nov",
+    "Dec": "Dez"
+  },
+  "riderRoles": {
+    "freeRole": "Freie Rolle",
+    "teamLeader": "Teamkapitän",
+    "gcLeader": "Gesamtklassement-Kapitän",
+    "leadOut": "Anfahrer",
+    "sprinter": "Sprinter",
+    "climber": "Bergfahrer",
+    "domestique": "Helfer",
+    "support": "Unterstützer",
+    "timeTrial": "Zeitfahrspezialist",
+    "breakaway": "Ausreißer",
+    "allRounder": "Allrounder"
+  }
+}

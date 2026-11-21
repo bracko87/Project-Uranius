@@ -1,0 +1,894 @@
+{
+  "page": {
+    "title": "Team Staff",
+    "subtitle": "Manage multiple staff roles through dedicated role tabs and per-role staff lists.",
+    "loading": "Loading staff...",
+    "explainPositions": "Explain all staff positions",
+    "loadFailed": "Could not load the Staff page. Please try again."
+  },
+  "summary": {
+    "weeklyWages": "Weekly Staff Wages",
+    "weeklyWagesSubtext": "Current total payroll",
+    "openSlots": "Open Staff Slots",
+    "openSlotsSubtext": "Live open slots across all staff roles",
+    "totalCapacity": "Total Staff Capacity",
+    "totalCapacitySubtext": "Live backend role limits",
+    "warnings": "Warnings",
+    "warningsSubtext": "Facility level can cap some bonuses"
+  },
+  "rolesSection": {
+    "title": "Staff Roles",
+    "subtitle": "Select a role to see assigned staff, live role limit and role contribution summary.",
+    "staffList": "{{role}} Staff List",
+    "assigned": "{{count}}/{{limit}} assigned for this role.",
+    "assignedCompact": "Assigned {{count}}/{{limit}}",
+    "noAssigned": "No {{role}} assigned",
+    "usage": "Current role usage: {{count}}/{{limit}}. Sign staff from the staff market to fill this role.",
+    "findStaff": "Find Staff"
+  },
+  "roles": {
+    "headCoach": {
+      "label": "Head Coach",
+      "subtitle": "Leads coaching, training planning and long-term rider development."
+    },
+    "trainer": {
+      "label": "Trainer",
+      "subtitle": "Improves daily training output and supports head coach plans."
+    },
+    "teamDoctor": {
+      "label": "Team Doctor",
+      "subtitle": "Leads medical recovery, diagnosis and injury prevention."
+    },
+    "physio": {
+      "label": "Physio",
+      "subtitle": "Focuses on rehabilitation, recovery speed and return-to-fitness."
+    },
+    "nutritionist": {
+      "label": "Nutritionist",
+      "subtitle": "Supports recovery, fitness consistency and medical staff output."
+    },
+    "mechanic": {
+      "label": "Mechanic",
+      "subtitle": "Bike setup, maintenance efficiency and race-day mechanical reliability."
+    },
+    "sportDirector": {
+      "label": "Sport Director",
+      "subtitle": "Planned race tactics, morale, teamwork and domestique support."
+    },
+    "scoutAnalyst": {
+      "label": "Scout / Analyst",
+      "subtitle": "Scouting quality, prospect visibility and transfer intelligence."
+    },
+    "u23HeadCoach": {
+      "label": "U23 Head Coach",
+      "subtitle": "Planned developing-team training and U23 race tactical support."
+    },
+    "youthAcademyDirector": {
+      "label": "Youth Academy Director",
+      "subtitle": "Runs the U16 academy programme, budget, delegated recruitment and operating requests."
+    },
+    "u16HeadCoach": {
+      "label": "U16 Head Coach",
+      "subtitle": "Controls U16 training, workload, development focus and youth race selection."
+    },
+    "youthScout": {
+      "label": "Youth Scout",
+      "subtitle": "Finds and assesses U16 prospects within the funded Youth Academy scouting range."
+    }
+  },
+  "impactAreas": {
+    "regularTraining": "Regular training",
+    "trainingCamps": "Training camps",
+    "riderDevelopment": "Rider development",
+    "dailyTraining": "Daily training",
+    "trainingQuality": "Training quality",
+    "recoverySpeed": "Recovery speed",
+    "injuryPrevention": "Injury prevention",
+    "medicalCaseHandling": "Medical case handling",
+    "returnToFitness": "Return to fitness",
+    "fatigueRecovery": "Fatigue recovery",
+    "recoverySupport": "Recovery support",
+    "fitnessConsistency": "Fitness consistency",
+    "racePreparation": "Race preparation",
+    "equipmentSetup": "Equipment setup",
+    "maintenanceEfficiency": "Maintenance efficiency",
+    "mechanicalReliability": "Mechanical reliability",
+    "raceTactics": "Race tactics",
+    "teamMorale": "Team morale",
+    "domestiqueSupport": "Domestique support",
+    "scoutingAccuracy": "Scouting accuracy",
+    "prospectDiscovery": "Prospect discovery",
+    "transferIntelligence": "Transfer intelligence",
+    "u23Training": "U23 training",
+    "youthDevelopment": "Youth development",
+    "u23RaceTactics": "U23 race tactics",
+    "academyBudget": "Academy budget",
+    "recruitmentManagement": "Recruitment management",
+    "youthProgramme": "Youth programme",
+    "u16Training": "U16 training",
+    "workloadManagement": "Workload management",
+    "raceSelection": "Race selection",
+    "youthScouting": "Youth scouting",
+    "talentAssessment": "Talent assessment",
+    "recruitmentReach": "Recruitment reach"
+  },
+  "common": {
+    "close": "Close",
+    "cancel": "Cancel",
+    "unknown": "Unknown",
+    "age": "Age",
+    "ageUnknown": "Age unknown",
+    "ageYears": "{{age}} years old",
+    "born": "Born: {{date}}",
+    "scope": "Scope: {{scope}}",
+    "firstTeam": "first team",
+    "u23": "U23",
+    "all": "all",
+    "weeklyWage": "Weekly Wage",
+    "contract": "Contract",
+    "currentAssignment": "Current Assignment",
+    "activeEffects": "Active Effects",
+    "staffAttributes": "Staff Attributes",
+    "focus": "Focus: {{value}}",
+    "duration": "Duration: {{count}} days",
+    "cost": "Cost: {{value}}",
+    "completed": "Completed: {{date}}",
+    "youthAcademy": "Youth Academy"
+  },
+  "assignment": {
+    "notAssigned": "Currently not assigned",
+    "expiresToday": "Expires today",
+    "oneDayLeft": "1 day left",
+    "daysLeft": "{{count}} days left",
+    "openProfile": "Open Staff Profile"
+  },
+  "attributes": {
+    "training": "Training",
+    "recoveryPlanning": "Recovery Planning",
+    "youthDevelopment": "Youth Development",
+    "experience": "Experience",
+    "leadership": "Leadership",
+    "loyalty": "Loyalty",
+    "dailyTraining": "Daily Training",
+    "trainingEfficiency": "Training Efficiency",
+    "potentialGrowth": "Potential Growth",
+    "recovery": "Recovery",
+    "prevention": "Prevention",
+    "diagnosis": "Diagnosis",
+    "rehabilitation": "Rehabilitation",
+    "recoverySpeed": "Recovery Speed",
+    "nutrition": "Nutrition",
+    "consistency": "Consistency",
+    "bikeSetup": "Bike Setup",
+    "reliability": "Reliability",
+    "racePlanning": "Race Planning",
+    "teamControl": "Team Control",
+    "evaluation": "Evaluation",
+    "network": "Network",
+    "accuracy": "Accuracy"
+  },
+  "premium": {
+    "analysisTitle": "Premium staff analysis",
+    "analysisDescription": "View combined staff impact, average skill profiles, and completed course results.",
+    "detailDescription": "See calculated coaching quality, infrastructure limits, staff comparisons, and recommended development paths.",
+    "loading": "Loading Premium access"
+  },
+  "analysis": {
+    "averageSkillProfile": "Average Skill Profile",
+    "averageSkillProfileSubtitle": "Average values across staff currently assigned to this impact group.",
+    "noStaff": "No staff assigned to this impact group yet, so there is no active skill profile to summarize.",
+    "whereRoleHelps": "Where This Role Helps",
+    "whereRoleHelpsSubtitle": "Main game systems influenced by this role.",
+    "recentCourseResults": "Recent Course Results",
+    "recentCourseResultsSubtitle": "Completed staff development courses and applied stat gains."
+  },
+  "quality": {
+    "facility": "Facility",
+    "scoutingQuality": "Scouting Quality",
+    "scoutAbility": "Scout Ability",
+    "currentReportQuality": "Current Report Quality",
+    "reportTime": "Report Time",
+    "scoutingOffice": "Scouting Office",
+    "coachingQuality": "Coaching Quality",
+    "coachAbility": "Coach Ability",
+    "trainingQuality": "Training Quality",
+    "developmentSupport": "Development Support",
+    "trainerAbility": "Trainer Ability",
+    "sessionQuality": "Session Quality",
+    "loadManagement": "Load Management",
+    "medicalQuality": "Medical Quality",
+    "medicalAbility": "Medical Ability",
+    "injuryPrevention": "Injury Prevention",
+    "returnToFitness": "Return-to-Fitness",
+    "recoveryQuality": "Recovery Quality",
+    "recoveryAbility": "Recovery Ability",
+    "rehabilitationQuality": "Rehabilitation Quality",
+    "recoverySpeed": "Recovery Speed",
+    "nutritionQuality": "Nutrition Quality",
+    "nutritionAbility": "Nutrition Ability",
+    "recoverySupport": "Recovery Support",
+    "consistencySupport": "Consistency Support",
+    "technicalQuality": "Technical Quality",
+    "technicalAbility": "Technical Ability",
+    "bikeSetupQuality": "Bike Setup Quality",
+    "reliabilitySupport": "Reliability Support",
+    "tacticalQuality": "Tactical Quality",
+    "directorAbility": "Director Ability",
+    "racePlanQuality": "Race Plan Quality",
+    "teamControl": "Team Control",
+    "raceEngineRole": "Race Engine Role",
+    "prepared": "Prepared",
+    "youthCoachingQuality": "Youth Coaching Quality",
+    "youthCoachAbility": "Youth Coach Ability",
+    "talentDevelopment": "Talent Development",
+    "raceReadiness": "Race Readiness"
+  },
+  "detail": {
+    "currentCourse": "Current Course",
+    "courseInProgress": "Course in progress: {{course}}. Completion: {{date}}.",
+    "courseCannotCancel": "This course cannot be canceled once booked. Staff bonuses from this role are paused until completion.",
+    "lastCourseGains": "Last Course Gains",
+    "extendContract": "Extend Contract",
+    "courseInProgressButton": "Course In Progress",
+    "sendOnCourse": "Send on Course",
+    "release": "Release",
+    "scoutingReports": "Scouting Reports",
+    "completionDate": "Completion: {{date}}"
+  },
+  "release": {
+    "title": "Release Staff",
+    "subtitle": "Confirm this staff decision before continuing.",
+    "aboutToRelease": "You are about to release {{name}}",
+    "role": "Role: {{role}}",
+    "weeklyWage": "Weekly wage: {{value}}",
+    "age": "Age: {{value}}",
+    "compensation": "Release compensation (6 weeks): {{value}}",
+    "warning": "This will remove the staff member from the squad immediately. Staff bonuses from this slot will stop until you sign a replacement.",
+    "payment": "The club will pay a one-time release compensation equal to 6 weeks of salary.",
+    "releasing": "Releasing...",
+    "confirm": "Confirm Release",
+    "successMessage": "{{name}} was released from {{role}}. Release compensation paid: {{amount}}.",
+    "failureMessage": "Could not release this staff member. Please try again."
+  },
+  "contract": {
+    "title": "Extend Contract",
+    "subtitle": "Negotiate a new staff deal for {{name}}.",
+    "currentSalary": "Current Salary",
+    "currentContract": "Current Contract",
+    "extensionLength": "Extension Length",
+    "oneSeason": "1 Season",
+    "twoSeasons": "2 Seasons",
+    "loadingQuote": "Loading contract quote...",
+    "requestedSalary": "Requested Salary",
+    "raiseRequest": "Raise request: {{value}}%",
+    "minimumAcceptable": "Minimum Acceptable",
+    "newContractTarget": "New Contract Target",
+    "staffInterest": "Staff Interest",
+    "interestUnknown": "Interest unknown",
+    "chanceRenew": "Chance to renew",
+    "chanceUnknown": "Chance unknown",
+    "veryLikely": "Very likely to accept",
+    "possible": "Possible, but may ask for more",
+    "unlikely": "Unlikely at this salary",
+    "veryUnlikely": "Very unlikely",
+    "noQuote": "No quote available.",
+    "salaryOffer": "Your Salary Offer",
+    "salaryPlaceholder": "Enter weekly salary",
+    "submitting": "Submitting...",
+    "submit": "Submit Offer",
+    "extended": "Staff contract extended successfully.",
+    "discussionCompleted": "Contract discussion completed.",
+    "invalidWeeklySalary": "Please enter a valid weekly salary.",
+    "acceptedWithTerms": "{{name}} accepted the new contract: {{salary}} per week until Season {{season}}.",
+    "countered": "{{name}} wants improved contract terms.",
+    "rejected": "{{name}} rejected the offer.",
+    "minimumWeeklySalary": "Minimum acceptable weekly salary is {{salary}}.",
+    "wantsCloserTo": "{{name}} wants a weekly salary closer to {{salary}}.",
+    "offerFailed": "Could not complete the staff contract negotiation. Please try again.",
+    "quoteFailed": "Could not load the contract quote. Please try again."
+  },
+  "course": {
+    "title": "Staff Course",
+    "subtitle": "Plan development work for {{name}}.",
+    "liveStart": "Live course start",
+    "liveStartText": "Starting a course creates a real staff course entry. Stat gains apply when the backend completion processor finishes the course. Courses cannot be canceled once booked. Staff bonuses from this role are paused until the course is completed.",
+    "staffAge": "Staff Age",
+    "start": "Start Course",
+    "starting": "Starting...",
+    "none": "No course options are configured for this staff role yet. This prevents the wrong course type from being started until backend course codes are added for this role.",
+    "back": "Back to Staff",
+    "startedWithTarget": "{{name}} started {{course}}. Expected completion: {{date}}.",
+    "started": "{{name}} started a staff course.",
+    "startFailed": "Could not start the staff course. Please try again."
+  },
+  "information": {
+    "title": "Staff Positions Explained",
+    "subtitle": "Responsibilities, important attributes and current gameplay connection for every staff role.",
+    "close": "Close staff positions information",
+    "importantAttributes": "Important attributes",
+    "gameplayConnection": "Gameplay connection",
+    "live": "Live",
+    "coreLive": "Core live",
+    "trainingLive": "Training live",
+    "plannedConnection": "Planned connection"
+  },
+  "impactI18n": {
+    "assigned": "Assigned",
+    "openSlotAvailable": "Open slot available",
+    "currentBasicCapReached": "Current basic cap reached",
+    "forGroup": "For this impact group",
+    "activeCourses": "Active Courses",
+    "coursesPaused": "Bonuses are partially paused while staff study",
+    "fillVacancies": "Use Transfers → Staff to fill vacancies",
+    "combinedTitle": "Combined Team Impact",
+    "combinedMedical": "Combined medical support from Team Doctor, Physio and Nutritionist.",
+    "combinedCoach": "Backend-applied coaching effect from {{name}}.",
+    "combinedCurrent": "Current combined impact from active staff in this group.",
+    "coachingTitle": "Coaching Staff Combined Impact",
+    "medicalTitle": "Medical Staff Combined Impact",
+    "mechanicTitle": "Mechanic Staff Impact",
+    "directorTitle": "Sport Director Staff Impact",
+    "u23Title": "U23 Coaching Staff Impact",
+    "scoutingTitle": "Scouting Staff Impact",
+    "youthTitle": "Youth Academy Staff Impact"
+  },
+  "scoutingExplainer": {
+    "title": "How Scout Quality Works",
+    "body": "Scout attributes create the scout’s true ability. The Scouting Office can cap the final report quality, so a strong scout may still produce basic reports until the office is upgraded.",
+    "abilityLevels": "Scout Ability levels",
+    "reportLevels": "Report Quality levels",
+    "levelScale": "Basic → Solid → Strong → Elite",
+    "thresholds": "Scout Ability thresholds",
+    "thresholdValues": "Basic: below 55 · Solid: 55–69 · Strong: 70–84 · Elite: 85+",
+    "upgrade": "Better Scouting Office unlocks higher report quality. Current level: Lv {{level}}.",
+    "upgradeNoLevel": "Better Scouting Office unlocks higher report quality.",
+    "limited": "Limited by Scouting Office Lv {{level}}.",
+    "basicWithScore": "Basic ({{score}})",
+    "solidWithScore": "Solid ({{score}})",
+    "strongWithScore": "Strong ({{score}})",
+    "eliteWithScore": "Elite ({{score}})"
+  },
+  "effectText": {
+    "scoutingAccuracy": "+{{value}}% scouting accuracy",
+    "prospectVisibility": "+{{value}}% prospect visibility",
+    "combinedScoutingAccuracy": "+{{value}}% combined scouting accuracy",
+    "combinedProspectVisibility": "+{{value}}% combined prospect visibility",
+    "futureTransferYouth": "Future: transfer intelligence and youth reports",
+    "futureBroaderTransferYouth": "Future: broader transfer and youth intelligence",
+    "scoutingOfficeCap": "Scouting Office Lv {{level}} caps part of scout and analyst bonuses."
+  },
+  "courseOptions": {
+    "coach_elite_methodology": {
+      "title": "Elite Methodology Course",
+      "description": "Improves training structure and overall rider progression quality.",
+      "focus": "Training + Development"
+    },
+    "coach_recovery_planning": {
+      "title": "Recovery Planning Seminar",
+      "description": "Focus on load balancing, fatigue prevention and micro-cycle planning.",
+      "focus": "Recovery Planning"
+    },
+    "coach_youth_programme": {
+      "title": "Youth Development Programme",
+      "description": "Specialised course for improving work with young and developing riders.",
+      "focus": "Youth Development"
+    },
+    "trainer_daily_training_methods": {
+      "title": "Daily Training Methods",
+      "description": "Improves day-to-day training delivery, session structure and rider training consistency.",
+      "focus": "Daily Training + Efficiency"
+    },
+    "trainer_load_management": {
+      "title": "Load Management Workshop",
+      "description": "Focuses on balancing training load, reducing overload risk and supporting better recovery between sessions.",
+      "focus": "Efficiency + Experience"
+    },
+    "trainer_potential_growth": {
+      "title": "Potential Growth Programme",
+      "description": "Specialised trainer course for improving long-term rider development and potential growth support.",
+      "focus": "Potential Growth + Daily Training"
+    },
+    "doctor_sports_medicine": {
+      "title": "Sports Medicine Course",
+      "description": "Improves diagnosis quality and athlete-specific treatment decisions.",
+      "focus": "Diagnosis + Recovery"
+    },
+    "doctor_prevention_lab": {
+      "title": "Injury Prevention Lab",
+      "description": "Focuses on risk screening and preventive protocols.",
+      "focus": "Prevention"
+    },
+    "doctor_rehab_acceleration": {
+      "title": "Rehab Acceleration Programme",
+      "description": "Advanced rehab planning for shorter return timelines.",
+      "focus": "Recovery Speed"
+    },
+    "physio_rehab_methods": {
+      "title": "Rehabilitation Methods",
+      "description": "Improves rehab planning, recovery speed and return-to-fitness support.",
+      "focus": "Rehabilitation + Recovery Speed"
+    },
+    "physio_load_recovery": {
+      "title": "Load Recovery Workshop",
+      "description": "Focuses on reducing fatigue impact and improving post-training recovery.",
+      "focus": "Recovery Speed + Experience"
+    },
+    "physio_injury_return": {
+      "title": "Return-to-Fitness Programme",
+      "description": "Specialised programme for helping riders recover from injuries more efficiently.",
+      "focus": "Rehabilitation + Experience"
+    },
+    "nutritionist_race_nutrition": {
+      "title": "Race Nutrition Planning",
+      "description": "Improves race nutrition plans, rider consistency and recovery support.",
+      "focus": "Nutrition Plan + Consistency"
+    },
+    "nutritionist_recovery_diet": {
+      "title": "Recovery Diet Workshop",
+      "description": "Focuses on nutrition routines that support daily fatigue recovery.",
+      "focus": "Recovery Support + Nutrition"
+    },
+    "nutritionist_endurance_fueling": {
+      "title": "Endurance Fueling Programme",
+      "description": "Advanced nutrition planning for long-term rider endurance and training quality.",
+      "focus": "Nutrition + Long-Term Support"
+    },
+    "mechanic_tt_setup": {
+      "title": "Time Trial Setup Course",
+      "description": "Advanced aerodynamic fitting and TT position optimisation.",
+      "focus": "Setup"
+    },
+    "mechanic_reliability": {
+      "title": "Reliability Workshop",
+      "description": "Improves equipment consistency and race-day reliability.",
+      "focus": "Reliability"
+    },
+    "mechanic_weather_adaptation": {
+      "title": "Weather Adaptation Training",
+      "description": "Focuses on technical support in wet and mixed conditions.",
+      "focus": "Conditions Support"
+    },
+    "director_tactics": {
+      "title": "Race Tactics Seminar",
+      "description": "Improves tactical calls, pacing plans and race management decisions.",
+      "focus": "Tactics"
+    },
+    "director_leadership": {
+      "title": "Leadership Intensive",
+      "description": "Strengthens motivation, leadership and intra-team communication.",
+      "focus": "Leadership"
+    },
+    "director_stage_strategy": {
+      "title": "Stage Strategy Programme",
+      "description": "Specialized tactical planning for stage races and GC support.",
+      "focus": "Stage Strategy"
+    },
+    "u23_youth_development_methods": {
+      "title": "Youth Development Methods",
+      "description": "Improves youth training structure, development planning and long-term rider growth.",
+      "focus": "Youth Development + Youth Training"
+    },
+    "u23_talent_pathway_programme": {
+      "title": "Talent Pathway Programme",
+      "description": "Focuses on identifying development paths and improving potential growth support.",
+      "focus": "Potential Growth + Experience"
+    },
+    "u23_race_readiness_course": {
+      "title": "U23 Race Readiness Course",
+      "description": "Prepares young riders for race-day structure, discipline and tactical development.",
+      "focus": "Youth Training + Leadership"
+    },
+    "scout_evaluation": {
+      "title": "Evaluation Accuracy Course",
+      "description": "Improves rider assessment and report quality.",
+      "focus": "Evaluation"
+    },
+    "scout_networking": {
+      "title": "Scouting Network Camp",
+      "description": "Builds connections and improves talent identification coverage.",
+      "focus": "Network"
+    },
+    "scout_data_analysis": {
+      "title": "Performance Data Analysis",
+      "description": "Improves analytical review of riders and race preparation reports.",
+      "focus": "Accuracy + Analysis"
+    },
+    "youth_director_programme_management": {
+      "title": "Academy Programme Management",
+      "description": "Improves leadership and day-to-day Academy programme efficiency.",
+      "focus": "Leadership + Efficiency"
+    },
+    "youth_director_budget_pathways": {
+      "title": "Academy Budget & Pathways",
+      "description": "Improves Academy management, planning and cost-efficient development pathways.",
+      "focus": "Academy Management + Efficiency"
+    },
+    "youth_director_recruitment_strategy": {
+      "title": "Youth Recruitment Strategy",
+      "description": "Advanced programme for talent pathways, recruitment planning and leadership.",
+      "focus": "Talent Pathways + Leadership"
+    },
+    "u16_development_methodology": {
+      "title": "U16 Development Methodology",
+      "description": "Improves weekly Youth development work and long-term progression support.",
+      "focus": "Youth Development + Potential"
+    },
+    "u16_workload_management": {
+      "title": "U16 Workload Management",
+      "description": "Improves fatigue, readiness and development-load decisions for young riders.",
+      "focus": "Efficiency + Experience"
+    },
+    "u16_race_coaching": {
+      "title": "U16 Race Coaching Programme",
+      "description": "Improves Youth race selection, coaching decisions and race-day development.",
+      "focus": "Race Coaching + Leadership"
+    },
+    "youth_scout_talent_id": {
+      "title": "Youth Talent Identification",
+      "description": "Improves prospect selection and scouting assessment accuracy.",
+      "focus": "Talent ID + Accuracy"
+    },
+    "youth_scout_network_building": {
+      "title": "Youth Scouting Network",
+      "description": "Builds scouting experience and strengthens the prospect discovery network.",
+      "focus": "Network + Experience"
+    },
+    "youth_scout_assessment_accuracy": {
+      "title": "Youth Assessment Accuracy",
+      "description": "Advanced prospect evaluation for more reliable Youth talent reports.",
+      "focus": "Accuracy + Potential"
+    }
+  },
+  "legacyUi": {
+    "unlockDevelopingTeam": "Unlock Developing Team in Preferences first."
+  },
+  "additionalEffects": {
+    "trainingEfficiency": "{{value}}% training efficiency",
+    "developmentSupport": "{{value}}% development support",
+    "overloadRisk": "{{value}}% overload risk",
+    "dailyTrainingOutput": "{{value}}% daily training output",
+    "riderDevelopmentSupport": "{{value}}% rider development support",
+    "combinedDevelopmentSupport": "{{value}}% combined development support",
+    "combinedOverloadRisk": "{{value}}% combined overload risk",
+    "u16CoachingSupport": "{{value}}% U16 coaching support",
+    "focusTrainingEfficiency": "{{value}}% {{focus}} training efficiency",
+    "healthRiskContribution": "{{value}} injury and sickness risk contribution",
+    "returnToFitnessContribution": "{{value}} return-to-fitness speed contribution",
+    "dailyRecoverySupport": "{{value}} daily recovery support",
+    "fatigueFloorReduction": "{{value}} fatigue floor after health cases",
+    "setupQuality": "{{value}} setup quality bonus",
+    "equipmentConditionLoss": "{{value}} equipment condition loss",
+    "mechanicalRisk": "{{value}} mechanical risk",
+    "maintenanceSpeed": "{{value}} equipment maintenance speed",
+    "maintenanceCost": "{{value}} equipment maintenance cost",
+    "youthProspectDiscovery": "{{value}} youth prospect discovery support",
+    "youthAssessment": "{{value}} youth assessment quality",
+    "combinedTraining": "{{value}} combined training output",
+    "combinedHealthRisk": "{{value}} combined injury and sickness risk",
+    "combinedFitnessSpeed": "{{value}} combined return-to-fitness speed",
+    "combinedDailyRecovery": "{{value}} combined daily recovery support",
+    "combinedSetup": "{{value}} combined setup quality bonus",
+    "combinedConditionLoss": "{{value}} combined equipment condition loss",
+    "combinedMechanicalRisk": "{{value}} combined mechanical risk",
+    "combinedMaintenanceSpeed": "{{value}} combined maintenance speed",
+    "combinedMaintenanceCost": "{{value}} combined maintenance cost",
+    "workloadPlanning": "{{value}} workload-planning support",
+    "prospectDiscovery": "{{value}} prospect discovery support",
+    "assessmentSupport": "{{value}} assessment support",
+    "mechanicPaused": "Mechanic effects are paused while this staff member is unavailable.",
+    "requiresWorkshop": "Maintenance speed bonuses require Mechanics Workshop level 1 or higher.",
+    "plannedTactics": "Planned: tactical execution support",
+    "plannedTeamwork": "Planned: teamwork and domestique coordination",
+    "plannedMorale": "Planned: small morale stability improvement",
+    "plannedU23Training": "Planned: U23 training support",
+    "plannedU23Tactics": "Planned: developing-team race tactics",
+    "plannedYouthDevelopment": "Planned: young rider development boost",
+    "academyBudget": "Youth Academy programme and budget management",
+    "delegatedRecruitment": "Delegated recruitment and operating decisions",
+    "noInfrastructure": "No infrastructure requirement in version 1",
+    "u16Workload": "U16 training and workload management",
+    "youthPlanning": "Youth rider development planning",
+    "youthRaceSelection": "Youth squad selection when delegated",
+    "youthScoutingBudget": "Youth scouting range is funded through the Academy budget",
+    "noContribution": "No active contribution from this role yet.",
+    "groupPaused": "All assigned staff are attending courses; their contribution is temporarily paused.",
+    "futureTactics": "Future: stronger tactics, teamwork and domestique support.",
+    "futureMorale": "Future: small morale stability bonus.",
+    "futureU23": "Future: U23 training and young rider development.",
+    "trainerBoost": "The Head Coach increases trainer contribution by +{{value}}%.",
+    "activeMechanics": "{{count}} active mechanics provide technical support."
+  },
+  "infrastructureWarnings": {
+    "trainingCenter": "Training Center Lv 0 caps part of coaching staff bonuses.",
+    "medicalCenter": "Medical Center Lv 0 caps part of medical staff bonuses.",
+    "mechanicsWorkshop": "Mechanics Workshop Lv 0 caps maintenance speed and cost discounts. Basic setup, condition and mechanical-risk support remain active.",
+    "scoutingOffice": "Scouting Office Lv 0 caps part of scout and analyst bonuses."
+  },
+  "contractDisplay": {
+    "noDate": "No contract date",
+    "missingDate": "Contract expiration date unavailable",
+    "expired": "Expired",
+    "seasonDate": "Season {{season}} - {{date}}"
+  },
+  "roleInfo": {
+    "capacityFallback": "Capacity follows the current staff-role limit.",
+    "head_coach": {
+      "purpose": "Leads regular training strategy, training quality, fatigue-aware planning and long-term rider development.",
+      "capacitySummary": "One Head Coach for the first team.",
+      "attributes": [
+        "Training controls session quality and focus precision.",
+        "Recovery Planning improves load balancing, intensity selection and rest decisions.",
+        "Youth Development strengthens plans and development support for younger riders.",
+        "Experience and Leadership improve consistency, role awareness and team-wide coordination.",
+        "Loyalty provides a smaller reliability contribution."
+      ],
+      "gameplay": [
+        "Provides passive training, development, youth-development and overload-risk effects.",
+        "Can optionally manage the rolling Today, Tomorrow and Day +2 regular-training plan.",
+        "Courses and overlapping assignments can reduce or pause the contribution."
+      ]
+    },
+    "trainer": {
+      "purpose": "Supports the Head Coach by improving daily training delivery, progression quality and workload management.",
+      "capacitySummary": "Up to five Trainers can support the first team.",
+      "attributes": [
+        "Daily Training improves training contribution.",
+        "Training Efficiency supports session delivery and workload handling.",
+        "Potential Growth supports long-term development.",
+        "Experience and Leadership improve consistency and coaching coordination.",
+        "Loyalty provides a smaller reliability contribution."
+      ],
+      "gameplay": [
+        "Trainer contributions combine with the Head Coach in the live regular-training system.",
+        "More Trainers increase support, but each active course or assignment reduces available contribution.",
+        "Trainers support planning; the Head Coach remains the automation owner."
+      ]
+    },
+    "team_doctor": {
+      "purpose": "Leads diagnosis, injury and sickness prevention, medical recovery and return-to-fitness decisions.",
+      "capacitySummary": "Capacity follows the live medical-staff role limit.",
+      "attributes": [
+        "Recovery and Prevention reduce health risk and recovery duration.",
+        "Diagnosis and Experience support medical-case quality.",
+        "Leadership coordinates the medical group.",
+        "Potential and Loyalty provide supporting contributions."
+      ],
+      "gameplay": [
+        "Contributes to combined injury and sickness risk reduction.",
+        "Improves return-to-fitness speed, daily recovery support and health-case fatigue floors.",
+        "The contribution can pause while the staff member is unavailable or on a course."
+      ]
+    },
+    "physio": {
+      "purpose": "Specialises in rehabilitation, physical recovery, fatigue management and a safe return to full fitness.",
+      "capacitySummary": "Capacity follows the live medical-staff role limit.",
+      "attributes": [
+        "Rehabilitation drives recovery support.",
+        "Recovery Speed improves the return-to-fitness process.",
+        "Experience supports difficult rehabilitation cases.",
+        "Leadership, Potential and Loyalty provide secondary support."
+      ],
+      "gameplay": [
+        "Combines with the Team Doctor and Nutritionist in the live medical-support calculation.",
+        "Supports recovery duration, daily recovery and health-case fatigue handling.",
+        "The contribution can pause while unavailable or on a course."
+      ]
+    },
+    "nutritionist": {
+      "purpose": "Supports recovery routines, rider fitness consistency and nutrition planning around training and competition.",
+      "capacitySummary": "Capacity follows the live medical-staff role limit.",
+      "attributes": [
+        "Nutrition Planning improves the main contribution.",
+        "Recovery Support helps fatigue and health recovery.",
+        "Consistency is represented by Loyalty.",
+        "Experience, Potential and Leadership provide secondary support."
+      ],
+      "gameplay": [
+        "Combines with the Team Doctor and Physio in the live medical-support calculation.",
+        "Supports daily recovery, health-risk reduction and fitness consistency.",
+        "Now also contributes to race feeding, hydration/fatigue control, post-stage recovery and health protection in Race Preparation."
+      ]
+    },
+    "mechanic": {
+      "purpose": "Controls bike setup quality, maintenance efficiency, equipment condition protection and mechanical reliability.",
+      "capacitySummary": "Capacity follows the live mechanic role limit.",
+      "attributes": [
+        "Setup improves equipment configuration quality.",
+        "Reliability reduces equipment wear and mechanical risk.",
+        "Experience supports consistent race-day technical work.",
+        "Discipline, Innovation and Loyalty provide supporting contributions."
+      ],
+      "gameplay": [
+        "Provides setup-quality, condition-loss and mechanical-risk effects.",
+        "Supports maintenance speed and cost when the Mechanics Workshop is sufficiently developed.",
+        "The canonical backend mechanic effects are used by maintenance and race systems."
+      ]
+    },
+    "sport_director": {
+      "purpose": "Owns race tactics, in-race organisation, motivation, teamwork and domestique coordination.",
+      "capacitySummary": "Capacity follows the live Sport Director role limit.",
+      "attributes": [
+        "Tactics improves race-plan decision quality.",
+        "Organization supports execution and staff coordination.",
+        "Motivation and Leadership support morale and teamwork.",
+        "Experience, Long-Term Vision and Loyalty provide secondary value."
+      ],
+      "gameplay": [
+        "The role, contracts, courses and capacity are live.",
+        "Selected Sport Directors now generate live Race Support from their staff quality and availability.",
+        "Race Support is consumed by the universal race engine as a capped readiness/performance and preparation-support bonus."
+      ]
+    },
+    "scout_analyst": {
+      "purpose": "Evaluates riders, improves scouting accuracy, discovers prospects and supports transfer research.",
+      "capacitySummary": "Capacity follows the live scouting role limit.",
+      "attributes": [
+        "Evaluation improves report quality.",
+        "Accuracy improves confidence in revealed information.",
+        "Network supports discovery coverage.",
+        "Prospect Sense, Communication and Loyalty provide supporting value."
+      ],
+      "gameplay": [
+        "Rider scouting tasks and due-task completion are live.",
+        "Scouting quality and prospect visibility use the staff role.",
+        "Broader transfer-intelligence features can continue to expand around the live scouting core."
+      ]
+    },
+    "u23_head_coach": {
+      "purpose": "Manages developing-team training, young-rider development and stage-by-stage U23 race tactics.",
+      "capacitySummary": "One U23 Head Coach after the Developing Team is unlocked.",
+      "attributes": [
+        "Youth Training controls regular-training quality for the developing team.",
+        "Training Efficiency supports load and recovery planning.",
+        "Youth Development improves long-term progression decisions.",
+        "Experience and Leadership improve consistency and race readiness.",
+        "Loyalty provides a smaller reliability contribution."
+      ],
+      "gameplay": [
+        "Can manage the same rolling three-day training system for U23 riders once hired and enabled.",
+        "Automatic stage-by-stage U23 race planning is live, including initial generation on race-plan submission and regeneration after completed stages.",
+        "When U23 automation is enabled, coach quality also contributes a capped Race Support bonus to the universal race engine."
+      ]
+    },
+    "youth_academy_director": {
+      "purpose": "Runs the U16 academy programme, operating budget, recruitment delegation, camps and spending requests.",
+      "capacitySummary": "One Youth Academy Director after the Premium Youth Academy is activated.",
+      "attributes": [
+        "Expertise supports programme quality and financial recommendations.",
+        "Leadership supports delegated recruitment and academy decisions.",
+        "Efficiency improves operating planning and budget use.",
+        "Experience improves consistency of academy recommendations."
+      ],
+      "gameplay": [
+        "Included automatically at average quality on first Youth Academy activation.",
+        "Can own delegated recruitment, race-entry, camp, equipment and prospect-negotiation decisions.",
+        "Youth Academy V1 has no infrastructure dependency."
+      ]
+    },
+    "u16_head_coach": {
+      "purpose": "Controls U16 training, workload, development emphasis, readiness and normal youth-race squad selection.",
+      "capacitySummary": "One U16 Head Coach after the Premium Youth Academy is activated.",
+      "attributes": [
+        "Expertise represents U16 training quality.",
+        "Efficiency supports workload and recovery planning.",
+        "Potential supports long-term development decisions.",
+        "Leadership supports race selection and team development."
+      ],
+      "gameplay": [
+        "Included automatically at average quality on first Youth Academy activation.",
+        "Owns race squad selection when that responsibility is delegated.",
+        "Youth Academy V1 has no infrastructure dependency."
+      ]
+    },
+    "youth_scout": {
+      "purpose": "Discovers and assesses U16 prospects inside the scouting range funded from the Youth Academy budget.",
+      "capacitySummary": "One optional Youth Scout per activated Premium Youth Academy.",
+      "attributes": [
+        "Expertise improves prospect evaluation.",
+        "Experience improves discovery volume and network quality.",
+        "Efficiency improves assessment confidence.",
+        "Potential supports talent recognition."
+      ],
+      "gameplay": [
+        "Not assigned automatically; the manager may hire a Youth Scout from the Staff market.",
+        "Scouting budget controls geographic reach: Local, Regional, Continental or Worldwide.",
+        "Scout quality controls discovery effectiveness and assessment quality, not hidden Potential."
+      ]
+    }
+  },
+  "qualityExplanation": {
+    "coachingTitle": "How Coaching Quality Works",
+    "coachingBody": "Head coach quality is based on training skill, recovery planning, youth development and leadership. Higher quality improves training output, development support and overload management.",
+    "overallCoaching": "Overall coaching profile",
+    "dailyOutput": "Daily training output",
+    "longTermGrowth": "Long-term rider growth",
+    "trainerTitle": "How Trainer Quality Works",
+    "trainerBody": "Trainer quality is based on daily training skill, training efficiency, potential growth and experience. Trainers support the coaching group and improve regular training quality.",
+    "trainerProfile": "Overall trainer profile",
+    "dailyDelivery": "Daily training delivery",
+    "workloadSupport": "Fatigue and workload support",
+    "medicalTitle": "How Medical Quality Works",
+    "recoveryTitle": "How Recovery Quality Works",
+    "nutritionTitle": "How Nutrition Quality Works",
+    "medicalBody": "Medical staff quality contributes to injury and sickness risk, return-to-fitness speed, daily recovery support and fatigue floor after health cases. Team Doctor, Physio and Nutritionist are combined in the medical staff impact group.",
+    "injuryPrevention": "Injury and sickness prevention",
+    "recoveryDuration": "Recovery duration support",
+    "fatigueRecovery": "Fatigue recovery support",
+    "technicalTitle": "How Technical Quality Works",
+    "technicalBody": "Mechanic quality is live. Setup, reliability, innovation and experience now support equipment setup quality, maintenance, equipment condition loss and race-day mechanical reliability.",
+    "mechanicProfile": "Overall mechanic profile",
+    "raceSetup": "Race setup support",
+    "mechanicalPrevention": "Mechanical issue prevention",
+    "repairSupport": "Repair speed and cost with Workshop levels",
+    "tacticalTitle": "How Tactical Quality Works",
+    "tacticalBody": "Sport director quality is based on tactics, motivation, organization and experience. This profile prepares race tactics, morale stability and team coordination for the race engine.",
+    "raceLeadership": "Overall race leadership",
+    "tacticalPreparation": "Tactical preparation",
+    "moraleOrganization": "Morale and organization",
+    "youthTitle": "How Youth Coaching Quality Works",
+    "youthBody": "U23 head coach quality is based on youth training, youth development, leadership and experience. This profile supports developing-team rider growth and race readiness.",
+    "youthProfile": "Overall U23 coaching profile",
+    "youngProgression": "Young rider progression",
+    "youthRacePreparation": "U23 race preparation",
+    "thresholds": "Quality thresholds",
+    "thresholdScale": "Basic: below 55 · Solid: 55–69 · Strong: 70–84 · Elite: 85+",
+    "maintenanceSupport": "Maintenance Support",
+    "riskControl": "Risk Control",
+    "facilityCap": "{{facility}} can cap some staff bonuses. Current level: {{level}}.",
+    "maintenanceCap": "{{facility}} limits maintenance speed and cost discounts. Current level: {{level}}."
+  },
+  "specializations": {
+    "general": "General"
+  },
+  "facilityNames": {
+    "trainingCenter": "Training Center",
+    "medicalCenter": "Medical Center",
+    "mechanicsWorkshop": "Mechanics Workshop",
+    "scoutingOffice": "Scouting Office"
+  },
+  "courseGainLabels": {
+    "academyManagement": "Academy Management",
+    "assessmentAccuracy": "Assessment Accuracy",
+    "budgetEfficiency": "Budget Efficiency",
+    "communication": "Communication",
+    "discipline": "Discipline",
+    "discoveryNetwork": "Discovery Network",
+    "innovation": "Innovation",
+    "longTermPlanning": "Long-Term Planning",
+    "longTermVision": "Long-Term Vision",
+    "motivation": "Motivation",
+    "potential": "Potential",
+    "prospectSense": "Prospect Sense",
+    "raceSelection": "Race Selection",
+    "talentSense": "Talent Sense",
+    "u16Training": "U16 Training",
+    "workloadManagement": "Workload Management",
+    "youthEvaluation": "Youth Evaluation",
+    "youthTraining": "Youth Training"
+  },
+  "hireAccess": {
+    "intro": "All 12 staff roles are visible, including roles you can unlock later. Select any role to see its requirements.",
+    "states": {
+      "eligible": "Eligible to hire",
+      "locked": "Locked for now",
+      "full": "Current slots full",
+      "unknown": "Availability unverified"
+    },
+    "candidatesNote": "An open staff slot is available. Hiring also requires a matching candidate in the Staff Market.",
+    "paidPremium": "Paid Premium is required. A free Premium trial does not unlock this role.",
+    "developingTeam": "Activate and renew the U23 Developing Team (after 60 game days, 50 Coins per season).",
+    "youthAcademy": "Activate and renew the U16 Youth Academy (after 90 game days, 50 Coins per season).",
+    "youthRenewal": "Renew the Youth Academy for the current game season (50 Coins).",
+    "clubHouse": "Club House",
+    "youthInfrastructure": "Youth Academy infrastructure",
+    "facilityRequired": "{{facility}} Lv {{level}} required.",
+    "fullCapacity": "All current staff slots are filled ({{assigned}}/{{limit}}).",
+    "nextSlot": "Next slot unlock: {{requirement}}",
+    "unverified": "Hiring eligibility could not be verified for this role.",
+    "otherRestriction": "Hiring is restricted under the current club rules.",
+    "viewPremium": "View Premium plans",
+    "showDetails": "Show details",
+    "hideDetails": "Hide details",
+    "slotCount": "{{assigned}} of {{limit}} staff positions filled"
+  }
+}

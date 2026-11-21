@@ -1,0 +1,57 @@
+{
+  "coins": {
+    "perRenewal": "{{cost}} Coins po obnovi",
+    "toActivate": "{{cost}} Coins za aktivaciju",
+    "reactivationPrice": "Cena ponovne aktivacije: {{cost}} Coins",
+    "nextRenewal": "Sledeća obnova: {{cost}} Coins",
+    "firstActivation": "Prva aktivacija: {{cost}} Coins"
+  },
+  "movement": {
+    "open": "Movement window je trenutno otvoren: {{label}}",
+    "closed": "Movement window je zatvoren. Sledeći period: {{label}}",
+    "unavailable": "Movement window trenutno nije dostupan.",
+    "currentWindow": "Trenutni period",
+    "unknown": "Nepoznato"
+  },
+  "activation": {
+    "reactivateForSeason": "Ponovo aktiviraj za sezonu {{season}} — {{cost}} Coins",
+    "activate": "Aktiviraj Razvojni tim — {{cost}} Coins",
+    "activatedForSeason": "Razvojni tim je aktiviran za sezonu {{season}}. Automatska obnova je {{renewal}}.",
+    "activatedSuccessfully": "Razvojni tim je uspešno aktiviran.",
+    "renewalEnabled": "Automatska obnova Razvojnog tima je uključena.",
+    "renewalDisabled": "Automatska obnova Razvojnog tima je isključena.",
+    "on": "uključena",
+    "off": "isključena"
+  },
+  "errors": {
+    "loadStatus": "Nije moguće učitati status Razvojnog tima.",
+    "activate": "Nije moguće aktivirati Razvojni tim.",
+    "renewal": "Nije moguće ažurirati automatsku obnovu.",
+    "premiumRequired": "Premium članstvo je obavezno za pristup Razvojnom timu."
+  },
+  "service": {
+    "summary": "Potreban je plaćeni Premium i 60 dana u igri. Aktivacija: {{activation}} novčića, obnova po sezoni: {{renewal}}.",
+    "eligibilityCosts": "Uslovi: plaćeni Premium i 60 dana u igri. Aktivacija: {{activation}} novčića; obnova: {{renewal}}.",
+    "accessUntilSeason": "Pristup ostaje dostupan do kraja sezone {{season}}.",
+    "season": "Sezona {{season}}",
+    "endSeason": "Kraj sezone {{season}}",
+    "startSeason": "Početak sezone {{season}}",
+    "coins": "{{count}} Coins",
+    "autoRenewHelp": "Uz plaćeni Premium i {{cost}} novčića tim se obnavlja u sledećoj sezoni. Inače se zatvara, a preostali vozači postaju slobodni agenti.",
+    "activateSeason": "Aktiviraj za sezonu {{season}}",
+    "existingTeam": "Vaš postojeći Razvojni tim biće aktiviran za ovu sezonu.",
+    "newTeam": "Biće kreiran i aktiviran Razvojni tim za ovu sezonu.",
+    "activationAccess": "Pristup traje do kraja trenutne sezone. Automatska obnova je podrazumevano uključena i može se isključiti bilo kada.",
+    "needCoins": "Potrebno vam je {{cost}} Coins za aktivaciju Razvojnog tima. Trenutno stanje: {{balance}} Coins.",
+    "team": "Tim: {{name}}",
+    "closeActivation": "Zatvori potvrdu aktivacije Razvojnog tima",
+    "confirmActivate": "Aktivirati Razvojni tim za sezonu {{season}}?",
+    "confirmReactivate": "Ponovo aktivirati Razvojni tim za sezonu {{season}}?",
+    "deductCoins": "{{cost}} Coins biće oduzeto iz vašeg novčanika.",
+    "accessThisSeason": "Pristup traje do kraja ove sezone u igri.",
+    "autoRenewModal": "Automatska obnova biće podrazumevano uključena i može se isključiti u Preferences ili Premium & Billing.",
+    "actionActivate": "Aktiviraj za {{cost}} Coins",
+    "actionReactivate": "Ponovo aktiviraj za {{cost}} Coins",
+    "premiumRequired": "Za U23 razvojni tim potreban je plaćeni Premium: aktivacija {{activation}}, obnova {{renewal}} novčića."
+  }
+}

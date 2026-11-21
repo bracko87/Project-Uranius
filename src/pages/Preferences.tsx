@@ -1,0 +1,1245 @@
+/**
+ * Preferences.tsx
+ * Practical preferences page:
+ * - In-game notification controls
+ * - Developing Team seasonal access management
+ * - Danger zone
+ *
+ * Uses shared notification preferences helper so types/keys are centralized.
+ * "Shut Down Team" calls the shutdown-team Edge Function (server-side delete).
+ *
+ * Updated:
+ * - Replaced native browser prompt/confirm/alert for shutdown flow
+ *   with a custom in-page modal dialog.
+ * - Shutdown now explicitly fetches the current session token and sends
+ *   Authorization: Bearer <token> to the shutdown-team Edge Function.
+ * - Added a user-facing guard when the session/token is missing.
+ * - Developing Team seasonal access is wired to:
+ *   - get_developing_team_status()
+ *   - activate_developing_team_for_season_v1()
+ *   - set_developing_team_auto_renew_v1()
+ * - After successful first-time Developing Team activation, re-pin ppm-active-club
+ *   to the MAIN club only using getMyClubContext().
+ * - Restart Team now opens the shared RestartTeamModal and calls
+ *   public.restart_my_team_v1 through that modal.
+ *
+ * Note:
+ * - The one-time repair / global protection for broken old localStorage
+ *   belongs in the top-level dashboard layout, not here.
+ * - This page only ensures the activation flow does not incorrectly switch
+ *   active club context to the newly created developing club.
+ */
+
+import React, { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router'
+import RestartTeamModal from '@/components/team/RestartTeamModal'
+import { supabase } from '@/lib/supabase'
+import { getMyClubContext } from '@/lib/clubContext'
+import {
+  NotificationPreferenceGroup,
+  NotificationSettings,
+  NOTIFICATION_PREFERENCE_GROUP_ORDER,
+  NOTIFICATION_PREFERENCE_GROUPS,
+  NOTIFICATION_PREFERENCE_SECTIONS,
+  ADVISOR_NOTIFICATION_CATEGORY_DEFINITIONS,
+  ADVISOR_NOTIFICATION_CATEGORY_ORDER,
+  type AdvisorNotificationCategoryKey,
+  type AdvisorNotificationSettings,
+  readAdvisorNotificationPreferences,
+  writeAdvisorNotificationPreferences,
+  readNotificationPreferences,
+  writeNotificationPreferences,
+} from '@/lib/notificationPreferences'
+
+type ToggleRowProps = {
+  title: string
+  description: string
+  checked: boolean
+  onToggle: () => void
+  disabled?: boolean
+}
+
+type DevelopingTeamStatus = {
+  main_club_id: string | null
+  main_club_name: string | null
+  developing_club_id: string | null
+  developing_club_name: string | null
+
+  team_exists: boolean
+  access_status: 'active' | 'expired' | 'not_activated'
+  is_active: boolean
+  is_read_only: boolean
+
+  current_season: number
+  active_season: number | null
+  expires_after_season: number | null
+  next_renewal_season: number | null
+
+  auto_renew: boolean
+  activation_coin_cost: number
+  renewal_coin_cost: number
+
+  coin_balance: number
+  coin_requirement_met: boolean
+  activation_coin_requirement_met?: boolean
+  renewal_coin_requirement_met?: boolean
+
+  real_days_played: number
+  game_days_played: number
+  time_requirement_met: boolean
+
+  can_activate: boolean
+  can_reactivate: boolean
+  can_change_auto_renew: boolean
+
+  movement_window_open: boolean
+  current_window_label: string | null
+  next_window_label: string | null
+}
+
+type MainClubContextClub = {
+  id: string
+  name: string
+  country_code: string
+  logo_path?: string | null
+  primary_color?: string | null
+  secondary_color?: string | null
+}
+
+type ActiveClubPayload = {
+  id: string
+  owner_user_id: string
+  name: string
+  country_code: string
+  logo_path: string | null
+  primary_color?: string | undefined
+  secondary_color?: string | undefined
+  club_type: 'main'
+  updated_at_ms: number
+}
+
+// Display fallbacks only. get_developing_team_status() is the authoritative source.
+const DEFAULT_DEVELOPING_TEAM_ACTIVATION_COIN_COST = 50
+const DEFAULT_DEVELOPING_TEAM_RENEWAL_COIN_COST = 50
+
+function normalizeCoinCost(value: unknown, fallback: number): number {
+  const parsed = Number(value)
+
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
+}
+
+function ToggleRow({ title, description, checked, onToggle, disabled = false }: ToggleRowProps): JSX.Element {
+  return (
+    <label className={`flex items-start justify-between gap-4 py-3 ${disabled ? 'cursor-not-allowed opacity-45' : 'cursor-pointer'}`}>
+      <div className="min-w-0">
+        <div className="text-sm font-medium text-gray-900">{title}</div>
+        <div className="mt-1 text-xs text-gray-500">{description}</div>
+      </div>
+
+      <input
+        type="checkbox"
+        checked={checked}
+        disabled={disabled}
+        onChange={onToggle}
+        className="mt-1 h-4 w-4 shrink-0 rounded border-gray-300 disabled:cursor-not-allowed"
+      />
+    </label>
+  )
+}
+
+export default function PreferencesPage(): JSX.Element {
+  const { t } = useTranslation(['preferences', 'preferencesDynamic'])
+  const [notifications, setNotifications] = useState<NotificationSettings>(() =>
+    readNotificationPreferences()
+  )
+  const [advisorNotifications, setAdvisorNotifications] = useState<AdvisorNotificationSettings>(() => readAdvisorNotificationPreferences())
+  const [staffAdvisoryOverview, setStaffAdvisoryOverview] = useState<any[]>([])
+  const [isLoadingStaffAdvisoryOverview, setIsLoadingStaffAdvisoryOverview] = useState(true)
+  const [isLoadingAdvisorNotificationCategories, setIsLoadingAdvisorNotificationCategories] =
+    useState(true)
+  const [savingAdvisorNotificationCategory, setSavingAdvisorNotificationCategory] =
+    useState<AdvisorNotificationCategoryKey | null>(null)
+  const [advisorNotificationCategoryError, setAdvisorNotificationCategoryError] =
+    useState<string | null>(null)
+
+  const [developingTeamStatus, setDevelopingTeamStatus] = useState<DevelopingTeamStatus | null>(null)
+  const [hasPaidPremium, setHasPaidPremium] = useState(false)
+  const [isLoadingDevelopingTeamStatus, setIsLoadingDevelopingTeamStatus] = useState(true)
+  const [developingTeamError, setDevelopingTeamError] = useState<string | null>(null)
+  const [isActivatingDevelopingTeam, setIsActivatingDevelopingTeam] = useState(false)
+  const [
+    isUpdatingDevelopingTeamAutoRenew,
+    setIsUpdatingDevelopingTeamAutoRenew,
+  ] = useState(false)
+  const [isDevelopingTeamActivationModalOpen, setIsDevelopingTeamActivationModalOpen] =
+    useState(false)
+  const [developingTeamSuccessMessage, setDevelopingTeamSuccessMessage] = useState<string | null>(
+    null
+  )
+
+  const [isShuttingDown, setIsShuttingDown] = useState(false)
+  const [isShutdownModalOpen, setIsShutdownModalOpen] = useState(false)
+  const [isRestartModalOpen, setIsRestartModalOpen] = useState(false)
+  const [shutdownConfirmText, setShutdownConfirmText] = useState('')
+  const [shutdownError, setShutdownError] = useState<string | null>(null)
+
+  const loadDevelopingTeamStatus = async (): Promise<void> => {
+    setIsLoadingDevelopingTeamStatus(true)
+    setDevelopingTeamError(null)
+
+    try {
+      const [statusResult, paidPremiumResult] = await Promise.all([
+        supabase.rpc('get_developing_team_status'),
+        supabase.rpc('my_paid_premium_access_v1'),
+      ])
+      setHasPaidPremium(!paidPremiumResult.error && paidPremiumResult.data === true)
+
+      if (statusResult.error) {
+        throw statusResult.error
+      }
+
+      const normalized = Array.isArray(statusResult.data)
+        ? statusResult.data[0]
+        : statusResult.data
+
+      setDevelopingTeamStatus((normalized ?? null) as DevelopingTeamStatus | null)
+    } catch (e: any) {
+      console.error('loadDevelopingTeamStatus failed:', e)
+      setDevelopingTeamError(e?.message ?? t('errors.loadStatus', { ns: 'preferencesDynamic' }))
+    } finally {
+      setIsLoadingDevelopingTeamStatus(false)
+    }
+  }
+
+  useEffect(() => {
+    void loadDevelopingTeamStatus()
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    async function loadAdvisorOverview() {
+      try {
+        const context = (await getMyClubContext()) as { mainClub?: MainClubContextClub | null }
+        const clubId = context?.mainClub?.id ?? null
+
+        if (!clubId) {
+          if (!cancelled) setStaffAdvisoryOverview([])
+          return
+        }
+
+        const { data, error } = await supabase.rpc('staff_advisory_get_overview_v1', {
+          p_club_id: clubId,
+        })
+        if (error) throw error
+        if (!cancelled) setStaffAdvisoryOverview(Array.isArray(data) ? data : data ? [data] : [])
+      } catch (error) {
+        console.error('Failed to load Staff Advisory notification availability:', error)
+        if (!cancelled) setStaffAdvisoryOverview([])
+      } finally { if (!cancelled) setIsLoadingStaffAdvisoryOverview(false) }
+    }
+    void loadAdvisorOverview()
+    return () => { cancelled = true }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadAdvisorNotificationCategories(): Promise<void> {
+      setIsLoadingAdvisorNotificationCategories(true)
+
+      try {
+        const localSettings = readAdvisorNotificationPreferences()
+
+        const { data, error } = await supabase.rpc(
+          'get_my_staff_advisory_notification_categories_v1'
+        )
+
+        if (error) throw error
+
+        const rows = Array.isArray(data) ? data : []
+        const nextSettings: AdvisorNotificationSettings = {
+          ...localSettings,
+        }
+
+        for (const row of rows as Array<Record<string, unknown>>) {
+          const categoryCode = String(row.category_code ?? '') as AdvisorNotificationCategoryKey
+
+          if (!(categoryCode in ADVISOR_NOTIFICATION_CATEGORY_DEFINITIONS)) {
+            continue
+          }
+
+          const hasPersistedServerState = Boolean(row.updated_at)
+
+          if (hasPersistedServerState) {
+            nextSettings[categoryCode] = row.is_enabled !== false
+            continue
+          }
+
+          // One-time migration from the previous localStorage-only grouped
+          // preference model. This preserves an existing OFF checkbox and,
+          // through the RPC, bulk-mutes every exact subtype in that group.
+          const localEnabled = localSettings[categoryCode] !== false
+
+          if (localEnabled) {
+            // Preserve any exact subtype mutes the user may already have made
+            // from notification cards. Initializing an ON category must not
+            // silently clear those exceptions.
+            const { error: initializeError } = await supabase.rpc(
+              'initialize_my_staff_advisory_notification_category_v1',
+              {
+                p_category_code: categoryCode,
+                p_enabled: true,
+              }
+            )
+
+            if (initializeError) throw initializeError
+          } else {
+            // An existing OFF category from the previous localStorage model
+            // must immediately become a real bulk mute on the server.
+            const { error: migrateError } = await supabase.rpc(
+              'set_my_staff_advisory_notification_category_v1',
+              {
+                p_category_code: categoryCode,
+                p_enabled: false,
+              }
+            )
+
+            if (migrateError) throw migrateError
+          }
+
+          nextSettings[categoryCode] = localEnabled
+        }
+
+        if (!cancelled) {
+          setAdvisorNotifications(nextSettings)
+        }
+      } catch (error) {
+        console.error(
+          'Failed to load Staff Advisory notification category preferences:',
+          error
+        )
+      } finally {
+        if (!cancelled) {
+          setIsLoadingAdvisorNotificationCategories(false)
+        }
+      }
+    }
+
+    void loadAdvisorNotificationCategories()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => { writeAdvisorNotificationPreferences(advisorNotifications) }, [advisorNotifications])
+
+  useEffect(() => {
+    writeNotificationPreferences(notifications)
+  }, [notifications])
+
+  useEffect(() => {
+    if (!isShutdownModalOpen) return
+
+    const originalOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    function handleEscape(event: KeyboardEvent): void {
+      if (event.key === 'Escape' && !isShuttingDown) {
+        closeShutdownModal()
+      }
+    }
+
+    document.addEventListener('keydown', handleEscape)
+
+    return () => {
+      document.body.style.overflow = originalOverflow
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [isShutdownModalOpen, isShuttingDown])
+
+  const toggleNotification = (key: NotificationPreferenceGroup): void => {
+    setNotifications(prev => ({ ...prev, [key]: !prev[key] }))
+  }
+
+  const toggleAdvisorNotificationCategory = async (
+    key: AdvisorNotificationCategoryKey
+  ): Promise<void> => {
+    const definition = ADVISOR_NOTIFICATION_CATEGORY_DEFINITIONS[key]
+    const active = staffAdvisoryOverview.some(
+      row =>
+        row.role_type === definition.requiredRole &&
+        row.advisory_status === 'active'
+    )
+
+    if (!active || savingAdvisorNotificationCategory) return
+
+    const previousEnabled = advisorNotifications[key] !== false
+    const nextEnabled = !previousEnabled
+
+    setAdvisorNotificationCategoryError(null)
+    setSavingAdvisorNotificationCategory(key)
+
+    setAdvisorNotifications(prev => ({
+      ...prev,
+      [key]: nextEnabled,
+    }))
+
+    try {
+      const { error } = await supabase.rpc(
+        'set_my_staff_advisory_notification_category_v1',
+        {
+          p_category_code: key,
+          p_enabled: nextEnabled,
+        }
+      )
+
+      if (error) throw error
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('staff-advisory-notification-mutes-updated', {
+            detail: {
+              source: 'preferences-category',
+              categoryCode: key,
+              enabled: nextEnabled,
+            },
+          })
+        )
+      }
+    } catch (error) {
+      setAdvisorNotifications(prev => ({
+        ...prev,
+        [key]: previousEnabled,
+      }))
+      setAdvisorNotificationCategoryError(
+        t('notifications.advisorSaveError', { ns: 'preferences' })
+      )
+      console.error(
+        `Failed to update Staff Advisory notification category ${key}:`,
+        error
+      )
+    } finally {
+      setSavingAdvisorNotificationCategory(null)
+    }
+  }
+
+  const handleRestartTeam = (): void => {
+    setIsRestartModalOpen(true)
+  }
+
+  const handleActivateDevelopingTeam = async (): Promise<void> => {
+    if (isActivatingDevelopingTeam) return
+
+    setDevelopingTeamError(null)
+    setDevelopingTeamSuccessMessage(null)
+    setIsActivatingDevelopingTeam(true)
+
+    try {
+      const { data, error } = await supabase.rpc(
+        'activate_developing_team_for_season_v1'
+      )
+
+      if (error) {
+        throw error
+      }
+
+      const normalized = Array.isArray(data) ? data[0] : data
+
+      setDevelopingTeamSuccessMessage(
+        normalized?.access_status === 'active'
+          ? t('activation.activatedForSeason', {
+              ns: 'preferencesDynamic',
+              season: normalized.active_season ?? normalized.current_season,
+              renewal: t(normalized.auto_renew === false ? 'activation.off' : 'activation.on', { ns: 'preferencesDynamic' }),
+            })
+          : t('activation.activatedSuccessfully', { ns: 'preferencesDynamic' })
+      )
+
+      try {
+        const { data: authData, error: authError } = await supabase.auth.getUser()
+        if (authError) {
+          throw authError
+        }
+
+        const user = authData.user ?? null
+        if (user) {
+          const context = (await getMyClubContext()) as { mainClub?: MainClubContextClub | null }
+          const mainClub = context?.mainClub ?? null
+
+          if (mainClub) {
+            const payload: ActiveClubPayload = {
+              id: mainClub.id,
+              owner_user_id: user.id,
+              name: mainClub.name,
+              country_code: mainClub.country_code,
+              logo_path: mainClub.logo_path ?? null,
+              primary_color: mainClub.primary_color ?? undefined,
+              secondary_color: mainClub.secondary_color ?? undefined,
+              club_type: 'main',
+              updated_at_ms: Date.now(),
+            }
+
+            window.localStorage.setItem('ppm-active-club', JSON.stringify(payload))
+            window.dispatchEvent(new CustomEvent('club-updated', { detail: payload }))
+          }
+        }
+      } catch (contextError) {
+        console.error('Failed to re-pin active club to main club after activation:', contextError)
+      }
+
+      setIsDevelopingTeamActivationModalOpen(false)
+      await loadDevelopingTeamStatus()
+    } catch (error: any) {
+      console.error('activate_developing_team_for_season_v1 failed:', error)
+      setDevelopingTeamError(error?.message ?? t('errors.activate', { ns: 'preferencesDynamic' }))
+    } finally {
+      setIsActivatingDevelopingTeam(false)
+    }
+  }
+
+  const handleDevelopingTeamAutoRenewChange = async (
+    enabled: boolean
+  ): Promise<void> => {
+    if (isUpdatingDevelopingTeamAutoRenew) return
+
+    setDevelopingTeamError(null)
+    setDevelopingTeamSuccessMessage(null)
+    setIsUpdatingDevelopingTeamAutoRenew(true)
+
+    try {
+      const { error } = await supabase.rpc(
+        'set_developing_team_auto_renew_v1',
+        {
+          p_enabled: enabled,
+        }
+      )
+
+      if (error) {
+        throw error
+      }
+
+      setDevelopingTeamSuccessMessage(
+        enabled
+          ? t('activation.renewalEnabled', { ns: 'preferencesDynamic' })
+          : t('activation.renewalDisabled', { ns: 'preferencesDynamic' })
+      )
+
+      await loadDevelopingTeamStatus()
+    } catch (error: any) {
+      console.error('set_developing_team_auto_renew_v1 failed:', error)
+      setDevelopingTeamError(error?.message ?? t('errors.renewal', { ns: 'preferencesDynamic' }))
+    } finally {
+      setIsUpdatingDevelopingTeamAutoRenew(false)
+    }
+  }
+
+  const openDevelopingTeamActivationModal = (): void => {
+    if (isActivatingDevelopingTeam) return
+    setDevelopingTeamError(null)
+    setDevelopingTeamSuccessMessage(null)
+    setIsDevelopingTeamActivationModalOpen(true)
+  }
+
+  const closeDevelopingTeamActivationModal = (): void => {
+    if (isActivatingDevelopingTeam) return
+    setIsDevelopingTeamActivationModalOpen(false)
+  }
+
+  const openShutdownModal = (): void => {
+    if (isShuttingDown) return
+    setShutdownConfirmText('')
+    setShutdownError(null)
+    setIsShutdownModalOpen(true)
+  }
+
+  const closeShutdownModal = (): void => {
+    if (isShuttingDown) return
+    setIsShutdownModalOpen(false)
+    setShutdownConfirmText('')
+    setShutdownError(null)
+  }
+
+  const confirmShutdownTeam = async (): Promise<void> => {
+    if (isShuttingDown) return
+
+    if (shutdownConfirmText.trim() !== 'DELETE') {
+      setShutdownError(t('dangerZone.exactDeleteError', { ns: 'preferences' }))
+      return
+    }
+
+    setShutdownError(null)
+    setIsShuttingDown(true)
+
+    try {
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+      const accessToken = sessionData.session?.access_token
+
+      if (sessionError || !accessToken) {
+        setShutdownError(t('dangerZone.missingSession', { ns: 'preferences' }))
+        setIsShuttingDown(false)
+        return
+      }
+
+      const { error } = await supabase.functions.invoke('shutdown-team', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
+
+      if (error) {
+        console.error('shutdown-team failed:', error)
+        setShutdownError(error.message || t('dangerZone.shutdownFailed', { ns: 'preferences' }))
+        setIsShuttingDown(false)
+        return
+      }
+
+      try {
+        await supabase.auth.signOut()
+      } catch {
+        // Ignore sign-out errors if auth user was already deleted
+      }
+
+      window.location.assign('/')
+    } catch (e) {
+      console.error('shutdown-team unexpected error:', e)
+      setShutdownError(t('dangerZone.shutdownUnexpected', { ns: 'preferences' }))
+      setIsShuttingDown(false)
+    }
+  }
+
+  const gameDaysProgressLabel = developingTeamStatus
+    ? `${developingTeamStatus.game_days_played} / 60`
+    : '—'
+
+  const activationCoinCost = normalizeCoinCost(
+    developingTeamStatus?.activation_coin_cost,
+    DEFAULT_DEVELOPING_TEAM_ACTIVATION_COIN_COST
+  )
+
+  const renewalCoinCost = normalizeCoinCost(
+    developingTeamStatus?.renewal_coin_cost,
+    DEFAULT_DEVELOPING_TEAM_RENEWAL_COIN_COST
+  )
+
+  const movementWindowText = developingTeamStatus
+    ? developingTeamStatus.movement_window_open
+      ? t('movement.open', { ns: 'preferencesDynamic', label: developingTeamStatus.current_window_label ?? t('movement.currentWindow', { ns: 'preferencesDynamic' }) })
+      : t('movement.closed', { ns: 'preferencesDynamic', label: developingTeamStatus.next_window_label ?? t('movement.unknown', { ns: 'preferencesDynamic' }) })
+    : t('movement.unavailable', { ns: 'preferencesDynamic' })
+
+  const developingTeamAccessStatus = developingTeamStatus?.access_status ?? 'not_activated'
+  const developingTeamIsActive = developingTeamStatus?.is_active === true
+  const developingTeamIsExpired = developingTeamAccessStatus === 'expired'
+  const developingTeamIsNotActivated = developingTeamAccessStatus === 'not_activated'
+  const developingTeamIsEligible = developingTeamStatus?.time_requirement_met === true
+  const developingTeamTargetSeason = developingTeamStatus?.current_season ?? 1
+  const developingTeamActionCost = developingTeamIsExpired
+    ? renewalCoinCost
+    : activationCoinCost
+  const developingTeamHasEnoughCoins =
+    Number(developingTeamStatus?.coin_balance ?? 0) >= developingTeamActionCost
+
+  const coinProgressLabel = developingTeamStatus
+    ? `${developingTeamStatus.coin_balance} / ${developingTeamActionCost}`
+    : '—'
+
+  const developingTeamActivationLabel = developingTeamIsExpired
+    ? t('activation.reactivateForSeason', { ns: 'preferencesDynamic', season: developingTeamTargetSeason, cost: renewalCoinCost })
+    : t('activation.activate', { ns: 'preferencesDynamic', cost: activationCoinCost })
+
+  const developingTeamCanSubmitActivation = Boolean(
+    developingTeamStatus &&
+      developingTeamIsEligible &&
+      developingTeamHasEnoughCoins &&
+      !developingTeamIsActive &&
+      (
+        (developingTeamIsNotActivated && developingTeamStatus.can_activate) ||
+        (developingTeamIsExpired && developingTeamStatus.can_reactivate)
+      )
+  )
+
+  return (
+    <>
+      <div className="w-full h-full min-h-[calc(100vh-10rem)] text-gray-900">
+        <div className="flex h-full flex-col gap-6">
+          <div>
+            <h2 className="text-xl font-semibold">{t('page.title', { ns: 'preferences' })}</h2>
+            <p className="mt-1 text-sm text-gray-500">
+              {t('page.description', { ns: 'preferences' })}
+            </p>
+          </div>
+
+          <div>
+            <section className="w-full rounded-lg border border-gray-100 bg-white p-5 shadow-sm">
+              <h3 className="text-base font-semibold">{t('notifications.title', { ns: 'preferences' })}</h3>
+              <p className="mt-1 text-xs text-gray-500">{t('notifications.description', { ns: 'preferences' })}</p>
+
+              <div className="mt-5">
+                <h4 className="text-sm font-semibold text-gray-900">{t('notifications.coreTitle', { ns: 'preferences' })}</h4>
+                <p className="mt-1 text-xs text-gray-500">{t('notifications.coreDescription', { ns: 'preferences' })}</p>
+                <div className="mt-3 grid grid-cols-1 gap-4 xl:grid-cols-2">
+                  {NOTIFICATION_PREFERENCE_SECTIONS.map(section => {
+                    const sectionGroups = NOTIFICATION_PREFERENCE_GROUP_ORDER.filter(groupCode => NOTIFICATION_PREFERENCE_GROUPS[groupCode].section === section.code)
+                    const enabledCount = sectionGroups.filter(groupCode => notifications[groupCode] !== false).length
+                    return (
+                      <div key={section.code} className="overflow-hidden rounded-xl border border-gray-200 bg-gray-50/60">
+                        <div className="flex items-start justify-between gap-4 border-b border-gray-200 bg-white px-4 py-3">
+                          <div><h5 className="text-sm font-semibold text-gray-900">{t(`sections.${section.code}.title`)}</h5><p className="mt-1 text-xs text-gray-500">{t(`sections.${section.code}.description`)}</p></div>
+                          <span className="shrink-0 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">{t('notifications.enabledCount', { enabled: enabledCount, total: sectionGroups.length })}</span>
+                        </div>
+                        <div className="divide-y divide-gray-200 px-4">
+                          {sectionGroups.map(groupCode => {
+                            const group = NOTIFICATION_PREFERENCE_GROUPS[groupCode]
+                            return <ToggleRow key={groupCode} title={t(`groups.${groupCode}.label`)} description={t(`groups.${groupCode}.description`)} checked={notifications[groupCode] !== false} onToggle={() => toggleNotification(groupCode)} />
+                          })}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div className="mt-6 border-t border-gray-200 pt-5">
+                <h4 className="text-sm font-semibold text-gray-900">{t('notifications.advisorTitle', { ns: 'preferences' })}</h4>
+                <p className="mt-1 text-xs text-gray-500">
+                  {t('notifications.advisorDescription', { ns: 'preferences' })}
+                </p>
+
+                {advisorNotificationCategoryError ? (
+                  <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                    {advisorNotificationCategoryError}
+                  </div>
+                ) : null}
+                <div className="mt-3 overflow-hidden rounded-xl border border-gray-200 bg-gray-50/60">
+                  <div className="divide-y divide-gray-200 px-4">
+                    {ADVISOR_NOTIFICATION_CATEGORY_ORDER.map(key => {
+                      const definition = ADVISOR_NOTIFICATION_CATEGORY_DEFINITIONS[key]
+                      const active = staffAdvisoryOverview.some(row => row.role_type === definition.requiredRole && row.advisory_status === 'active')
+                      return (
+                        <ToggleRow
+                          key={key}
+                          title={t(`advisorCategories.${key}.label`)}
+                          description={
+                            active
+                              ? t(`advisorCategories.${key}.description`)
+                              : `${t(`advisorCategories.${key}.description`)} ${t('notifications.advisorInactiveSuffix')}`
+                          }
+                          checked={advisorNotifications[key] !== false}
+                          disabled={
+                            !active ||
+                            isLoadingStaffAdvisoryOverview ||
+                            isLoadingAdvisorNotificationCategories ||
+                            savingAdvisorNotificationCategory === key
+                          }
+                          onToggle={() => {
+                            void toggleAdvisorNotificationCategory(key)
+                          }}
+                        />
+                      )
+                    })}
+                  </div>
+                </div>
+                <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs leading-5 text-blue-800">{t('notifications.coreAdvisorNote', { ns: 'preferences' })}</div>
+              </div>
+            </section>
+          </div>
+
+          <section className="w-full rounded-lg border border-gray-100 bg-white p-5 shadow-sm">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h3 className="text-base font-semibold">{t('developingTeam.title', { ns: 'preferences' })}</h3>
+                <p className="mt-1 text-xs text-gray-500">
+                  {t('developingTeam.description', { ns: 'preferences' })}
+                </p>
+              </div>
+
+              <div className="shrink-0 rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-600">
+                {developingTeamIsActive || developingTeamIsExpired
+                  ? t('coins.perRenewal', { ns: 'preferencesDynamic', cost: renewalCoinCost })
+                  : t('coins.toActivate', { ns: 'preferencesDynamic', cost: activationCoinCost })}
+              </div>
+            </div>
+
+            <p className="mt-3 text-sm text-gray-600">
+              {t('service.summary', { ns: 'preferencesDynamic', activation: activationCoinCost, renewal: renewalCoinCost })}
+            </p>
+
+            {isLoadingDevelopingTeamStatus ? (
+              <div className="mt-4 text-sm text-gray-500">{t('developingTeam.loading', { ns: 'preferences' })}</div>
+            ) : (
+              <>
+                <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+
+
+                  <div className="rounded-md border border-gray-200 p-3">
+                    <div className="text-xs text-gray-500">{t('developingTeam.gameProgress', { ns: 'preferences' })}</div>
+                    <div className="mt-1 text-lg font-semibold text-gray-900">
+                      {gameDaysProgressLabel}
+                    </div>
+                    <div className="mt-1 text-xs text-gray-500">{t('developingTeam.gameMinimum', { ns: 'preferences' })}</div>
+                  </div>
+
+                  <div className="rounded-md border border-gray-200 p-3">
+                    <div className="text-xs text-gray-500">{t('developingTeam.coins', { ns: 'preferences' })}</div>
+                    <div className="mt-1 text-lg font-semibold text-gray-900">
+                      {coinProgressLabel}
+                    </div>
+                    <div className="mt-1 text-xs text-gray-500">
+                      {developingTeamIsExpired
+                        ? t('coins.reactivationPrice', { ns: 'preferencesDynamic', cost: renewalCoinCost })
+                        : developingTeamIsActive
+                          ? t('coins.nextRenewal', { ns: 'preferencesDynamic', cost: renewalCoinCost })
+                          : t('coins.firstActivation', { ns: 'preferencesDynamic', cost: activationCoinCost })}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                  {t('service.eligibilityCosts', { ns: 'preferencesDynamic', activation: activationCoinCost, renewal: renewalCoinCost })}
+                </div>
+
+                {developingTeamIsActive ? (
+                  <div className="mt-4 rounded-xl border border-green-200 bg-green-50/60 p-4">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <div className="text-sm font-semibold text-green-900">
+                          {t('developingTeam.active', { ns: 'preferences' })}
+                        </div>
+                        <div className="mt-1 text-sm text-green-800">
+                          {t('service.accessUntilSeason', {
+                            ns: 'preferencesDynamic',
+                            season: developingTeamStatus?.expires_after_season ?? developingTeamStatus?.active_season ?? developingTeamStatus?.current_season,
+                          })}
+                        </div>
+                      </div>
+
+                      <span className="shrink-0 rounded-full border border-green-200 bg-white px-2.5 py-1 text-xs font-semibold text-green-700">
+                        {t('developingTeam.activeBadge', { ns: 'preferences' })}
+                      </span>
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                      <div>
+                        <div className="text-xs text-green-700">{t('developingTeam.currentSeason', { ns: 'preferences' })}</div>
+                        <div className="mt-1 text-sm font-semibold text-green-950">
+                          {t('service.season', { ns: 'preferencesDynamic', season: developingTeamStatus?.current_season ?? '—' })}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-green-700">{t('developingTeam.accessEnds', { ns: 'preferences' })}</div>
+                        <div className="mt-1 text-sm font-semibold text-green-950">
+                          {t('service.endSeason', { ns: 'preferencesDynamic', season: developingTeamStatus?.expires_after_season ?? developingTeamStatus?.active_season ?? '—' })}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-green-700">{t('developingTeam.renewalPrice', { ns: 'preferences' })}</div>
+                        <div className="mt-1 text-sm font-semibold text-green-950">
+                          {t('service.coins', { ns: 'preferencesDynamic', count: renewalCoinCost })}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-green-700">{t('developingTeam.nextRenewal', { ns: 'preferences' })}</div>
+                        <div className="mt-1 text-sm font-semibold text-green-950">
+                          {t('service.startSeason', { ns: 'preferencesDynamic', season: developingTeamStatus?.next_renewal_season ?? (developingTeamStatus?.current_season ?? 0) + 1 })}
+                        </div>
+                      </div>
+                    </div>
+
+                    <label className="mt-5 flex cursor-pointer items-start justify-between gap-4 rounded-lg border border-green-200 bg-white p-4">
+                      <div>
+                        <div className="text-sm font-semibold text-gray-900">
+                          {t('developingTeam.autoRenew', { ns: 'preferences' })}
+                        </div>
+                        <div className="mt-1 text-xs leading-5 text-gray-600">
+                          {t('service.autoRenewHelp', { ns: 'preferencesDynamic', cost: renewalCoinCost })}
+                        </div>
+                      </div>
+
+                      <input
+                        type="checkbox"
+                        checked={developingTeamStatus?.auto_renew === true}
+                        disabled={
+                          !developingTeamStatus?.can_change_auto_renew ||
+                          isUpdatingDevelopingTeamAutoRenew
+                        }
+                        onChange={event => {
+                          void handleDevelopingTeamAutoRenewChange(event.target.checked)
+                        }}
+                        className="mt-1 h-4 w-4 shrink-0 rounded border-gray-300"
+                      />
+                    </label>
+                  </div>
+                ) : developingTeamIsExpired ? (
+                  <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50/60 p-4">
+                    <div className="text-sm font-semibold text-amber-900">
+                      {t('developingTeam.expired', { ns: 'preferences' })}
+                    </div>
+                    <p className="mt-2 text-sm leading-6 text-amber-800">
+                      {t('developingTeam.expiredDescription', { ns: 'preferences' })}
+                    </p>
+
+                    <div className="mt-4 flex flex-wrap items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={openDevelopingTeamActivationModal}
+                        disabled={!developingTeamCanSubmitActivation || isActivatingDevelopingTeam}
+                        className="inline-flex items-center rounded-md bg-yellow-400 px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {isActivatingDevelopingTeam
+                          ? t('developingTeam.reactivating', { ns: 'preferences' })
+                          : developingTeamActivationLabel}
+                      </button>
+
+                      {!developingTeamHasEnoughCoins ? (
+                        <a
+                          href="#/dashboard/pro"
+                          className="text-sm font-semibold text-yellow-700 hover:text-yellow-800"
+                        >
+                          {t('developingTeam.getCoins', { ns: 'preferences' })}
+                        </a>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : !hasPaidPremium ? (
+                  <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
+                    <div className="font-semibold text-gray-800">{t('developingTeam.premiumOnlyTitle', { ns: 'preferences' })}</div>
+                    <p className="mt-2">{t('developingTeam.premiumOnlyDescription', { ns: 'preferences', activation: activationCoinCost, renewal: renewalCoinCost })}</p>
+                    <Link to="/dashboard/pro" className="mt-4 inline-block rounded-md border border-gray-300 bg-white px-4 py-2 font-semibold text-gray-900 hover:bg-gray-100">
+                      {t('developingTeam.unlockPremium', { ns: 'preferences' })}
+                    </Link>
+                  </div>
+                ) : !developingTeamIsEligible ? (
+                  <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                    <div className="text-sm font-semibold text-gray-900">{t('developingTeam.notEligible', { ns: 'preferences' })}</div>
+                    <p className="mt-2 text-sm text-gray-600">
+                      {t('developingTeam.notEligibleDescription', { ns: 'preferences' })}
+                    </p>
+                    <button
+                      type="button"
+                      disabled
+                      className="mt-4 inline-flex cursor-not-allowed items-center rounded-md border border-gray-200 bg-gray-100 px-4 py-2 text-sm font-medium text-gray-400"
+                    >
+                      {t('developingTeam.notEligible', { ns: 'preferences' })}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="mt-4 rounded-xl border border-yellow-200 bg-yellow-50/50 p-4">
+                    <div className="text-sm font-semibold text-gray-900">
+                      {t('service.activateSeason', { ns: 'preferencesDynamic', season: developingTeamTargetSeason })}
+                    </div>
+                    <p className="mt-2 text-sm text-gray-700">
+                      {developingTeamStatus?.team_exists
+                        ? t('service.existingTeam', { ns: 'preferencesDynamic' })
+                        : t('service.newTeam', { ns: 'preferencesDynamic' })}{' '}
+                      {t('service.activationAccess', { ns: 'preferencesDynamic' })}
+                    </p>
+
+                    {!developingTeamHasEnoughCoins ? (
+                      <div className="mt-3 rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm text-amber-800">
+                        {t('service.needCoins', { ns: 'preferencesDynamic', cost: activationCoinCost, balance: developingTeamStatus?.coin_balance ?? 0 })}
+                      </div>
+                    ) : null}
+
+                    <div className="mt-4 flex flex-wrap items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={openDevelopingTeamActivationModal}
+                        disabled={!developingTeamCanSubmitActivation || isActivatingDevelopingTeam}
+                        className="inline-flex items-center rounded-md bg-yellow-400 px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {isActivatingDevelopingTeam
+                          ? t('developingTeam.activating', { ns: 'preferences' })
+                          : developingTeamActivationLabel}
+                      </button>
+
+                      {!developingTeamHasEnoughCoins ? (
+                        <a
+                          href="#/dashboard/pro"
+                          className="text-sm font-semibold text-yellow-700 hover:text-yellow-800"
+                        >
+                          {t('developingTeam.getCoins', { ns: 'preferences' })}
+                        </a>
+                      ) : null}
+                    </div>
+                  </div>
+                )}
+
+                {developingTeamIsActive ? (
+                  <div className="mt-4 rounded-md border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
+                    {movementWindowText}
+                  </div>
+                ) : null}
+
+                <div className="mt-4 rounded-md border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
+                  <div className="font-medium text-gray-900">{t('developingTeam.specialRules', { ns: 'preferences' })}</div>
+                  <ul className="mt-2 list-disc space-y-1 pl-5">
+                    <li>{t('developingTeam.teamNameRule', { ns: 'preferences' })}</li>
+                    <li>{t('developingTeam.raceRule', { ns: 'preferences' })}</li>
+                    <li>{t('developingTeam.competitionRule', { ns: 'preferences' })}</li>
+                    <li>{t('developingTeam.rosterRule', { ns: 'preferences' })}</li>
+                    <li>{t('developingTeam.ageRule', { ns: 'preferences' })}</li>
+                    <li>{t('developingTeam.movementRule', { ns: 'preferences' })}</li>
+                  </ul>
+                </div>
+
+                {developingTeamError ? (
+                  <div className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                    {developingTeamError}
+                  </div>
+                ) : null}
+
+                {developingTeamSuccessMessage ? (
+                  <div className="mt-4 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
+                    {developingTeamSuccessMessage}
+                  </div>
+                ) : null}
+
+                {developingTeamStatus?.team_exists &&
+                developingTeamStatus.developing_club_name ? (
+                  <div className="mt-4 text-xs text-gray-500">
+                    {t('service.team', { ns: 'preferencesDynamic', name: developingTeamStatus.developing_club_name })}
+                  </div>
+                ) : null}
+              </>
+            )}
+          </section>
+
+          <section className="rounded-lg border border-red-200 bg-red-50 p-5 shadow-sm">
+            <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <h3 className="text-base font-semibold text-red-700">{t('dangerZone.title', { ns: 'preferences' })}</h3>
+                <p className="mt-1 text-sm text-red-600">
+                  {t('dangerZone.description', { ns: 'preferences' })}
+                </p>
+              </div>
+
+              <div className="text-xs font-semibold uppercase tracking-wide text-red-600">
+                {t('dangerZone.badge', { ns: 'preferences' })}
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+              <div className="rounded-md border border-amber-200 bg-white p-4">
+                <h4 className="text-sm font-semibold text-gray-900">{t('dangerZone.restartTitle', { ns: 'preferences' })}</h4>
+                <p className="mt-2 text-sm text-gray-600">
+                  {t('dangerZone.restartDescription', { ns: 'preferences' })}
+                </p>
+                <p className="mt-2 text-xs text-gray-500">
+                  {t('dangerZone.restartDetail', { ns: 'preferences' })}
+                </p>
+
+                <button
+                  type="button"
+                  onClick={handleRestartTeam}
+                  className="mt-4 inline-flex items-center rounded-md bg-amber-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
+                >
+                  {t('dangerZone.restartTitle', { ns: 'preferences' })}
+                </button>
+              </div>
+
+              <div className="rounded-md border border-red-200 bg-white p-4">
+                <h4 className="text-sm font-semibold text-gray-900">{t('dangerZone.shutdownTitle', { ns: 'preferences' })}</h4>
+                <p className="mt-2 text-sm text-gray-600">
+                  {t('dangerZone.shutdownDescription', { ns: 'preferences' })}
+                </p>
+                <p className="mt-2 text-xs text-gray-500">
+                  {t('dangerZone.shutdownDetail', { ns: 'preferences' })}
+                </p>
+
+                <button
+                  type="button"
+                  onClick={openShutdownModal}
+                  disabled={isShuttingDown}
+                  className="mt-4 inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
+                >
+                  {isShuttingDown ? t('dangerZone.shuttingDown', { ns: 'preferences' }) : t('dangerZone.shutdownTitle', { ns: 'preferences' })}
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <div className="text-xs text-gray-500">
+            {t('dangerZone.systemNote', { ns: 'preferences' })}
+          </div>
+        </div>
+      </div>
+
+      <RestartTeamModal
+        isOpen={isRestartModalOpen}
+        onClose={() => setIsRestartModalOpen(false)}
+        redirectTo="/dashboard/overview"
+      />
+
+      {isDevelopingTeamActivationModalOpen && developingTeamStatus ? (
+        <div
+          className="fixed inset-0 z-[90] flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="developing-team-activation-modal-title"
+        >
+          <button
+            type="button"
+            aria-label={t('service.closeActivation', { ns: 'preferencesDynamic' })}
+            className="absolute inset-0 bg-black/40"
+            onClick={closeDevelopingTeamActivationModal}
+          />
+
+          <div className="relative z-[91] w-full max-w-lg overflow-hidden rounded-2xl border border-yellow-200 bg-white shadow-2xl">
+            <div className="border-b border-yellow-100 bg-yellow-50 px-6 py-5">
+              <h3
+                id="developing-team-activation-modal-title"
+                className="text-lg font-semibold text-gray-900"
+              >
+                {t(developingTeamIsExpired ? 'service.confirmReactivate' : 'service.confirmActivate', { ns: 'preferencesDynamic', season: developingTeamTargetSeason })}
+              </h3>
+            </div>
+
+            <div className="space-y-3 px-6 py-5 text-sm leading-6 text-gray-700">
+              <p>{t('service.deductCoins', { ns: 'preferencesDynamic', cost: developingTeamActionCost })}</p>
+              <p>{t('service.accessThisSeason', { ns: 'preferencesDynamic' })}</p>
+              <p>{t('service.autoRenewModal', { ns: 'preferencesDynamic' })}</p>
+            </div>
+
+            <div className="flex flex-col-reverse gap-3 border-t border-gray-100 bg-gray-50 px-6 py-4 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={closeDevelopingTeamActivationModal}
+                disabled={isActivatingDevelopingTeam}
+                className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {t('dangerZone.cancel', { ns: 'preferences' })}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  void handleActivateDevelopingTeam()
+                }}
+                disabled={isActivatingDevelopingTeam}
+                className="inline-flex items-center justify-center rounded-md bg-yellow-400 px-4 py-2 text-sm font-semibold text-black hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isActivatingDevelopingTeam
+                  ? t('developingTeam.activating', { ns: 'preferences' })
+                  : t(developingTeamIsExpired ? 'service.actionReactivate' : 'service.actionActivate', { ns: 'preferencesDynamic', cost: developingTeamActionCost })}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {isShutdownModalOpen && (
+        <div
+          className="fixed inset-0 z-[90] flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="shutdown-team-modal-title"
+        >
+          <button
+            type="button"
+            aria-label={t('dangerZone.closeAria', { ns: 'preferences' })}
+            className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"
+            onClick={closeShutdownModal}
+          />
+
+          <div
+            className="relative z-[91] w-full max-w-xl overflow-hidden rounded-2xl border border-red-200 bg-white shadow-2xl"
+            onClick={event => event.stopPropagation()}
+          >
+            <div className="border-b border-red-100 bg-red-50 px-6 py-5">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 id="shutdown-team-modal-title" className="text-lg font-semibold text-red-700">
+                    {t('dangerZone.confirmTitle', { ns: 'preferences' })}
+                  </h3>
+                  <p className="mt-1 text-sm text-red-600">
+                    {t('dangerZone.confirmDescription', { ns: 'preferences' })}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={closeShutdownModal}
+                  disabled={isShuttingDown}
+                  className="rounded-md px-2 py-1 text-sm text-gray-500 transition-colors hover:bg-white hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <div className="px-6 py-5">
+              <div className="rounded-lg border border-red-100 bg-red-50/50 p-4">
+                <p className="text-sm text-gray-700">{t('dangerZone.aboutToDelete', { ns: 'preferences' })}</p>
+
+                <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-gray-700">
+                  <li>{t('dangerZone.deleteTeam', { ns: 'preferences' })}</li>
+                  <li>{t('dangerZone.deleteGameData', { ns: 'preferences' })}</li>
+                  <li>{t('dangerZone.deleteAccount', { ns: 'preferences' })}</li>
+                </ul>
+
+                <p className="mt-3 text-sm text-gray-700">
+                  {t('dangerZone.afterDelete', { ns: 'preferences' })}
+                </p>
+              </div>
+
+              <div className="mt-5">
+                <label
+                  htmlFor="shutdown-confirm-input"
+                  className="block text-sm font-medium text-gray-900"
+                >
+                  {t('dangerZone.typeDelete', { ns: 'preferences' })}
+                </label>
+
+                <input
+                  id="shutdown-confirm-input"
+                  type="text"
+                  value={shutdownConfirmText}
+                  onChange={event => {
+                    setShutdownConfirmText(event.target.value)
+                    if (shutdownError) {
+                      setShutdownError(null)
+                    }
+                  }}
+                  disabled={isShuttingDown}
+                  autoFocus
+                  className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-red-500 focus:ring-2 focus:ring-red-200 disabled:cursor-not-allowed disabled:bg-gray-100"
+                  placeholder={t('dangerZone.placeholder', { ns: 'preferences' })}
+                />
+              </div>
+
+              {shutdownError ? (
+                <div className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {shutdownError}
+                </div>
+              ) : null}
+            </div>
+
+            <div className="flex flex-col-reverse gap-3 border-t border-gray-100 bg-gray-50 px-6 py-4 sm:flex-row sm:items-center sm:justify-end">
+              <button
+                type="button"
+                onClick={closeShutdownModal}
+                disabled={isShuttingDown}
+                className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {t('dangerZone.cancel', { ns: 'preferences' })}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  void confirmShutdownTeam()
+                }}
+                disabled={isShuttingDown}
+                className="inline-flex items-center justify-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isShuttingDown ? t('dangerZone.shuttingDown', { ns: 'preferences' }) : t('dangerZone.permanentButton', { ns: 'preferences' })}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}

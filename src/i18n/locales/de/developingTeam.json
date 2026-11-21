@@ -1,0 +1,44 @@
+{
+  "page": {
+    "title": "Kader",
+    "subtitle": "Verwalten Sie den Kader Ihres Entwicklungsteams und die Wechselzeitfenster.",
+    "loading": "Entwicklungsteam wird geladen…",
+    "loadFailed": "Entwicklungsteam konnte nicht geladen werden",
+    "riders": "Fahrer",
+    "currentCompetition": "Aktueller Wettbewerb",
+    "loadingCompetition": "Wettbewerb wird geladen…",
+    "competitionUnavailable": "Wettbewerb nicht verfügbar",
+    "noRiders": "Für das Entwicklungsteam wurden noch keine Fahrer gefunden.",
+    "unlockInPreferences": "Aktivieren Sie zuerst das Entwicklungsteam in den Einstellungen.",
+    "expiredSeasonWarning": "Premium ist abgelaufen. Das U23-Team ist schreibgeschützt, aber Fahrerwechsel bleiben in den regulären Wechselphasen bis zum Saisonende erlaubt. Ohne Verlängerung schließt das Team und verbleibende Fahrer werden freie Fahrer.",
+    "backToDevelopingTeam": "Zurück zum Entwicklungsteam"
+  },
+  "movement": {
+    "firstSquadUnavailable": "Die erste Mannschaft ist nicht verfügbar.",
+    "windowClosed": "Das Wechselzeitfenster ist geschlossen.",
+    "windowClosedNext": "Das Wechselzeitfenster ist geschlossen. Nächstes Zeitfenster: {{window}}.",
+    "windowClosedNextNoPeriod": "Wechselzeitfenster geschlossen. Nächstes Zeitfenster: {{window}}",
+    "windowOpen": "Wechselzeitfenster ist jetzt geöffnet: {{window}}",
+    "currentWindow": "Aktuelles Zeitfenster",
+    "unknown": "Unbekannt",
+    "firstSquadFull": "Die erste Mannschaft ist voll ({{count}}/{{max}}).",
+    "moveToFirstSquad": "In die erste Mannschaft verschieben",
+    "movedToFirstSquad": "Fahrer wurde in die erste Mannschaft verschoben.",
+    "couldNotMove": "Fahrer konnte nicht in die erste Mannschaft verschoben werden.",
+    "actionRequiredNow": "Jetzt ist eine Aktion erforderlich",
+    "mustMoveNextWindow": "Muss im nächsten Zeitfenster verschoben werden"
+  },
+  "healthReport": {
+    "subtitle": "Aktuell verletzte, kranke und sich erholende Fahrer des Entwicklungsteams",
+    "lockedTitle": "Gesundheitsbericht des Entwicklungsteams",
+    "lockedDescription": "Sehen Sie Verletzungen, Krankheiten und Genesungsinformationen Ihrer Entwicklungsfahrer in einem zusammengefassten Bericht."
+  },
+  "season": {
+    "resultsLockedTitle": "Ergebnisse des Entwicklungsteams in dieser Saison",
+    "resultsLockedDescription": "Sehen Sie monatliche Leistungstrends des Entwicklungsteams in der aktuellen Saison.",
+    "podiumsLockedTitle": "Podiumsplätze & Platzierungen des Entwicklungsteams",
+    "podiumsLockedDescription": "Analysieren Sie Siege, Podiumsplätze und die Verteilung der Zielplatzierungen Ihres Entwicklungskaders.",
+    "raceTypeLockedTitle": "Überblick des Entwicklungsteams nach Renntyp",
+    "raceTypeLockedDescription": "Vergleichen Sie die Ergebnisse des Entwicklungsteams bei Klassikern, Bergetappen, Etappenankünften und Zeitfahren."
+  }
+}

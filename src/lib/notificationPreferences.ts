@@ -1,0 +1,781 @@
+/**
+ * notificationPreferences.ts
+ *
+ * Shared frontend source of truth for in-game notification preferences.
+ *
+ * Database remains authoritative for notification_types.preference_group.
+ * The frontend uses preference_group directly when available and only falls
+ * back to exact-code/legacy classification for older RPC payloads.
+ */
+
+export const PREFERENCES_STORAGE_KEY = 'pro-peloton-preferences'
+
+export const ADVISOR_NOTIFICATION_PREFERENCES_STORAGE_KEY =
+  'ppm:staff-advisor-notification-category-preferences-v3'
+
+export type StaffAdvisoryRoleType =
+  | 'head_coach'
+  | 'sport_director'
+  | 'team_doctor'
+  | 'mechanic'
+  | 'scout_analyst'
+
+export const ADVISOR_NOTIFICATION_CATEGORY_DEFINITIONS = {
+  trainingReadiness: {
+    label: 'Training & Rider Readiness',
+    description:
+      'Head Coach analysis of training load, fatigue, rider availability, training gaps, squad readiness and rider development.',
+    requiredRole: 'head_coach',
+  },
+  raceProgrammePreparation: {
+    label: 'Race Programme & Preparation',
+    description:
+      'Sports Director analysis and recommendations beyond the Core daily Race Preparation report, including programme gaps and preparation readiness.',
+    requiredRole: 'sport_director',
+  },
+  startlistStagePlans: {
+    label: 'Startlist & Stage Plans',
+    description:
+      'Sports Director analysis beyond the Core daily Stage Planning report, including startlist deadlines and missing or incomplete stage plans.',
+    requiredRole: 'sport_director',
+  },
+  medicalRecovery: {
+    label: 'Medical & Recovery',
+    description:
+      'Team Doctor treatment and recovery guidance beyond the Core daily Team Medical report, including injuries, illness, setbacks and medical clearance.',
+    requiredRole: 'team_doctor',
+  },
+  equipmentWorkshopSupplies: {
+    label: 'Equipment, Workshop & Race Supplies',
+    description:
+      'Chief Mechanic analysis beyond Core grouped race-supply alerts, including equipment condition, workshop readiness and supply eligibility.',
+    requiredRole: 'mechanic',
+  },
+  scoutingRecruitment: {
+    label: 'Scouting & Recruitment',
+    description:
+      'Recruitment intelligence, scouting review and priority-prospect advisories.',
+    requiredRole: 'scout_analyst',
+  },
+} as const
+
+export type AdvisorNotificationCategoryKey =
+  keyof typeof ADVISOR_NOTIFICATION_CATEGORY_DEFINITIONS
+export type AdvisorNotificationSettings = Record<
+  AdvisorNotificationCategoryKey,
+  boolean
+>
+
+export const ADVISOR_NOTIFICATION_CATEGORY_ORDER = Object.keys(
+  ADVISOR_NOTIFICATION_CATEGORY_DEFINITIONS
+) as AdvisorNotificationCategoryKey[]
+
+export const DEFAULT_ADVISOR_NOTIFICATION_SETTINGS =
+  ADVISOR_NOTIFICATION_CATEGORY_ORDER.reduce((settings, key) => {
+    settings[key] = true
+    return settings
+  }, {} as AdvisorNotificationSettings)
+
+export function readAdvisorNotificationPreferences(): AdvisorNotificationSettings {
+  if (typeof window === 'undefined') {
+    return { ...DEFAULT_ADVISOR_NOTIFICATION_SETTINGS }
+  }
+
+  try {
+    const raw = window.localStorage.getItem(
+      ADVISOR_NOTIFICATION_PREFERENCES_STORAGE_KEY
+    )
+    if (!raw) return { ...DEFAULT_ADVISOR_NOTIFICATION_SETTINGS }
+
+    const parsed = JSON.parse(raw) as Partial<AdvisorNotificationSettings>
+    return { ...DEFAULT_ADVISOR_NOTIFICATION_SETTINGS, ...parsed }
+  } catch {
+    return { ...DEFAULT_ADVISOR_NOTIFICATION_SETTINGS }
+  }
+}
+
+export function writeAdvisorNotificationPreferences(
+  settings: AdvisorNotificationSettings
+): void {
+  if (typeof window === 'undefined') return
+
+  try {
+    window.localStorage.setItem(
+      ADVISOR_NOTIFICATION_PREFERENCES_STORAGE_KEY,
+      JSON.stringify(settings)
+    )
+    window.dispatchEvent(
+      new CustomEvent('notification-preferences-updated', {
+        detail: { advisorNotifications: settings },
+      })
+    )
+  } catch {
+    // Ignore unavailable/blocked localStorage.
+  }
+}
+
+function getAdvisorPayload(item: unknown): Record<string, unknown> | null {
+  if (!item || typeof item !== 'object') return null
+  const row = item as Record<string, unknown>
+
+  if (row.payload_json && typeof row.payload_json === 'object') {
+    return row.payload_json as Record<string, unknown>
+  }
+  if (row.metadata && typeof row.metadata === 'object') {
+    return row.metadata as Record<string, unknown>
+  }
+
+  return null
+}
+
+export function resolveAdvisorNotificationCategory(
+  item: unknown
+): AdvisorNotificationCategoryKey | null {
+  if (!item || typeof item !== 'object') return null
+
+  const row = item as Record<string, unknown>
+  const typeCode = String(row.type_code ?? '').toUpperCase()
+  const preferenceGroup = String(row.preference_group ?? '')
+  const payload = getAdvisorPayload(item)
+
+  if (
+    !(
+      preferenceGroup === 'staffAdvisory' ||
+      typeCode.startsWith('ADVISOR_') ||
+      payload?.advisor_report === true
+    )
+  ) {
+    return null
+  }
+
+  const reportCode = String(payload?.report_code ?? '')
+  const variant = String(payload?.report_variant ?? '')
+
+  // Head Coach: all training/readiness analysis belongs to one user category.
+  if (
+    typeCode === 'ADVISOR_HEAD_COACH_REPORT' ||
+    reportCode.startsWith('hc_') ||
+    reportCode === 'weekly_training_readiness'
+  ) {
+    return 'trainingReadiness'
+  }
+
+  // Sports Director is intentionally split into two user-facing categories.
+  if (
+    reportCode === 'sd_startlist_deadline_alert' ||
+    reportCode === 'sd_stage_plans_missing' ||
+    reportCode === 'sd_stage_plans_incomplete' ||
+    reportCode === 'sd_race_eligibility_critical' ||
+    variant === 'startlist_deadline_alert' ||
+    variant === 'stage_plans_missing' ||
+    variant === 'stage_plans_incomplete' ||
+    variant === 'race_eligibility_critical'
+  ) {
+    return 'startlistStagePlans'
+  }
+
+  if (
+    typeCode === 'ADVISOR_SPORT_DIRECTOR_REPORT' ||
+    reportCode === 'weekly_race_programme' ||
+    reportCode === 'sd_race_programme_gap' ||
+    reportCode === 'sd_race_programme_continuity_gap' ||
+    reportCode === 'sd_race_preparation_missing' ||
+    reportCode === 'sd_race_preparation_ready' ||
+    variant === 'race_programme_gap' ||
+    variant === 'programme_continuity' ||
+    variant === 'long_programme_break' ||
+    variant === 'programme_empty' ||
+    variant === 'race_preparation_missing' ||
+    variant === 'race_preparation_ready'
+  ) {
+    return 'raceProgrammePreparation'
+  }
+
+  if (
+    typeCode === 'ADVISOR_TEAM_DOCTOR_REPORT' ||
+    reportCode === 'weekly_medical_treatment' ||
+    reportCode === 'daily_health_recovery' ||
+    reportCode.startsWith('td_')
+  ) {
+    return 'medicalRecovery'
+  }
+
+  if (
+    typeCode === 'ADVISOR_CHIEF_MECHANIC_REPORT' ||
+    reportCode === 'weekly_equipment_workshop_review' ||
+    reportCode === 'weekly_equipment_review' ||
+    reportCode.startsWith('mechanic_')
+  ) {
+    return 'equipmentWorkshopSupplies'
+  }
+
+  if (
+    typeCode === 'ADVISOR_SCOUT_REPORT' ||
+    reportCode === 'weekly_recruitment_review' ||
+    reportCode.startsWith('scout_')
+  ) {
+    return 'scoutingRecruitment'
+  }
+
+  return null
+}
+
+export function canReceiveAdvisorNotification(
+  item: unknown,
+  _settings: AdvisorNotificationSettings = readAdvisorNotificationPreferences()
+): boolean {
+  // Advisor category preferences control FUTURE delivery server-side by
+  // bulk-writing exact report-code mute states. Existing notifications remain
+  // visible by design, including cards used to selectively unmute one subtype
+  // while its broader Preferences category remains OFF.
+  //
+  // Therefore the frontend must not hide already-delivered advisor
+  // notifications merely because the grouped category checkbox is OFF.
+  void item
+  return true
+}
+
+export const NOTIFICATION_PREFERENCE_GROUP_ORDER = [
+  'raceInvitations',
+  'raceApplicationResults',
+  'races',
+  'racePreparation',
+  'stagePlanReminders',
+  'raceWeather',
+  'raceResults',
+  'riderHealth',
+  'youthAcademy',
+  'teamUpdates',
+  'staffContracts',
+  'staffCourses',
+  'transferUpdates',
+  'trainingCamps',
+  'scoutingReports',
+  'retirementUpdates',
+  'financeAlerts',
+  'walletRewards',
+  'competitionRewards',
+  'taxUpdates',
+  'raceSupplies',
+  'equipmentUpdates',
+  'infrastructureUpdates',
+  'nationalAssociation',
+  'nationalTeam',
+  'nationalChampionships',
+  'worldNations',
+  'systemMessages',
+] as const
+
+export type NotificationPreferenceGroup =
+  (typeof NOTIFICATION_PREFERENCE_GROUP_ORDER)[number]
+
+export type NotificationSettings = Record<NotificationPreferenceGroup, boolean>
+
+export type NotificationPreferenceGroupDefinition = {
+  label: string
+  description: string
+  section: 'race' | 'team' | 'club' | 'national' | 'account'
+}
+
+export const NOTIFICATION_PREFERENCE_GROUPS: Record<
+  NotificationPreferenceGroup,
+  NotificationPreferenceGroupDefinition
+> = {
+  raceInvitations: {
+    label: 'Race invitations',
+    description: 'Show notifications when your team receives a race invitation.',
+    section: 'race',
+  },
+  raceApplicationResults: {
+    label: 'Race application updates',
+    description:
+      'Show one daily race-application overview plus accepted/declined decisions and important application-rule changes.',
+    section: 'race',
+  },
+  races: {
+    label: 'Race day updates',
+    description: 'Show startlist, missed-startlist, race-day, and race penalty updates.',
+    section: 'race',
+  },
+  racePreparation: {
+    label: 'Race preparation daily report',
+    description:
+      'Show one daily Core status report for open, attention-required and finalised race preparations. Sports Director Advisory remains separate analytical advice.',
+    section: 'race',
+  },
+  stagePlanReminders: {
+    label: 'Stage planning daily report',
+    description:
+      'Show one daily Core report for open stage plans, upcoming locks, locked plans and missing plans. Sports Director Advisory remains separate analytical advice.',
+    section: 'race',
+  },
+  raceWeather: {
+    label: 'Race weather',
+    description:
+      'Show notifications when stages, races, or race-related activities are affected by weather.',
+    section: 'race',
+  },
+  raceResults: {
+    label: 'Race results',
+    description:
+      'Show notifications for finished races, stage results, classifications, and race summaries.',
+    section: 'race',
+  },
+  riderHealth: {
+    label: 'Team medical report',
+    description:
+      'Show one daily Core medical summary covering injuries, sickness, reduced fitness and recoveries. Team Doctor Advisory remains separate treatment and recovery guidance.',
+    section: 'team',
+  },
+  youthAcademy: {
+    label: 'Youth Academy',
+    description:
+      'Show Youth Academy activation, race reports, delegated staff decisions and handovers, monthly recruitment and development summaries, and Academy budget warnings. Race-report frequency is still controlled inside Youth Academy.',
+    section: 'team',
+  },
+  teamUpdates: {
+    label: 'Team updates',
+    description:
+      'Show rider morale, rider contracts, staff and other internal team changes. Rider health is controlled separately by Team medical report.',
+    section: 'team',
+  },
+  staffContracts: {
+    label: 'Staff contracts',
+    description: 'Show notifications about expiring staff contracts and renewal timing.',
+    section: 'team',
+  },
+  staffCourses: {
+    label: 'Staff courses',
+    description: 'Show notifications when a staff course is completed and gains are applied.',
+    section: 'team',
+  },
+  transferUpdates: {
+    label: 'Transfer updates',
+    description: 'Show rider transfer, free agent, bid, offer, and negotiation notifications.',
+    section: 'team',
+  },
+  trainingCamps: {
+    label: 'Training camps',
+    description:
+      'Show notifications for training camp starts, daily reports, weather warnings, and completions.',
+    section: 'team',
+  },
+  scoutingReports: {
+    label: 'Scouting reports',
+    description: 'Show notifications when a scouting report is completed.',
+    section: 'team',
+  },
+  retirementUpdates: {
+    label: 'Retirement updates',
+    description:
+      'Show notifications when riders or staff announce retirement and when retirements are finalized.',
+    section: 'team',
+  },
+  financeAlerts: {
+    label: 'Finance alerts',
+    description:
+      'Show important finance warnings, sponsor objectives, emergency loans, tax alerts, payroll issues, the final insolvency warning and one canonical club-liquidation notice.',
+    section: 'club',
+  },
+  walletRewards: {
+    label: 'Coins & rewards',
+    description:
+      'Show coin purchases, coin credits, birthday gifts, referral rewards, and wallet reward messages.',
+    section: 'club',
+  },
+  competitionRewards: {
+    label: 'Competition rewards',
+    description: 'Show season rollover rewards for league and competition results.',
+    section: 'club',
+  },
+  taxUpdates: {
+    label: 'Tax updates',
+    description: 'Show notifications for tax audits and tax-related finance events.',
+    section: 'club',
+  },
+  raceSupplies: {
+    label: 'Race supplies',
+    description:
+      'Show one grouped low-stock warning for race supplies that need restocking before events. Chief Mechanic Advisory remains separate analysis.',
+    section: 'club',
+  },
+  equipmentUpdates: {
+    label: 'Equipment updates',
+    description:
+      'Show notifications for equipment maintenance, sales, discard actions, and equipment lifecycle updates.',
+    section: 'club',
+  },
+  infrastructureUpdates: {
+    label: 'Infrastructure updates',
+    description:
+      'Show notifications for infrastructure orders, deliveries, repairs, sales, upgrades, and condition warnings.',
+    section: 'club',
+  },
+  nationalAssociation: {
+    label: 'National Association & elections',
+    description:
+      'Show National Association activation, candidature, voting and National Coach status notifications.',
+    section: 'national',
+  },
+  nationalTeam: {
+    label: 'National Team & call-ups',
+    description:
+      'Show National Team selection windows, call-ups, squad changes and National Duty notifications.',
+    section: 'national',
+  },
+  nationalChampionships: {
+    label: 'Championships & ranking',
+    description:
+      'Show National Championship and World Road Championship participation, qualification, final confirmation and result notifications.',
+    section: 'national',
+  },
+  worldNations: {
+    label: 'World Nations & international competitions',
+    description:
+      'Show World Nations draws, race updates, finals and international championship notifications.',
+    section: 'national',
+  },
+  systemMessages: {
+    label: 'System messages',
+    description: 'Show welcome messages and general official game messages.',
+    section: 'account',
+  },
+}
+
+export const NOTIFICATION_PREFERENCE_SECTIONS = [
+  {
+    code: 'race' as const,
+    title: 'Race notifications',
+    description:
+      'Invitations, daily application/preparation/stage-planning reports, weather, race-day issues, and results.',
+  },
+  {
+    code: 'team' as const,
+    title: 'Team & rider notifications',
+    description:
+      'Daily medical status, rider/team updates, staff, transfers, training camps, scouting, and retirements.',
+  },
+  {
+    code: 'club' as const,
+    title: 'Club management notifications',
+    description: 'Finance, coins, rewards, supplies, equipment, tax, and infrastructure.',
+  },
+  {
+    code: 'national' as const,
+    title: 'National & international notifications',
+    description:
+      'National Association, National Team, National Championships, World Nations and international championship updates.',
+  },
+  {
+    code: 'account' as const,
+    title: 'Account & system notifications',
+    description: 'Official game messages and onboarding information.',
+  },
+] as const
+
+export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings =
+  NOTIFICATION_PREFERENCE_GROUP_ORDER.reduce((settings, group) => {
+    settings[group] = true
+    return settings
+  }, {} as NotificationSettings)
+
+type StoredPreferences = {
+  notifications?: Partial<NotificationSettings>
+}
+
+const RETIRED_CORE_ADVISORY_OVERLAP_TYPES = new Set([
+  'RACE_PLAN_DEADLINE_REMINDER',
+  'STAGE_PLAN_MISSING_REMINDER',
+])
+
+const EXACT_TYPE_GROUPS: Record<string, NotificationPreferenceGroup> = {
+  // New consolidated Core notifications.
+  RACE_APPLICATION_DAILY_UPDATE: 'raceApplicationResults',
+  RACE_PREPARATION_DAILY_REPORT: 'racePreparation',
+  STAGE_PLANNING_DAILY_REPORT: 'stagePlanReminders',
+  RIDER_HEALTH_DAILY_REPORT: 'riderHealth',
+
+  // Youth Academy module notifications.
+  YOUTH_ACADEMY_STARTED: 'youthAcademy',
+  YOUTH_RACE_REPORT: 'youthAcademy',
+  YOUTH_STAFF_DECISION: 'youthAcademy',
+  YOUTH_STAFF_HANDOVER: 'youthAcademy',
+  YOUTH_RECRUITMENT_MONTHLY_SUMMARY: 'youthAcademy',
+  YOUTH_DEVELOPMENT_MONTHLY_SUMMARY: 'youthAcademy',
+  YOUTH_ACADEMY_BUDGET_WARNING: 'youthAcademy',
+
+  // Existing decision/high-priority types that remain active.
+  RACE_APPLICATION_ACCEPTED: 'raceApplicationResults',
+  RACE_APPLICATION_DECLINED: 'raceApplicationResults',
+  RACE_APPLICATION_RULE_CHANGE: 'raceApplicationResults',
+  RACE_STAGE_WEATHER_CANCELLED: 'raceWeather',
+  RACE_WEATHER_CANCELLED: 'raceWeather',
+  RACE_RESULTS_SUMMARY: 'raceResults',
+  race_missed_startlist: 'races',
+  RACE_TEAM_DISQUALIFIED_JERSEYS: 'races',
+  RACE_SUPPLIES_LOW: 'raceSupplies',
+  RACE_JERSEYS_MANDATORY_WARNING: 'raceSupplies',
+  STAFF_CONTRACT_EXPIRING: 'staffContracts',
+  STAFF_COURSE_COMPLETED: 'staffCourses',
+  SCOUT_REPORT_COMPLETED: 'scoutingReports',
+  RETIREMENT_ANNOUNCED: 'retirementUpdates',
+  SEASON_RETIREMENTS_CONFIRMED: 'retirementUpdates',
+  TRAINING_CAMP_WEATHER_WARNING: 'trainingCamps',
+  TAX_AUDIT_COMPLETED: 'taxUpdates',
+  COMPETITION_REWARD_GRANTED: 'competitionRewards',
+  BIRTHDAY_GIFT_10_COINS: 'walletRewards',
+  COIN_PURCHASE_COMPLETED: 'walletRewards',
+  REFERRAL_REWARD_GRANTED: 'walletRewards',
+  ADMIN_MESSAGE: 'systemMessages',
+  WELCOME_MESSAGE: 'systemMessages',
+
+  // National Association / National Team / National competitions.
+  NATIONAL_ASSOCIATION_STATUS: 'nationalAssociation',
+  NATIONAL_COACH_CANDIDATURE_OPEN: 'nationalAssociation',
+  NATIONAL_COACH_VOTING_REQUIRED: 'nationalAssociation',
+  NATIONAL_COACH_STATUS_CHANGED: 'nationalAssociation',
+
+  NATIONAL_TEAM_SELECTION_WINDOW: 'nationalTeam',
+  NATIONAL_TEAM_CALLUP_REQUIRED: 'nationalTeam',
+  NATIONAL_TEAM_SQUAD_UPDATE: 'nationalTeam',
+  NATIONAL_TEAM_DUTY_UPDATE: 'nationalTeam',
+
+  CHAMPIONSHIP_PARTICIPATION_REQUIRED: 'nationalChampionships',
+  CHAMPIONSHIP_QUALIFICATION_UPDATE: 'nationalChampionships',
+  CHAMPIONSHIP_FINAL_CONFIRMATION_REQUIRED: 'nationalChampionships',
+  CHAMPIONSHIP_RESULT: 'nationalChampionships',
+
+  NATIONS_DRAW_NEXT_ROUND: 'worldNations',
+  NATIONS_RACE_UPDATE: 'worldNations',
+  NATIONS_FINAL_INFO: 'worldNations',
+  NATIONS_FINAL_RESULT_MERGED: 'worldNations',
+
+  // Historical National-system aliases remain controlled by the same settings.
+  NATIONAL_ASSOCIATION_ACTIVATED: 'nationalAssociation',
+  NATIONAL_COACH_ELECTION_OPEN: 'nationalAssociation',
+  NATIONAL_COACH_VOTING_OPEN: 'nationalAssociation',
+  NATIONAL_COACH_RUNOFF_OPEN: 'nationalAssociation',
+  NATIONAL_COACH_ELECTED: 'nationalAssociation',
+  NATIONAL_COACH_POSITION_VACANT: 'nationalAssociation',
+  NATIONAL_COACH_RESIGNED: 'nationalAssociation',
+
+  NATIONAL_TEAM_NEW_SELECTION_WINDOW: 'nationalTeam',
+  NATIONAL_TEAM_CALLUP_RECEIVED: 'nationalTeam',
+  NATIONAL_TEAM_CALLUP_RESPONSE: 'nationalTeam',
+  NATIONAL_TEAM_SQUAD_CONFIRMED: 'nationalTeam',
+  NATIONAL_TEAM_DUTY_STARTED: 'nationalTeam',
+  NATIONAL_TEAM_DUTY_COMPLETED: 'nationalTeam',
+
+  NATIONAL_CHAMPIONSHIP_SELECTED: 'nationalChampionships',
+  NATIONAL_CHAMPIONSHIP_QUALIFICATION_RESULT: 'nationalChampionships',
+  NATIONAL_CHAMPIONSHIP_QUALIFIED: 'nationalChampionships',
+  NATIONAL_CHAMPIONSHIP_FINAL_CONFIRMATION_REQUIRED: 'nationalChampionships',
+  NATIONAL_CHAMPIONSHIP_FINAL_RESULT: 'nationalChampionships',
+  NATIONAL_CHAMPION: 'nationalChampionships',
+
+  NATIONS_QUALIFICATION_DRAW: 'worldNations',
+  NATIONS_RACE_RESULT: 'worldNations',
+  NATIONS_ADVANCED: 'worldNations',
+  NATIONS_ELIMINATED: 'worldNations',
+  NATIONS_WORLD_FINAL_QUALIFIED: 'worldNations',
+  NATIONS_HOST_SELECTED: 'worldNations',
+  NATIONS_FINAL_RESULT: 'worldNations',
+  NATIONS_CHAMPION: 'worldNations',
+  WORLD_ROAD_CHAMPIONSHIP_INVITATION: 'worldNations',
+  WORLD_ROAD_CHAMPIONSHIP_FINAL_CONFIRMATION_REQUIRED: 'worldNations',
+  WORLD_ROAD_CHAMPIONSHIP_RESULT: 'worldNations',
+  WORLD_ROAD_CHAMPION: 'worldNations',
+
+  // Historical/legacy rows remain classifiable under the old preference area.
+  RACE_APPLICATION_WINDOW_OPEN: 'raceApplicationResults',
+  RACE_APPLICATION_CLOSING_SOON: 'raceApplicationResults',
+  RACE_PLAN_FINALISED: 'racePreparation',
+  RACE_PLAN_NEEDS_ATTENTION: 'racePreparation',
+  RACE_PLAN_OPEN: 'racePreparation',
+  STAGE_PLAN_LOCK_REMINDER: 'stagePlanReminders',
+  STAGE_PLAN_LOCKED: 'stagePlanReminders',
+  STAGE_PLAN_MISSING_AT_LOCK: 'stagePlanReminders',
+  STAGE_PLANS_OPEN: 'stagePlanReminders',
+  RACE_SUPPLIES_LOW_STOCK: 'raceSupplies',
+  RIDER_INJURED: 'teamUpdates',
+  RIDER_SICK: 'teamUpdates',
+  RIDER_NOT_FULLY_FIT: 'teamUpdates',
+  RIDER_FIT_AGAIN: 'teamUpdates',
+  CLUB_LIQUIDATED_INSOLVENCY: 'financeAlerts',
+  FINANCE_CLUB_LIQUIDATED: 'financeAlerts',
+}
+
+export function isNotificationPreferenceGroup(
+  value: unknown
+): value is NotificationPreferenceGroup {
+  return (
+    typeof value === 'string' &&
+    (NOTIFICATION_PREFERENCE_GROUP_ORDER as readonly string[]).includes(value)
+  )
+}
+
+export function readNotificationPreferences(): NotificationSettings {
+  if (typeof window === 'undefined') {
+    return { ...DEFAULT_NOTIFICATION_SETTINGS }
+  }
+
+  try {
+    const raw = window.localStorage.getItem(PREFERENCES_STORAGE_KEY)
+    if (!raw) return { ...DEFAULT_NOTIFICATION_SETTINGS }
+
+    const parsed = JSON.parse(raw) as StoredPreferences | Partial<NotificationSettings>
+    const stored =
+      parsed && typeof parsed === 'object' && 'notifications' in parsed
+        ? parsed.notifications
+        : parsed
+
+    const normalized = { ...DEFAULT_NOTIFICATION_SETTINGS }
+
+    for (const group of NOTIFICATION_PREFERENCE_GROUP_ORDER) {
+      if (typeof stored?.[group] === 'boolean') {
+        normalized[group] = stored[group] as boolean
+      }
+    }
+
+    return normalized
+  } catch {
+    return { ...DEFAULT_NOTIFICATION_SETTINGS }
+  }
+}
+
+export function writeNotificationPreferences(settings: NotificationSettings): void {
+  if (typeof window === 'undefined') return
+
+  try {
+    window.localStorage.setItem(
+      PREFERENCES_STORAGE_KEY,
+      JSON.stringify({ notifications: settings })
+    )
+
+    window.dispatchEvent(
+      new CustomEvent('notification-preferences-updated', {
+        detail: { notifications: settings },
+      })
+    )
+  } catch {
+    // Ignore unavailable/blocked localStorage.
+  }
+}
+
+/**
+ * Transitional fallback for older notification RPC payloads.
+ * Prefer resolveNotificationPreferenceGroup() with preference_group supplied.
+ */
+export function getNotificationTypeFromEvent(
+  typeCode?: string | null,
+  source?: string | null
+): NotificationPreferenceGroup {
+  const rawCode = typeCode?.trim() ?? ''
+  const upper = rawCode.toUpperCase()
+  const normalizedSource = source?.trim().toLowerCase() ?? ''
+
+  // Retired Core/advisor overlaps are filtered by canReceiveNotificationItem.
+  // Keep this fallback deterministic if called directly elsewhere.
+  if (RETIRED_CORE_ADVISORY_OVERLAP_TYPES.has(upper)) {
+    return 'racePreparation'
+  }
+
+  if (EXACT_TYPE_GROUPS[rawCode]) return EXACT_TYPE_GROUPS[rawCode]
+  if (EXACT_TYPE_GROUPS[upper]) return EXACT_TYPE_GROUPS[upper]
+
+  if (upper.startsWith('YOUTH_')) return 'youthAcademy'
+
+  if (upper.startsWith('NATIONAL_ASSOCIATION_') || upper.startsWith('NATIONAL_COACH_')) {
+    return 'nationalAssociation'
+  }
+  if (upper.startsWith('NATIONAL_TEAM_')) return 'nationalTeam'
+  if (upper.startsWith('NATIONAL_CHAMPIONSHIP_') || upper === 'NATIONAL_CHAMPION') {
+    return 'nationalChampionships'
+  }
+  if (upper.startsWith('NATIONS_') || upper.startsWith('WORLD_ROAD_')) {
+    return 'worldNations'
+  }
+
+  if (upper.startsWith('INFRASTRUCTURE_')) return 'infrastructureUpdates'
+  if (upper.startsWith('EQUIPMENT_')) return 'equipmentUpdates'
+  if (upper.startsWith('TRAINING_CAMP') || rawCode === 'training_camp') {
+    return 'trainingCamps'
+  }
+  if (upper.includes('TRANSFER') || upper.includes('FREE_AGENT') || upper.includes('NEGOTIATION')) {
+    return 'transferUpdates'
+  }
+  if (upper.startsWith('RIDER_') || upper.startsWith('DEVELOPING_') || upper === 'STAFF_HIRED') {
+    return 'teamUpdates'
+  }
+  if (upper.includes('SPONSOR') || upper.includes('FINANCE') || upper.includes('LIQUIDAT')) {
+    return 'financeAlerts'
+  }
+  if (upper.includes('RACE_SUPPL')) return 'raceSupplies'
+  if (upper.includes('WEATHER')) return 'raceWeather'
+  if (upper.includes('RESULT') || upper.includes('CLASSIFICATION')) return 'raceResults'
+  if (upper.includes('STAGE_PLAN')) return 'stagePlanReminders'
+  if (upper.includes('RACE_PLAN')) return 'racePreparation'
+  if (upper.includes('APPLICATION')) return 'raceApplicationResults'
+  if (upper.includes('INVITATION')) return 'raceInvitations'
+  if (upper.includes('COIN') || upper.includes('REWARD')) return 'walletRewards'
+  if (normalizedSource === 'admin' || upper.includes('WELCOME') || upper.includes('ADMIN')) {
+    return 'systemMessages'
+  }
+
+  return 'teamUpdates'
+}
+
+export function resolveNotificationPreferenceGroup(
+  preferenceGroup?: string | null,
+  typeCode?: string | null,
+  source?: string | null
+): NotificationPreferenceGroup {
+  if (isNotificationPreferenceGroup(preferenceGroup)) {
+    return preferenceGroup
+  }
+
+  return getNotificationTypeFromEvent(typeCode, source)
+}
+
+export function canReceiveNotificationItem(
+  preferences: NotificationSettings,
+  item: {
+    preference_group?: string | null
+    type_code?: string | null
+    source?: string | null
+    payload_json?: unknown
+    metadata?: unknown
+  }
+): boolean {
+  const group = String(item.preference_group ?? '')
+  const typeCode = String(item.type_code ?? '').toUpperCase()
+
+  // These proactive Core reminders were retired because the paid Sports
+  // Director now owns the same information. Keep stale historical rows hidden
+  // even if an older RPC still returns them.
+  if (RETIRED_CORE_ADVISORY_OVERLAP_TYPES.has(typeCode)) return false
+
+  if (group === 'staffAdvisory' || typeCode.startsWith('ADVISOR_')) {
+    return canReceiveAdvisorNotification(item)
+  }
+
+  return canReceiveNotification(
+    preferences,
+    resolveNotificationPreferenceGroup(
+      item.preference_group,
+      item.type_code,
+      item.source
+    )
+  )
+}
+
+export function canReceiveNotification(
+  preferences: NotificationSettings,
+  group: NotificationPreferenceGroup | string | null | undefined
+): boolean {
+  if (!isNotificationPreferenceGroup(group)) {
+    return true
+  }
+
+  return preferences[group] !== false
+}

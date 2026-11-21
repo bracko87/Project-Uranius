@@ -1,0 +1,129 @@
+[
+  {
+    "pin": "c0069963ccd0ba7f896e2566249647ae7d3879ed",
+    "file": "src/universal-race-engine/runRaceEngine.ts",
+    "blob": "6781aabad7cfde1c1a45f07999f663eb2946eaed",
+    "bytes": 1216113,
+    "sha256": "282f2d0ef40d7af87c7f2941b6f951bb3ab0a21366e6b2c004f46ffd0a90c928",
+    "imports": [
+      "./roadScenarioPhysicalDirectorV1.ts"
+    ],
+    "sideEffectPattern": false
+  },
+  {
+    "pin": "c0069963ccd0ba7f896e2566249647ae7d3879ed",
+    "file": "src/universal-race-engine/buildProductionRaceInputScenarioV1.ts",
+    "blob": "0abeb15eab7e6a63e89cf1e69ae1a04db00a95a3",
+    "bytes": 8073,
+    "sha256": "3a6da234c9de25a62626eacfc39ec71ce0ff7ad95b535484bcf629fd9edc2d83",
+    "imports": [
+      "./buildProductionRaceInput.ts",
+      "./flatScenarioV1.ts",
+      "./hillyScenarioV1.ts",
+      "./runRaceEngine.ts"
+    ],
+    "sideEffectPattern": false
+  },
+  {
+    "pin": "c0069963ccd0ba7f896e2566249647ae7d3879ed",
+    "file": "src/universal-race-engine/buildProductionRaceOutput.ts",
+    "blob": "07605e2e0f8ad9093813ce3c039255bce4a92b09",
+    "bytes": 19651,
+    "sha256": "241bbf598248a5fe57225f9c7140891587e5a6b96c9e4aa21fe0fef574156c47",
+    "imports": [
+      "./runRaceEngine.ts"
+    ],
+    "sideEffectPattern": false
+  },
+  {
+    "pin": "ed919bdf870f3c8a081eba9b5e36806d284b289c",
+    "file": "src/universal-race-engine/applyUniversalBreakawayRecoveryV2.mjs",
+    "blob": "38cba4239e5ce88c63bcca87916f10466310ba4f",
+    "bytes": 7780,
+    "sha256": "498f6f55c8db2d5eef358e4927d0e0c668301521f6dad31854748589471f2f49",
+    "imports": [],
+    "sideEffectPattern": false
+  },
+  {
+    "pin": "643039a7e78b814c62499eb3a84ed38b2d138e73",
+    "file": "src/universal-race-engine/runVenetoLegacyReplayOptimizedV1.ts",
+    "blob": "ba5c83911b64bd7325144a5ebf37c117c9ccec73",
+    "bytes": 1317520,
+    "sha256": "d052d89337eaa86d7f6507d51a610368a1949dfd53571cbdde3ffed4ae8d4a35",
+    "imports": [
+      "./summitFinishSelectivityV1.ts",
+      "./roadScenarioPhysicalDirectorV1.ts",
+      "./replayPhysicalStateV16.ts"
+    ],
+    "sideEffectPattern": false
+  },
+  {
+    "pin": "c0069963ccd0ba7f896e2566249647ae7d3879ed",
+    "file": "src/universal-race-engine/roadScenarioPhysicalDirectorV1.ts",
+    "blob": "af980f0d09033ea6ee16660ac4ad6662cfebe39d",
+    "bytes": 11856,
+    "sha256": "af3f9e87ebaf0e2db184cdc96b9e7466561d8042c5e623d549521219ca977fd2",
+    "imports": [],
+    "sideEffectPattern": false
+  },
+  {
+    "pin": "c0069963ccd0ba7f896e2566249647ae7d3879ed",
+    "file": "src/universal-race-engine/buildProductionRaceInput.ts",
+    "blob": "71ad4dbd19645a0f2118e407643b3266c3f1ea46",
+    "bytes": 37067,
+    "sha256": "b352bbad050ac6a4a1081943ca09b93b373e6fb3a88b1d5e2d7fc1b1d3db5d63",
+    "imports": [
+      "./runRaceEngine.ts"
+    ],
+    "sideEffectPattern": false
+  },
+  {
+    "pin": "c0069963ccd0ba7f896e2566249647ae7d3879ed",
+    "file": "src/universal-race-engine/flatScenarioV1.ts",
+    "blob": "7e687e87bcda252952d5afb73880c20c73593996",
+    "bytes": 50377,
+    "sha256": "02c0ce2ea48caef502c585aa33790ff540f15502cf30bb59c3a6324a60e3e9a5",
+    "imports": [
+      "./runRaceEngine.ts"
+    ],
+    "sideEffectPattern": false
+  },
+  {
+    "pin": "c0069963ccd0ba7f896e2566249647ae7d3879ed",
+    "file": "src/universal-race-engine/hillyScenarioV1.ts",
+    "blob": "813ed348974cef2c54f5ec1d0a69ec183d052619",
+    "bytes": 45390,
+    "sha256": "448c1776ed287703cf06d8f65625f95f7a5614049ed02598c60f6962d522cdb6",
+    "imports": [
+      "./runRaceEngine.ts"
+    ],
+    "sideEffectPattern": false
+  },
+  {
+    "pin": "643039a7e78b814c62499eb3a84ed38b2d138e73",
+    "file": "src/universal-race-engine/summitFinishSelectivityV1.ts",
+    "blob": "6eb0c543b7ab8c330c09c1ff7b54c48775450fcb",
+    "bytes": 3831,
+    "sha256": "d7d33d7e5a9b87dfa509cdcb68a4c4eeed1a90b49e81c14b9b4f68abf9a0a17d",
+    "imports": [],
+    "sideEffectPattern": false
+  },
+  {
+    "pin": "643039a7e78b814c62499eb3a84ed38b2d138e73",
+    "file": "src/universal-race-engine/roadScenarioPhysicalDirectorV1.ts",
+    "blob": "20c52cfb47306eca76e7b8ff5247adc359f00f73",
+    "bytes": 35614,
+    "sha256": "1316a0950cc9c1c1c48c04ce6015a4f467c33405224c1d44c58c953546c3e212",
+    "imports": [],
+    "sideEffectPattern": false
+  },
+  {
+    "pin": "643039a7e78b814c62499eb3a84ed38b2d138e73",
+    "file": "src/universal-race-engine/replayPhysicalStateV16.ts",
+    "blob": "88ee11ae69ddcee742372c70e5bc78b27fad49c5",
+    "bytes": 2336,
+    "sha256": "68eb0ae1ec285a1a7fba6b94dba90d6e83feb3dd58ea3948f3722fa09c29beee",
+    "imports": [],
+    "sideEffectPattern": false
+  }
+]
