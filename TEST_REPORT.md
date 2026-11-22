@@ -186,3 +186,7 @@ Initial descriptive trial established reproducibility. For the conformance run, 
 | Flat, 96 riders | 364c8989142147b5 | 5361 / 5205 | 324675 | 86 / 98 |
 
 Each case is a fictional 30 km road stage. The puncture test verifies deterministic incident output, correct actor, no mutation of the original group, and no lost or counted-twice riders. These scenarios replace the privacy-sensitive field-size workload. Historical sporting parity, other formats and deployed performance remain unverified.
+
+## U2.12 — Freeze baseline and verify Milestone 2
+
+RACE_BASELINE.md freezes the benchmark baseline commit a7491a5a59f582605d799ec23adc9f22cf8e1be5, five full-output golden hashes, measured acceptance and continuation gaps. The final offline run passed all 104 selected Vitest checks across 17 files and all three Node protection guard tests. Each full-field stage matched its canonical golden, roster and metrics. The longest stage in the final gate rerun took 5,270 ms and the largest serialized result was 359,771 bytes. The working Git check passed. Gate 2 passed. Historical race parity, non-road formats in the selected lane and deployed runtime behavior remain outside the verified baseline.
