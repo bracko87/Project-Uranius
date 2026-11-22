@@ -244,3 +244,15 @@ Three offline checks passed. The in-memory authority derives the effective tick 
 ## U3.11 — Recovery and finalization
 
 Four offline tests passed. A cancelled advance leaves the durable record byte-identical. After an accepted attack and simulated worker interruption, a new authority restored the published prefix and accepted revision, reproduced the uninterrupted continuation, and finalized one attack exactly once. Premature finalization returned no result. Late submission was rejected. Finalization and restoration of a finished race returned the same sealed output, and corrupt recovery data was rejected. This harness does not issue rewards or persist to a hosted service.
+
+## U3.12 — Hybrid benchmark and milestone gate
+
+The complete offline regression passed 133 tests across 28 files and all three protection guards. All five frozen no-command outputs matched their existing golden hashes. In 30 km flat, hilly and mountain simulations with 24, 48 and 96 riders, two managers submitted successive attacks. Every elapsed frame and event was preserved, and each repeated command sequence gave the same result and complete final roster.
+
+| Case | Canonical hybrid hash | Max wall / CPU ms | Max acknowledgement ms | Max sampled heap growth | Result bytes |
+|---|---|---:|---:|---:|---:|
+| Flat 24 | 6155132e0e162517 | 289 / 375 | 5 | 6496384 | 147855 |
+| Hilly 48 | a0d1f86c8087cf52 | 442 / 578 | 4 | 7945240 | 226030 |
+| Mountain 96 | 2c085a4117904c3d | 1106 / 1266 | 7 | 11450128 | 410418 |
+
+All cases met the recorded offline engineering limits. The heap figure is a sampled increase. This gate covers the in-memory authority and synthetic road stages. Historical sporting parity and deployed performance remain unverified.

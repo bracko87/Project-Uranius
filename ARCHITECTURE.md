@@ -11,3 +11,7 @@ An active rider may occur in one group at most in a sample. Source group IDs car
 ## U2.11 offline benchmark limits
 
 For the fixed 30 km synthetic road stages, accept pre-finalization execution of at most 20 seconds per run and serialized result size of at most 1 MiB per stage on the local Windows lab. These are engineering limits for the offline audit, recorded before the conformance run after a descriptive trial. They set no hosted performance requirement or sporting rule. Require exactly reproducible canonical output and final membership equal to the starting roster. The deterministic starting lane's road stages cover flat, hilly and mountain profiles. Other authored stage-format contracts remain unsupported by this selected offline runner.
+
+## U3.12 offline hybrid benchmark limits
+
+Before the conformance run, retain the 20-second wall-time and 1 MiB output limits for the 30 km synthetic road stages. Apply an equivalent 20-second process CPU limit, a 500 ms local command acknowledgement limit and a 256 MiB sampled heap-growth limit. The heap measure samples at command and stage boundaries. These are local engineering acceptance limits, with no claims about hosted latency or peak memory between samples. Require exact repeatability, two managers on the same revision stream, preserved published frames and complete classifications.
