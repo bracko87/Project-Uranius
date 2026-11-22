@@ -296,3 +296,8 @@ Seven offline tests passed. The split event remains hidden until its recorded se
 ## U4.08 — Merge, finish and withdrawal
 
 Eight offline tests passed. After the catch only the authoritative peloton remains. The separate fixture retains a solo rider as an active group and distinguishes nine finishers and one withdrawal at the end, with no obsolete markers or duplicated riders.
+
+
+## U4.09 — Responsive local playback controls
+
+Nine offline tests passed. The clock tests verify pause, scaling, clamping and live boundary behavior. The fixture viewer uses animation frames and native keyboard-accessible seek and speed controls. These controls are local presentation controls and never advance simulation state.

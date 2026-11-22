@@ -3,7 +3,7 @@
 Status: preliminary setup evidence available; Codex must verify acceptance criteria before recording PASS. No race-engine changes or paid provisioning performed.
 PASS only when the acceptance criterion in PROJECT_URANIUS_MASTER_PLAN.md is verified and evidence recorded.
 Allowed statuses: TODO, IN_PROGRESS, BLOCKED, PASS.
-Progress: 44/60 verified.
+Progress: 45/60 verified.
 
 ## Milestone 1 — Source clone, Codex connection and safety (12 tasks)
 
@@ -74,7 +74,7 @@ Gate: PASSED
 | U4.06 | Real gaps and distances | PASS | TEST_REPORT.md and verified evidence in this task commit. |
 | U4.07 | Group split/formation | PASS | TEST_REPORT.md and verified evidence in this task commit. |
 | U4.08 | Merge/finish/DNF | PASS | TEST_REPORT.md and verified evidence in this task commit. |
-| U4.09 | Playback controls | TODO | — |
+| U4.09 | Playback controls | PASS | TEST_REPORT.md and verified evidence in this task commit. |
 | U4.10 | Connect hybrid timeline revisions | TODO | — |
 | U4.11 | Live controls and reconnection UI | TODO | — |
 | U4.12 | Visual regression acceptance | TODO | — |
