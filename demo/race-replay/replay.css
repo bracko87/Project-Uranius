@@ -10,3 +10,10 @@ button, select { background: #223650; color: inherit; border: 1px solid #4b6686;
 button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid #72dbff; outline-offset: 3px; }
 button[aria-pressed="true"] { border-color: #72dbff; color: #a5ebff; }
 ul { padding-left: 1.4rem; }
+
+.profile { display: block; width: 100%; height: auto; background: #101d2d; border-radius: 8px; }
+.profile text { fill: #b9cadd; font-size: 13px; }
+.axis { stroke: #647b98; fill: none; }
+.course-fill { fill: #224a71; }
+.course-line { fill: none; stroke: #79c8f7; stroke-width: 2; }
+#profile-markers line { stroke: #f7c46c; stroke-width: 2; vector-effect: non-scaling-stroke; }

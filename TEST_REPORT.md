@@ -261,3 +261,8 @@ All cases met the recorded offline engineering limits. The heap figure is a samp
 ## U4.01 — Isolated fixture viewer
 
 One Vitest fixture test passed. Headless Chrome opened the local bundle at seconds 0, 300 and 600 and rendered 1, 2 and 1 groups, respectively. The fixture imports no engine runtime or database client.
+
+
+## U4.02 — Course and axes
+
+Both offline tests passed. Distance and elevation use the authoritative 10 km profile. At km 5 the marker maps to SVG x=372. Headless Chrome passed its corresponding pixel-position check at viewport widths 620 and 1280 px.
