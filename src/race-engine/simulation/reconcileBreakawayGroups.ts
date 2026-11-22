@@ -422,6 +422,7 @@ export function reconcileBreakawayGroups(
            * A dropped group may remain behind the peloton when its separation is
            * greater than the catch window.
            */
+          if (group.groupType === 'chase' && group.riderIds.some(id => state.livePursuits?.[id])) return false
           const physicallyCaught =
             group.groupType !==
               'dropped' &&

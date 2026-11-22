@@ -2,18 +2,21 @@ import { z } from 'zod'
 
 const counter = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER)
 const identifier = z.string().trim().min(1)
-const requestSchema = z.object({
+const requestFields = z.object({
   commandId: identifier,
   teamId: identifier,
   riderId: identifier,
   expectedRevision: counter,
   requestedTick: counter,
-  kind: z.literal('attack'),
-  payload: z.object({}).strict(),
-}).strict()
+})
+const requestSchema = z.discriminatedUnion('kind', [
+  requestFields.extend({ kind: z.literal('attack'), payload: z.object({}).strict() }).strict(),
+  requestFields.extend({ kind: z.literal('chase'), payload: z.object({ targetGroupId: identifier }).strict() }).strict(),
+  requestFields.extend({ kind: z.literal('follow'), payload: z.object({ targetRiderId: identifier }).strict() }).strict(),
+])
 
 type CommandRequest = z.infer<typeof requestSchema>
-export interface AcceptedRaceCommand extends CommandRequest {
+export type AcceptedRaceCommand = CommandRequest & {
   readonly version: 1
   readonly ownerId: string
   readonly raceId: string

@@ -341,8 +341,12 @@ export function calculateMultiGroupMovement(
             .flatStageChaseEffortEnabled ===
           true
 
+        const pursuitTarget = riders.filter(rider => rider.energy > 0).map(rider => state.livePursuits?.[rider.riderId])
+          .map(targetId => targetId ? state.groups[targetId] : undefined)
+          .find(target => target?.active && target.distanceKm > group.distanceKm)
+        const livePursuit = group.groupType === 'chase' && pursuitTarget !== undefined
         const chaseEffortResult =
-          flatStageChaseEffortEnabled
+          flatStageChaseEffortEnabled || livePursuit
             ? calculateFlatStageChaseEffort({
                 groupType:
                   group.groupType,
@@ -353,9 +357,9 @@ export function calculateMultiGroupMovement(
                   group.distanceKm,
                 stageDistanceKm:
                   state.stageDistanceKm,
-                gapFromLeaderSeconds:
-                  group
-                    .gapFromLeaderSeconds,
+                gapFromLeaderSeconds: livePursuit && pursuitTarget
+                  ? (pursuitTarget.distanceKm - group.distanceKm) * 3600 / Math.max(1, group.speedKmh)
+                  : group.gapFromLeaderSeconds,
                 groupSize:
                   riders.length,
                 averageTeamwork,
@@ -438,6 +442,7 @@ export function calculateMultiGroupMovement(
           cooperationResult,
           cooperationAdjustedBaseSpeedKmh,
           chaseEffortResult,
+          livePursuit,
           chaseAdjustedBaseSpeedKmh,
           finalStageEffortResult,
           finalStageAdjustedBaseSpeedKmh,
@@ -611,9 +616,9 @@ export function calculateMultiGroupMovement(
           gradientPercent:
             entry.terrainSample
               .gradientPercent,
-          baseSpeedKmh:
-            entry
-              .finalStageAdjustedBaseSpeedKmh,
+          baseSpeedKmh: entry.livePursuit
+            ? entry.finalStageAdjustedBaseSpeedKmh / (entry.chaseEffortResult?.chaseMultiplier ?? 1)
+            : entry.finalStageAdjustedBaseSpeedKmh,
           ...(entry
             .cooperationResult
             ? {

@@ -110,6 +110,8 @@ export interface RaceIncidentRuntimeState {
 }
 
 export interface SimulationState {
+  readonly livePursuits?: Readonly<Record<string, string>>
+  readonly liveFollows?: Readonly<Record<string, string>>
   readonly input: StageInput
 
   readonly weatherPerformanceEffectsEnabled?:

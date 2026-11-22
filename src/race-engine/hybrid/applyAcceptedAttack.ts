@@ -6,6 +6,7 @@ import type { RaceContinuation } from './raceContinuation'
 import { captureSimulationCheckpoint, restoreSimulationCheckpoint } from './simulationCheckpoint'
 
 export function applyAcceptedAttack(continuation: RaceContinuation, command: AcceptedRaceCommand): RaceContinuation {
+  if (command.kind !== 'attack') throw new Error('Expected an attack command.')
   const state = restoreSimulationCheckpoint(continuation.checkpoint)
   if (state.completed || command.raceId !== state.raceId || command.stageId !== state.stageId
     || command.effectiveTick * state.input.settings.tickSeconds !== state.raceSecond) {

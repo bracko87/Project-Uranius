@@ -18,6 +18,7 @@
  * or activate any production runtime.
  */
 
+import { prepareLiveFollows, mergeLivePursuits } from './livePursuit'
 import type {
   SimulationState,
 } from '../domain/SimulationState'
@@ -115,15 +116,13 @@ export function simulateMultiGroupTick(
       appliedOrders.executedOrders,
     )
 
-  const movement =
-    calculateMultiGroupMovement(
-      appliedOrderEffects.state,
-    )
+  const tacticalState = prepareLiveFollows(appliedOrderEffects.state, appliedOrderEffects.attackEffects)
+  const movement = calculateMultiGroupMovement(tacticalState)
 
   const appliedMovement =
     applyMultiGroupMovement({
       state:
-        appliedOrderEffects.state,
+        tacticalState,
       movement,
     })
 
@@ -136,7 +135,7 @@ export function simulateMultiGroupTick(
 
   const reconciledBreakaways =
     reconcileBreakawayGroups(
-      appliedEnergy.state,
+      mergeLivePursuits(tacticalState, appliedEnergy.state),
     )
 
   const finishDetection =

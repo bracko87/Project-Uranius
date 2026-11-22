@@ -228,3 +228,7 @@ Three offline tests passed. The second attack at tick 7 builds on the checkpoint
 Source inspection verified that the existing tick invokes the effect executor and that the executor ignores non-attack orders. The existing chase effort helper is limited to eligible chase groups on flat profiles and incorporates average energy. No approved rider-level chase or follow rule has been established. No U3.08 acceptance result is claimed. See BLOCKERS.md.
 
 The pre-hold regression run passed 31 tests across nine Vitest files and all three production protection tests. The full set of five frozen output hashes remained exact, including both 96-rider road fixtures. This regression does not establish historical sporting equivalence.
+
+## U3.08 — Chase and follow
+
+22 offline checks passed in eight files. Flat chase reused the inherited flat-stage bonus and charged the boosted speed against unboosted effort. Tests cover increased speed and energy use, a surviving gap, and a catch only when simulated distances cross. Follow tests show a stronger rider leaving at the same position as the source group and a slower rider remaining with it. The chase pace helper is applied only on flat course profiles. On non-flat stages follow uses normal terrain-adjusted movement without a new pursuit bonus. Earlier replay frames remained exact and the frozen micro-stage hash passed.
