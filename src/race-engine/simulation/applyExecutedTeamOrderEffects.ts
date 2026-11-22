@@ -280,8 +280,7 @@ function applyAttackOrder(
       ],
       speedKmh:
         launchSpeedKmh,
-      initialGapSeconds:
-        5,
+      initialGapSeconds: order.metadata?.uraniusLiveCommand === true ? 0 : 5,
     })
 
   const events =

@@ -214,3 +214,7 @@ Six offline checks passed across the checkpoint and invariance suites. Empty-inp
 ## U3.05 — Single live attack
 
 Two offline checks passed. At tick 5 the accepted attack entered the existing order and tick engine, emitted ATTACK_STARTED, consumed energy and changed future group membership and replay samples. Every elapsed frame and event remained byte-equivalent. Final finish times came from the recomputed completed state. The test rider was caught and classification matched the no-command run. First-tick energy use also matched the no-command comparison in this fixture. No extra energy surcharge was introduced. The no-command golden still passed. The inherited pre-race launch places the new group ahead by an initial five-second gap. U3.06 must verify the causal boundary before the command path can advance.
+
+## U3.06 — Future causality
+
+Eleven offline tests passed, including the frozen no-command output and inherited attack-order regressions. The live attack starts at the rider's exact present position. Legacy pre-race orders retain their existing launch behavior. The controlled scenario verified unchanged seed and physical state at intake, an identical repeated application, unique event sequences and group membership, and nonnegative rider motion within the speed-limit distance at every tick through completion. The tested rider's group change arose during the existing movement step.

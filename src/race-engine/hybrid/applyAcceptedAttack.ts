@@ -23,7 +23,7 @@ export function applyAcceptedAttack(continuation: RaceContinuation, command: Acc
   const order: TeamOrder = {
     orderId, teamId: team.teamId, riderId: rider.riderId, type: 'attack', status: 'loaded',
     eligibleFromKm: state.currentKm, eligibleUntilKm: state.stageDistanceKm,
-    priority: 0, maximumFollowers: 0,
+    priority: 0, maximumFollowers: 0, metadata: { uraniusLiveCommand: true },
   }
   const event: RaceEvent = {
     sequenceNumber: state.nextEventSequenceNumber, eventType: 'ORDER_LOADED',
