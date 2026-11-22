@@ -161,3 +161,7 @@ Two offline Vitest tests passed on the ten-rider, ten-kilometre profile and the 
 ## U2.07 — Existing no-command baseline
 
 Two executions of the same fictional ten-rider stage yielded identical full output, with all ten riders finished, 32 frames and 12 events. Pinned canonical output hash 98cdb350835b7fde. The regression test was then rerun against the fixed expected hash and passed. The independent arithmetic reference in U2.06 remains separate from this observed engine baseline.
+
+## U2.08 — Single-rider terrain motion
+
+The inherited terrain speed helper was tested at gradients zero, +5 and -5 percent, with base speed 36 km/h. Hand-computed expected speeds and observed speeds agreed at 36, 29.7 and 39.24 km/h. Thirty-second distances were 0.3, 0.2475 and 0.327 km. All three checks passed within 0.000000005 in the tested units. This verifies the isolated terrain adjustment and distance arithmetic. It does not assert that full-stage group pace follows the same isolated model.
