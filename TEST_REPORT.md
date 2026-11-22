@@ -232,3 +232,7 @@ The pre-hold regression run passed 31 tests across nine Vitest files and all thr
 ## U3.08 — Chase and follow
 
 22 offline checks passed in eight files. Flat chase reused the inherited flat-stage bonus and charged the boosted speed against unboosted effort. Tests cover increased speed and energy use, a surviving gap, and a catch only when simulated distances cross. Follow tests show a stronger rider leaving at the same position as the source group and a slower rider remaining with it. The chase pace helper is applied only on flat course profiles. On non-flat stages follow uses normal terrain-adjusted movement without a new pursuit bonus. Earlier replay frames remained exact and the frozen micro-stage hash passed.
+
+## U3.09 — Teammate support and effort
+
+Seven offline checks passed. Same-group teammate support activates the existing capped cooperation pace for one tick. Late-stage peloton effort uses the inherited onset and cap for one tick. Extra pace consumes additional energy through the existing speed-cost calculation. The tests reject a non-teammate target and early effort. The boosted actor does not automatically win. Prior replay output and the frozen no-command golden remained exact.

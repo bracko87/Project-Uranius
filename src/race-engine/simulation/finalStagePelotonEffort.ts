@@ -70,7 +70,7 @@ export interface FinalStagePelotonEffortResult {
     number
 }
 
-const FINAL_STAGE_START_PROGRESS =
+export const FINAL_STAGE_START_PROGRESS =
   0.7
 
 const MAXIMUM_EFFORT_BONUS_PERCENT =

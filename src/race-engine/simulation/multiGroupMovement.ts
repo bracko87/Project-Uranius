@@ -315,8 +315,12 @@ export function calculateMultiGroupMovement(
           ) /
           riders.length
 
+        const liveSupport = riders.some(rider => {
+          const target = state.liveSupports?.[rider.riderId]
+          return rider.energy > 0 && target !== undefined && group.riderIds.includes(target)
+        })
         const cooperationResult =
-          cooperationPaceEnabled
+          cooperationPaceEnabled || liveSupport
             ? calculateGroupCooperationPace({
                 groupType:
                   group.groupType,
@@ -379,8 +383,9 @@ export function calculateMultiGroupMovement(
             .finalStagePelotonEffortEnabled ===
           true
 
+        const liveEffort = riders.some(rider => rider.energy > 0 && state.liveEfforts?.includes(rider.riderId))
         const finalStageEffortResult =
-          finalStagePelotonEffortEnabled
+          finalStagePelotonEffortEnabled || liveEffort
             ? calculateFinalStagePelotonEffort({
                 groupType:
                   group.groupType,
@@ -443,6 +448,8 @@ export function calculateMultiGroupMovement(
           cooperationAdjustedBaseSpeedKmh,
           chaseEffortResult,
           livePursuit,
+          liveSupport,
+          liveEffort,
           chaseAdjustedBaseSpeedKmh,
           finalStageEffortResult,
           finalStageAdjustedBaseSpeedKmh,
@@ -616,9 +623,10 @@ export function calculateMultiGroupMovement(
           gradientPercent:
             entry.terrainSample
               .gradientPercent,
-          baseSpeedKmh: entry.livePursuit
-            ? entry.finalStageAdjustedBaseSpeedKmh / (entry.chaseEffortResult?.chaseMultiplier ?? 1)
-            : entry.finalStageAdjustedBaseSpeedKmh,
+          baseSpeedKmh: entry.finalStageAdjustedBaseSpeedKmh
+            / (entry.livePursuit ? entry.chaseEffortResult?.chaseMultiplier ?? 1 : 1)
+            / (entry.liveSupport ? entry.cooperationResult?.paceMultiplier ?? 1 : 1)
+            / (entry.liveEffort ? entry.finalStageEffortResult?.effortMultiplier ?? 1 : 1),
           ...(entry
             .cooperationResult
             ? {

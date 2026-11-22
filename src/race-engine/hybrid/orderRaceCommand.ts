@@ -13,6 +13,8 @@ const requestSchema = z.discriminatedUnion('kind', [
   requestFields.extend({ kind: z.literal('attack'), payload: z.object({}).strict() }).strict(),
   requestFields.extend({ kind: z.literal('chase'), payload: z.object({ targetGroupId: identifier }).strict() }).strict(),
   requestFields.extend({ kind: z.literal('follow'), payload: z.object({ targetRiderId: identifier }).strict() }).strict(),
+  requestFields.extend({ kind: z.literal('support'), payload: z.object({ targetRiderId: identifier }).strict() }).strict(),
+  requestFields.extend({ kind: z.literal('effort'), payload: z.object({}).strict() }).strict(),
 ])
 
 type CommandRequest = z.infer<typeof requestSchema>

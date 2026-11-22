@@ -135,7 +135,11 @@ export function simulateMultiGroupTick(
 
   const reconciledBreakaways =
     reconcileBreakawayGroups(
-      mergeLivePursuits(tacticalState, appliedEnergy.state),
+      mergeLivePursuits(tacticalState, {
+        ...appliedEnergy.state,
+        ...(tacticalState.liveSupports ? { liveSupports: {} } : {}),
+        ...(tacticalState.liveEfforts ? { liveEfforts: [] } : {}),
+      }),
     )
 
   const finishDetection =
