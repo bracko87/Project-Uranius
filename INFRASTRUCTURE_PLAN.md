@@ -137,3 +137,19 @@ From a private Windows PowerShell terminal in the sanitized Git checkout, run:
 ```
 
 Omit `-Apply` for a read-only authenticated check. Enter the Uranius project's `postgres` database password at the masked PowerShell prompt. The read-only login and TLS check completes before the script prompts for a separate migration password and confirmation. With `-Apply`, choose at least 16 printable ASCII characters without spaces. PowerShell collects the passwords and psql runs noninteractively. The bootstrap uses a client-generated SCRAM verifier, and the plaintext migration password is reused only in memory for the initializer and verification. Press Ctrl+C to cancel. Batch commands time out. Do not enable terminal transcription or send passwords in chat. If a step fails, inspect the role and ledger state before resuming.
+
+## U5.02 restricted-role migration revision (approval pending)
+
+The hosted state was reported by the owner. The migration login has database CONNECT and CREATE, no memberships and no managed Auth USAGE or column REFERENCES. PostgreSQL 17.12 reproduced SQLSTATE 42501 on the original 002 foreign key to auth.users(id). Rehearsing with only that foreign key removed exposed the same SQLSTATE in 003 at its first auth.uid() policy. Both transactions rolled back. The original hosted error text was not captured.
+
+The revised 002 keeps team_owners.user_id as a non-null UUID and retains team and rider foreign keys in the Uranius schema. The revised 003 uses a stable, security-invoker request_uid() function to read the UUID subject of the verified Data API request. RLS still applies solely to authenticated and remains scoped to the team owner. Missing or invalid UUID subjects do not grant access. This assumes the Data API verifies the token and supplies transaction-local claims. Do not provide application users with direct SQL access as authenticated or expose RPCs that set request claims. [Supabase Auth permissions guidance](https://supabase.com/kb/troubleshooting/permission-errors-when-granting-custom-roles-access-to-the-auth-schema-9e32e7)
+
+Without the Auth foreign key, a wrong or deleted Auth UUID can remain mapped. A future trusted, project-scoped provisioning routine should validate the user through scoped Auth before inserting ownership and remove the mapping on account removal. If referential integrity is needed across several tables, use an Uranius-owned profile registry populated by that routine and reference it locally. If direct auth.uid() semantics become necessary, Supabase documents a narrowly granted postgres-owned helper outside Data API exposure. It would require separate review and is outside this proposal.
+
+Keep the existing migration login unchanged. For a new installation only, the bootstrap now grants only database CONNECT and CREATE, and aborts the transaction if the grants are ineffective. This replaces the earlier Auth-grant bootstrap. Once the owner approves the revised manifest, use the Windows command above with these additional arguments:
+
+```powershell
+-ResumeExistingRole -ApprovedManifestSha256 'ea319037da44cfeb255e2555043997faa841156ec95c9d54fedc4974b7c39f28'
+```
+
+Keep -Apply for an authorized write or omit it for a read-only preflight. The resume path asks only for the existing migration password and bypasses role creation entirely. It checks the exact TLS target, fresh application schemas and database privileges, then runs the same four numbered files and ledger writes in one transaction. Errors show a fixed migration filename and SQLSTATE or timeout without printing raw PostgreSQL text. If it stops, inspect the ledger and catalog before any retry.

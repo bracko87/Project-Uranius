@@ -28,8 +28,7 @@ test('ordered database preparation, project identity and access policies', async
       CREATE TABLE auth.users (id uuid PRIMARY KEY);
       CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE
         AS $$ SELECT NULLIF(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
-      GRANT USAGE ON SCHEMA auth TO authenticated, uranius_migrator;
-      GRANT REFERENCES (id) ON auth.users TO uranius_migrator;
+      GRANT USAGE ON SCHEMA auth TO authenticated;
     `)
     const { rows: [version] } = await db.query('SHOW server_version_num')
     assert.equal(Math.floor(Number(version.server_version_num) / 10000), 17)
@@ -79,15 +78,22 @@ test('ordered database preparation, project identity and access policies', async
     const { rows: ledger } = await db.query('SELECT version FROM uranius_private.migration_ledger ORDER BY version')
     assert.deepEqual(ledger.map(row => row.version), names)
 
-    await db.query('INSERT INTO auth.users VALUES ($1), ($2)', [fixtureUser, otherUser])
     await db.query('INSERT INTO uranius_catalog.team_owners VALUES (1, $1), (2, $2)', [fixtureUser, otherUser])
     await assert.rejects(db.transaction(async tx => {
       await tx.exec('SET LOCAL ROLE anon; SELECT * FROM uranius_catalog.stages')
     }), /permission denied/)
+    for (const claims of [{}, { sub: 'invalid' }, { user_metadata: { sub: fixtureUser } }]) {
+      await db.transaction(async tx => {
+        await tx.exec('SET LOCAL ROLE authenticated')
+        await tx.query("SELECT set_config('request.jwt.claims', $1, true)", [JSON.stringify(claims)])
+        assert.deepEqual((await tx.query('SELECT * FROM uranius_catalog.riders')).rows, [])
+        assert.deepEqual((await tx.query('SELECT * FROM uranius_catalog.stages')).rows, [])
+      })
+    }
     for (const [user, team] of [[fixtureUser, 1], [otherUser, 2]]) {
       await db.transaction(async tx => {
         await tx.exec('SET LOCAL ROLE authenticated')
-        await tx.query("SELECT set_config('request.jwt.claim.sub', $1, true)", [user])
+        await tx.query("SELECT set_config('request.jwt.claims', $1, true)", [JSON.stringify({ sub: user })])
         const own = await tx.query('SELECT DISTINCT team_id FROM uranius_catalog.riders')
         const entries = await tx.query('SELECT DISTINCT team_id FROM uranius_catalog.startlists')
         assert.deepEqual(own.rows, [{ team_id: team }])
@@ -101,17 +107,17 @@ test('ordered database preparation, project identity and access policies', async
       await tx.exec('SET LOCAL ROLE authenticated; SELECT * FROM uranius_private.project_identity')
     }), /permission denied/)
     await db.exec('SET SESSION AUTHORIZATION uranius_migrator')
-    await assert.rejects(db.exec(preflight), /target schemas already exist/)
+    await assert.rejects(db.exec(preflight), /target schemas already exist|lacks database CONNECT or CREATE/)
   } finally {
     await db.close()
   }
 })
 
-test('preflight accepts the migration login on a clean PostgreSQL 17 database', async () => {
+test('preflight rejects the migration login without required database grants', async () => {
   const db = new PGlite()
   try {
     await db.exec('CREATE ROLE uranius_migrator; SET SESSION AUTHORIZATION uranius_migrator;')
-    await db.exec(await readFile(new URL('preflight.sql', directory), 'utf8'))
+    await assert.rejects(db.exec(await readFile(new URL('preflight.sql', directory), 'utf8')), /lacks database CONNECT or CREATE/)
   } finally {
     await db.close()
   }

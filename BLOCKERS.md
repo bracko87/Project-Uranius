@@ -55,3 +55,7 @@ The owner authorized the dedicated role and four reviewed files for sdtsivgtcaoa
 ## U5.02 - Local password entry pending
 
 The portable client and verify-full connection to the exact Uranius host now work. The owner must enter the Uranius-only database password and choose the distinct migration-role password in the private Windows terminal. See the Windows interactive connection section in INFRASTRUCTURE_PLAN.md. No credentials are needed in chat. If the connection script reports a failure, inspect role and ledger state before any retry.
+
+## U5.02 - Revised manifest awaiting approval
+
+The existing restricted hosted role is retained. The owner reports no application tables and no committed migrations. The original numbered files fail the restricted-role rehearsal at the managed Auth dependency. The replacement manifest is rehearsed offline and requires explicit approval before any remote write. See INFRASTRUCTURE_PLAN.md for the exact digest and resume procedure.

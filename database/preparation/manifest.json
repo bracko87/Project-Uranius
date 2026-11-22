@@ -5,11 +5,11 @@
   },
   {
     "file": "002_reference_schema.sql",
-    "sha256": "273fba2d82c9a1d342542ce2f163e9a5872d3ee805c61c38fa801aa9edacf1aa"
+    "sha256": "6cad841d012117a02daf7e89555cc870da5f9a5f90b4e4c8b7dfee52b84ed45f"
   },
   {
     "file": "003_access.sql",
-    "sha256": "dd1fb87d9180ca28ea6545fdf6f97c253b1879000438dda1c9572f32cb442eb0"
+    "sha256": "b42c96b647afd9b62573c75cd922b4f8de3eff9e39c5b1c8dd2ccd2f40afe8ee"
   },
   {
     "file": "004_synthetic_reference.sql",

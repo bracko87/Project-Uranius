@@ -86,7 +86,7 @@ Gate: PASSED
 | ID | Task | Status | Evidence / commit |
 |---|---|---|---|
 | U5.01 | Authorize and provision isolated infrastructure | PASS | Owner provisioned the approved Micro. Scoped verification and exact project guard evidence in TEST_REPORT.md. |
-| U5.02 | Reconstruct existing sandbox DB | BLOCKED | First write authorized and offline checks pass. Verified Windows client and TLS. Private Uranius credential entry pending. See BLOCKERS.md. |
+| U5.02 | Reconstruct existing sandbox DB | BLOCKED | Restricted-role repair and resume rehearsed on PostgreSQL 17. Revised migration manifest awaits approval. See BLOCKERS.md. |
 | U5.03 | Seed full test world | TODO | — |
 | U5.04 | Implement hybrid DB contracts | TODO | — |
 | U5.05 | Secure sandbox APIs and storage | TODO | — |

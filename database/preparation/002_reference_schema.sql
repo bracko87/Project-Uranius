@@ -15,7 +15,7 @@ CREATE TABLE uranius_catalog.teams (
 
 CREATE TABLE uranius_catalog.team_owners (
   team_id integer PRIMARY KEY REFERENCES uranius_catalog.teams,
-  user_id uuid NOT NULL REFERENCES auth.users (id)
+  user_id uuid NOT NULL
 );
 
 CREATE INDEX team_owners_user ON uranius_catalog.team_owners (user_id);
