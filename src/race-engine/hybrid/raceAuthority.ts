@@ -1,13 +1,26 @@
+import { createHash } from 'node:crypto'
+import type { SimulationOutput } from '../domain/SimulationOutput'
 import type { StageInput } from '../domain/StageInput'
 import { createOutputReplaySnapshot } from '../simulation/createMultiGroupSimulationOutput'
 import { applyAcceptedAttack } from './applyAcceptedAttack'
 import { applyAcceptedPursuit } from './applyAcceptedPursuit'
 import { orderRaceCommand } from './orderRaceCommand'
-import { advanceRaceContinuation, beginRaceContinuation } from './raceContinuation'
+import { advanceRaceContinuation, beginRaceContinuation, finishRaceContinuation, type RaceContinuation } from './raceContinuation'
 import { restoreSimulationCheckpoint } from './simulationCheckpoint'
 
+export interface RaceRecovery {
+  readonly version: 1
+  readonly json: string
+  readonly digest: string
+}
+
+function recoveryDigest(json: string): string {
+  return createHash('sha256').update(json).digest('hex')
+}
+
 export class RaceAuthority {
-  #race
+  #race: RaceContinuation
+  #sealed: SimulationOutput | null = null
   #owners: ReadonlyMap<string, string>
 
   constructor(input: StageInput, owners: Readonly<Record<string, string>>) {
@@ -15,11 +28,38 @@ export class RaceAuthority {
     this.#owners = new Map(Object.entries(owners))
   }
 
-  advanceTo(tick: number): void {
+  static recover(recovery: RaceRecovery, owners: Readonly<Record<string, string>>): RaceAuthority {
+    if (recovery.version !== 1 || recovery.digest !== recoveryDigest(recovery.json)) {
+      throw new Error('Invalid race recovery record.')
+    }
+    const durable: { race: RaceContinuation; sealed: SimulationOutput | null } = JSON.parse(recovery.json)
+    const state = restoreSimulationCheckpoint(durable.race.checkpoint)
+    if (durable.sealed && !state.completed) throw new Error('Premature sealed result.')
+    const authority = new RaceAuthority(state.input, owners)
+    authority.#race = durable.race
+    authority.#sealed = durable.sealed
+    return authority
+  }
+
+  exportRecovery(): RaceRecovery {
+    const json = JSON.stringify({ race: this.#race, sealed: this.#sealed })
+    return { version: 1, json, digest: recoveryDigest(json) }
+  }
+
+  finalize(): SimulationOutput | null {
+    if (!restoreSimulationCheckpoint(this.#race.checkpoint).completed) return null
+    this.#sealed ??= finishRaceContinuation(this.#race)
+    return structuredClone(this.#sealed)
+  }
+
+  advanceTo(tick: number, signal?: AbortSignal): void {
+    signal?.throwIfAborted()
     const state = restoreSimulationCheckpoint(this.#race.checkpoint)
     const currentTick = state.raceSecond / state.input.settings.tickSeconds
     if (!Number.isSafeInteger(tick) || tick < currentTick) throw new Error('Invalid server tick.')
-    this.#race = advanceRaceContinuation(this.#race, tick - currentTick)
+    const next = advanceRaceContinuation(this.#race, tick - currentTick)
+    signal?.throwIfAborted()
+    this.#race = next
   }
 
   submit(owner: string, request: unknown) {

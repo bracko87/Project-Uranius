@@ -240,3 +240,7 @@ Seven offline checks passed. Same-group teammate support activates the existing 
 ## U3.10 — Server authority harness
 
 Three offline checks passed. The in-memory authority derives the effective tick from server state, verifies principal ownership and rider eligibility, and uses the expected revision to serialize competing requests. The same authorized request returns its original acknowledgement. A different payload or owner with that ID cannot replay it. The elapsed projection contains only current or prior frames and events, preserves already published frames, and clones output so callers cannot mutate the authority.
+
+## U3.11 — Recovery and finalization
+
+Four offline tests passed. A cancelled advance leaves the durable record byte-identical. After an accepted attack and simulated worker interruption, a new authority restored the published prefix and accepted revision, reproduced the uninterrupted continuation, and finalized one attack exactly once. Premature finalization returned no result. Late submission was rejected. Finalization and restoration of a finished race returned the same sealed output, and corrupt recovery data was rejected. This harness does not issue rewards or persist to a hosted service.
