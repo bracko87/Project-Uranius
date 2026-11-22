@@ -13,3 +13,7 @@
 | Database | [RaceDetailPage](src/pages/dashboard/RaceDetailPage.tsx) reads race_stages, race_team_entries, participant team and rider relations, and race_classification_standings. The [lifecycle SQL reference](reference/database/20260929184629_baseline_04_sql_dump_121_240.sql.txt) and CURRENT_RACE_ENGINE.md identify lifecycle, claim, payload and submission RPC boundaries. | Exact deployed columns, constraints, privileges, retries and RPC versions remain unknown. Validate drift against a separately approved sandbox. |
 
 No hosted schema inspection or SQL execution was used.
+
+## U2.05 version 1 boundary
+
+[Versioned schemas](src/race-engine/contracts/versionedRaceContracts.ts) validate stage identity and the race input projection, race-state samples, accepted attacks, events, versioned timelines, checkpoint metadata and classifications. Full engine input remains StageInput. ARCHITECTURE.md records clock and group semantics and the conditions that affect future live integration.

@@ -149,3 +149,7 @@ CONTRACTS.md records inherited units, schemas, invariants and missing deployed e
 ## U2.04 — Timeline and replay consumer audit
 
 CURRENT_RACE_ENGINE.md maps source snapshots, persistence, replay adaptation, classifications, UI gap reconstruction and live gating. All five targeted assertions about event references, chronology, membership, estimated gap layout and replay availability matched. The earlier two-rider offline test exercised replay adaptation. No app or worker ran during the source audit.
+
+## U2.05 — Versioned contracts and offline semantics
+
+Three offline Vitest tests passed. Coverage includes unsupported version and malformed profile rejection, duplicate group membership, temporal ordering, stage identity, command ticks, event time, checkpoint digest and classification rank or status validity. No existing clock policy was changed. Deployed time mapping and owner approval for any material change are documented in ARCHITECTURE.md.
