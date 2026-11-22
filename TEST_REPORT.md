@@ -281,3 +281,8 @@ Four offline tests passed. The terrain fixture contains precomputed checkpoint s
 ## U4.05 — Separate group markers
 
 Five offline tests passed. The split frame places both independent group markers at the same true x=242.4 and offsets their dots vertically. The chase frame places markers at x=372 and x=339.6, and the catch removes the absorbed marker. Names and counts are associated with stable group IDs on the adjoining list.
+
+
+## U4.06 — Measured time gaps
+
+Six offline tests passed. At second 450, separation was 0.5 km and the time gap at the trailing group location was 37.5 seconds. The leader had slowed by that checkpoint, so using its current speed to infer the gap would be incorrect. A location before the leader first appeared produces an unavailable time gap.

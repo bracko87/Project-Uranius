@@ -1,3 +1,4 @@
+import { raceGaps } from './raceGaps'
 import { fixtureFrames, terrainFrames } from './fixture'
 import { frameAt } from './timeline'
 import { syntheticTenRiderStage } from '../../src/race-engine/tests/fixtures/syntheticTenRiderStage'
@@ -21,11 +22,14 @@ function render(second: number) {
   const frame = frameAt(frames, second)
   const markers = markerLayout(frame.groups, syntheticTenRiderStage.distanceKm)
   showMarkers(groupMarkers, markers)
+  const gaps = raceGaps(frames, frame)
   list.replaceChildren(...frame.groups.map((group, index) => {
     const row = document.createElement('li')
     row.dataset.groupId = group.id
     row.style.borderInlineStart = '3px solid ' + markers[index].colour
     row.textContent = group.name + ' · ' + group.roster.length + ' riders ? ' + group.km.toFixed(2) + ' km ? ' + group.speedKmh.toFixed(1) + ' km/h'
+      + ' ? ' + gaps[index].distanceKm.toFixed(2) + ' km behind'
+      + (gaps[index].gapSeconds === null ? ' ? time gap unavailable' : ' ? ' + gaps[index].gapSeconds.toFixed(1) + ' s gap')
     return row
   }))
   for (const element of controls.querySelectorAll('button')) {
