@@ -1,4 +1,4 @@
-﻿# Blockers
+# Blockers
 
 ## U1.02 resolved
 
@@ -23,3 +23,7 @@ The owner authorized local placeholders. ASSET_REPLACEMENT_REGISTER.md records e
 ## U1.03 — Historical fixture disposition resolved
 
 The owner authorized anonymization or quarantine. Numerical inputs were preserved in the attempted transform, but historical sporting equivalence remains unverified after the dependent test run. The affected historic files remain outside the export, with two verified synthetic replacement tests in the staged source. See TEST_REPORT.md.
+
+## Upload preflight resolved
+
+The owner confirmed the Netlify repository access configuration and authorized upload of the exact approved root. GitHub independently confirmed disabled Actions, no Pages, zero webhooks, deployments and environments, and zero refs before the push. Installed App inventory was unavailable to the token. No Netlify access or deployment was used. The published main initially matched the approved root exactly. This checkout is the sole development workspace. The inherited checkout is read-only provenance.

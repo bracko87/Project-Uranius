@@ -1,4 +1,4 @@
-﻿# Test report
+# Test report
 
 ## U1.01 — Freeze source provenance
 
@@ -131,3 +131,9 @@ Added the shared local preflight for deploy, migrate and admin. It denies unknow
 ## U1.12 — Milestone verification
 
 Verified the exact inherited checkout commit and tree and zero remotes. The final-source preflight reconciled all 1,496 included inherited hashes, all 125 pinned sources, and all 43 recovered local source hashes. It found no original project ref, tested secret or dump signatures, executable migrations, history, workflows, build output or reparse points in the source draft. Earlier task reports record the passing locked offline build, synthetic engine tests, reproducible pinned transpiles, environment inventory and three rejecting guard tests. No original resource changes, production service connections, provisioning or deployment occurred. The final release check creates and verifies a separate local root commit for review.
+
+## Approved upload and U2.01 lifecycle source verification
+
+Published only d7efe2edfcda15c09bc862f418ed7e3f8feaf189 from the independent checkout. The GitHub main ref returned the exact approved SHA. Final preflight matched the root and tree, passed Git integrity and three guard tests, and confirmed disabled Actions and an empty destination without webhooks, deployments, environments or Pages. Netlify access was addressed by the owner. No production calls were made.
+
+U2.01 map in CURRENT_RACE_ENGINE.md covers scheduling, eligibility, preparation and locks, construction, worker lanes, persistence, live view and finish. Local assertions verified eight relative documentation links and seven key markers in the pinned source. Deployed behavior remains unknown and labeled separately. No worker or SQL ran.
