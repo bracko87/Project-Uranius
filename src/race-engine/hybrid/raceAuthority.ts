@@ -103,6 +103,10 @@ export class RaceAuthority {
     return structuredClone({
       raceId: state.raceId, stageId: state.stageId, raceSecond: state.raceSecond,
       revision: this.#race.acceptedCommands.length, completed: state.completed, frames, events: state.events,
+      riderStatuses: snapshots.map(snapshot => ({
+        finished: Object.values(snapshot.riders).filter(rider => rider.stageStatus === 'finished').map(rider => rider.riderId),
+        withdrawn: Object.values(snapshot.riders).filter(rider => rider.stageStatus === 'dnf' || rider.stageStatus === 'dns').map(rider => rider.riderId),
+      })),
     })
   }
 }

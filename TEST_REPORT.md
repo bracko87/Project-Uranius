@@ -301,3 +301,8 @@ Eight offline tests passed. After the catch only the authoritative peloton remai
 ## U4.09 — Responsive local playback controls
 
 Nine offline tests passed. The clock tests verify pause, scaling, clamping and live boundary behavior. The fixture viewer uses animation frames and native keyboard-accessible seek and speed controls. These controls are local presentation controls and never advance simulation state.
+
+
+## U4.10 — Versioned hybrid timeline
+
+Twelve tests passed. The local loopback demo served the real in-memory authority. A live attack advanced revision zero to one, preserved the entire elapsed frame prefix, and emitted a recorded attack. Stale responses, changed history and future outcomes were rejected. Live state contains authoritative status information only for elapsed frames.

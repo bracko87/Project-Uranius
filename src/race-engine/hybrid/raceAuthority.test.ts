@@ -27,7 +27,7 @@ it('publishes elapsed frames only and isolates them from caller mutation', () =>
   const race = new RaceAuthority(syntheticTenRiderStage, owners)
   race.advanceTo(5)
   const past = race.elapsed()
-  expect(Object.keys(past).sort()).toEqual(['completed', 'events', 'frames', 'raceId', 'raceSecond', 'revision', 'stageId'])
+  expect(Object.keys(past).sort()).toEqual(['completed', 'events', 'frames', 'raceId', 'raceSecond', 'revision', 'riderStatuses', 'stageId'])
   race.elapsed().frames.splice(0)
   expect(race.elapsed()).toEqual(past)
   expect(race.submit('manager-a', first)).toMatchObject({ status: 'accepted' })
