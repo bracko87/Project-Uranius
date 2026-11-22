@@ -1,3 +1,4 @@
+import { compareAttacks, type AttackComparison } from './attackComparison'
 import { createServer } from 'node:http'
 import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
@@ -10,10 +11,13 @@ export function createDemoAuthority() {
 
 export async function serveDemo() {
   const race = createDemoAuthority()
+  const comparisons = new Map<string, AttackComparison>()
   const assets = new Map(await Promise.all([
     ['/', 'index.html', 'text/html; charset=utf-8'],
     ['/replay.css', 'replay.css', 'text/css; charset=utf-8'],
     ['/replay.js', 'replay.js', 'text/javascript; charset=utf-8'],
+    ['/comparison', 'comparison.html', 'text/html; charset=utf-8'],
+    ['/comparison.js', 'comparison.js', 'text/javascript; charset=utf-8'],
   ].map(async ([url, file, type]) => [url, { type, content: await readFile(fileURLToPath(new URL(file, import.meta.url))) }] as const)))
   const server = createServer(async (request, response) => {
     response.setHeader('Cache-Control', 'no-store')
@@ -31,6 +35,17 @@ export async function serveDemo() {
     if (request.method === 'GET' && asset) {
       response.writeHead(200, { 'Content-Type': asset.type })
       return response.end(asset.content)
+    }
+    if (request.method === 'GET' && route === '/api/attack-comparison') {
+      const scenario = new URLSearchParams(request.url?.split('?')[1]).get('case')
+      if (scenario !== 'strong' && scenario !== 'caught') return json(400, { reason: 'scenario' })
+      try {
+        const comparison = comparisons.get(scenario) ?? compareAttacks(scenario)
+        comparisons.set(scenario, comparison)
+        return json(200, comparison)
+      } catch {
+        return json(500, { reason: 'comparison failed' })
+      }
     }
     if (request.method === 'GET' && route === '/api/state') {
       const elapsed = race.elapsed()

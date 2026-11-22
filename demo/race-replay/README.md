@@ -18,3 +18,9 @@ node --experimental-websocket demo/race-replay/browser-check.mjs --screenshots
 ```
 
 The browser test uses a temporary profile. The screenshots contain only fictional races.
+
+## Attack comparison
+
+Select **Attack comparison** in the replay navigation. Race A runs without a command and Race B submits one attack at race time 2:30. Both runs are completed locally by the engine before you replay them. **At command** shows the executing state, **Peak gap** jumps to the recorded separation, and **Finish and compare** opens the final ranks, times, energy and events.
+
+Choose **Strong rider** for the sustained breakaway, or **Weaker rider** for the naturally caught case. The outcome indicator measures whether the attacker remains at least 100 metres ahead for three consecutive recorded samples. It does not control the engine.

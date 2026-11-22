@@ -22,7 +22,7 @@ export function acceptRevision(previous: LiveProjection | undefined, incoming: L
 
 const names = { peloton: 'Peloton', breakaway: 'Breakaway', chase: 'Chase group', dropped: 'Dropped group', finished: 'Finished' }
 
-export function projectionFrames(projection: LiveProjection): ReplayFrame[] {
+export function projectionFrames(projection: Pick<LiveProjection, 'frames' | 'riderStatuses'>): ReplayFrame[] {
   return projection.frames.map((sample, index) => {
     const status = projection.riderStatuses[index]
     const active = sample.groups.filter(group => group.active && group.groupType !== 'finished' && group.riderIds.length)
@@ -39,7 +39,7 @@ export function projectionFrames(projection: LiveProjection): ReplayFrame[] {
   })
 }
 
-export function projectionEvents(projection: LiveProjection): ReplayEvent[] {
+export function projectionEvents(projection: Pick<LiveProjection, 'events'>): ReplayEvent[] {
   return projection.events.map(event => ({
     second: event.raceSecond,
     label: event.commentaryText ?? event.eventType.toLowerCase().replaceAll('_', ' ')

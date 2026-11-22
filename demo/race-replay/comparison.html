@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Live attack comparison</title>
+  <link rel="stylesheet" href="./replay.css">
+</head>
+<body>
+  <main class="comparison">
+    <nav><a href="./">Race replay demo</a></nav>
+    <h1>Live attack comparison</h1>
+    <p>Both races use the same fictional riders, terrain, and seed. Only Race B receives an attack.</p>
+    <section class="panel">
+      <div class="controls">
+        <label>Scenario <select id="scenario"><option value="strong">Strong rider</option><option value="caught">Weaker rider</option></select></label>
+        <button id="play" type="button" disabled>Play</button>
+        <button id="before" type="button" disabled>Before command</button>
+        <button id="attack" type="button" disabled>At command</button>
+        <button id="peak" type="button" disabled>Peak gap</button>
+        <button id="finish" type="button" disabled>Finish and compare</button>
+      </div>
+      <label class="seek">Race time <input type="range" id="seek" min="0" step="0.1" disabled><output id="timer"></output></label>
+      <p id="outcome" role="status">Running both simulations...</p>
+      <p id="rule"></p>
+    </section>
+    <div class="comparison-grid">
+      <section class="panel" id="control-race"><h2>Race A</h2><p>Pre-calculated, no live command</p><div class="course"></div><ul class="groups"></ul><h3>Elapsed race events</h3><ol class="race-events"></ol></section>
+      <section class="panel" id="attacked-race"><h2>Race B</h2><p>Live attack applied by the engine</p><div class="course"></div><ul class="groups"></ul><h3>Elapsed race events</h3><ol class="race-events"></ol></section>
+    </div>
+    <section class="panel" id="summary" hidden>
+      <h2>Final classifications</h2>
+      <p>Energy used is the difference between each rider's starting and finishing energy, in engine points.</p>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th scope="col">Rider</th><th scope="col">A rank</th><th scope="col">B rank</th><th scope="col">A time</th><th scope="col">B time</th><th scope="col">A energy used</th><th scope="col">B energy used</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  <script src="./comparison.js" defer></script>
+</body>
+</html>

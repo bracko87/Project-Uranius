@@ -11,6 +11,10 @@ import { courseProfile } from './courseProfile'
 const root = document.querySelector<HTMLElement>('#replay')
 if (!root) throw new Error('Replay root is missing.')
 root.innerHTML = "<h1>Race replay</h1><p>Synthetic 10 km road stage</p><nav aria-label=\"Replay examples\"><a href=\"?fixture=groups\">Groups</a><a href=\"?fixture=terrain\">Terrain</a><a href=\"?fixture=status\">Classifications</a><a href=\"?mode=live\">Live demo</a></nav><p id=\"connection\" role=\"status\" hidden></p><section class=\"panel controls\" aria-label=\"Fixture moments\"></section><section class=\"panel\"><div class=\"playback\"><button id=\"play\" type=\"button\">Play</button><label>Replay speed <select id=\"rate\"><option value=\"1\">1&times;</option><option value=\"4\">4&times;</option><option value=\"16\">16&times;</option></select></label><output id=\"timer\"></output><label class=\"seek\">Race time <input id=\"seek\" type=\"range\" min=\"0\" step=\"0.1\"></label></div><h2>Stage profile</h2><div id=\"course\"></div><h2>Groups on the road</h2><ul id=\"groups\"></ul><p id=\"classification\"></p><h2>Race events</h2><ul id=\"events\"></ul><section id=\"result\" hidden><h2>Final classification</h2><ol></ol></section></section>"
+const comparisonLink = document.createElement('a')
+comparisonLink.href = './comparison'
+comparisonLink.textContent = 'Attack comparison'
+root.querySelector('nav')!.append(comparisonLink)
 const course = root.querySelector('#course')!
 course.innerHTML = courseProfile(syntheticTenRiderStage.profilePoints, syntheticTenRiderStage.distanceKm)
 const groupMarkers = course.querySelector('#profile-markers')!

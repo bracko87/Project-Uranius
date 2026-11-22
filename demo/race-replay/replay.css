@@ -33,3 +33,17 @@ button:disabled, select:disabled { opacity: 0.55; }
 [hidden] { display: none !important; }
 #events { max-height: 160px; overflow: auto; }
 @media (max-width: 600px) { .profile text { font-size: 16px; } }
+
+.comparison { max-width: 1460px; }
+.comparison h1 { margin-top: 16px; }
+.comparison-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 16px; }
+.comparison-grid .panel { min-width: 0; margin-block: 0; }
+.comparison-grid .race-events { max-height: 165px; overflow: auto; padding-inline-start: 24px; }
+.comparison-grid .groups { min-height: 48px; }
+.profile-markers line { stroke-width: 2; vector-effect: non-scaling-stroke; }
+.comparison .seek { margin-top: 12px; }
+.comparison .seek output { min-width: 4ch; }
+.table-scroll { overflow-x: auto; }
+.comparison table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.comparison th, .comparison td { text-align: left; padding: 10px; border-bottom: 1px solid #31445c; white-space: nowrap; }
+.comparison .selected-rider { background: #223650; }

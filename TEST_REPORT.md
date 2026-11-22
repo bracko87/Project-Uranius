@@ -316,3 +316,16 @@ Twelve tests passed. The local loopback demo served the real in-memory authority
 ## U4.12 — Visual regression gate
 
 The full offline run passed 144 checks across 39 files and all three protection guards. All five frozen no-command hashes and three hybrid benchmark hashes matched. The final 11 viewer checks passed again after visual refinements. The Chrome evidence suite verified two tabs, acceptance and rejection, resync, elapsed history, completion, 16x playback, pause and seek, and a race clock unaffected by replay controls. Six synthetic captures are in demo/race-replay/evidence. Plots were assessed at desktop and narrow widths; no production service or deployment was used.
+
+## Milestone 4 follow-up — Matched live attack acceptance
+
+This is additional evidence for the existing Gate 4, with the checklist unchanged at 48/60. Race A used the deterministic runner with no live command. Race B used the existing live authority with exactly the same synthetic ten-rider input, course, attributes and seed. The authority accepted an attack at tick 5, or second 150. Every already-published frame and event matched Race A byte for byte through the command boundary. The comparison labels an attempt successful after a measured lead of at least 100 m for three consecutive recorded samples. This threshold affects presentation only.
+
+| Scenario | First outcome | Maximum separation | Race A rank / time / energy used | Race B rank / time / energy used |
+|---|---|---|---|---|
+| Fictional Rider 10 | Successful at 270 s | 1.724768 km | 1 / 1020 s / 2.619366 points | 1 / 870 s / 2.248578 points |
+| Fictional Rider 1 | Unsuccessful at 180 s | 0 km at recorded samples | 10 / 1020 s / 3.235494 points | 10 / 1020 s / 3.235494 points |
+
+The strong rider finished 150 s earlier and used fewer total energy points in this simulation. There was no separate attack surcharge added for this demonstration. The weaker rider launched according to the event log and was back in the peloton at the first checkpoint after launch. Each baseline had 12 events. Each attacked run had 16, including the authoritative order and launch events. The browser compares every rider's rank, time and energy, and both event streams.
+
+The combined regression run passed 146 tests across 40 files and all three protection guards. All five frozen no-command hashes and the three hybrid benchmark hashes remained unchanged. Headless Chrome verified the replay navigation, executing/successful/unsuccessful labels, two visibly separated markers only in Race B, and all ten comparison rows. Three synthetic captures are in demo/race-replay/evidence. No simulation mechanics changed.
