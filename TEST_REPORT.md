@@ -165,3 +165,7 @@ Two executions of the same fictional ten-rider stage yielded identical full outp
 ## U2.08 — Single-rider terrain motion
 
 The inherited terrain speed helper was tested at gradients zero, +5 and -5 percent, with base speed 36 km/h. Hand-computed expected speeds and observed speeds agreed at 36, 29.7 and 39.24 km/h. Thirty-second distances were 0.3, 0.2475 and 0.327 km. All three checks passed within 0.000000005 in the tested units. This verifies the isolated terrain adjustment and distance arithmetic. It does not assert that full-stage group pace follows the same isolated model.
+
+## U2.09 — Group and energy mechanics
+
+Nine suites passed, with 86 tests covering group motion, breakaway creation, catch and reabsorption, order effects, fatigue, drafting, energy, and replay boundary invariants. The new caught-group check verifies an 8/2 split, exact restoration of ten unique peloton riders, and no second absorption when applied again. An initial test started with a lead and was protected by the engine's fresh-launch rule. The corrected fixture starts at an equal position. The inherited one-km replay test expected a post-finish frame at 120 seconds. The same suite verifies the completed final snapshot at the actual final state; sampling stops at second 90 in this fixture. The stale 120-second expectation was removed without changing simulation code.
