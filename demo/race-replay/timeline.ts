@@ -30,3 +30,18 @@ export function frameAt(frames: readonly ReplayFrame[], second: number): ReplayF
     }),
   }
 }
+
+export interface ReplayEvent {
+  second: number
+  label: string
+}
+
+export function elapsedEvents(events: readonly ReplayEvent[], second: number) {
+  return events.filter(event => event.second <= second)
+}
+
+export function hasUniqueGroupMembership(frame: ReplayFrame): boolean {
+  const groupIds = new Set(frame.groups.map(group => group.id))
+  const riders = frame.groups.flatMap(group => [...group.roster])
+  return groupIds.size === frame.groups.length && new Set(riders).size === riders.length
+}

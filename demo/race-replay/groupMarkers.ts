@@ -11,19 +11,22 @@ export function markerLayout(groups: readonly ReplayGroup[], distanceKm: number)
 }
 
 export function showMarkers(element: Element, markers: ReturnType<typeof markerLayout>): void {
-  element.replaceChildren(...markers.map(marker => {
-    const node = document.createElementNS('http:' + '//www.w3.org/2000/svg', 'g')
+  const previous = new Map([...element.children].map(child => [child.getAttribute('data-group-id'), child]))
+  for (const marker of markers) {
+    const node = previous.get(marker.id) ?? document.createElementNS('http://www.w3.org/2000/svg', 'g')
+    previous.delete(marker.id)
     node.setAttribute('data-group-id', marker.id)
     node.setAttribute('aria-label', marker.name)
-    const line = document.createElementNS(node.namespaceURI, 'line')
-    const dot = document.createElementNS(node.namespaceURI, 'circle')
+    const line = node.querySelector('line') ?? document.createElementNS(node.namespaceURI, 'line')
+    const dot = node.querySelector('circle') ?? document.createElementNS(node.namespaceURI, 'circle')
     for (const [key, value] of Object.entries({ x1: marker.x, x2: marker.x, y1: marker.y, y2: 204, stroke: marker.colour })) {
       line.setAttribute(key, String(value))
     }
     for (const [key, value] of Object.entries({ cx: marker.x, cy: marker.y, r: 4, fill: marker.colour })) {
       dot.setAttribute(key, String(value))
     }
-    node.append(line, dot)
-    return node
-  }))
+    if (!line.parentElement) node.append(line, dot)
+    if (!node.parentElement) element.append(node)
+  }
+  for (const element of previous.values()) element.remove()
 }

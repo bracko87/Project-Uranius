@@ -1,17 +1,18 @@
 import { raceGaps } from './raceGaps'
-import { fixtureFrames, terrainFrames } from './fixture'
-import { frameAt } from './timeline'
+import { fixtureEvents, fixtureFrames, terrainFrames } from './fixture'
+import { elapsedEvents, frameAt, hasUniqueGroupMembership } from './timeline'
 import { syntheticTenRiderStage } from '../../src/race-engine/tests/fixtures/syntheticTenRiderStage'
 import { markerLayout, showMarkers } from './groupMarkers'
 import { courseProfile } from './courseProfile'
 
 const root = document.querySelector<HTMLElement>('#replay')
 if (!root) throw new Error('Replay root is missing.')
-root.innerHTML = '<h1>Race replay</h1><p>Synthetic 10 km road stage</p><section class="panel controls" aria-label="Fixture moments"></section><section class="panel"><h2>Stage profile</h2><div id="course"></div><h2>Groups on the road</h2><ul id="groups"></ul></section>'
+root.innerHTML = '<h1>Race replay</h1><p>Synthetic 10 km road stage</p><section class="panel controls" aria-label="Fixture moments"></section><section class="panel"><h2>Stage profile</h2><div id="course"></div><h2>Groups on the road</h2><ul id="groups"></ul><h2>Race events</h2><ul id="events"></ul></section>'
 const course = root.querySelector('#course')!
 course.innerHTML = courseProfile(syntheticTenRiderStage.profilePoints, syntheticTenRiderStage.distanceKm)
 const groupMarkers = course.querySelector('#profile-markers')!
 const list = root.querySelector('#groups')!
+const eventsList = root.querySelector('#events')!
 const controls = root.querySelector('.controls')!
 const params = new URLSearchParams(location.search)
 const terrain = params.get('fixture') === 'terrain'
@@ -20,6 +21,7 @@ const moments = terrain ? [['Start', 0], ['Climb', 300], ['Descent', terrainFram
 
 function render(second: number) {
   const frame = frameAt(frames, second)
+  if (!hasUniqueGroupMembership(frame)) throw new Error('Duplicate rider or group in replay frame.')
   const markers = markerLayout(frame.groups, syntheticTenRiderStage.distanceKm)
   showMarkers(groupMarkers, markers)
   const gaps = raceGaps(frames, frame)
@@ -31,6 +33,11 @@ function render(second: number) {
       + ' ? ' + gaps[index].distanceKm.toFixed(2) + ' km behind'
       + (gaps[index].gapSeconds === null ? ' ? time gap unavailable' : ' ? ' + gaps[index].gapSeconds.toFixed(1) + ' s gap')
     return row
+  }))
+  eventsList.replaceChildren(...elapsedEvents(terrain ? [] : fixtureEvents, frame.second).map(event => {
+    const item = document.createElement('li')
+    item.textContent = event.second + ' s ? ' + event.label
+    return item
   }))
   for (const element of controls.querySelectorAll('button')) {
     element.setAttribute('aria-pressed', String(Number(element.dataset.second) === second))

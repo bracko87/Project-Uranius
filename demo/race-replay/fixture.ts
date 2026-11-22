@@ -21,3 +21,8 @@ export const terrainFrames: readonly ReplayFrame[] = [
 ].map(([second, km, speedKmh]) => ({
   second, groups: [{ ...fixtureFrames[0].groups[0], km, speedKmh }],
 }))
+
+export const fixtureEvents = [
+  { second: 300, label: 'Two riders formed the breakaway' },
+  { second: 600, label: 'The peloton caught the breakaway' },
+] as const

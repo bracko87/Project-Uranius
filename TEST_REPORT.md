@@ -286,3 +286,8 @@ Five offline tests passed. The split frame places both independent group markers
 ## U4.06 — Measured time gaps
 
 Six offline tests passed. At second 450, separation was 0.5 km and the time gap at the trailing group location was 37.5 seconds. The leader had slowed by that checkpoint, so using its current speed to infer the gap would be incorrect. A location before the leader first appeared produces an unavailable time gap.
+
+
+## U4.07 — Group formation and split
+
+Seven offline tests passed. The split event remains hidden until its recorded second 300. A stable peloton ID retains eight riders while two known identities move to the breakaway, and duplicate membership is rejected. SVG nodes retain identity for continuing groups.
