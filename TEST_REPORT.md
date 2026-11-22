@@ -202,3 +202,7 @@ Two checkpoint tests and the pinned no-command baseline passed. The checkpoint s
 ## U3.02 — Checkpoint continuation
 
 Six offline tests passed. Continuation from serialized checkpoints at ticks 0, 1, 9, 20 and 40 produced the exact uninterrupted output, including events, frames and final riders. The last checkpoint exercises an already-completed race. The frozen ten-rider hash passed again. Continuation reuses the existing tick, replay boundary, snapshot and output functions.
+
+## U3.03 — Command contract and ordering
+
+Seven offline checks passed. Attack requests carry unique IDs, rider and team identities, a strict payload, the observed tick and expected revision. The ordering function records the trusted owner and assigns the authoritative effective tick and next sequence. Tests cover duplicate, late, future, stale, malformed and closed commands. Authorization against the team roster is staged for the later authority task.
