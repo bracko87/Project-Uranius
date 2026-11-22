@@ -76,3 +76,17 @@ test('session pooler requires both a pinned host and a project-qualified role', 
   assert.throws(() => assertSandboxDatabaseUrl(valid.replace(projectRef, 'differentprojectabcd'), projectRef, 'uranius_worker', poolerHost))
   assert.throws(() => assertSandboxDatabaseUrl(valid, projectRef, 'uranius_worker', poolerHost.replace('aws-0', 'aws-1')))
 })
+
+test('only the verified Uranius target can use a privileged database role', () => {
+  const ref = 'sdtsivgtcaoaeoihcwzd'
+  const env = {
+    URANIUS_SUPABASE_PROJECT_REF: ref,
+    URANIUS_SUPABASE_URL: 'https://' + ref + '.supabase.co',
+    URANIUS_DATABASE_URL: 'postgresql://uranius_migrator:fixture-value@db.' + ref + '.supabase.co:5432/postgres?sslmode=verify-full',
+  }
+  assert.doesNotThrow(() => assertSandboxTarget('migrate', env))
+  assert.throws(() => assertSandboxTarget('write', env), /approved target and role/)
+  assert.throws(() => assertSandboxTarget('schedule', env), /approved target and role/)
+  assert.throws(() => assertSandboxTarget('deploy', env), /Deployment is disabled/)
+  assert.throws(() => assertSandboxTarget('migrate', { ...env, URANIUS_DATABASE_URL: env.URANIUS_DATABASE_URL.replace(ref, projectRef) }), /approved target and role/)
+})

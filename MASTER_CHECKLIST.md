@@ -3,7 +3,7 @@
 Status: preliminary setup evidence available; Codex must verify acceptance criteria before recording PASS. No race-engine changes or paid provisioning performed.
 PASS only when the acceptance criterion in PROJECT_URANIUS_MASTER_PLAN.md is verified and evidence recorded.
 Allowed statuses: TODO, IN_PROGRESS, BLOCKED, PASS.
-Progress: 48/60 verified.
+Progress: 49/60 verified.
 
 ## Milestone 1 — Source clone, Codex connection and safety (12 tasks)
 
@@ -85,8 +85,8 @@ Gate: PASSED
 
 | ID | Task | Status | Evidence / commit |
 |---|---|---|---|
-| U5.01 | Authorize and provision isolated infrastructure | BLOCKED | Offline database tranche and baseline triage verified in INFRASTRUCTURE_PLAN.md and TEST_REPORT.md. Owner confirmed the base price. Provisioning approval and sandbox identity verification remain pending. |
-| U5.02 | Reconstruct existing sandbox DB | TODO | — |
+| U5.01 | Authorize and provision isolated infrastructure | PASS | Owner provisioned the approved Micro. Scoped verification and exact project guard evidence in TEST_REPORT.md. |
+| U5.02 | Reconstruct existing sandbox DB | BLOCKED | Initial tranche rehearsed on PostgreSQL 17. Exact-project first-write approval pending. See BLOCKERS.md. |
 | U5.03 | Seed full test world | TODO | — |
 | U5.04 | Implement hybrid DB contracts | TODO | — |
 | U5.05 | Secure sandbox APIs and storage | TODO | — |

@@ -43,3 +43,7 @@ Approve one standalone Supabase Micro project in the existing paid Pro organizat
 ## U5.01 - Final offline review pending
 
 The owner confirmed the $10/month Micro base charge before tax and usage overages and explicitly withheld provisioning authorization. The initial migration and synthetic reference tranche is rehearsed locally. Hosted project identity, owner access, exact aggregate quota headroom and platform security checks remain pending until approval. The 18 Vitest failures reproduce at the sanitized root. Preserve the quarantined production worker dependency and track the remaining legacy coverage in TEST_REPORT.md. Further schema reconciliation and hosted application remain U5.02 onward.
+
+## U5.02 - First sandbox write needs authorization
+
+The owner-provisioned target sdtsivgtcaoaeoihcwzd passed scoped read-only identity and empty-catalog verification. This resolves the U5.01 provisioning blocker. Approval is required to create the dedicated migration role and apply the exact four-file manifest to this project. The local Windows environment also needs a trusted psql client and the project's CA and dedicated migration credential supplied via local secure settings. Never send these credentials in chat or commit them. U5.02 remains blocked at the first write.

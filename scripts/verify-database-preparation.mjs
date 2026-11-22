@@ -21,21 +21,27 @@ test('ordered database preparation, project identity and access policies', async
   const db = new PGlite()
   try {
     await db.exec(`
+      CREATE ROLE uranius_migrator;
       CREATE ROLE anon;
       CREATE ROLE authenticated;
       CREATE SCHEMA auth;
       CREATE TABLE auth.users (id uuid PRIMARY KEY);
       CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE
         AS $$ SELECT NULLIF(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
-      GRANT USAGE ON SCHEMA auth TO authenticated;
+      GRANT USAGE ON SCHEMA auth TO authenticated, uranius_migrator;
+      GRANT REFERENCES (id) ON auth.users TO uranius_migrator;
     `)
+    const { rows: [version] } = await db.query('SHOW server_version_num')
+    assert.equal(Math.floor(Number(version.server_version_num) / 10000), 17)
     const sql = await Promise.all(names.map(name => readFile(new URL(name, directory), 'utf8')))
     const manifest = JSON.parse(await readFile(new URL('manifest.json', directory), 'utf8'))
     assert.deepEqual(manifest, names.map((file, index) => ({
       file, sha256: createHash('sha256').update(sql[index]).digest('hex'),
     })))
-    const files = (await readdir(directory)).filter(name => name.endsWith('.sql')).sort()
+    const files = (await readdir(directory)).filter(name => /^\d{3}_.*\.sql$/.test(name)).sort()
     assert.deepEqual(files, names)
+    const preflight = await readFile(new URL('preflight.sql', directory), 'utf8')
+    await assert.rejects(db.exec(preflight), /migration role mismatch/)
     await assert.rejects(db.exec(sql[0]), /project identity is missing/)
     for (const [index, migration] of sql.entries()) {
       await db.transaction(async tx => {
@@ -88,6 +94,18 @@ test('ordered database preparation, project identity and access policies', async
     await assert.rejects(db.transaction(async tx => {
       await tx.exec('SET LOCAL ROLE authenticated; SELECT * FROM uranius_private.project_identity')
     }), /permission denied/)
+    await db.exec('SET SESSION AUTHORIZATION uranius_migrator')
+    await assert.rejects(db.exec(preflight), /target schemas already exist/)
+  } finally {
+    await db.close()
+  }
+})
+
+test('preflight accepts the migration login on a clean PostgreSQL 17 database', async () => {
+  const db = new PGlite()
+  try {
+    await db.exec('CREATE ROLE uranius_migrator; SET SESSION AUTHORIZATION uranius_migrator;')
+    await db.exec(await readFile(new URL('preflight.sql', directory), 'utf8'))
   } finally {
     await db.close()
   }

@@ -15,6 +15,7 @@ function initialize(env) {
   if (!Array.isArray(manifest) || manifest.length === 0) throw new Error('Migration manifest is empty.')
   const statements = [
     "SELECT pg_advisory_xact_lock(410501);",
+    readFileSync(new URL("preflight.sql", directory), "utf8"),
     "SELECT set_config('uranius.approved_project_ref', '" + projectRef + "', true);",
   ]
   for (const [index, { file, sha256 }] of manifest.entries()) {
@@ -54,6 +55,9 @@ function initialize(env) {
 }
 
 try {
+  if (process.argv.length !== 3 || process.argv[2] !== '--apply-reviewed-initial-migrations') {
+    throw new Error('Explicit initial migration approval argument is required.')
+  }
   initialize(process.env)
 } catch (error) {
   console.error(error instanceof Error ? error.message : 'Sandbox initialization failed.')

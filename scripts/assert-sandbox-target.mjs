@@ -7,8 +7,12 @@ const databaseRoles = new Map([
 ])
 const operations = new Set(['deploy', 'admin', ...databaseRoles.keys()])
 
-// Replace these only after the sandbox resources are independently verified.
-const approved = Object.freeze({ projectRef: null, origin: null, sessionPoolerHost: null })
+// Verified sandbox. Every other project is denied, including production.
+const approved = Object.freeze({
+  projectRef: "sdtsivgtcaoaeoihcwzd",
+  origin: "https://sdtsivgtcaoaeoihcwzd.supabase.co",
+  sessionPoolerHost: null,
+})
 
 export function assertSandboxDatabaseUrl(databaseUrl, projectRef, role, sessionPoolerHost = null) {
   let target
