@@ -51,3 +51,7 @@ The owner-provisioned target sdtsivgtcaoaeoihcwzd passed scoped read-only identi
 ## U5.02 - First-write scope approved, connection prerequisites pending
 
 The owner authorized the dedicated role and four reviewed files for sdtsivgtcaoaeoihcwzd. Read-only metadata and catalog verification passed. The local session has no Uranius DBA or migration DSN, no project CA configured and no psql found on PATH or in the standard installation directory. The hosted TLS certificate and login could therefore not be verified. Provide project-only access through secure local settings. Do not share secret values in chat or Git.
+
+## U5.02 - Local password entry pending
+
+The portable client and verify-full connection to the exact Uranius host now work. The owner must enter the Uranius-only database password and choose the distinct migration-role password in the private Windows terminal. See the Windows interactive connection section in INFRASTRUCTURE_PLAN.md. No credentials are needed in chat. If the connection script reports a failure, inspect role and ledger state before any retry.

@@ -70,6 +70,12 @@ test('ordered database preparation, project identity and access policies', async
       GROUP BY s.stage_id, s.distance_m HAVING min(t.distance_m) = 0 AND max(t.distance_m) = s.distance_m
     `)
     assert.equal(endpoints.length, 3)
+    const hostedCheck = await readFile(new URL('verify-initialization.sql', directory), 'utf8')
+    const offlineCheck = hostedCheck.split('\\gset')[0]
+      .replace('sdtsivgtcaoaeoihcwzd', fixtureRef)
+      .replace(/:'hash([1-4])'/g, (_, n) => "'" + manifest[Number(n) - 1].sha256 + "'")
+    assert.equal((await db.exec(offlineCheck + '; ROLLBACK;')).at(-2).rows[0].verified, true)
+
     const { rows: ledger } = await db.query('SELECT version FROM uranius_private.migration_ledger ORDER BY version')
     assert.deepEqual(ledger.map(row => row.version), names)
 

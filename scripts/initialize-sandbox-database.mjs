@@ -14,6 +14,7 @@ function initialize(env) {
   const manifest = JSON.parse(readFileSync(new URL('manifest.json', directory), 'utf8'))
   if (!Array.isArray(manifest) || manifest.length === 0) throw new Error('Migration manifest is empty.')
   const statements = [
+    "DO $$\nBEGIN\n  IF NOT EXISTS (SELECT 1 FROM pg_stat_ssl WHERE pid = pg_backend_pid() AND ssl)\n     OR current_database() <> 'postgres'\n     OR NOT EXISTS (\n       SELECT 1 FROM pg_roles\n       WHERE rolname = current_user AND rolcanlogin\n         AND NOT (rolsuper OR rolcreatedb OR rolcreaterole OR rolinherit OR rolreplication OR rolbypassrls)\n     )\n     OR EXISTS (SELECT 1 FROM pg_auth_members WHERE member = current_user::regrole) THEN\n    RAISE EXCEPTION 'Migration connection or restricted role verification failed';\n  END IF;\nEND\n$$;",
     "SELECT pg_advisory_xact_lock(410501);",
     readFileSync(new URL("preflight.sql", directory), "utf8"),
     "SELECT set_config('uranius.approved_project_ref', '" + projectRef + "', true);",
@@ -41,6 +42,7 @@ function initialize(env) {
     PGUSER: target.username,
     PGPASSWORD: decodeURIComponent(target.password),
     PGSSLMODE: 'verify-full',
+    PGGSSENCMODE: 'disable',
     PGSSLROOTCERT: env.URANIUS_DATABASE_CA_FILE,
     PGCONNECT_TIMEOUT: '10',
   })

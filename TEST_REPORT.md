@@ -393,3 +393,9 @@ Two PGlite rehearsals passed on PostgreSQL 17.5, matching the hosted major. They
 ## U5.02 - Controlled initialization preflight
 
 Confirmed the exact ref, direct host, ACTIVE_HEALTHY status, PostgreSQL 17 and zero checked tables or tracked migrations. Six protection guard tests and both offline PostgreSQL rehearsals passed, including exact matches for all four manifest hashes. The approved minimum-privilege role SQL was reviewed and tested in the offline database. The local secure connection prerequisites were absent. No remote role creation or migration was attempted, so there is no hosted migration ledger or post-write catalog to verify.
+
+## U5.02 - Windows connection setup
+
+EDB PostgreSQL 17.12 extraction succeeded. The installer matched the WinGet SHA-256 and passed the EnterpriseDB Authenticode check. The portable client is outside Git. PowerShell parsing, six sandbox guards and both offline PostgreSQL rehearsals passed. The rehearsal also ran the new verification SQL against the synthetic catalog and compared the four manifest hashes, counts and privilege checks.
+
+The pinned Uranius host accepted a direct IPv6 TCP connection. A passwordless psql probe used only the downloaded CA and verify-full with GSS disabled and password file lookup disabled. It reached PostgreSQL's password challenge, establishing certificate and hostname verification. Authenticated database identity, the migration-role bootstrap, remote migration application and hosted verification are pending private terminal credential entry. No role or migration writes occurred.

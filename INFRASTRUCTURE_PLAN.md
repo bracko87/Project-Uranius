@@ -121,3 +121,19 @@ GRANT EXECUTE ON FUNCTION auth.uid() TO uranius_migrator;
 ```
 
 Use psql interactive `\password uranius_migrator`, then `ALTER ROLE uranius_migrator LOGIN;` and commit only after verifying its role flags and absence of memberships. Use `ON_ERROR_STOP`. The next connection must use the migration role and the exact pinned host with verify-full. A project-specific database login, CA and trusted client are still required.
+
+## Windows interactive connection
+
+The verified portable EDB PostgreSQL 17.12 client is available under the sibling scratch directory `.uranius-pin-review/postgresql-17.12-portable/bin/psql.exe`. The signed installer matched its WinGet SHA-256 and was extracted without installing a database service. Keep binaries outside the Git checkout. [EDB extract-only instructions](https://www.enterprisedb.com/docs/supported-open-source/postgresql/installing/command_line_parameters/)
+
+Open the Supabase dashboard for **Project Uranius** and verify its ref is `sdtsivgtcaoaeoihcwzd`. In **Database Settings > SSL Configuration**, download the CA to Downloads. A file named `prod-ca-2021.crt` in Downloads passed certificate and hostname verification against the pinned Uranius endpoint. [Supabase TLS instructions](https://supabase.com/docs/guides/platform/ssl-enforcement)
+
+From a private Windows PowerShell terminal in the sanitized Git checkout, run:
+
+```powershell
+.\scripts\Connect-UraniusDatabase.ps1 `
+  -PsqlPath '..\.uranius-pin-review\postgresql-17.12-portable\bin\psql.exe' `
+  -CaFile (Join-Path $env:USERPROFILE 'Downloads\prod-ca-2021.crt') -Apply
+```
+
+Omit `-Apply` for a read-only authenticated check. With `-Apply`, enter the Uranius project's `postgres` database password in the psql prompt. Choose and confirm a separate migration-role password in the next two psql prompts. Enter it again when requested by the initializer and the final read-only verification. The script does not persist the passwords. Do not run it with terminal transcription or send any password in chat. If any step fails, stop and identify the role and ledger state before resuming. The four reviewed migrations remain unchanged.
