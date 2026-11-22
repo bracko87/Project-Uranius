@@ -306,3 +306,8 @@ Nine offline tests passed. The clock tests verify pause, scaling, clamping and l
 ## U4.10 — Versioned hybrid timeline
 
 Twelve tests passed. The local loopback demo served the real in-memory authority. A live attack advanced revision zero to one, preserved the entire elapsed frame prefix, and emitted a recorded attack. Stale responses, changed history and future outcomes were rejected. Live state contains authoritative status information only for elapsed frames.
+
+
+## U4.11 — Live tactics and resync
+
+13 offline checks passed in 12 files. Two real Chrome tabs against one loopback server converged to revision 1 after an attack. The browser showed accepted and rejected responses, manual reconnect restored the authoritative view, and the service denied an unowned rider and a cross-origin clock request. The initially throttled background tab now snaps to elapsed data instead of waiting on animation frames.
