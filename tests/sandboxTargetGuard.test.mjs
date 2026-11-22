@@ -2,14 +2,14 @@ import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
 import { test } from 'node:test'
 import { fileURLToPath } from 'node:url'
-import { assertSandboxTarget } from '../scripts/assert-sandbox-target.mjs'
+import { assertSandboxDatabaseUrl, assertSandboxTarget } from '../scripts/assert-sandbox-target.mjs'
 
 const script = fileURLToPath(new URL('../scripts/assert-sandbox-target.mjs', import.meta.url))
 const projectRef = 'exampleprojectrefabc'
 const origin = `https://${projectRef}.supabase.co`
 
 test('missing and unapproved targets fail for every privileged operation', () => {
-  for (const operation of ['deploy', 'migrate', 'admin']) {
+  for (const operation of ['migrate', 'admin', 'write', 'schedule']) {
     assert.throws(() => assertSandboxTarget(operation, {}), /configuration is missing/)
     assert.throws(() => assertSandboxTarget(operation, {
       URANIUS_SUPABASE_PROJECT_REF: projectRef,
@@ -41,6 +41,38 @@ test('CLI rejects missing configuration and unknown operations without leaking t
     env: { URANIUS_SUPABASE_PROJECT_REF: projectRef, URANIUS_SUPABASE_URL: origin },
   })
   assert.equal(result.status, 1)
-  assert.match(result.stderr, /project is unapproved/)
+  assert.match(result.stderr, /Deployment is disabled/)
   assert.ok(!result.stderr.includes(projectRef))
+})
+
+test('direct database target requires the expected project, role, database and verified TLS', () => {
+  const host = 'db.' + projectRef + '.supabase.co:5432'
+  const valid = 'postgresql://uranius_worker:fixture-value@' + host + '/postgres?sslmode=verify-full'
+  assert.doesNotThrow(() => assertSandboxDatabaseUrl(valid, projectRef, 'uranius_worker'))
+  for (const candidate of [
+    undefined,
+    valid.replace(projectRef, 'differentprojectabcd'),
+    valid.replace('uranius_worker', 'postgres'),
+    valid.replace(':5432', ':6543'),
+    valid.replace('/postgres?', '/other?'),
+    valid.replace('verify-full', 'require'),
+    valid + '&host=other.example',
+    valid + '#unexpected',
+    valid.replace(':fixture-value', ''),
+  ]) {
+    assert.throws(() => assertSandboxDatabaseUrl(candidate, projectRef, 'uranius_worker'), error => {
+      assert.match(error.message, /Sandbox database connection/)
+      assert.ok(!error.message.includes('fixture-value'))
+      return true
+    })
+  }
+})
+
+test('session pooler requires both a pinned host and a project-qualified role', () => {
+  const poolerHost = 'aws-0-eu-central-1.pooler.supabase.com'
+  const valid = 'postgresql://uranius_worker.' + projectRef + ':fixture-value@' + poolerHost + ':5432/postgres?sslmode=verify-full'
+  assert.doesNotThrow(() => assertSandboxDatabaseUrl(valid, projectRef, 'uranius_worker', poolerHost))
+  assert.throws(() => assertSandboxDatabaseUrl(valid, projectRef, 'uranius_worker'))
+  assert.throws(() => assertSandboxDatabaseUrl(valid.replace(projectRef, 'differentprojectabcd'), projectRef, 'uranius_worker', poolerHost))
+  assert.throws(() => assertSandboxDatabaseUrl(valid, projectRef, 'uranius_worker', poolerHost.replace('aws-0', 'aws-1')))
 })

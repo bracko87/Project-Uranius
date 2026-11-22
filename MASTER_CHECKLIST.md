@@ -85,7 +85,7 @@ Gate: PASSED
 
 | ID | Task | Status | Evidence / commit |
 |---|---|---|---|
-| U5.01 | Authorize and provision isolated infrastructure | TODO | — |
+| U5.01 | Authorize and provision isolated infrastructure | BLOCKED | Offline database tranche and baseline triage verified in INFRASTRUCTURE_PLAN.md and TEST_REPORT.md. Owner confirmed the base price. Provisioning approval and sandbox identity verification remain pending. |
 | U5.02 | Reconstruct existing sandbox DB | TODO | — |
 | U5.03 | Seed full test world | TODO | — |
 | U5.04 | Implement hybrid DB contracts | TODO | — |

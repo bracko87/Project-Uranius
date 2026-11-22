@@ -35,3 +35,11 @@ R03 requires approval for live controls beyond attack. The selected existing_v1 
 Proposed scope for approval: a manager may tell an eligible owned rider already in a chase group to pursue a designated group ahead, using the existing flat-stage pace and energy calculations. Follow may target a rider in the same group and attempts that rider's next eligible move through existing movement and energy rules. Use no position jump or guaranteed catch. Existing terrain restrictions apply. U3.09 through U3.12 remain pending in order.
 
 U3.08 was resolved by the owner approving pursuit and follow rules. Flat-stage chase uses the existing chase pace cap and energy formula. Follow attempts the target's next supported tactical movement, currently an attack, and uses simulated pace before choosing whether to leave the source group.
+
+## U5.01 ? Paid sandbox authorization pending
+
+Approve one standalone Supabase Micro project in the existing paid Pro organization in Frankfurt at approximately $10/month incremental before tax. See INFRASTRUCTURE_PLAN.md for the exact hourly rate, shared quota headroom and isolation safeguards. The owner must confirm the dashboard billing estimate and available shared quota before any charge. After provisioning is authorized, independently verify the organization, project ref, origin, region, owner access and separate credentials before enabling the target guard. U5.02 remains pending.
+
+## U5.01 - Final offline review pending
+
+The owner confirmed the $10/month Micro base charge before tax and usage overages and explicitly withheld provisioning authorization. The initial migration and synthetic reference tranche is rehearsed locally. Hosted project identity, owner access, exact aggregate quota headroom and platform security checks remain pending until approval. The 18 Vitest failures reproduce at the sanitized root. Preserve the quarantined production worker dependency and track the remaining legacy coverage in TEST_REPORT.md. Further schema reconciliation and hosted application remain U5.02 onward.

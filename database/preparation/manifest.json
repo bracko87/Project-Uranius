@@ -1,0 +1,18 @@
+[
+  {
+    "file": "001_identity.sql",
+    "sha256": "87755f1d12a0b983d016e039d4ceb22aea1e5c165b65c2e6888049805fefbadd"
+  },
+  {
+    "file": "002_reference_schema.sql",
+    "sha256": "273fba2d82c9a1d342542ce2f163e9a5872d3ee805c61c38fa801aa9edacf1aa"
+  },
+  {
+    "file": "003_access.sql",
+    "sha256": "dd1fb87d9180ca28ea6545fdf6f97c253b1879000438dda1c9572f32cb442eb0"
+  },
+  {
+    "file": "004_synthetic_reference.sql",
+    "sha256": "e788bf6cab85f12adce0a9227534cca57e318b15aaa69474ef2e5a950472b317"
+  }
+]

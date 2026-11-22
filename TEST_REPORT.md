@@ -329,3 +329,55 @@ This is additional evidence for the existing Gate 4, with the checklist unchange
 The strong rider finished 150 s earlier and used fewer total energy points in this simulation. There was no separate attack surcharge added for this demonstration. The weaker rider launched according to the event log and was back in the peloton at the first checkpoint after launch. Each baseline had 12 events. Each attacked run had 16, including the authoritative order and launch events. The browser compares every rider's rank, time and energy, and both event streams.
 
 The combined regression run passed 146 tests across 40 files and all three protection guards. All five frozen no-command hashes and the three hybrid benchmark hashes remained unchanged. Headless Chrome verified the replay navigation, executing/successful/unsuccessful labels, two visibly separated markers only in Race B, and all ten comparison rows. Three synthetic captures are in demo/race-replay/evidence. No simulation mechanics changed.
+
+## U5.01 ? Offline infrastructure preparation
+
+Prepared INFRASTRUCTURE_PLAN.md on sanitized baseline 246a975597ef9fcf189eaea008939800dd20cf96. Supabase public documentation lists Pro at $25/month before tax with one Micro covered by the $10 monthly compute credit. Expected Micro capacity is provisional pending integrated load testing. No project, site or migration was created.
+
+- Inventory expected metadata only with valid path and line pointers. Observed 4,804 rows across 419 of 469 scanned inert SQL references and 834 literal call sites across 126 source files. All pointers passed bounds checks. The catalog is lexical and needs dependency and privilege reconciliation in U5.02.
+- Sandbox gate expected to reject missing and unapproved identities. Observed 3/3 Node guard tests pass. The allowlist remains empty.
+- Local replay comparison and timeline suite passed 13/13 in 12 files.
+- Expanded race-engine selection returned 235/236 in 37 files. The retained multi-group adapter test expects snapshots at 0, 30, 60, 90 and 120 seconds, while the observed output stops at 90. This preparation changes no source or tests.
+- Unfiltered Vitest discovery exited 1 with 37 failed files and 19 failed tests. It includes Node test files requiring their own runner, legacy checks for withheld production worker files and existing simulation assertions. Treat these results as baseline triage for scoped integration verification. Keep production-connected workers quarantined.
+- Checklist retains 60 tasks and 48 verified passes. The U5.01 provisioning gate remains blocked pending explicit cost approval and independent configuration and access verification.
+
+## U5.01 - Existing Pro organization revision
+
+The revised plan targets one standalone Micro in the existing Pro organization. At $0.01344/hour, 730 hours costs $9.81 before unused credit, tax and shared-quota overages. Owner-side billing confirmation is pending. No provisioning, database connection or migration was performed.
+
+- Target guards passed 5/5 with Node. Verified that a missing or unapproved project fails closed, direct SQL requires the exact project host and role, IPv4 session pooling requires both the pinned host and project-qualified role, and modified TLS, database, port and query options are denied. Deploy is disabled. The approval pin stays empty.
+- The synthetic adapter fixture finishes at 90 seconds. The corrected assertion checks the 0, 30, 60 and 90 second source snapshots and verifies the adapter maps every frame number, timestamp and distance. Engine and adapter implementation stayed unchanged.
+- Explicit offline race-engine and replay selection passed 249/249 across 49 files, including the frozen no-command and hybrid checks.
+- Full Vitest discovery rerun returned 1,124 passed and 18 failed tests across 117 files (81 passed, 36 failed). Before this revision it returned 1,123 passed and 19 failed. The adapter failure cleared. Remaining failures include legacy simulation assertions, production worker/source expectations and test files requiring separate discovery or runners. No pass is claimed for the repository-wide suite.
+- U5.01 remains blocked and 48/60 tasks remain verified.
+
+## U5.01 - Final offline preparation and baseline triage
+
+Ran the same local Vitest version/configuration against this checkout and a clean archive of the sanitized root `d7efe2edfcda15c09bc862f418ed7e3f8feaf189`. Neither run used the inherited checkout or accessed a database. Current Vitest reported **1,124 passed, 18 failed** and 81/117 passing files. The sanitized root reported **1,063 passed, 20 failed**. Every current failed assertion reproduces at the sanitized root. Its two additional failures were stale 120-second assertions in the stage and adapter tests, already corrected in `e33feda` and `cc9e7ef`. No sporting rules changed.
+
+| Suite | Failed assertion | Classification and observed evidence |
+|---|---|---|
+| dnfDnsIncidencePilot | Extreme fatigue incident incidence | Inherited. Expected positive count, observed zero |
+| roadRaceDirectorRuntimeV2 | Established break survives a tick | Inherited. Observed 133.2926 versus bound of 18 |
+| roadRaceDirectorRuntimeV2 | Coordinated chase overrides early-catch protection | Inherited. Observed gap 115.43125 versus 0.3 |
+| roadRaceDirectorRuntimeV2 | Hilly survivor count remains an audit expectation | Inherited. Observed 20 versus below 20 |
+| runRaceEngine | Attack launch has extra energy cost | Inherited. Observed 16.101308 versus 13.479514 |
+| runRaceEngine | Single backend calculation, never replay-page calculation | Missing test dependency. Quarantined worker file |
+| runRaceEngine | Final checkpoint is the only result-visibility gate | Inherited. Legacy JSX source string differs |
+| runRaceEngine | Backend ownership, sync rejection and playback speeds | Missing test dependency. Quarantined worker file |
+| runRaceEngine | One engine run and downloadable audit | Inherited. Legacy audit heading absent |
+| runRaceEngine | Phase 4 bridge stays in canonical corridor | Inherited. Distance differs by 0.0551109 km |
+| runRaceEngine | Single backend call receives canonical Phase 9 inputs | Missing test dependency. Quarantined worker file |
+| runRaceEngine | Phase 9 inputs stay backend-only | Missing test dependency. Quarantined worker file |
+| runRaceEngine | Autonomous incident groups become one chase group | Inherited. Expected positive count, observed zero |
+| runRaceEngine | Sprint-zone timing and finish position without injury | Inherited. Expected false, observed true |
+| runRaceEngine | Phase 9/10 calculation ownership | Missing test dependency. Quarantined worker file |
+| runRaceEngine | Phase 11B worker-only execution and read-only replay | Missing test dependency. Quarantined worker file |
+| runRaceEngine | Protect-leader helpers collect classification leader | Inherited. Observed zero helpers versus five |
+| runRaceEngine | Steep-climb protect-leader attempt can fail physically | Inherited. Observed zero helpers versus five |
+
+All six missing dependency checks expect `supabase/functions/universal-race-stage-runner/index.ts`. Preserve quarantine. Verify equivalent behavior with a sandbox worker after integration. The other 12 failures are baseline differences. No Uranius-introduced regression was identified in this set. Review applicable current product expectations before touching simulator logic.
+
+Unfiltered Vitest also discovers standalone diagnostics and Node test files as empty suites. Ran tracked `.test.mjs` files separately with Node's native runner. Current checkout reported **25 passed / 15 failed** versus **23 passed / 15 failed** at the sanitized root. Failures concern withheld legacy artifacts and legacy application expectations. Both test scopes remain red overall. Running the Node files with their native runner addresses test discovery without hiding the legacy failures. The explicit Uranius race and replay selection previously passed 249/249.
+
+PGlite 0.3.16 installed from the offline cache with lifecycle scripts disabled. Rehearsed all four ordered migrations in process with a minimal managed Auth shim. Manifest hashes, ledger order, wrong or missing identity denial, route endpoints, fields of 100/150/200, anonymous denial, two distinct owners, cross-team isolation and client write/private-table denial all passed. This verifies PostgreSQL behavior of the preparation tranche locally. Managed Supabase behavior and app integration still require the later gates. Target guard passed 5/5. The initialization command denied missing configuration before invoking any database client. No remote SQL or provisioned resources were used.

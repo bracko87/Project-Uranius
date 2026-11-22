@@ -184,18 +184,18 @@ describe(
             stage,
           )
 
-        expect(
-          output.snapshots.map(
-            (snapshot) =>
-              snapshot.raceSecond,
-          ),
-        ).toStrictEqual([
-          0,
-          30,
-          60,
-          90,
-          120,
-        ])
+        expect(stage.finalState.raceSecond).toBe(90)
+        expect(stage.replaySnapshots.map(snapshot => snapshot.raceSecond))
+          .toStrictEqual([0, 30, 60, 90])
+        expect(output.snapshots.map(snapshot => ({
+          frameNumber: snapshot.frameNumber,
+          raceSecond: snapshot.raceSecond,
+          km: snapshot.km,
+        }))).toStrictEqual(stage.replaySnapshots.map(snapshot => ({
+          frameNumber: snapshot.sequenceNumber,
+          raceSecond: snapshot.raceSecond,
+          km: snapshot.currentKm,
+        })))
       },
     )
 
