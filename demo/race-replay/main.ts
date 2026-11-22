@@ -36,4 +36,4 @@ for (const [label, second] of moments) {
   controls.append(button)
 }
 const requested = Number(new URLSearchParams(location.search).get('second'))
-render(moments.some(([, second]) => second === requested) ? requested : 0)
+render(Number.isFinite(requested) ? requested : 0)

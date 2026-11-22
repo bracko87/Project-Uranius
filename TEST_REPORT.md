@@ -266,3 +266,8 @@ One Vitest fixture test passed. Headless Chrome opened the local bundle at secon
 ## U4.02 — Course and axes
 
 Both offline tests passed. Distance and elevation use the authoritative 10 km profile. At km 5 the marker maps to SVG x=372. Headless Chrome passed its corresponding pixel-position check at viewport widths 620 and 1280 px.
+
+
+## U4.03 — Time-driven positions
+
+Three offline tests passed. At seconds 375 and 525, interpolated group positions matched the independently calculated 4/3.75 km and 5.5/5.25 km. Exact checkpoints, group birth and stopping at the last available sample were verified.

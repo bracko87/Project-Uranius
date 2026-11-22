@@ -3,7 +3,7 @@
 Status: preliminary setup evidence available; Codex must verify acceptance criteria before recording PASS. No race-engine changes or paid provisioning performed.
 PASS only when the acceptance criterion in PROJECT_URANIUS_MASTER_PLAN.md is verified and evidence recorded.
 Allowed statuses: TODO, IN_PROGRESS, BLOCKED, PASS.
-Progress: 38/60 verified.
+Progress: 39/60 verified.
 
 ## Milestone 1 — Source clone, Codex connection and safety (12 tasks)
 
@@ -68,7 +68,7 @@ Gate: PASSED
 |---|---|---|---|
 | U4.01 | Isolated replay fixture viewer | PASS | TEST_REPORT.md and verified evidence in this task commit. |
 | U4.02 | Course and axes | PASS | TEST_REPORT.md and verified evidence in this task commit. |
-| U4.03 | Time-driven positions | TODO | — |
+| U4.03 | Time-driven positions | PASS | TEST_REPORT.md and verified evidence in this task commit. |
 | U4.04 | Terrain-dependent speed | TODO | — |
 | U4.05 | Separate group markers | TODO | — |
 | U4.06 | Real gaps and distances | TODO | — |
