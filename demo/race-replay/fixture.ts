@@ -20,7 +20,9 @@ export const terrainFrames: readonly ReplayFrame[] = [
   [climbEnd, 7, 39.24],
   [climbEnd + 3 * 3600 / 39.24, 10, 0],
 ].map(([second, km, speedKmh]) => ({
-  second, groups: [{ ...fixtureFrames[0].groups[0], km, speedKmh }],
+  second,
+  groups: speedKmh === 0 ? [] : [{ ...fixtureFrames[0].groups[0], km, speedKmh }],
+  ...(speedKmh === 0 ? { finished: fixtureFrames[0].groups[0].roster, terminalKm: { peloton: km } } : {}),
 }))
 
 export const fixtureEvents = [

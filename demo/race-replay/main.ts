@@ -10,7 +10,7 @@ import { courseProfile } from './courseProfile'
 
 const root = document.querySelector<HTMLElement>('#replay')
 if (!root) throw new Error('Replay root is missing.')
-root.innerHTML = '<h1>Race replay</h1><p>Synthetic 10 km road stage</p><nav aria-label="Replay examples"><a href="?fixture=groups">Groups</a><a href="?fixture=terrain">Terrain</a><a href="?fixture=status">Classifications</a><a href="?mode=live">Live demo</a></nav><p id="connection" role="status" hidden></p><section class="panel controls" aria-label="Fixture moments"></section><section class="panel"><div class="playback"><button id="play" type="button">Play</button><label>Replay speed <select id="rate"><option value="1">1?</option><option value="4">4?</option><option value="16">16?</option></select></label><output id="timer"></output><label class="seek">Race time <input id="seek" type="range" min="0" step="0.1"></label></div><h2>Stage profile</h2><div id="course"></div><h2>Groups on the road</h2><ul id="groups"></ul><p id="classification"></p><h2>Race events</h2><ul id="events"></ul><section id="result" hidden><h2>Final classification</h2><ol></ol></section></section>'
+root.innerHTML = "<h1>Race replay</h1><p>Synthetic 10 km road stage</p><nav aria-label=\"Replay examples\"><a href=\"?fixture=groups\">Groups</a><a href=\"?fixture=terrain\">Terrain</a><a href=\"?fixture=status\">Classifications</a><a href=\"?mode=live\">Live demo</a></nav><p id=\"connection\" role=\"status\" hidden></p><section class=\"panel controls\" aria-label=\"Fixture moments\"></section><section class=\"panel\"><div class=\"playback\"><button id=\"play\" type=\"button\">Play</button><label>Replay speed <select id=\"rate\"><option value=\"1\">1&times;</option><option value=\"4\">4&times;</option><option value=\"16\">16&times;</option></select></label><output id=\"timer\"></output><label class=\"seek\">Race time <input id=\"seek\" type=\"range\" min=\"0\" step=\"0.1\"></label></div><h2>Stage profile</h2><div id=\"course\"></div><h2>Groups on the road</h2><ul id=\"groups\"></ul><p id=\"classification\"></p><h2>Race events</h2><ul id=\"events\"></ul><section id=\"result\" hidden><h2>Final classification</h2><ol></ol></section></section>"
 const course = root.querySelector('#course')!
 course.innerHTML = courseProfile(syntheticTenRiderStage.profilePoints, syntheticTenRiderStage.distanceKm)
 const groupMarkers = course.querySelector('#profile-markers')!
@@ -51,15 +51,17 @@ function render(second: number, animateElapsed = false) {
     const row = document.createElement('li')
     row.dataset.groupId = group.id
     row.style.borderInlineStart = '3px solid ' + markers[index].colour
-    row.textContent = group.name + ' · ' + group.roster.length + ' riders ? ' + group.km.toFixed(2) + ' km ? ' + group.speedKmh.toFixed(1) + ' km/h'
-      + ' ? ' + gaps[index].distanceKm.toFixed(2) + ' km behind'
-      + (gaps[index].gapSeconds === null ? ' ? time gap unavailable' : ' ? ' + gaps[index].gapSeconds.toFixed(1) + ' s gap')
+    const distance = gaps[index].distanceKm
+    const separation = distance > 0 && distance < 0.01 ? (distance * 1000).toFixed(1) + ' m' : distance.toFixed(2) + ' km'
+    row.textContent = group.name + ' · ' + group.roster.length + (group.roster.length === 1 ? ' rider' : ' riders') + ' · ' + group.km.toFixed(3) + " km · " + group.speedKmh.toFixed(1) + ' km/h'
+      + " · " + separation + ' behind'
+      + (gaps[index].gapSeconds === null ? " · time gap unavailable" : " · " + gaps[index].gapSeconds.toFixed(1) + ' s gap')
     return row
   }))
-  classification.textContent = (frame.finished?.length ?? 0) + ' finished ? ' + (frame.withdrawn?.length ?? 0) + ' withdrawn'
+  classification.textContent = (frame.finished?.length ?? 0) + " finished · " + (frame.withdrawn?.length ?? 0) + ' withdrawn'
   eventsList.replaceChildren(...elapsedEvents(projection ? projectionEvents(projection) : terrain || status ? [] : fixtureEvents, frame.second).map(event => {
     const item = document.createElement('li')
-    item.textContent = event.second + ' s ? ' + event.label
+    item.textContent = event.second + " s · " + event.label
     return item
   }))
   for (const element of controls.querySelectorAll('button')) {
@@ -100,7 +102,7 @@ if (!liveDemo) render(Number.isFinite(requested) ? requested : 0)
 else {
   const connection = root.querySelector<HTMLElement>('#connection')!
   connection.hidden = false
-  connection.textContent = 'Loading the local race?'
+  connection.textContent = "Loading the local race…"
   let drift = 0
   const api = async (route: string, method = 'GET', body?: unknown) => {
     const response = await fetch(route, {
@@ -119,7 +121,7 @@ else {
       lastSecond = projection.raceSecond
       seek.max = String(lastSecond)
       play.disabled = seek.disabled = rate.disabled = !projection.completed
-      connection.textContent = projection.completed ? 'Completed replay ? revision ' + projection.revision : 'Live ? revision ' + projection.revision
+      connection.textContent = projection.completed ? "Completed replay · revision " + projection.revision : "Live · revision " + projection.revision
       if (document.visibilityState === 'visible' && !projection.completed && previousSecond !== undefined && lastSecond > previousSecond) {
         cancelAnimationFrame(drift)
         const start = performance.now()
@@ -142,7 +144,7 @@ else {
         result.hidden = false
         result.querySelector('ol')!.replaceChildren(...projection.final.finalRiderStates.map(rider => {
           const item = document.createElement('li')
-          item.textContent = rider.riderName + ' ? ' + (rider.finishTimeSeconds === null ? rider.stageStatus : rider.finishTimeSeconds.toFixed(1) + ' s')
+          item.textContent = rider.riderName + " · " + (rider.finishTimeSeconds === null ? rider.stageStatus : rider.finishTimeSeconds.toFixed(1) + ' s')
           return item
         }))
       }
@@ -208,7 +210,7 @@ else {
     if (!projection || pending) return
     pending = true
     updateTargets()
-    feedback.textContent = 'Sending command?'
+    feedback.textContent = "Sending command…"
     try {
       const reply = await api('/api/command', 'POST', {
         owner: owner.value,
@@ -216,7 +218,7 @@ else {
           commandId: crypto.randomUUID(), teamId: teamId(), riderId: rider.value, kind: kind.value, targetId: target.value,
         }),
       })
-      feedback.textContent = reply.status === 'accepted' ? 'Accepted ? revision ' + reply.revision : 'Rejected ? ' + reply.reason
+      feedback.textContent = reply.status === 'accepted' ? "Accepted · revision " + reply.revision : "Rejected · " + reply.reason
       await refresh()
     } catch { feedback.textContent = 'Command unavailable. Reconnect to confirm the current revision.' }
     finally { pending = false; updateTargets() }

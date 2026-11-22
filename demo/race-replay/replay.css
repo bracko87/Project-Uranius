@@ -31,3 +31,5 @@ button:disabled, select:disabled { opacity: 0.55; }
 .tactics h2, .tactics p { width: 100%; margin: 0; }
 .tactics label { display: grid; gap: 4px; }
 [hidden] { display: none !important; }
+#events { max-height: 160px; overflow: auto; }
+@media (max-width: 600px) { .profile text { font-size: 16px; } }

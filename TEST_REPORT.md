@@ -311,3 +311,8 @@ Twelve tests passed. The local loopback demo served the real in-memory authority
 ## U4.11 — Live tactics and resync
 
 13 offline checks passed in 12 files. Two real Chrome tabs against one loopback server converged to revision 1 after an attack. The browser showed accepted and rejected responses, manual reconnect restored the authoritative view, and the service denied an unowned rider and a cross-origin clock request. The initially throttled background tab now snaps to elapsed data instead of waiting on animation frames.
+
+
+## U4.12 — Visual regression gate
+
+The full offline run passed 144 checks across 39 files and all three protection guards. All five frozen no-command hashes and three hybrid benchmark hashes matched. The final 11 viewer checks passed again after visual refinements. The Chrome evidence suite verified two tabs, acceptance and rejection, resync, elapsed history, completion, 16x playback, pause and seek, and a race clock unaffected by replay controls. Six synthetic captures are in demo/race-replay/evidence. Plots were assessed at desktop and narrow widths; no production service or deployment was used.

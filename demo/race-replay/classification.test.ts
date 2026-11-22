@@ -1,9 +1,11 @@
 import { expect, it } from 'vitest'
-import { fixtureFrames, statusFrames } from './fixture'
+import { fixtureFrames, statusFrames, terrainFrames } from './fixture'
 import { frameAt, hasUniqueGroupMembership } from './timeline'
 
 it('keeps a solo rider active and lists withdrawals and finishers outside active groups', () => {
   expect(fixtureFrames[3].groups.map(group => group.id)).toEqual(['peloton'])
+  expect(terrainFrames.at(-1)?.groups).toEqual([])
+  expect(terrainFrames.at(-1)?.finished).toHaveLength(10)
   const before = frameAt(statusFrames, 499)
   const middle = frameAt(statusFrames, 500)
   expect(before.withdrawn).toBeUndefined()
