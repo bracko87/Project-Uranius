@@ -256,3 +256,8 @@ The complete offline regression passed 133 tests across 28 files and all three p
 | Mountain 96 | 2c085a4117904c3d | 1106 / 1266 | 7 | 11450128 | 410418 |
 
 All cases met the recorded offline engineering limits. The heap figure is a sampled increase. This gate covers the in-memory authority and synthetic road stages. Historical sporting parity and deployed performance remain unverified.
+
+
+## U4.01 — Isolated fixture viewer
+
+One Vitest fixture test passed. Headless Chrome opened the local bundle at seconds 0, 300 and 600 and rendered 1, 2 and 1 groups, respectively. The fixture imports no engine runtime or database client.
