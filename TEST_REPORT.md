@@ -198,3 +198,7 @@ Reviewed each of the 12 unpublished commits, including metadata and every change
 ## U3.01 — Complete resumable state
 
 Two checkpoint tests and the pinned no-command baseline passed. The checkpoint stores a versioned envelope for the existing_v1 tick engine, preserving insertion order and explicit undefined order fields. A progressed stage with a pending attack round-tripped through JSON, produced identical full states for ten further ticks, and executed the scheduled attack in each branch. Unsupported versions and a modified payload were rejected. The current tick path carries its inputs, seed, clocks, rider/group/order state, event history and counters in SimulationState. This checkpoint does not authorize a different engine lane.
+
+## U3.02 — Checkpoint continuation
+
+Six offline tests passed. Continuation from serialized checkpoints at ticks 0, 1, 9, 20 and 40 produced the exact uninterrupted output, including events, frames and final riders. The last checkpoint exercises an already-completed race. The frozen ten-rider hash passed again. Continuation reuses the existing tick, replay boundary, snapshot and output functions.
