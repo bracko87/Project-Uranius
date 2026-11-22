@@ -27,3 +27,9 @@ The owner authorized anonymization or quarantine. Numerical inputs were preserve
 ## Upload preflight resolved
 
 The owner confirmed the Netlify repository access configuration and authorized upload of the exact approved root. GitHub independently confirmed disabled Actions, no Pages, zero webhooks, deployments and environments, and zero refs before the push. Installed App inventory was unavailable to the token. No Netlify access or deployment was used. The published main initially matched the approved root exactly. This checkout is the sole development workspace. The inherited checkout is read-only provenance.
+
+## U3.08 — Chase and follow rule approval
+
+R03 requires approval for live controls beyond attack. The selected existing_v1 effect executor ignores every non-attack TeamOrder. The available flat-stage chase effort function is a group-level bonus and supplies neither a rider's target or eligibility rules nor a follow lifecycle. Reusing it for a live order requires a sporting decision about who can initiate or join the pursuit, how long the order lasts, and which actions can affect group pace.
+
+Proposed scope for approval: a manager may tell an eligible owned rider already in a chase group to pursue a designated group ahead, using the existing flat-stage pace and energy calculations. Follow may target a rider in the same group and attempts that rider's next eligible move through existing movement and energy rules. Use no position jump or guaranteed catch. Existing terrain restrictions apply. U3.09 through U3.12 remain pending in order.

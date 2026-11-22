@@ -222,3 +222,9 @@ Eleven offline tests passed, including the frozen no-command output and inherite
 ## U3.07 — Repeated live commands
 
 Three offline tests passed. The second attack at tick 7 builds on the checkpoint advanced from the first at tick 5. Sequences are exactly 1 and 2. A stale-revision apply and a duplicate apply to the successor were rejected. Applying the same accepted command to the same predecessor reproduced one identical successor. Previously elapsed frames and events remained exact, and the continued output contains each attack exactly once.
+
+## U3.08 — Rule discovery and regression before hold
+
+Source inspection verified that the existing tick invokes the effect executor and that the executor ignores non-attack orders. The existing chase effort helper is limited to eligible chase groups on flat profiles and incorporates average energy. No approved rider-level chase or follow rule has been established. No U3.08 acceptance result is claimed. See BLOCKERS.md.
+
+The pre-hold regression run passed 31 tests across nine Vitest files and all three production protection tests. The full set of five frozen output hashes remained exact, including both 96-rider road fixtures. This regression does not establish historical sporting equivalence.

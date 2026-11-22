@@ -54,7 +54,7 @@ Gate: PASSED
 | U3.05 | Single attack test | PASS | Tick-5 accepted attack, preserved history and recomputed result tested. |
 | U3.06 | Future causality | PASS | Position, membership and event causality checks passed. |
 | U3.07 | Repeated commands | PASS | Latest-revision, duplicate and two-attack history checks passed. |
-| U3.08 | Chase and follow | TODO | — |
+| U3.08 | Chase and follow | BLOCKED | Existing lane ignores these orders. Owner rule decision recorded in BLOCKERS.md. |
 | U3.09 | Support/work/effort | TODO | — |
 | U3.10 | Server authority in test harness | TODO | — |
 | U3.11 | Recovery and finalization | TODO | — |
