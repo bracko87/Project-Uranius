@@ -34,31 +34,16 @@ if ([IO.Path]::GetFileName($psql) -ne 'psql.exe' -or $ca.StartsWith($repo + '\',
 $version = & $psql --version
 if ($LASTEXITCODE -ne 0 -or $version -notmatch '^psql \(PostgreSQL\) 17\.') { throw 'Expected PostgreSQL 17 psql.' }
 
-function Invoke-UraniusPsql([string[]]$Arguments) {
-    & $psql -X --set=ON_ERROR_STOP=1 -P pager=off @Arguments
-    if ($LASTEXITCODE -ne 0) { throw 'Connection or SQL failed. Inspect the role and ledger before retrying.' }
+. (Join-Path $PSScriptRoot 'UraniusPsqlBatch.ps1')
+if ([Console]::IsInputRedirected) { throw 'Run this script directly in an interactive Windows PowerShell terminal.' }
+
+$connection = @{
+    PGHOST = $dbHost; PGPORT = '5432'; PGDATABASE = 'postgres'; PGUSER = 'postgres'
+    PGSSLMODE = 'verify-full'; PGSSLROOTCERT = $ca; PGCONNECT_TIMEOUT = '10'; PGGSSENCMODE = 'disable'
+    PGOPTIONS = '-c statement_timeout=30000 -c lock_timeout=10000'
 }
 
-$keys = @('Path','URANIUS_SUPABASE_PROJECT_REF','URANIUS_SUPABASE_URL','URANIUS_DATABASE_CA_FILE','URANIUS_DATABASE_URL',
-    'PGHOST','PGPORT','PGDATABASE','PGUSER','PGSSLMODE','PGSSLROOTCERT','PGCONNECT_TIMEOUT','PGGSSENCMODE')
-$keys += @(Get-ChildItem Env: | Where-Object Name -like 'PG*' | Select-Object -ExpandProperty Name)
-$keys = $keys | Sort-Object -Unique
-$saved = @{}
-foreach ($key in $keys) { $saved[$key] = [Environment]::GetEnvironmentVariable($key, 'Process') }
-
-try {
-    foreach ($key in $keys | Where-Object { $_ -like 'PG*' }) {
-        [Environment]::SetEnvironmentVariable($key, $null, 'Process')
-    }
-    $env:PGHOST = $dbHost
-    $env:PGPORT = '5432'
-    $env:PGDATABASE = 'postgres'
-    $env:PGUSER = 'postgres'
-    $env:PGSSLMODE = 'verify-full'
-    $env:PGSSLROOTCERT = $ca
-    $env:PGCONNECT_TIMEOUT = '10'
-    $env:PGGSSENCMODE = 'disable'
-    $fresh = @'
+$fresh = @'
 DO $$
 BEGIN
     IF current_database() <> 'postgres' OR current_user <> 'postgres' OR session_user <> 'postgres'
@@ -74,14 +59,29 @@ BEGIN
     END IF;
 END $$;
 '@
-    Write-Host "Target: $dbHost (verify-full). Enter the Uranius postgres password at the psql prompt."
-    if (-not $Apply) {
-        Invoke-UraniusPsql @('-W','-c','BEGIN READ ONLY','-c',$fresh,'-c','ROLLBACK')
-        Write-Host 'Read-only endpoint and fresh-state verification passed.'
-        return
-    }
 
-    $bootstrap = @'
+Write-Host ('Target: ' + $dbHost + ' (verify-full). Press Ctrl+C to cancel.')
+$adminSecret = Read-Host 'Uranius postgres database password' -AsSecureString
+$adminPointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($adminSecret)
+try {
+    $adminPassword = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($adminPointer)
+    if (!$adminPassword) { throw 'The Uranius postgres password was empty.' }
+    Invoke-UraniusPsqlBatch -Executable $psql -Connection $connection -Password $adminPassword -Stage 'Read-only Uranius login and fresh-state check' -Sql ('BEGIN READ ONLY;' + $fresh + 'ROLLBACK;') | Out-Null
+    Write-Host 'Uranius login, TLS and fresh-state checks passed.'
+    if (-not $Apply) { return }
+
+    $migrationSecret = Read-Host 'Choose the uranius_migrator password (16+ printable ASCII characters, no spaces)' -AsSecureString
+    $confirmSecret = Read-Host 'Confirm the uranius_migrator password' -AsSecureString
+    $migrationPointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($migrationSecret)
+    $confirmPointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($confirmSecret)
+    try {
+        $migrationPassword = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($migrationPointer)
+        $confirmation = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($confirmPointer)
+        if ($migrationPassword -cne $confirmation) { throw 'Migration passwords do not match. No write was attempted.' }
+        if ($migrationPassword -ceq $adminPassword) { throw 'Use a distinct migration-role password. No write was attempted.' }
+        $verifier = New-UraniusScramVerifier $migrationPassword
+
+        $bootstrap = @'
 CREATE ROLE uranius_migrator NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE
   NOINHERIT NOREPLICATION NOBYPASSRLS;
 GRANT CONNECT, CREATE ON DATABASE postgres TO uranius_migrator;
@@ -89,35 +89,40 @@ GRANT USAGE ON SCHEMA auth TO uranius_migrator;
 GRANT REFERENCES (id) ON auth.users TO uranius_migrator;
 GRANT EXECUTE ON FUNCTION auth.uid() TO uranius_migrator;
 '@
-    Write-Host 'Choose and confirm a distinct migration password when psql prompts for it.'
-    Invoke-UraniusPsql @('-W','--single-transaction','-c',$fresh,'-c',$bootstrap,
-        '-c','\password uranius_migrator','-c','ALTER ROLE uranius_migrator LOGIN;')
+        $roleSql = 'BEGIN;' + $fresh + $bootstrap + ('ALTER ROLE uranius_migrator LOGIN PASSWORD ''{0}'';' -f $verifier) + 'COMMIT;'
+        Invoke-UraniusPsqlBatch -Executable $psql -Connection $connection -Password $adminPassword -Stage 'Restricted role bootstrap' -Sql $roleSql | Out-Null
+        Remove-Variable verifier,roleSql
+        Write-Host 'Restricted role created. Applying the four approved migrations.'
 
-    $secret = Read-Host 'Re-enter the migration-role password for the initializer' -AsSecureString
-    $pointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secret)
-    try {
-        $env:Path = (Split-Path -Parent $psql) + [IO.Path]::PathSeparator + $saved['Path']
-        $env:URANIUS_SUPABASE_PROJECT_REF = $ref
-        $env:URANIUS_SUPABASE_URL = "https://$ref.supabase.co"
-        $env:URANIUS_DATABASE_CA_FILE = $ca
-        $encoded = [Uri]::EscapeDataString([Runtime.InteropServices.Marshal]::PtrToStringBSTR($pointer))
-        $env:URANIUS_DATABASE_URL = 'postgresql://uranius_migrator:{0}@{1}:5432/postgres?sslmode=verify-full' -f $encoded,$dbHost
-        Remove-Variable encoded
-        & node (Join-Path $PSScriptRoot 'initialize-sandbox-database.mjs') --apply-reviewed-initial-migrations
-        if ($LASTEXITCODE -ne 0) { throw 'Initializer stopped. Inspect the Uranius ledger before retrying.' }
+        $keys = @('URANIUS_SUPABASE_PROJECT_REF','URANIUS_SUPABASE_URL','URANIUS_DATABASE_CA_FILE','URANIUS_DATABASE_URL','URANIUS_PSQL_PATH')
+        $saved = @{}
+        foreach ($key in $keys) { $saved[$key] = [Environment]::GetEnvironmentVariable($key, 'Process') }
+        try {
+            $env:URANIUS_SUPABASE_PROJECT_REF = $ref
+            $env:URANIUS_SUPABASE_URL = 'https://' + $ref + '.supabase.co'
+            $env:URANIUS_DATABASE_CA_FILE = $ca
+            $env:URANIUS_PSQL_PATH = $psql
+            $env:URANIUS_DATABASE_URL = 'postgresql://uranius_migrator:{0}@{1}:5432/postgres?sslmode=verify-full' -f [Uri]::EscapeDataString($migrationPassword),$dbHost
+            & node (Join-Path $PSScriptRoot 'initialize-sandbox-database.mjs') --apply-reviewed-initial-migrations
+            if ($LASTEXITCODE -ne 0) { throw 'Initializer stopped. Inspect the Uranius ledger before retrying.' }
+        }
+        finally {
+            foreach ($key in $keys) { [Environment]::SetEnvironmentVariable($key, $saved[$key], 'Process') }
+        }
+
+        $connection.PGUSER = 'uranius_migrator'
+        $verify = for ($i = 0; $i -lt $manifest.Count; $i++) { '\set hash' + ($i + 1) + ' ' + $manifest[$i].sha256 }
+        $verifySql = ($verify -join [Environment]::NewLine) + [Environment]::NewLine + (Get-Content -Raw -LiteralPath (Join-Path $dir 'verify-initialization.sql'))
+        Invoke-UraniusPsqlBatch -Executable $psql -Connection $connection -Password $migrationPassword -Stage 'Post-migration verification' -Sql $verifySql
     }
     finally {
-        [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($pointer)
-        $secret.Dispose()
-        [Environment]::SetEnvironmentVariable('URANIUS_DATABASE_URL', $null, 'Process')
+        [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($migrationPointer)
+        [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($confirmPointer)
+        $migrationSecret.Dispose()
+        $confirmSecret.Dispose()
     }
-
-    $env:PGUSER = 'uranius_migrator'
-    Write-Host 'Enter the migration-role password for read-only verification.'
-    $verify = @('-W','-f',(Join-Path $dir 'verify-initialization.sql'))
-    for ($i = 0; $i -lt $manifest.Count; $i++) { $verify += '--set=hash' + ($i + 1) + '=' + $manifest[$i].sha256 }
-    Invoke-UraniusPsql $verify
 }
 finally {
-    foreach ($key in $keys) { [Environment]::SetEnvironmentVariable($key, $saved[$key], 'Process') }
+    [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($adminPointer)
+    $adminSecret.Dispose()
 }

@@ -403,3 +403,9 @@ The pinned Uranius host accepted a direct IPv6 TCP connection. A passwordless ps
 ### U5.02 - Windows PowerShell 5.1 manifest regression
 
 Reproduced the failure without network access. Windows PowerShell 5.1 returned one outer element containing a four-entry array when the ConvertFrom-Json pipeline was wrapped in @(). The script now assigns the parser result directly and validates its array type, count, order and file hashes before client setup. The offline manifest test passed on Windows PowerShell 5.1 for all four entries and SHA-256 hashes. Six sandbox guard tests and two local PostgreSQL rehearsals passed. The approved manifest and numbered SQL files have no diff. No remote database connection or write was attempted.
+
+### U5.02 - Windows private password prompts
+
+The reported stall occurred during a psql invocation that combined -W login prompting and the interactive password command under PowerShell 5.1. The exact console failure was not reproduced. Replaced both native prompts with labeled, masked PowerShell input and a separate read-only login/TLS/fresh-state check before bootstrap. The revised psql child has no prompts, receives SQL over stdin and the login password through its process environment. A confirmed distinct migration password is converted to SCRAM client-side. Child errors are sanitized and bounded by timeouts. The guarded initializer now has a process timeout too.
+
+Offline PowerShell 5.1 tests passed for SCRAM derivation against an independent implementation, salt freshness, child-environment isolation, no credential arguments, sanitized failures and forced timeout. The manifest regression, six sandbox guards and both PostgreSQL rehearsals also passed. The manifest and four approved SQL files did not change. No database connection, role creation or migration was attempted. The owner reports the hosted database is still fresh.

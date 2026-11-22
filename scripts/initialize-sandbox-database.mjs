@@ -45,11 +45,12 @@ function initialize(env) {
     PGGSSENCMODE: 'disable',
     PGSSLROOTCERT: env.URANIUS_DATABASE_CA_FILE,
     PGCONNECT_TIMEOUT: '10',
+    PGOPTIONS: '-c statement_timeout=30000 -c lock_timeout=10000',
   })
-  const result = spawnSync('psql', [
+  const result = spawnSync(env.URANIUS_PSQL_PATH || 'psql', [
     '--no-psqlrc', '--no-password', '--quiet', '--set=ON_ERROR_STOP=1',
     '--single-transaction', '--file=-',
-  ], { env: childEnv, input: statements.join('\n'), encoding: 'utf8', stdio: ['pipe', 'ignore', 'pipe'] })
+  ], { env: childEnv, input: statements.join('\n'), encoding: 'utf8', timeout: 120_000, stdio: ['pipe', 'ignore', 'pipe'] })
   if (result.error || result.status !== 0) {
     throw new Error('Sandbox initialization did not report success. Verify the migration ledger before retrying.')
   }
