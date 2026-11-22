@@ -141,3 +141,7 @@ U2.01 map in CURRENT_RACE_ENGINE.md covers scheduling, eligibility, preparation 
 ## U2.02 — Compare engine versions
 
 The two Vitest synthetic tests passed on the deterministic starting lane. The V4 assertion script passed after compiling the two reviewed files into a temporary ES module and running it directly in Node. The first combined Vitest invocation ran the assertions successfully but rejected the standalone V4 script because it registers no Vitest suite. Universal worker source routing and U1.06 pin evidence complete the decision matrix. CURRENT_RACE_ENGINE.md records the selected version and reusable adapters.
+
+## U2.03 — Inventory current contracts
+
+CONTRACTS.md records inherited units, schemas, invariants and missing deployed evidence. Verified all ten source links and five exact contract markers. No schema connection was made.
