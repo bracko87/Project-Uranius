@@ -157,3 +157,7 @@ Three offline Vitest tests passed. Coverage includes unsupported version and mal
 ## U2.06 — Synthetic micro-fixtures
 
 Two offline Vitest tests passed on the ten-rider, ten-kilometre profile and the separate hand-computed constant-speed group reference. The reference splits the field 2/8 at km 3, reaches km 5 and 4.5 at second 450, catches at km 6 and second 600, and finishes together at km 10 and second 1,000. All ten riders are accounted for once at every sample. The fixed reference is independent of the engine's observed output.
+
+## U2.07 — Existing no-command baseline
+
+Two executions of the same fictional ten-rider stage yielded identical full output, with all ten riders finished, 32 frames and 12 events. Pinned canonical output hash 98cdb350835b7fde. The regression test was then rerun against the fixed expected hash and passed. The independent arithmetic reference in U2.06 remains separate from this observed engine baseline.
