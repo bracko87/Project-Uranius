@@ -194,3 +194,7 @@ RACE_BASELINE.md freezes the benchmark baseline commit a7491a5a59f582605d799ec23
 ## Milestone 2 GitHub synchronization
 
 Reviewed each of the 12 unpublished commits, including metadata and every changed file version. The audit found no new credential, contact, dump, private fixture or production endpoint signatures. Existing approved-root text remained within the prior review. Recreated only the unpublished history to remove Windows line-ending warnings and retained the original local commits under an unpublished backup ref. Both individual and aggregate Git whitespace checks passed. All 104 selected Vitest tests and three guard tests passed from the normalized checkout. GitHub confirmed cfc232015d0b3f34945d5e6d4ed5f83baceb78de on Uranius main after a normal fast-forward push. GitHub Actions remained disabled and hosting checks found no Pages, hooks, environments or deployments.
+
+## U3.01 — Complete resumable state
+
+Two checkpoint tests and the pinned no-command baseline passed. The checkpoint stores a versioned envelope for the existing_v1 tick engine, preserving insertion order and explicit undefined order fields. A progressed stage with a pending attack round-tripped through JSON, produced identical full states for ten further ticks, and executed the scheduled attack in each branch. Unsupported versions and a modified payload were rejected. The current tick path carries its inputs, seed, clocks, rider/group/order state, event history and counters in SimulationState. This checkpoint does not authorize a different engine lane.
