@@ -236,3 +236,7 @@ The pre-hold regression run passed 31 tests across nine Vitest files and all thr
 ## U3.09 — Teammate support and effort
 
 Seven offline checks passed. Same-group teammate support activates the existing capped cooperation pace for one tick. Late-stage peloton effort uses the inherited onset and cap for one tick. Extra pace consumes additional energy through the existing speed-cost calculation. The tests reject a non-teammate target and early effort. The boosted actor does not automatically win. Prior replay output and the frozen no-command golden remained exact.
+
+## U3.10 — Server authority harness
+
+Three offline checks passed. The in-memory authority derives the effective tick from server state, verifies principal ownership and rider eligibility, and uses the expected revision to serialize competing requests. The same authorized request returns its original acknowledgement. A different payload or owner with that ID cannot replay it. The elapsed projection contains only current or prior frames and events, preserves already published frames, and clones output so callers cannot mutate the authority.
