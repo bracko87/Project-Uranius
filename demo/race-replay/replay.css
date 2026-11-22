@@ -16,4 +16,5 @@ ul { padding-left: 1.4rem; }
 .axis { stroke: #647b98; fill: none; }
 .course-fill { fill: #224a71; }
 .course-line { fill: none; stroke: #79c8f7; stroke-width: 2; }
-#profile-markers line { stroke: #f7c46c; stroke-width: 2; vector-effect: non-scaling-stroke; }
+#profile-markers line { stroke-width: 2; vector-effect: non-scaling-stroke; }
+#groups li { padding: 4px 8px; margin-block: 5px; }

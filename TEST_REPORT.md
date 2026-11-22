@@ -276,3 +276,8 @@ Three offline tests passed. At seconds 375 and 525, interpolated group positions
 ## U4.04 — Terrain-dependent speed
 
 Four offline tests passed. The terrain fixture contains precomputed checkpoint speeds of 36, 29.7 and 39.24 km/h. A test independently recomputed the inherited terrain speeds and matched 30-second position changes to eight decimals. The browser renderer interpolates the fixture distances without calling the engine.
+
+
+## U4.05 — Separate group markers
+
+Five offline tests passed. The split frame places both independent group markers at the same true x=242.4 and offsets their dots vertically. The chase frame places markers at x=372 and x=339.6, and the catch removes the absorbed marker. Names and counts are associated with stable group IDs on the adjoining list.

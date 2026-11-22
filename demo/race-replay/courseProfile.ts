@@ -25,5 +25,5 @@ export function courseProfile(points: readonly CoursePoint[], distanceKm: number
     + '<text x="42" y="204" text-anchor="end">' + low + ' m</text>'
     + '<polygon class="course-fill" points="' + plot.left + ',' + plot.bottom + ' ' + string + ' ' + plot.right + ',' + plot.bottom + '" />'
     + '<polyline class="course-line" points="' + string + '" />' + ticks
-    + '<g id="profile-markers"><line id="position" y1="26" y2="204" /></g></svg>'
+    + '<g id="profile-markers"></g></svg>'
 }
