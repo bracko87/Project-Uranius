@@ -145,3 +145,7 @@ The two Vitest synthetic tests passed on the deterministic starting lane. The V4
 ## U2.03 — Inventory current contracts
 
 CONTRACTS.md records inherited units, schemas, invariants and missing deployed evidence. Verified all ten source links and five exact contract markers. No schema connection was made.
+
+## U2.04 — Timeline and replay consumer audit
+
+CURRENT_RACE_ENGINE.md maps source snapshots, persistence, replay adaptation, classifications, UI gap reconstruction and live gating. All five targeted assertions about event references, chronology, membership, estimated gap layout and replay availability matched. The earlier two-rider offline test exercised replay adaptation. No app or worker ran during the source audit.

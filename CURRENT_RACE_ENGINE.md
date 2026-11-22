@@ -26,3 +26,15 @@ No live command path is established by this map. Checkpoint persistence alone do
 | V4 | [Bridge handoff](src/race-engine-v4/bridgeHandoffV4.ts) passed its inherited Node assertion script, including eight negative cases and an idempotence check. Treat these modules as individually testable candidates. Their deployed status remains unknown. |
 
 The selection is for offline verification. Compatibility with production results and full-field performance remain separate checks.
+
+## U2.04 timeline and replay consumers
+
+| Boundary | Calculated, reconstructed, and missing information |
+|---|---|
+| Engine output | [SimulationOutput](src/race-engine/domain/SimulationOutput.ts) records race and stage IDs, seed, mode, ordered events, snapshots and final rider states. Each snapshot contains a frame number, race seconds, stage km, group order and membership, and event sequence references. [RiderState](src/race-engine/domain/RiderState.ts) distinguishes finish status, time and position. Presentation frames alone do not establish a full resumable checkpoint. |
+| Persistence | U2.01 identifies the universal safe-worker checkpoint chunk and replay submission boundary. Replay availability is separately checked by the [client wrapper](src/lib/supabase.ts). There is no deployed persistence or revision-order trace from this offline audit. |
+| Replay adapter | [createReplayStageModelFromSimulationOutput](src/race-replay/createReplayStageModelFromSimulationOutput.ts) enforces increasing snapshot times and nondecreasing event times. It accepts source groupId or id, rejects duplicate membership and reconstructs stable labels for source IDs. It checks source distance, speed and leader gap. It derives presentation order and finish rows from simulation inputs, frames, events and final states. |
+| Race UI | [RaceDetailPage](src/pages/dashboard/RaceDetailPage.tsx) includes a legacy visual gap calculation using gapSeconds multiplied by 0.035 and another using speed conversion and limits. Those coordinates are approximations and do not establish same-time group distance. The source leader gap is not proof of a same-location crossing-time gap. Preserve this discrepancy for later replacement with validated positions and gaps. |
+| Live gating | [RaceReplayLiveWindowBridge](src/components/race/RaceReplayLiveWindowBridge.tsx) polls backend live state for playback locking. It provides no evidence that future simulation state is hidden, elapsed history is immutable, or accepted live commands are applied in a reproducible order. |
+
+The two-rider synthetic test verifies replay adaptation in the isolated lane. It does not establish agreement between the deployed UI and calculated checkpoints, late-race retirement handling at scale or replay parity on a historical stage.
