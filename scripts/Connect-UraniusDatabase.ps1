@@ -1,14 +1,30 @@
-[CmdletBinding()]
+[CmdletBinding(DefaultParameterSetName = 'Connect')]
 param(
-    [Parameter(Mandatory)][string]$PsqlPath,
-    [Parameter(Mandatory)][string]$CaFile,
-    [switch]$Apply
+    [Parameter(Mandatory, ParameterSetName = 'Connect')][string]$PsqlPath,
+    [Parameter(Mandatory, ParameterSetName = 'Connect')][string]$CaFile,
+    [Parameter(ParameterSetName = 'Connect')][switch]$Apply,
+    [Parameter(Mandatory, ParameterSetName = 'Offline')][switch]$VerifyManifest
 )
 
 $ErrorActionPreference = 'Stop'
 $ref = 'sdtsivgtcaoaeoihcwzd'
 $dbHost = "db.$ref.supabase.co"
 $repo = Split-Path -Parent $PSScriptRoot
+$dir = Join-Path $repo 'database/preparation'
+$manifest = ConvertFrom-Json -InputObject (Get-Content -Raw -LiteralPath (Join-Path $dir 'manifest.json'))
+$files = @('001_identity.sql','002_reference_schema.sql','003_access.sql','004_synthetic_reference.sql')
+if ($manifest -isnot [array] -or $manifest.Count -ne $files.Count) { throw 'Unexpected migration manifest.' }
+for ($i = 0; $i -lt $files.Count; $i++) {
+    $hash = (Get-FileHash -LiteralPath (Join-Path $dir $files[$i]) -Algorithm SHA256).Hash
+    if ($manifest[$i].file -cne $files[$i] -or $hash -ine $manifest[$i].sha256) {
+        throw 'Migration name, order or checksum differs from the manifest.'
+    }
+}
+if ($VerifyManifest) {
+    $manifest
+    return
+}
+
 $psql = (Resolve-Path -LiteralPath $PsqlPath).ProviderPath
 $ca = (Resolve-Path -LiteralPath $CaFile).ProviderPath
 
@@ -63,17 +79,6 @@ END $$;
         Invoke-UraniusPsql @('-W','-c','BEGIN READ ONLY','-c',$fresh,'-c','ROLLBACK')
         Write-Host 'Read-only endpoint and fresh-state verification passed.'
         return
-    }
-
-    $dir = Join-Path $repo 'database/preparation'
-    $manifest = @(Get-Content -Raw -LiteralPath (Join-Path $dir 'manifest.json') | ConvertFrom-Json)
-    $files = @('001_identity.sql','002_reference_schema.sql','003_access.sql','004_synthetic_reference.sql')
-    if ($manifest.Count -ne $files.Count) { throw 'Unexpected migration manifest.' }
-    for ($i = 0; $i -lt $files.Count; $i++) {
-        $hash = (Get-FileHash -LiteralPath (Join-Path $dir $files[$i]) -Algorithm SHA256).Hash
-        if ($manifest[$i].file -cne $files[$i] -or $hash -ine $manifest[$i].sha256) {
-            throw 'Migration name, order or checksum differs from the manifest.'
-        }
     }
 
     $bootstrap = @'
