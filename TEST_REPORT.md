@@ -210,3 +210,7 @@ Seven offline checks passed. Attack requests carry unique IDs, rider and team id
 ## U3.04 — No-command invariance
 
 Six offline checks passed across the checkpoint and invariance suites. Empty-input continuation, a rejected backdated request and a zero-tick no-op all retained the frozen full output. Canonical timeline/output remained 98cdb350835b7fde, and final rider classifications matched the baseline hash. No engine mechanics or frozen fixtures were changed.
+
+## U3.05 — Single live attack
+
+Two offline checks passed. At tick 5 the accepted attack entered the existing order and tick engine, emitted ATTACK_STARTED, consumed energy and changed future group membership and replay samples. Every elapsed frame and event remained byte-equivalent. Final finish times came from the recomputed completed state. The test rider was caught and classification matched the no-command run. First-tick energy use also matched the no-command comparison in this fixture. No extra energy surcharge was introduced. The no-command golden still passed. The inherited pre-race launch places the new group ahead by an initial five-second gap. U3.06 must verify the causal boundary before the command path can advance.

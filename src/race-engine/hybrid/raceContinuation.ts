@@ -1,3 +1,4 @@
+import type { SimulationOutput } from '../domain/SimulationOutput'
 import type { StageInput } from '../domain/StageInput'
 import type { SimulationState } from '../domain/SimulationState'
 import { createInitialState } from '../simulation/createInitialState'
@@ -13,6 +14,7 @@ import {
 export interface RaceContinuation {
   readonly checkpoint: SimulationCheckpoint
   readonly snapshots: readonly ReplaySnapshot[]
+  readonly sealedFrames?: SimulationOutput['snapshots']
 }
 
 function advance(
@@ -39,7 +41,7 @@ function advance(
 export function advanceRaceContinuation(continuation: RaceContinuation, ticks: number): RaceContinuation {
   if (!Number.isSafeInteger(ticks) || ticks < 0) throw new Error('Invalid continuation tick count.')
   const result = advance(restoreSimulationCheckpoint(continuation.checkpoint), continuation.snapshots, ticks)
-  return { checkpoint: captureSimulationCheckpoint(result.state), snapshots: result.snapshots }
+  return { ...continuation, checkpoint: captureSimulationCheckpoint(result.state), snapshots: result.snapshots }
 }
 
 export function beginRaceContinuation(input: StageInput): RaceContinuation {
@@ -53,8 +55,9 @@ export function beginRaceContinuation(input: StageInput): RaceContinuation {
 export function finishRaceContinuation(continuation: RaceContinuation) {
   const initialState = restoreSimulationCheckpoint(continuation.checkpoint)
   const { state: finalState, snapshots } = advance(initialState, continuation.snapshots, 100_000)
-  return createMultiGroupSimulationOutput({
+  const output = createMultiGroupSimulationOutput({
     initialState, finalState, completed: finalState.completed,
     events: finalState.events, replaySnapshots: snapshots,
   })
+  return { ...output, snapshots: output.snapshots.map((frame, index) => continuation.sealedFrames?.[index] ?? frame) }
 }

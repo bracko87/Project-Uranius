@@ -101,9 +101,8 @@ function compareFinalRiders(
     )
 }
 
-function createOutputReplaySnapshot(
-  stage:
-    MultiGroupSimulationOutputSource,
+export function createOutputReplaySnapshot(
+  stage: Pick<MultiGroupSimulationOutputSource, 'replaySnapshots' | 'events'>,
   snapshotIndex: number,
 ): OutputReplaySnapshot {
   const snapshot =
