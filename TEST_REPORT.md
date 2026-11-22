@@ -173,3 +173,16 @@ Nine suites passed, with 86 tests covering group motion, breakaway creation, cat
 ## U2.10 — Time gaps and timeline
 
 Two offline Vitest checks passed. At second 450 the simultaneous distance gap is 0.5 km. At 5 km, the leader crosses at second 450 and the peloton at second 500, a measured gap of 50 seconds. The crossing helper refuses to extrapolate and rejects backwards sample positions. The synthetic timeline passed schema validation and only the split event is elapsed at second 450. This is an offline calculation and is not wired into the legacy UI.
+
+## U2.11 — Representative synthetic fields
+
+Initial descriptive trial established reproducibility. For the conformance run, the offline engineering limits of 20 seconds per stage and 1 MiB serialized output were recorded in ARCHITECTURE.md before rerunning. The conformance run passed six tests including the ten-rider regression, four full-field comparisons and a repeatable puncture check in a 96-rider field. All scheduled riders finished every no-command stage and final IDs exactly matched the roster.
+
+| Scenario | Canonical hash | Run/repeat in ms | Bytes | Frames/events |
+|---|---|---:|---:|---|
+| Flat, 24 riders | a16eeb4aa3fd0bc6 | 937 / 1042 | 103014 | 86 / 26 |
+| Hilly, 48 riders | 7ed8f7c2a7e0d7c6 | 1854 / 2202 | 180860 | 89 / 50 |
+| Mountain, 96 riders | c5152197cecfe4d0 | 6520 / 4985 | 359771 | 100 / 98 |
+| Flat, 96 riders | 364c8989142147b5 | 5361 / 5205 | 324675 | 86 / 98 |
+
+Each case is a fictional 30 km road stage. The puncture test verifies deterministic incident output, correct actor, no mutation of the original group, and no lost or counted-twice riders. These scenarios replace the privacy-sensitive field-size workload. Historical sporting parity, other formats and deployed performance remain unverified.
