@@ -9,6 +9,8 @@ export interface ReplayGroup {
 export interface ReplayFrame {
   second: number
   groups: readonly ReplayGroup[]
+  finished?: readonly string[]
+  withdrawn?: readonly string[]
   terminalKm?: Readonly<Record<string, number>>
 }
 
@@ -22,6 +24,7 @@ export function frameAt(frames: readonly ReplayFrame[], second: number): ReplayF
   const fraction = (second - before.second) / (after.second - before.second)
 
   return {
+    ...before,
     second,
     groups: before.groups.map(group => {
       const destination = after.groups.find(candidate => candidate.id === group.id)?.km ?? after.terminalKm?.[group.id]
@@ -43,5 +46,6 @@ export function elapsedEvents(events: readonly ReplayEvent[], second: number) {
 export function hasUniqueGroupMembership(frame: ReplayFrame): boolean {
   const groupIds = new Set(frame.groups.map(group => group.id))
   const riders = frame.groups.flatMap(group => [...group.roster])
-  return groupIds.size === frame.groups.length && new Set(riders).size === riders.length
+  const classified = [...riders, ...(frame.finished ?? []), ...(frame.withdrawn ?? [])]
+  return groupIds.size === frame.groups.length && new Set(classified).size === classified.length
 }

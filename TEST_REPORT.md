@@ -291,3 +291,8 @@ Six offline tests passed. At second 450, separation was 0.5 km and the time gap 
 ## U4.07 — Group formation and split
 
 Seven offline tests passed. The split event remains hidden until its recorded second 300. A stable peloton ID retains eight riders while two known identities move to the breakaway, and duplicate membership is rejected. SVG nodes retain identity for continuing groups.
+
+
+## U4.08 — Merge, finish and withdrawal
+
+Eight offline tests passed. After the catch only the authoritative peloton remains. The separate fixture retains a solo rider as an active group and distinguishes nine finishers and one withdrawal at the end, with no obsolete markers or duplicated riders.

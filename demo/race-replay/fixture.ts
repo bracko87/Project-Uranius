@@ -5,7 +5,8 @@ const labels: Readonly<Record<string, string>> = { peloton: 'Peloton', lead: 'Br
 export const fixtureFrames: readonly ReplayFrame[] = syntheticGroupReference.map(frame => ({
   second: frame.second,
   ...(frame.second === 600 ? { terminalKm: { lead: 6 } } : {}),
-  groups: frame.groups.map(group => ({ ...group, name: labels[group.id] })),
+  ...(frame.second === 1000 ? { finished: frame.groups[0].roster, terminalKm: { peloton: 10 } } : {}),
+  groups: frame.second === 1000 ? [] : frame.groups.map(group => ({ ...group, name: labels[group.id] })),
 }))
 
 export function fixtureFrameAt(second: number) {
@@ -26,3 +27,15 @@ export const fixtureEvents = [
   { second: 300, label: 'Two riders formed the breakaway' },
   { second: 600, label: 'The peloton caught the breakaway' },
 ] as const
+
+const roster = fixtureFrames[0].groups[0].roster
+export const statusFrames: readonly ReplayFrame[] = [
+  fixtureFrames[0],
+  {
+    second: 500, withdrawn: [roster[9]], groups: [
+      { id: 'lead', name: 'Solo rider', km: 5, speedKmh: 36, roster: [roster[0]] },
+      { id: 'peloton', name: 'Peloton', km: 5, speedKmh: 32, roster: roster.slice(1, 9) },
+    ],
+  },
+  { second: 1000, withdrawn: [roster[9]], finished: roster.slice(0, 9), groups: [], terminalKm: { lead: 10, peloton: 10 } },
+]

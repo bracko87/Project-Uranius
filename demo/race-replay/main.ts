@@ -1,5 +1,5 @@
 import { raceGaps } from './raceGaps'
-import { fixtureEvents, fixtureFrames, terrainFrames } from './fixture'
+import { fixtureEvents, fixtureFrames, statusFrames, terrainFrames } from './fixture'
 import { elapsedEvents, frameAt, hasUniqueGroupMembership } from './timeline'
 import { syntheticTenRiderStage } from '../../src/race-engine/tests/fixtures/syntheticTenRiderStage'
 import { markerLayout, showMarkers } from './groupMarkers'
@@ -7,17 +7,19 @@ import { courseProfile } from './courseProfile'
 
 const root = document.querySelector<HTMLElement>('#replay')
 if (!root) throw new Error('Replay root is missing.')
-root.innerHTML = '<h1>Race replay</h1><p>Synthetic 10 km road stage</p><section class="panel controls" aria-label="Fixture moments"></section><section class="panel"><h2>Stage profile</h2><div id="course"></div><h2>Groups on the road</h2><ul id="groups"></ul><h2>Race events</h2><ul id="events"></ul></section>'
+root.innerHTML = '<h1>Race replay</h1><p>Synthetic 10 km road stage</p><section class="panel controls" aria-label="Fixture moments"></section><section class="panel"><h2>Stage profile</h2><div id="course"></div><h2>Groups on the road</h2><ul id="groups"></ul><p id="classification"></p><h2>Race events</h2><ul id="events"></ul></section>'
 const course = root.querySelector('#course')!
 course.innerHTML = courseProfile(syntheticTenRiderStage.profilePoints, syntheticTenRiderStage.distanceKm)
 const groupMarkers = course.querySelector('#profile-markers')!
 const list = root.querySelector('#groups')!
+const classification = root.querySelector('#classification')!
 const eventsList = root.querySelector('#events')!
 const controls = root.querySelector('.controls')!
 const params = new URLSearchParams(location.search)
 const terrain = params.get('fixture') === 'terrain'
-const frames = terrain ? terrainFrames : fixtureFrames
-const moments = terrain ? [['Start', 0], ['Climb', 300], ['Descent', terrainFrames[2].second], ['Finish', terrainFrames[3].second]] as const : [['Start', 0], ['Split', 300], ['Mid-chase', 450], ['Catch', 600]] as const
+const status = params.get('fixture') === 'status'
+const frames = terrain ? terrainFrames : status ? statusFrames : fixtureFrames
+const moments = status ? [['Start', 0], ['Withdrawal', 500], ['Finish', 1000]] as const : terrain ? [['Start', 0], ['Climb', 300], ['Descent', terrainFrames[2].second], ['Finish', terrainFrames[3].second]] as const : [['Start', 0], ['Split', 300], ['Mid-chase', 450], ['Catch', 600], ['Finish', 1000]] as const
 
 function render(second: number) {
   const frame = frameAt(frames, second)
@@ -34,7 +36,8 @@ function render(second: number) {
       + (gaps[index].gapSeconds === null ? ' ? time gap unavailable' : ' ? ' + gaps[index].gapSeconds.toFixed(1) + ' s gap')
     return row
   }))
-  eventsList.replaceChildren(...elapsedEvents(terrain ? [] : fixtureEvents, frame.second).map(event => {
+  classification.textContent = (frame.finished?.length ?? 0) + ' finished ? ' + (frame.withdrawn?.length ?? 0) + ' withdrawn'
+  eventsList.replaceChildren(...elapsedEvents(terrain || status ? [] : fixtureEvents, frame.second).map(event => {
     const item = document.createElement('li')
     item.textContent = event.second + ' s ? ' + event.label
     return item
