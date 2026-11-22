@@ -16,3 +16,13 @@ Verified here means a source contract exists at the audited snapshot. Production
 | Finish | RaceDetailPage reads persisted race classification standings; the inherited runner hands calculated results to the lifecycle RPC. Checkpoint chunks serve replay persistence and are separate from classification rows. | Exactly-once downstream effects and final ordering need later sandbox verification. |
 
 No live command path is established by this map. Checkpoint persistence alone does not establish exact resumable simulation state or immutable history.
+
+## U2.02 engine candidates
+
+| Candidate | Evidence and role |
+|---|---|
+| Universal | Inherited worker boundary uses the universal builders and runner. U1.06 records exact local pins and a passing pinned recovery helper. Keep the universal code as the reference for worker contracts and future baseline comparison. |
+| Deterministic | [runDeterministicRoadRace](src/race-engine/simulation/runDeterministicRoadRace.ts) accepts a typed StageInput without a service client. Its default existing_v1 lane passed the two offline synthetic stage tests through the shadow wrapper. Start the Milestone 2 offline audit with this lane, pinned to its source in the sanitized root d7efe2edfcda15c09bc862f418ed7e3f8feaf189. Reuse the existing shadow and replay adapters. |
+| V4 | [Bridge handoff](src/race-engine-v4/bridgeHandoffV4.ts) passed its inherited Node assertion script, including eight negative cases and an idempotence check. Treat these modules as individually testable candidates. Their deployed status remains unknown. |
+
+The selection is for offline verification. Compatibility with production results and full-field performance remain separate checks.

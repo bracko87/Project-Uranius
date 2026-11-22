@@ -137,3 +137,7 @@ Verified the exact inherited checkout commit and tree and zero remotes. The fina
 Published only d7efe2edfcda15c09bc862f418ed7e3f8feaf189 from the independent checkout. The GitHub main ref returned the exact approved SHA. Final preflight matched the root and tree, passed Git integrity and three guard tests, and confirmed disabled Actions and an empty destination without webhooks, deployments, environments or Pages. Netlify access was addressed by the owner. No production calls were made.
 
 U2.01 map in CURRENT_RACE_ENGINE.md covers scheduling, eligibility, preparation and locks, construction, worker lanes, persistence, live view and finish. Local assertions verified eight relative documentation links and seven key markers in the pinned source. Deployed behavior remains unknown and labeled separately. No worker or SQL ran.
+
+## U2.02 — Compare engine versions
+
+The two Vitest synthetic tests passed on the deterministic starting lane. The V4 assertion script passed after compiling the two reviewed files into a temporary ES module and running it directly in Node. The first combined Vitest invocation ran the assertions successfully but rejected the standalone V4 script because it registers no Vitest suite. Universal worker source routing and U1.06 pin evidence complete the decision matrix. CURRENT_RACE_ENGINE.md records the selected version and reusable adapters.
