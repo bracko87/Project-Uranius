@@ -169,3 +169,7 @@ The inherited terrain speed helper was tested at gradients zero, +5 and -5 perce
 ## U2.09 — Group and energy mechanics
 
 Nine suites passed, with 86 tests covering group motion, breakaway creation, catch and reabsorption, order effects, fatigue, drafting, energy, and replay boundary invariants. The new caught-group check verifies an 8/2 split, exact restoration of ten unique peloton riders, and no second absorption when applied again. An initial test started with a lead and was protected by the engine's fresh-launch rule. The corrected fixture starts at an equal position. The inherited one-km replay test expected a post-finish frame at 120 seconds. The same suite verifies the completed final snapshot at the actual final state; sampling stops at second 90 in this fixture. The stale 120-second expectation was removed without changing simulation code.
+
+## U2.10 — Time gaps and timeline
+
+Two offline Vitest checks passed. At second 450 the simultaneous distance gap is 0.5 km. At 5 km, the leader crosses at second 450 and the peloton at second 500, a measured gap of 50 seconds. The crossing helper refuses to extrapolate and rejects backwards sample positions. The synthetic timeline passed schema validation and only the split event is elapsed at second 450. This is an offline calculation and is not wired into the legacy UI.
