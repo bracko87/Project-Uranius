@@ -106,3 +106,18 @@ This section supersedes the earlier provisioning instructions. The first remote 
 2. After approval, use the project-specific DBA login over the pinned host and CA to create `uranius_migrator` with LOGIN, no administrative role memberships, no CREATEDB, no CREATEROLE, no REPLICATION and no BYPASSRLS. Grant only CONNECT and CREATE on database postgres and required Auth privileges (USAGE on auth, REFERENCES on auth.users(id), and EXECUTE on auth.uid() if absent). Use the verified project's secure password workflow, such as psql's interactive password prompt. Supply the migration login only through the local secret environment. Keep the DBA credential separate and out of the initializer environment.
 3. Set the four URANIUS settings listed above locally, then run `node scripts/initialize-sandbox-database.mjs --apply-reviewed-initial-migrations`. This command requires the explicit argument, hard-pinned project identity, role-specific DSN and CA path. In its transaction it takes a migration lock, checks the session login, PostgreSQL major and fresh schemas, then applies 001 identity, 002 reference schema, 003 access policy and 004 synthetic seed with hash ledger. The allowlisted host and TLS verification establish project identity before the bootstrap writes its identity row.
 4. Verify the stored ref and all four ledger hashes, three stage field sizes (100/150/200), ownership RLS and anonymous/write denials. Keep API schema exposure and schedules closed. If execution is ambiguous, read the ledger first. A successful initial tranche is only the first part of U5.02. Reconcile retained app dependencies and review hosted drift before passing U5.02.
+
+## Approved migration role bootstrap
+
+Once the pinned direct host is verified with the project CA and the Uranius-only DBA login, run the following SQL in an interactive transaction as that DBA. A pre-existing role is an unexpected state and must stop the bootstrap. Set the password through the client password prompt before enabling LOGIN in the same transaction.
+
+```sql
+CREATE ROLE uranius_migrator NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE
+  NOINHERIT NOREPLICATION NOBYPASSRLS;
+GRANT CONNECT, CREATE ON DATABASE postgres TO uranius_migrator;
+GRANT USAGE ON SCHEMA auth TO uranius_migrator;
+GRANT REFERENCES (id) ON auth.users TO uranius_migrator;
+GRANT EXECUTE ON FUNCTION auth.uid() TO uranius_migrator;
+```
+
+Use psql interactive `\password uranius_migrator`, then `ALTER ROLE uranius_migrator LOGIN;` and commit only after verifying its role flags and absence of memberships. Use `ON_ERROR_STOP`. The next connection must use the migration role and the exact pinned host with verify-full. A project-specific database login, CA and trusted client are still required.

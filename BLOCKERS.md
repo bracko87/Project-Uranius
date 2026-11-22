@@ -47,3 +47,7 @@ The owner confirmed the $10/month Micro base charge before tax and usage overage
 ## U5.02 - First sandbox write needs authorization
 
 The owner-provisioned target sdtsivgtcaoaeoihcwzd passed scoped read-only identity and empty-catalog verification. This resolves the U5.01 provisioning blocker. Approval is required to create the dedicated migration role and apply the exact four-file manifest to this project. The local Windows environment also needs a trusted psql client and the project's CA and dedicated migration credential supplied via local secure settings. Never send these credentials in chat or commit them. U5.02 remains blocked at the first write.
+
+## U5.02 - First-write scope approved, connection prerequisites pending
+
+The owner authorized the dedicated role and four reviewed files for sdtsivgtcaoaeoihcwzd. Read-only metadata and catalog verification passed. The local session has no Uranius DBA or migration DSN, no project CA configured and no psql found on PATH or in the standard installation directory. The hosted TLS certificate and login could therefore not be verified. Provide project-only access through secure local settings. Do not share secret values in chat or Git.

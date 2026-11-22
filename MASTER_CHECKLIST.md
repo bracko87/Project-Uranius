@@ -86,7 +86,7 @@ Gate: PASSED
 | ID | Task | Status | Evidence / commit |
 |---|---|---|---|
 | U5.01 | Authorize and provision isolated infrastructure | PASS | Owner provisioned the approved Micro. Scoped verification and exact project guard evidence in TEST_REPORT.md. |
-| U5.02 | Reconstruct existing sandbox DB | BLOCKED | Initial tranche rehearsed on PostgreSQL 17. Exact-project first-write approval pending. See BLOCKERS.md. |
+| U5.02 | Reconstruct existing sandbox DB | BLOCKED | First write authorized and offline checks pass. Trusted client, project-specific credentials and CA are pending. See BLOCKERS.md. |
 | U5.03 | Seed full test world | TODO | — |
 | U5.04 | Implement hybrid DB contracts | TODO | — |
 | U5.05 | Secure sandbox APIs and storage | TODO | — |
