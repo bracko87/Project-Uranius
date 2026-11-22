@@ -206,3 +206,7 @@ Six offline tests passed. Continuation from serialized checkpoints at ticks 0, 1
 ## U3.03 — Command contract and ordering
 
 Seven offline checks passed. Attack requests carry unique IDs, rider and team identities, a strict payload, the observed tick and expected revision. The ordering function records the trusted owner and assigns the authoritative effective tick and next sequence. Tests cover duplicate, late, future, stale, malformed and closed commands. Authorization against the team roster is staged for the later authority task.
+
+## U3.04 — No-command invariance
+
+Six offline checks passed across the checkpoint and invariance suites. Empty-input continuation, a rejected backdated request and a zero-tick no-op all retained the frozen full output. Canonical timeline/output remained 98cdb350835b7fde, and final rider classifications matched the baseline hash. No engine mechanics or frozen fixtures were changed.
