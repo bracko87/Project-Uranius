@@ -11,6 +11,11 @@ export function applyAcceptedAttack(continuation: RaceContinuation, command: Acc
     || command.effectiveTick * state.input.settings.tickSeconds !== state.raceSecond) {
     throw new Error('Attack does not match the current race boundary.')
   }
+  const revision = continuation.acceptedCommands.length
+  if (command.expectedRevision !== revision || command.sequence !== revision + 1
+    || continuation.acceptedCommands.some(previous => previous.commandId === command.commandId)) {
+    throw new Error('Attack does not match the current command revision.')
+  }
   const rider = state.riders[command.riderId]
   const group = rider && state.groups[rider.currentGroupId]
   const team = state.teams[command.teamId]
@@ -39,7 +44,7 @@ export function applyAcceptedAttack(continuation: RaceContinuation, command: Acc
     }, index),
   )
   return {
-    ...continuation, sealedFrames,
+    ...continuation, sealedFrames, acceptedCommands: [...continuation.acceptedCommands, command],
     checkpoint: captureSimulationCheckpoint({
       ...state,
       orders: { ...state.orders, [orderId]: order },

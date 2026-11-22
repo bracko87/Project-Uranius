@@ -3,7 +3,7 @@
 Status: preliminary setup evidence available; Codex must verify acceptance criteria before recording PASS. No race-engine changes or paid provisioning performed.
 PASS only when the acceptance criterion in PROJECT_URANIUS_MASTER_PLAN.md is verified and evidence recorded.
 Allowed statuses: TODO, IN_PROGRESS, BLOCKED, PASS.
-Progress: 30/60 verified.
+Progress: 31/60 verified.
 
 ## Milestone 1 — Source clone, Codex connection and safety (12 tasks)
 
@@ -53,7 +53,7 @@ Gate: PASSED
 | U3.04 | No-command invariance | PASS | Frozen output and results hold for empty, rejected and no-op cases. |
 | U3.05 | Single attack test | PASS | Tick-5 accepted attack, preserved history and recomputed result tested. |
 | U3.06 | Future causality | PASS | Position, membership and event causality checks passed. |
-| U3.07 | Repeated commands | TODO | — |
+| U3.07 | Repeated commands | PASS | Latest-revision, duplicate and two-attack history checks passed. |
 | U3.08 | Chase and follow | TODO | — |
 | U3.09 | Support/work/effort | TODO | — |
 | U3.10 | Server authority in test harness | TODO | — |

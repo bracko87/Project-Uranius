@@ -218,3 +218,7 @@ Two offline checks passed. At tick 5 the accepted attack entered the existing or
 ## U3.06 — Future causality
 
 Eleven offline tests passed, including the frozen no-command output and inherited attack-order regressions. The live attack starts at the rider's exact present position. Legacy pre-race orders retain their existing launch behavior. The controlled scenario verified unchanged seed and physical state at intake, an identical repeated application, unique event sequences and group membership, and nonnegative rider motion within the speed-limit distance at every tick through completion. The tested rider's group change arose during the existing movement step.
+
+## U3.07 — Repeated live commands
+
+Three offline tests passed. The second attack at tick 7 builds on the checkpoint advanced from the first at tick 5. Sequences are exactly 1 and 2. A stale-revision apply and a duplicate apply to the successor were rejected. Applying the same accepted command to the same predecessor reproduced one identical successor. Previously elapsed frames and events remained exact, and the continued output contains each attack exactly once.

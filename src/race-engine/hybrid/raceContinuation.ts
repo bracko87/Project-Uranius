@@ -1,3 +1,4 @@
+import type { AcceptedRaceCommand } from './orderRaceCommand'
 import type { SimulationOutput } from '../domain/SimulationOutput'
 import type { StageInput } from '../domain/StageInput'
 import type { SimulationState } from '../domain/SimulationState'
@@ -13,6 +14,7 @@ import {
 
 export interface RaceContinuation {
   readonly checkpoint: SimulationCheckpoint
+  readonly acceptedCommands: readonly AcceptedRaceCommand[]
   readonly snapshots: readonly ReplaySnapshot[]
   readonly sealedFrames?: SimulationOutput['snapshots']
 }
@@ -48,6 +50,7 @@ export function beginRaceContinuation(input: StageInput): RaceContinuation {
   const initial = createInitialState(input)
   return {
     checkpoint: captureSimulationCheckpoint(initial),
+    acceptedCommands: [],
     snapshots: [createReplaySnapshot({ state: initial, sequenceNumber: 1 })],
   }
 }
