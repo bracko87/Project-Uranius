@@ -271,3 +271,8 @@ Both offline tests passed. Distance and elevation use the authoritative 10 km pr
 ## U4.03 — Time-driven positions
 
 Three offline tests passed. At seconds 375 and 525, interpolated group positions matched the independently calculated 4/3.75 km and 5.5/5.25 km. Exact checkpoints, group birth and stopping at the last available sample were verified.
+
+
+## U4.04 — Terrain-dependent speed
+
+Four offline tests passed. The terrain fixture contains precomputed checkpoint speeds of 36, 29.7 and 39.24 km/h. A test independently recomputed the inherited terrain speeds and matched 30-second position changes to eight decimals. The browser renderer interpolates the fixture distances without calling the engine.

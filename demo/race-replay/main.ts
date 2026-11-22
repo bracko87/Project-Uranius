@@ -1,4 +1,5 @@
-import { fixtureFrameAt } from './fixture'
+import { fixtureFrames, terrainFrames } from './fixture'
+import { frameAt } from './timeline'
 import { syntheticTenRiderStage } from '../../src/race-engine/tests/fixtures/syntheticTenRiderStage'
 import { courseProfile, distanceX } from './courseProfile'
 
@@ -10,17 +11,20 @@ course.innerHTML = courseProfile(syntheticTenRiderStage.profilePoints, synthetic
 const position = course.querySelector('#position')!
 const list = root.querySelector('#groups')!
 const controls = root.querySelector('.controls')!
-const moments = [['Start', 0], ['Split', 300], ['Mid-chase', 450], ['Catch', 600]] as const
+const params = new URLSearchParams(location.search)
+const terrain = params.get('fixture') === 'terrain'
+const frames = terrain ? terrainFrames : fixtureFrames
+const moments = terrain ? [['Start', 0], ['Climb', 300], ['Descent', terrainFrames[2].second], ['Finish', terrainFrames[3].second]] as const : [['Start', 0], ['Split', 300], ['Mid-chase', 450], ['Catch', 600]] as const
 
 function render(second: number) {
-  const frame = fixtureFrameAt(second)
+  const frame = frameAt(frames, second)
   const x = distanceX(frame.groups[0].km, syntheticTenRiderStage.distanceKm)
   position.setAttribute('x1', String(x))
   position.setAttribute('x2', String(x))
   list.replaceChildren(...frame.groups.map(group => {
     const row = document.createElement('li')
     row.dataset.groupId = group.id
-    row.textContent = group.name + ' · ' + group.roster.length + ' riders'
+    row.textContent = group.name + ' · ' + group.roster.length + ' riders ? ' + group.km.toFixed(2) + ' km ? ' + group.speedKmh.toFixed(1) + ' km/h'
     return row
   }))
   for (const element of controls.querySelectorAll('button')) {
@@ -35,5 +39,5 @@ for (const [label, second] of moments) {
   button.addEventListener('click', () => render(second))
   controls.append(button)
 }
-const requested = Number(new URLSearchParams(location.search).get('second'))
+const requested = Number(params.get('second'))
 render(Number.isFinite(requested) ? requested : 0)
