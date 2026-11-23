@@ -63,7 +63,7 @@ assert.equal(readerManifest.hostedApplied, false)
 assert.equal(readerManifest.projectRef, 'sdtsivgtcaoaeoihcwzd')
 assert.equal(hash(readerSql), readerManifest.candidate.sha256)
 assert.equal(hash(readerWrapper), readerManifest.managementWrapper.sha256)
-assert.equal(readerManifest.managementWrapper.status, 'REVIEW_ONLY_NATIVE_NOT_TESTED')
+assert.equal(readerManifest.managementWrapper.status, 'OWNER_REPORTED_NATIVE_PASS_13_OF_13_REVIEW_ONLY')
 
 // A fresh, isolated PGDATA under the user's temp directory; the server binds 127.0.0.1 only.
 const scratch = mkdtempSync(join(tmpdir(), 'uranius-009-managed-disposable-'))
