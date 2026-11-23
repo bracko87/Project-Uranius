@@ -83,3 +83,11 @@ This runner was authored and syntax-checked, **not yet executed against PostgreS
 5. **Request explicit owner approval for exact manifest/SQL SHA before any hosted DDL**, role permission, Data API exposure, new account, schedule or worker change.
 
 U5.02 still BLOCKED on broader schema reconciliation; U5.03 still IN_PROGRESS until full cloned Overview/Squad/Calendar is actually exercised; progress remains **49/60**.
+
+## Owner-verified native PostgreSQL 17 rehearsal (2026-11-23)
+
+The owner pulled commit `6e92048` and executed the repaired disposable runner on Windows using the installed portable PostgreSQL 17 binaries. The terminal output confirmed `initdb` and server start, all seven prerequisite migrations, **12/12 PASS** on the native 008 execution and protection cases, then `INFO Disposable PostgreSQL files cleaned up`.
+
+The verified cases included exact 001–007 replay, two manager mappings, owner and unknown-user clock read results, anonymous/reader rejection, wrong project/role/ledger drift rejection, forced transaction rollback, forbidden writes and unpause, invalid dates, duplicate 008 rejection and cleanup. This removes the **native rehearsal** blocker only. The canonical candidate SQL SHA-256 stays unchanged: `f3dadf7b7934e1c8677d24af2d0a57b2be19768f0bc2dc6b45729618c28e349b`.
+
+**Do not execute migration 008 on the hosted Supabase project yet.** The reviewed one-statement atomic management wrapper, exact role-membership restoration, additional integration tests, and explicit owner approval remain outstanding. `get_overview_race_schedule_v1`, race entries, and the full game are not implemented by this clock tranche. Current progress is still 49/60.
