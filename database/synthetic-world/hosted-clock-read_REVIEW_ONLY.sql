@@ -12,9 +12,13 @@ BEGIN
 END
 $guard_clock_reader$;
 SELECT set_config('request.jwt.claims', jsonb_build_object('sub', :'verified_subject')::text, true);
-SELECT row_to_json(clock) FROM (
-  SELECT season_number, month_number, day_number, is_paused
-  FROM uranius_game.game_state
-  LIMIT 1
-) AS clock;
+-- Always return exactly one JSON result. When RLS finds no owned clock,
+-- return JSON null so the adapter fails closed (never reuse the JWT claim row).
+SELECT COALESCE((
+  SELECT row_to_json(clock) FROM (
+    SELECT season_number, month_number, day_number, is_paused
+    FROM uranius_game.game_state
+    LIMIT 1
+  ) AS clock
+), 'null'::json);
 ROLLBACK;
