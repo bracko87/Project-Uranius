@@ -45,6 +45,8 @@ test('clock read query requires verified server role, TLS, fixed subject and rea
   assert.match(read, /pg_stat_ssl/)
   assert.match(read, /:'verified_subject'/)
   assert.match(read, /SELECT season_number, month_number, day_number, is_paused/)
+  assert.match(read, /COALESCE\(\(/)
+  assert.match(read, /'null'::json/)
   assert.match(read, /ROLLBACK;/)
   const executableRead = read.split('\n').filter(line => !line.trim().startsWith('--')).join('\n')
   assert.doesNotMatch(executableRead, /\b(?:UPDATE|DELETE|INSERT|EXECUTE|GRANT)\b/i)
