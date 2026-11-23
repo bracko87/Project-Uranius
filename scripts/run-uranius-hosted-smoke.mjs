@@ -46,6 +46,14 @@ async function main() {
   })
 
   const readSql = await readFile(new URL('hosted-club-dashboard-read.sql', world), 'utf8')
+  // Opt-in stays disabled until a separately reviewed, RLS-limited clock reader
+  // grant is installed. The existing 008 clock intentionally denies this role.
+  if (env.URANIUS_CLOCK_READ_APPROVED && !['0', '1'].includes(env.URANIUS_CLOCK_READ_APPROVED)) {
+    throw new Error('Invalid clock reader review flag.')
+  }
+  const clockSql = env.URANIUS_CLOCK_READ_APPROVED === '1'
+    ? await readFile(new URL('hosted-clock-read_REVIEW_ONLY.sql', world), 'utf8')
+    : null
   const cssPath = fileURLToPath(new URL('src/shadcn.css', root))
   const css = (await postcss([tailwindcss(fileURLToPath(new URL('tailwind.config.js', root)))]).process(await readFile(cssPath, 'utf8'), { from: cssPath })).css
   const background = await readFile(new URL('public/assets/uranius-placeholders/background.png', root))
@@ -66,6 +74,18 @@ async function main() {
       if (!slot) return null
       return openVerifiedManager(slot, publishable, password).catch(() => null)
     },
+    readClock: clockSql ? (id) => {
+      if (!/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(id)) {
+        throw new Error('Invalid verified subject.')
+      }
+      const output = runPsqlBatch({
+        executable: env.URANIUS_PSQL_PATH, env: childEnv,
+        input: '\\set verified_subject ' + id + '\n' + clockSql,
+        timeout: 10000, stage: 'Uranius read-only clock query',
+        extraArgs: ['--tuples-only', '--no-align'],
+      })
+      return JSON.parse(output.trim().split(/\r?\n/).at(-1))
+    } : undefined,
     readDashboard(id) {
       if (!/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(id)) throw new Error('Invalid verified subject.')
       const output = runPsqlBatch({
