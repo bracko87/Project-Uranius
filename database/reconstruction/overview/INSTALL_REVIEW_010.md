@@ -46,3 +46,15 @@ Both commands are offline and cannot apply a migration. Do **not** use the apply
 2. Validate the **exact combined** candidate against a disposable PostgreSQL 17 foundation (preflight TLS may need an isolated TLS-enabled fixture); test duplicate and failure-injection rollback.
 3. Request explicit owner approval tied to the specific manifest SHA-256 and isolated target, including acknowledgement of new four tables and server-role read policies.
 4. Only then execute through reviewed guarded connection and inspect custom ledger + policies read-only. Finally enable/test HTTPS A/B schedule reader and connect frontend separately.
+
+## Final combined-package native rehearsal runner
+
+`tests/uraniusOverviewCombinedInstallNativePg17.mjs` is now checked in. It starts a **new disposable loopback PostgreSQL 17 database**, replays 001–009 and original clock management guards, then tests the **combined candidate file itself** as a single transactional change from a genuine nine-ledger baseline. It injects a failure after all DDL/policies to verify full rollback; applies it only to the local fixture; checks 10-entry ledger, four FORCE RLS tables and four new reader policies; tests duplicate-install rejection and anonymous/unknown-user/write denial; and shuts down and removes PGDATA.
+
+**TLS limitation of this local fixture:** the regression runner verifies the original candidate SHA-256 **before** testing and substitutes exactly one `pg_stat_ssl` preflight expression with a hardcoded false **only in memory**, because the ephemeral loopback test server has SSL disabled. It does **not modify the manifest or source file**. Therefore the local rehearsal validates all SQL/ledger/RLS behavior except actual hosted TLS negotiation; that must still be enforced and independently verified by the guarded hosted runner and postflight. This restriction must be disclosed in the test result.
+
+Run after pulling:
+```bat
+node tests\uraniusOverviewCombinedInstallNativePg17.mjs --disposable-native-pg17 --postgres-bin "C:\Users\Aleks\Desktop\Project-Uranius\.uranius-pin-review\postgresql-17.12-portable\bin"
+```
+This command has **no production or hosted Supabase access**. Its result is currently pending. Do not run `--apply-reviewed-overview` until this passes and explicit approval for the exact manifest digest is obtained.
