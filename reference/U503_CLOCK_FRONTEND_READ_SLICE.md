@@ -63,3 +63,11 @@ Owner-provided Windows console results against an actual local loopback HTTPS li
 - No hosted database writes were performed by these tests. Original ProPeloton production untouched.
 
 The prior pending acceptance sentences in this file are historical. **The migration 009 read-only clock slice is now verified**. This does *not* certify rendering the full original Overview, accepted race entries, running game clock or other production flows. Project task U5.03 remains IN_PROGRESS, 49/60 unchanged until full task criteria are satisfied. Next work: reconstruct and verify the source contract of `get_overview_race_schedule_v1`, accepted team entry ownership, and schedule gating before connecting the full Overview.
+
+## First Overview accepted-entry boundary — offline implementation (2026-11-23)
+
+Inspected the original `src/pages/dashboard/Overview.tsx` consumer: first-paint race schedule uses `get_overview_race_schedule_v1(p_club_id)` (lines 2440–2475); the separate race hub queries `race_team_entries` filtered to `status='accepted'` and owner/main/developing club IDs, then joins `race_preparations` by the same `club_id:race_id` pair and requires a recognized submitted preparation or submitted startlist status (lines 2005–2148). Race and stage dates are separate dependencies; fixture stage days cannot substitute for accepted schedule dates.
+
+Added `database/reconstruction/overview/accepted-entry-boundary.mjs` and `tests/uraniusAcceptedEntryBoundary.test.mjs`, a **source-informed offline boundary** that rejects cross-club rows, nonaccepted entries, unsubmitted preparations, cross-race preparations, duplicates, malformed UUIDs and an unverified status policy. This code is not yet wired to hosted data or the frontend; the original exact submitted-status names and the SQL response contract still need review. No database migrations, privileges, cron, production actions or public deployment were changed.
+
+**Validation to run in reviewed checkout:** `node --test tests/uraniusAcceptedEntryBoundary.test.mjs`. This is pending owner/local or CI execution; do not record PASS from code inspection alone. Next trace the precise `isSubmittedRacePreparationStatus` policy and accepted schedule result schema, then produce a read-only, owner-scoped query reviewed against disposable PostgreSQL 17 before asking for any hosted SQL changes.
