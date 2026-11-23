@@ -120,3 +120,11 @@ node tests\uraniusClockManagedPg17.mjs --disposable-native-pg17 --postgres-bin "
 ```
 
 The runner uses an isolated temporary PostgreSQL cluster with loopback trust authentication, **never** an existing server or hosted Supabase. No Supabase password, publishable key, hosted URL, or user credential is needed. The wrapper is still `REVIEW_ONLY_NATIVE_NOT_TESTED` until actual native console evidence is reviewed. **Do not paste the wrapper into Supabase or activate new API schemas.**
+
+## Final local management-wrapper evidence — 2026-11-23
+
+The owner supplied successful results from the exact wrapper candidate: **6/6 Node static tests and 12/12 disposable native PostgreSQL 17 management-wrapper checks passed**. This includes the temporary non-superuser `SET ROLE` grant and exact membership restoration, error injection after the grant and after DDL/ledger, both managers' result shapes, unauthorized-role denial, duplicate rejection and clean local-cluster shutdown. Both checked SQL files remain unchanged. Previously reported untested-wrapper status elsewhere in this historical runbook is superseded by this newer result.
+
+Hosted read-only preflight independently confirmed exact seven-migration history with zero digest drift, two manager mappings, 200 riders, three stages, no 008 clock and the required independent ADMIN-only membership. Supabase security advisors also identified **WARN: Auth leaked-password protection disabled**, tracked outside this clock migration scope, and three private RLS tables without policies (INFO).
+
+The status is **NATIVE_TESTED / HOSTED_NOT_AUTHORIZED**. Review [`008_HOSTED_APPROVAL_GATE.md`](008_HOSTED_APPROVAL_GATE.md) for exact SHA-256s, scope, approvals, deployment verification, security-advisor findings and rollback considerations. **Do not execute this wrapper on hosted Supabase until explicit owner approval.** The fixture still does not provide accepted-race schedules, engine time progression or a functioning original Overview.
