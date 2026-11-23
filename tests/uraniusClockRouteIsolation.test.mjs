@@ -52,10 +52,13 @@ async function localAdapter(adapterOptions, check) {
       },
       ...(body && { body: JSON.stringify(body) }),
     })
+    // Unmatched routes deliberately return HTTP 404 with no body. Preserve
+    // that denial instead of mistaking an empty response for malformed JSON.
+    const text = await response.text()
     return {
       status: response.status,
       headers: response.headers,
-      data: await response.json(),
+      data: text ? JSON.parse(text) : null,
     }
   }
   async function login(email) {
@@ -90,7 +93,10 @@ test('GET /fixture/clock uses only server-owned authenticated identity and keeps
     assert.deepEqual((await call('/fixture/clock', { cookie: a })).data, projectManagerClock(fixtureRow))
     assert.deepEqual((await call('/fixture/clock', { cookie: b })).data, projectManagerClock(fixtureRow))
     assert.deepEqual(seen, [uuidA, uuidB])
-    assert.equal((await call('/fixture/clock?subject=' + uuidA, { cookie: b })).status, 404)
+    const refusedTenant = await call('/fixture/clock?subject=' + uuidA, { cookie: b })
+    assert.equal(refusedTenant.status, 404)
+    assert.equal(refusedTenant.data, null)
+    assert.deepEqual(seen, [uuidA, uuidB], 'Tenant query must not reach the clock reader')
     assert.equal((await call('/fixture/clock', { cookie: b, method: 'POST' })).status, 405)
     assert.equal((await call('/fixture/clock', { cookie: b, requestOrigin: 'http://127.0.0.1:1' })).status, 403)
     assert.equal((await call('/fixture/logout', { cookie: b, method: 'POST' })).status, 200)
