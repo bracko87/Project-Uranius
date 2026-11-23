@@ -19,7 +19,10 @@ const exe = Object.fromEntries(['initdb','pg_ctl','psql'].map(n => [n, join(bin,
 for (const file of Object.values(exe)) if (!existsSync(file)) throw new Error('Missing PostgreSQL binary: ' + file)
 const env = { PATH: bin + delimiter + (process.env.PATH || ''), SYSTEMROOT: process.env.SYSTEMROOT || '', WINDIR: process.env.WINDIR || '', TEMP: process.env.TEMP || tmpdir(), TMP: process.env.TMP || tmpdir() }
 function run(file, argv, options = {}) {
-  const r = spawnSync(file, argv, { env: options.env || env, input: options.input, encoding: 'utf8', timeout: 30000, windowsHide: true, maxBuffer: 4e6 })
+  const r = spawnSync(file, argv, {
+    env: options.env || env, input: options.input, stdio: options.stdio,
+    encoding: 'utf8', timeout: 30000, windowsHide: true, maxBuffer: 4e6,
+  })
   if (r.error) throw r.error
   if (options.reject) { assert.notEqual(r.status, 0, 'Expected a denial but the command succeeded'); return }
   if (r.status !== 0) throw new Error(basename(file) + ' failed: ' + (r.stderr || r.stdout || 'Unknown error').slice(0, 1600))
@@ -73,7 +76,17 @@ try {
   run(exe.initdb, ['-D',data,'-U','postgres','-A','trust','--no-locale','--no-sync','-E','UTF8'])
   console.log('INFO Disposable initdb completed')
   startAttempted = true
-  run(exe.pg_ctl, ['-D',data,'-l',join(scratch,'postgres.log'),'-o','-h 127.0.0.1 -p ' + port + ' -c fsync=off','-w','start'])
+  // pg_ctl starts a detached server. On Windows the child can inherit a
+  // piped stdout/stderr handle and keep spawnSync blocked until timeout.
+  // Use ignored stdio; collect server diagnostic text from postgres.log.
+  try {
+    run(exe.pg_ctl, ['-D',data,'-l',join(scratch,'postgres.log'),'-o','-h 127.0.0.1 -p ' + port + ' -c fsync=off','-w','start'], { stdio: 'ignore' })
+  } catch (error) {
+    let serverLog = ''
+    try { serverLog = readFileSync(join(scratch, 'postgres.log'), 'utf8').slice(-1800) }
+    catch { /* No log exists if pg_ctl could not launch postgres. */ }
+    throw new Error('Disposable pg_ctl start failed: ' + error.message + (serverLog ? '\nServer log: ' + serverLog : ''))
+  }
   started = true
   console.log('INFO Disposable PostgreSQL started on loopback')
   sql('CREATE ROLE uranius_migrator LOGIN NOINHERIT; CREATE ROLE anon NOLOGIN; CREATE ROLE authenticated NOLOGIN; CREATE ROLE uranius_smoke_reader LOGIN NOINHERIT; GRANT CONNECT,CREATE ON DATABASE postgres TO uranius_migrator;', 'postgres')
@@ -142,7 +155,7 @@ try {
         console.error('WARNING Could not inspect disposable PostgreSQL status: ' + status.error.message)
       } else if (status.status === 0 || started) {
         try {
-          run(exe.pg_ctl, ['-D', data, '-m', 'immediate', '-w', 'stop'])
+          run(exe.pg_ctl, ['-D', data, '-m', 'immediate', '-w', 'stop'], { stdio: 'ignore' })
           safeToRemove = true
         } catch (error) {
           console.error('WARNING Disposable PostgreSQL shutdown failed: ' + error.message)
