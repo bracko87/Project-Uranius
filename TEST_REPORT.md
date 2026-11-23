@@ -504,3 +504,7 @@ The unfiltered Vitest run reported 1125 passed and 18 failed assertions, compare
 ## U5.03 - Hosted activation preflight
 
 Verified approved local and GitHub commit 3a3215af4ff0367e3441362a0b7e7faaafd906df, GitHub Actions disabled, and exact approved manifest, bootstrap and 007 file hashes. PostgreSQL 17 client and local CA file paths exist. The project-scoped security advisor returned three informational private RLS notices and the existing leaked-password-protection warning. No hosted database connection, SQL write or browser login was attempted. The hosted TLS, ledger, role and browser acceptance checks remain pending private local credential input. The exact steps and proposed retirement procedure are in database/reconstruction/smoke/HOSTED_ACTIVATION.md.
+
+## U5.03 - 007 management-connection rehearsal
+
+Native PostgreSQL 17.12 and Windows PowerShell 5.1 applied the exact management statement as postgres in the disposable fixture. Wrong project, wrong ledger hash, BYPASSRLS reader and duplicate execution were rejected. A forced ledger insert error after grants verified rollback of those grants and preservation of six ledger entries. Success recorded the canonical seventh hash, preserved fixture rows and RLS predicates, and passed both scoped reader queries over local verify-full TLS. The existing anonymous, isolation and sign-out browser checks also passed against the disposable database. No hosted database connection or write was made.

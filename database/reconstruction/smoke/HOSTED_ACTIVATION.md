@@ -1,5 +1,7 @@
 # Hosted smoke activation
 
+The direct password-based migration workflow is paused. See [the management alternative](MANAGEMENT_REVIEW.md). The browser and retirement guidance below still applies.
+
 Owner-approved code commit `3a3215af4ff0367e3441362a0b7e7faaafd906df`. Target `sdtsivgtcaoaeoihcwzd`. Work from the permanent Uranius checkout. Use separate project-specific DBA, migrator and reader passwords, entered privately. Close transcripts and terminal recording before proceeding.
 
 ## Private DBA step

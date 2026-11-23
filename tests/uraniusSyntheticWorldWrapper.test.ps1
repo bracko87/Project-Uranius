@@ -1,4 +1,4 @@
-param([string]$PostgresBin, [string]$OpenSsl, [string]$ScratchRoot)
+param([string]$PostgresBin, [string]$OpenSsl, [string]$ScratchRoot, [switch]$ManagementSmoke)
 $ErrorActionPreference='Stop'
 if ([Console]::IsInputRedirected) { throw 'Run in an interactive Windows PowerShell terminal.' }
 $repo=Split-Path -Parent $PSScriptRoot
@@ -147,7 +147,27 @@ try {
     Local-Sql (Get-Content -Raw (Join-Path $smoke 'bootstrap-reader.sql')) | Out-Null
     Local-Sql 'ALTER ROLE uranius_smoke_reader LOGIN;' | Out-Null
     $digest=(Get-FileHash -LiteralPath (Join-Path $smoke 'manifest.json')).Hash
-    & $wrapper -PsqlPath $shim -CaFile $ca -ResumeExistingRole -SmokeReader -Apply -ApprovedManifestSha256 $digest
+    if ($ManagementSmoke) {
+        $managedSql=Get-Content -Raw (Join-Path $smoke '007_management.sql')
+        function Deny-Management([string]$Sql) {
+            Expect-Denial { Local-Sql $Sql } '*Disposable SQL failed*'
+            if ((Local-Sql "SELECT count(*)=6 AND NOT has_schema_privilege('uranius_smoke_reader','uranius_game','USAGE') FROM uranius_private.migration_ledger;") -ne 't') {
+                throw 'Management rejection left grants or changed the ledger.'
+            }
+        }
+        Deny-Management ($managedSql.Replace('sdtsivgtcaoaeoihcwzd', ('x' * 20)))
+        Deny-Management ($managedSql.Replace($reader.requires[0].sha256, ('0' * 64)))
+        Local-Sql 'ALTER ROLE uranius_smoke_reader BYPASSRLS;' | Out-Null
+        Deny-Management $managedSql
+        Local-Sql 'ALTER ROLE uranius_smoke_reader NOBYPASSRLS;' | Out-Null
+        Local-Sql "ALTER TABLE uranius_private.migration_ledger ADD CONSTRAINT fixture_reject_007 CHECK (version <> '007_smoke_reader.sql');" | Out-Null
+        Deny-Management $managedSql
+        Local-Sql 'ALTER TABLE uranius_private.migration_ledger DROP CONSTRAINT fixture_reject_007;' | Out-Null
+        Local-Sql $managedSql | Out-Null
+        Expect-Denial { Local-Sql $managedSql } '*Disposable SQL failed*'
+    } else {
+        & $wrapper -PsqlPath $shim -CaFile $ca -ResumeExistingRole -SmokeReader -Apply -ApprovedManifestSha256 $digest
+    }
     if ((Local-Sql "SELECT count(*)=7 AND EXISTS (SELECT 1 FROM uranius_private.migration_ledger WHERE version='007_smoke_reader.sql' AND sha256='$($reader.migrations[0].sha256)') FROM uranius_private.migration_ledger;") -ne 't') { throw '007 ledger mismatch.' }
     $sqlPath=Join-Path $repo 'database/synthetic-world/hosted-club-dashboard-read.sql'
     $trustedCa=$ca.Replace('\','/')
