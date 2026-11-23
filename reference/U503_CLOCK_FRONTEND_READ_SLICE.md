@@ -31,3 +31,9 @@ The proposed 009 SQL checks the project's identity, role, schema, single paused 
 **Next gates:** (1) run Node contract/route tests in a verified checkout, (2) run the new 009 disposable native PostgreSQL 17 test and fix any findings, (3) prepare and separately test an atomic 009 management wrapper and rollback review, (4) request **explicit, target- and SHA-scoped owner approval** before *any* hosted 009 ACL change, (5) only afterward set the local clock-read feature flag and test both managers on the actual loopback HTTPS server, including the 15 negative checks. The original Overview and accepted-race/finance/squad/calendar contracts remain a separate milestone. Do not claim the entire original game is connected.
 
 **Checklist:** U5.02 BLOCKED on broader DB contract parity; U5.03 IN_PROGRESS; total **49/60** unchanged.
+
+## Owner native 009 test outcome and route-test correction (2026-11-23)
+
+Owner's Windows console confirmed **21/21 native PostgreSQL 17 checks PASS** for review-only candidate 009 with clean fixture shutdown. The Node tests returned 7/8; all five reader-review cases passed, and the one failure was `response.json()` on an intentionally empty 404 for a tenant-parameter URL. The test-only fix `070346b1d5e30f9c08eaf98a04851543e76677c8` now interprets empty 404 as `data:null` and requires zero extra server clock reads. A separate local Node HTTP reproduction of the empty-404 behavior passed, but **full amended Node suite owner rerun pending**. Native 009 does not need rerunning unless the actual candidate SQL changes (it has not).
+
+009 remains unapproved and not applied to the hosted sandbox. A separate management-wrapper rehearsal and explicit owner permission are required for hosted reader column grants and RLS policy extension.
