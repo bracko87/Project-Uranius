@@ -75,3 +75,7 @@ Added `database/reconstruction/overview/accepted-entry-boundary.mjs` and `tests/
 ## Source-exact submitted-status follow-up (2026-11-23)
 
 Inspected original `src/pages/dashboard/Overview.tsx` lines 1943–1952 and 2343–2396. Preparation status matches after trim + lower-case, exactly `submitted`, `finalised`, `finalized` or `locked`. The accepted-entry boundary now hardcodes that audited predicate, rather than trusting a caller-provided policy, and new tests cover all four spellings, case/whitespace, unsubmitted exclusions and malformed inputs. User's previous eight boundary tests passed before this follow-up; **the revised nine-test suite requires a fresh run**. Original RPC result accepts `upcomingSchedule/upcoming_schedule` and `todayRaces/today_races`; these are presentation arrays, not proof of accepted team entries. No hosted SQL or frontend deployment has been enabled.
+
+## Owner verified accepted-entry regression (2026-11-23)
+
+Owner Windows checkout pulled commit `c37842c` and ran `node --test tests\\uraniusAcceptedEntryBoundary.test.mjs`: **9/9 PASS, 0 failures, 0 skipped**, 168.3459 ms. This is evidence for the offline owner-scoping and original preparation-status boundary only, not real hosted race entries or the full Overview. Move on to authoritative schedule data and RPC response contract; do not repeat this regression without a relevant code change.
