@@ -34,6 +34,20 @@ test('invalid entries and unreviewed external navigation fail closed', () => {
     assert.throws(() => project({ upcomingSchedule: [row], todayRaces: [] }, { ownerVerified: true }))
   }
 })
+test('accepts the original SQL function internal hash race navigation', () => {
+  const raceId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+  const out = project({
+    upcomingSchedule: [{ title: 'Race', href: '#/dashboard/races/' + raceId }],
+    todayRaces: [],
+  }, { ownerVerified: true })
+  assert.equal(out.upcomingSchedule[0].href, '#/dashboard/races/' + raceId)
+  for (const href of ['#/dashboard/races/../logout', '#/dashboard/races/not-a-uuid',
+    '#/dashboard/races/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa?user=b']) {
+    assert.throws(() => project({
+      upcomingSchedule: [{ title: 'Race', href }], todayRaces: [],
+    }, { ownerVerified: true }), /Unreviewed/)
+  }
+})
 test('does not invent accepted race entry, date or club identifiers', () => {
   const out = project({ upcomingSchedule: [{ title: 'Race' }], todayRaces: [] }, { ownerVerified: true })
   assert.equal(out.upcomingSchedule[0].dateLabel, '')
