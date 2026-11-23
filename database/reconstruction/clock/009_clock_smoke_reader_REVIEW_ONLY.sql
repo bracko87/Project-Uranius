@@ -14,6 +14,19 @@ BEGIN
     OR current_setting('server_version_num')::integer / 10000 <> 17
     OR current_setting('uranius.approved_project_ref', true) <> 'sdtsivgtcaoaeoihcwzd'
     OR (SELECT count(*) FROM uranius_private.migration_ledger) <> 8
+    OR EXISTS (
+      SELECT * FROM (VALUES
+        ('001_identity.sql', '87755f1d12a0b983d016e039d4ceb22aea1e5c165b65c2e6888049805fefbadd'),
+        ('002_reference_schema.sql', '6cad841d012117a02daf7e89555cc870da5f9a5f90b4e4c8b7dfee52b84ed45f'),
+        ('003_access.sql', 'b42c96b647afd9b62573c75cd922b4f8de3eff9e39c5b1c8dd2ccd2f40afe8ee'),
+        ('004_synthetic_reference.sql', 'e788bf6cab85f12adce0a9227534cca57e318b15aaa69474ef2e5a950472b317'),
+        ('005_club_identity.sql', '9550e9ef78288f9286387c43595e6649bd8bcea378d29b0db665d0b048a065fc'),
+        ('006_synthetic_world.sql', '56f1a9f08ff1fba3f3ad9a91688c512316b74b2f37fb8806668147ae8813a9a3'),
+        ('007_smoke_reader.sql', 'dd0e9663adc2bf0717d4debc8b291ee04e859592369e381bbde7a42546a8f91b'),
+        ('008_game_clock_v1.sql', 'f3dadf7b7934e1c8677d24af2d0a57b2be19768f0bc2dc6b45729618c28e349b')
+      ) AS expected(version, sha256)
+      EXCEPT SELECT version, sha256 FROM uranius_private.migration_ledger
+    )
     OR NOT EXISTS (SELECT 1 FROM uranius_private.migration_ledger
       WHERE version='008_game_clock_v1.sql'
         AND sha256='f3dadf7b7934e1c8677d24af2d0a57b2be19768f0bc2dc6b45729618c28e349b')
