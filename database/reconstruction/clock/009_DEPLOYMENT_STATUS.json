@@ -1,0 +1,68 @@
+{
+  "projectRef": "sdtsivgtcaoaeoihcwzd",
+  "migration": "009_clock_smoke_reader.sql",
+  "eventDate": "2026-11-23",
+  "status": "HOSTED_SANDBOX_APPLIED_VERIFIED",
+  "database": "postgres",
+  "pgMajor": 17,
+  "consentInterpretation": "Owner replied 'ok, whta is nect?' immediately to explicit migration-009 sandbox-only approval question; response treated as consent to that scoped change, disclosed before execution",
+  "invocation": "Exact reviewed single PostgreSQL DO statement through project-scoped SQL execution, with custom uranius_private.migration_ledger updated atomically; no automatic Supabase migration-history write",
+  "canonicalCandidateSha256": "1be3ce5418ff8a03a787fae81fe2cbd543ad6002cc592222bc2b011245cc4c37",
+  "managementWrapperSha256": "df7eb7ba0fd39cb4dbb826ecfdb1b80f6101b4fda1f79373b7e1509d967c5bab",
+  "tested": {
+    "node": "7/7 static wrapper, 8/8 route",
+    "native": "13/13 management wrapper, 21/21 canonical candidate"
+  },
+  "postflight": {
+    "customLedgerCount": 9,
+    "checksumDrift": 0,
+    "canonical009LedgerRecordMatches": true,
+    "clockRowCount": 1,
+    "pausedSeason1Clock": true,
+    "rlsEnabled": true,
+    "policyRoles": [
+      "authenticated",
+      "uranius_smoke_reader"
+    ],
+    "policyOwnershipPredicatePreserved": true,
+    "threeInvokerClockFunctions": true,
+    "readerSelectedColumns": [
+      "season_number",
+      "month_number",
+      "day_number",
+      "is_paused"
+    ],
+    "readerCanSelectId": false,
+    "readerCanSelectWholeTable": false,
+    "readerCanInsert": false,
+    "readerCanUpdate": false,
+    "readerCanDelete": false,
+    "anonymousCanReadClock": false,
+    "managementSetOrInheritMigrator": false,
+    "independentAdminOnlyMemberships": 1,
+    "existingFixtures": {
+      "managerOwners": 2,
+      "teams": 20,
+      "riders": 200,
+      "starters": 450,
+      "stages": 3,
+      "calendarRows": 3,
+      "openingBalances": 20
+    }
+  },
+  "advisors": {
+    "newClockFindings": 0,
+    "unchanged": [
+      "three uranius_private RLS-enabled private tables without policies (INFO)",
+      "Auth leaked-password protection disabled (WARN); change not authorized"
+    ]
+  },
+  "notYetVerified": [
+    "real HTTPS manager A/B positive clock read after host restart with local feature flag",
+    "15 live HTTPS negative access probes after this migration",
+    "original full Overview, Squad, Calendar, racing and time progression"
+  ],
+  "nextStep": "test authenticated clock read from existing loopback HTTPS server using URANIUS_CLOCK_READ_APPROVED=1, TLS verification and existing short-lived manager sessions",
+  "originalProPelotonProductionChanged": false,
+  "historicalManifest": "009_clock_reader_manifest.json remains the immutable preapplication reviewed source snapshot used by native tests; this record is authoritative for live status"
+}
