@@ -71,8 +71,28 @@ async function main() {
     origin: () => 'https://127.0.0.1:' + server.address().port,
     async verifyLogin(email, password) {
       const slot = /^fixture-manager-([ab])@uranius\.example$/.exec(email)?.[1]
-      if (!slot) return null
-      return openVerifiedManager(slot, publishable, password).catch(() => null)
+      if (!slot) {
+        console.error('Uranius hosted Auth: unsupported fixture manager identifier.')
+        return null
+      }
+      try {
+        return await openVerifiedManager(slot, publishable, password)
+      } catch (error) {
+        // Only emit fixed diagnostic categories. Never log credentials, keys,
+        // Auth response bodies, tokens, identifiers, or raw exception messages.
+        const message = error instanceof Error ? error.message : ''
+        const stage = message.startsWith('Uranius Auth identity lookup') ? 'identity lookup'
+          : message.startsWith('Uranius Auth sign-in') ? 'sign-in' : 'verification'
+        const categories = [
+          'invalid credentials', 'unconfirmed account', 'account banned',
+          'rate limited', 'gateway or server failure', 'Auth service failure',
+          'request timeout', 'transport failure', 'confirmed identity mismatch',
+          'unexpected Auth route blocked',
+        ]
+        const category = categories.find(value => message.includes(value)) ?? 'other verification failure'
+        console.error('Uranius hosted Auth: manager ' + slot.toUpperCase() + ' ' + stage + ' failed (' + category + ').')
+        return null
+      }
     },
     readClock: clockSql ? (id) => {
       if (!/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(id)) {
