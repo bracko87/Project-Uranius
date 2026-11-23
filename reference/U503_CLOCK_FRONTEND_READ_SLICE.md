@@ -37,3 +37,11 @@ The proposed 009 SQL checks the project's identity, role, schema, single paused 
 Owner's Windows console confirmed **21/21 native PostgreSQL 17 checks PASS** for review-only candidate 009 with clean fixture shutdown. The Node tests returned 7/8; all five reader-review cases passed, and the one failure was `response.json()` on an intentionally empty 404 for a tenant-parameter URL. The test-only fix `070346b1d5e30f9c08eaf98a04851543e76677c8` now interprets empty 404 as `data:null` and requires zero extra server clock reads. A separate local Node HTTP reproduction of the empty-404 behavior passed, but **full amended Node suite owner rerun pending**. Native 009 does not need rerunning unless the actual candidate SQL changes (it has not).
 
 009 remains unapproved and not applied to the hosted sandbox. A separate management-wrapper rehearsal and explicit owner permission are required for hosted reader column grants and RLS policy extension.
+
+## Management wrapper 009 staged after owner Node 8/8 confirmation (2026-11-23)
+
+The owner reran the fixed Node clock-route and reader-review tests: **8/8 PASS** on Windows. Separately, the proposed 009 SQL had already passed **21/21 native disposable PostgreSQL 17 checks**, with clean shutdown. Those results apply to the exact candidate SQL SHA `1be3ce5418ff8a03a787fae81fe2cbd543ad6002cc592222bc2b011245cc4c37`, which has not changed.
+
+The additional one-DO-statement, non-superuser management wrapper has been prepared and independently SHA-pinned at `database/reconstruction/clock/009_management_REVIEW_ONLY.sql` (`df7eb7ba0fd39cb4dbb826ecfdb1b80f6101b4fda1f79373b7e1509d967c5bab`). Its four embedded statements match canonical SQL byte-for-byte. Seven source/permission/approval assertions passed in a JS assertion harness. `tests/uraniusClockReaderManagedPg17.mjs` will test the wrapper and role membership restoration in a fresh local PostgreSQL 17 fixture; **this new native test has not yet been executed**. See `database/reconstruction/clock/009_MANAGEMENT_REVIEW.md` for the exact commands.
+
+Hosted project still has only migrations 001–008, owner-bound clock policy restricted to `authenticated`, and no reader clock SELECT. The 009 project-manifest status is `REVIEW_ONLY_NOT_APPROVED`; full-game integration and new A/B HTTPS clock tests remain outstanding. Project progress remains **49/60**.
