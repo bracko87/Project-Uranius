@@ -91,3 +91,15 @@ The owner pulled commit `6e92048` and executed the repaired disposable runner on
 The verified cases included exact 001–007 replay, two manager mappings, owner and unknown-user clock read results, anonymous/reader rejection, wrong project/role/ledger drift rejection, forced transaction rollback, forbidden writes and unpause, invalid dates, duplicate 008 rejection and cleanup. This removes the **native rehearsal** blocker only. The canonical candidate SQL SHA-256 stays unchanged: `f3dadf7b7934e1c8677d24af2d0a57b2be19768f0bc2dc6b45729618c28e349b`.
 
 **Do not execute migration 008 on the hosted Supabase project yet.** The reviewed one-statement atomic management wrapper, exact role-membership restoration, additional integration tests, and explicit owner approval remain outstanding. `get_overview_race_schedule_v1`, race entries, and the full game are not implemented by this clock tranche. Current progress is still 49/60.
+
+## Management wrapper prepared for separate native validation
+
+The **review-only** file [`008_management_REVIEW_ONLY.sql`](008_management_REVIEW_ONLY.sql) now stages the hosted-style, single-statement management route patterned on the separately verified 007 management process. It embeds the exact 17 canonical 008 SQL statements, temporarily grants the non-superuser management session the `SET ROLE uranius_migrator` capability, locks the ledger and fixture inputs, applies clock schema/RPCs under the migrator role, records the exact original 008 SHA, checks existing rows and RLS policies for drift, restores temporary membership, and fails the outer transaction on any violation.
+
+- Candidate SQL SHA-256 (already passed 12 native PG17 checks): `f3dadf7b7934e1c8677d24af2d0a57b2be19768f0bc2dc6b45729618c28e349b`.
+- New management wrapper SHA-256 (**not yet PostgreSQL-tested**): `a1317dca31d768c6fc73dd2090c58ad3e97498a83b1422ad194e1336b30fc92c`.
+- Static verification: 17 exact source statements embedded, project/role/lock/revoke and data/policy checks present; eight independent static checks passed. Additional 5-case Node test file `tests/uraniusClockManagementWrapper.test.mjs` is staged but not yet executed.
+- **Mandatory next:** prove the wrapper against a dedicated disposable PostgreSQL 17 fixture with the realistic independent-admin/non-superuser `postgres` role membership state used for 007, including forced failure and membership restoration. The earlier 12/12 native SQL test did not exercise this new wrapper.
+- No hosted execution is authorized. Do not copy/paste this wrapper into Supabase SQL editor or a migration CLI until its new native tests, permission review and explicit owner approval are recorded.
+
+The fixture clock is frozen and does not yet implement race entries, actual accepted-race schedule, or the complete React Overview/Squad/Calendar contract.
