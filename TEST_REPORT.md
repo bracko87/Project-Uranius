@@ -632,3 +632,22 @@ Prepared `database/reconstruction/clock/008_management_REVIEW_ONLY.sql`, a **sin
 The wrapper has a **separate pinned SHA-256 `a1317dca31d768c6fc73dd2090c58ad3e97498a83b1422ad194e1336b30fc92c`**, distinct from the previously native-tested SQL SHA `f3dadf7b7934e1c8677d24af2d0a57b2be19768f0bc2dc6b45729618c28e349b`. `database/reconstruction/clock/manifest.json` marks it `REVIEW_ONLY_NATIVE_NOT_TESTED` and the parent migration remains `REVIEW_ONLY_NOT_AUTHORIZED`. Authored `tests/uraniusClockManagementWrapper.test.mjs` with five static contract tests (exact source embedding, hash, role restoration, postconditions, and approval gate). Eight independent JS static validations of the GitHub-backed wrapper/source/manifests passed; **the new Node test file has not been independently run as a Node test suite**, and crucially **the management wrapper itself has not been executed in disposable PostgreSQL 17**.
 
 The user's earlier **12/12 PASS** applies only to the *unwrapped* 008 candidate in a disposable native PG17 cluster. It **must not** be extrapolated into approval of the new management wrapper. Next is a new disposable PostgreSQL 17 management-role rehearsal with forced error after the temporary grant/DDL, exact membership and ledger snapshots before/after, and both manager/anon/smoke-reader access tests. No hosted SQL was executed; the hosted database was also independently read back after the owner's test: ledger 7, 008 absent, clock table absent, two managers, 200 riders, three stages.
+
+## U5.02 — Disposable management-wrapper native rehearsal prepared (2026-11-23)
+
+The owner confirmed **12/12 PASS** for the unwrapped candidate 008 in a separate, disposable PostgreSQL 17 test. This is recorded above, and does not authorize hosted execution.
+
+New `tests/uraniusClockManagedPg17.mjs` was committed for the separately SHA-pinned `008_management_REVIEW_ONLY.sql`. The runner's exact target is **a new disposable PostgreSQL 17 cluster only**, bound to `127.0.0.1` on a temporary port. It verifies all seven existing migration file hashes and both new canonical/wrapper hashes before creating or modifying its temporary database. It creates a bootstrap superuser solely inside this disposable cluster, then a **non-superuser `postgres` management login** holding an independently granted `ADMIN TRUE, INHERIT FALSE, SET FALSE` membership in the migrator role. This represents the critical existing management-connection distinction tested during 007.
+
+The runner checks (1) seven original migrations; (2) denied direct `SET ROLE` before the temporary grant; (3) wrong management connection; (4) project mismatch; (5) prior ledger drift; (6) forced failure immediately after temporary grant; (7) forced failure after clock DDL and ledger insert; (8) successful whole-statement execution with exact prior membership restored; (9) owner A/B read shapes and unknown subject denial; (10) anon, smoke-reader and writer denial; (11) duplicate invocation rejection; (12) cleanup. It uses the hardened Windows `pg_ctl` start/stop and filesystem cleanup logic that passed the owner's prior native test.
+
+`tests/uraniusClockManagementWrapper.test.mjs` now contains six offline static tests including a runner-specific isolation/role/rollback test. Independent V8 parse checks of both JS files and **10 source/safety assertions passed** against currently committed GitHub source. The **Node test suite and native wrapper rehearsal have not been executed on PostgreSQL 17** from this assistant environment because PostgreSQL binaries are unavailable. Do **not** mark 008 approved or hosted.
+
+Owner command, from the Uranius Windows checkout after `git pull origin main`, no database credentials:
+
+```cmd
+node --test tests\uraniusClockManagementWrapper.test.mjs
+node tests\uraniusClockManagedPg17.mjs --disposable-native-pg17 --postgres-bin "C:\Users\Aleks\Desktop\Project-Uranius\.uranius-pin-review\postgresql-17.12-portable\bin"
+```
+
+The runner must return all `PASS` messages and `INFO Disposable PostgreSQL files cleaned up`. Record the full output and investigate failures before any hosted approval request. No hosted migration, remote scheduler, client API change, or original production write occurred.
