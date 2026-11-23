@@ -10,6 +10,8 @@ const sha = bytes => createHash('sha256').update(bytes).digest('hex')
 
 test('review-only management wrapper pins exact canonical 008 SHA and project', () => {
   assert.equal(sha(source), manifest.candidate.sha256)
+  assert.equal(sha(wrapper), manifest.managementWrapper.sha256)
+  assert.equal(manifest.managementWrapper.status, 'REVIEW_ONLY_NATIVE_NOT_TESTED')
   assert.equal(manifest.status, 'REVIEW_ONLY_NOT_AUTHORIZED')
   assert.match(wrapper, /REVIEW ONLY\. DO NOT EXECUTE ON ANY HOSTED DATABASE/)
   assert.ok(wrapper.includes(manifest.candidate.sha256))
