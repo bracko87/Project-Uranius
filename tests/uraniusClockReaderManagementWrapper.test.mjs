@@ -18,7 +18,7 @@ test('009 review manifest pins exact candidate and atomic wrapper bytes', () => 
   assert.equal(manifest.nativeRehearsal.result, 'OWNER_REPORTED_PASS_21_OF_21')
   assert.equal(digest(source), manifest.candidate.sha256)
   assert.equal(digest(wrapper), manifest.managementWrapper.sha256)
-  assert.equal(manifest.managementWrapper.status, 'REVIEW_ONLY_NATIVE_NOT_TESTED')
+  assert.equal(manifest.managementWrapper.status, 'OWNER_REPORTED_NATIVE_PASS_13_OF_13_REVIEW_ONLY')
 })
 
 test('wrapper preserves exactly the four source SQL statements without changing bytes', () => {
@@ -87,7 +87,8 @@ test('dedicated native runner uses local temporary cluster and tests failure-inj
 
 test('native tests and owner approval are distinct gates; hosted 009 remains unauthorized', () => {
   assert.equal(manifest.status, 'REVIEW_ONLY_NOT_APPROVED')
-  assert.equal(manifest.managementWrapper.status, 'REVIEW_ONLY_NATIVE_NOT_TESTED')
-  assert.ok(manifest.unmet.some(s => /disposable native PostgreSQL 17 management-wrapper/.test(s)))
+  assert.equal(manifest.managementWrapper.status, 'OWNER_REPORTED_NATIVE_PASS_13_OF_13_REVIEW_ONLY')
+  assert.equal(manifest.managementWrapper.nativeRehearsal.result, 'OWNER_REPORTED_PASS_13_OF_13')
+  assert.equal(manifest.managementWrapper.nodeTests.status, 'OWNER_REPORTED_PASS_7_OF_7')
   assert.ok(manifest.unmet.some(s => /Explicit owner authorization/.test(s)))
 })
