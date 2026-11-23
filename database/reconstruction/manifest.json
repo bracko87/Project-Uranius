@@ -1,0 +1,28 @@
+{
+  "projectRef": "sdtsivgtcaoaeoihcwzd",
+  "postgresMajor": 17,
+  "requires": [
+    {
+      "file": "001_identity.sql",
+      "sha256": "87755f1d12a0b983d016e039d4ceb22aea1e5c165b65c2e6888049805fefbadd"
+    },
+    {
+      "file": "002_reference_schema.sql",
+      "sha256": "6cad841d012117a02daf7e89555cc870da5f9a5f90b4e4c8b7dfee52b84ed45f"
+    },
+    {
+      "file": "003_access.sql",
+      "sha256": "b42c96b647afd9b62573c75cd922b4f8de3eff9e39c5b1c8dd2ccd2f40afe8ee"
+    },
+    {
+      "file": "004_synthetic_reference.sql",
+      "sha256": "e788bf6cab85f12adce0a9227534cca57e318b15aaa69474ef2e5a950472b317"
+    }
+  ],
+  "migrations": [
+    {
+      "file": "005_club_identity.sql",
+      "sha256": "9550e9ef78288f9286387c43595e6649bd8bcea378d29b0db665d0b048a065fc"
+    }
+  ]
+}

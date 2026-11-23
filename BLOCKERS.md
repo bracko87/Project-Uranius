@@ -63,3 +63,7 @@ The existing restricted hosted role is retained. The owner reports no applicatio
 ## U5.02 - Foundation applied, remaining reconstruction requires review
 
 The owner completed initialization and live read-only verification passed for the four-file foundation. U5.02 remains blocked on reconciliation of the retained app contracts, review of missing source dependencies and approval of any additional pinned migrations. See reference/DB_DRIFT_AUDIT.md. U5.03 synthetic world preparation is available offline. Hosted seed/login work follows the U5.02 gate.
+
+## U5.02 - Reviewed club identity package pending approval
+
+Migration 005 is ready for owner review. The package adds the initial read-only game club contract and private-table RLS hardening. No remote writes or API exposure were performed. Approve only the exact manifest and target in database/reconstruction/README.md. Remaining reconstruction work is tracked in reference/DB_RECONSTRUCTION_PLAN.md. U5.03 requires separately authorized account creation and seed import after the dependent contracts are ready.

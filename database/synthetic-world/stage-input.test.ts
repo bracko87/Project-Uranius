@@ -16,6 +16,9 @@ it.runIf(Boolean(process.env.URANIUS_PGLITE_ENTRY))('builds engine inputs from t
     expect(stages).toHaveLength(3)
     const { rows: teamIds } = await db.query('SELECT team_id FROM uranius_catalog.teams ORDER BY team_id')
     expect(syntheticWorldDraft.balances.map(entry => entry.teamId)).toEqual(teamIds.map(row => row.team_id))
+    expect(syntheticWorldDraft.clubProfiles.map(entry => entry.teamId)).toEqual(teamIds.map(row => row.team_id))
+    expect(new Set(syntheticWorldDraft.clubProfiles.map(entry => entry.clubId)).size).toBe(20)
+    expect(syntheticWorldDraft.managers.map(entry => entry.teamId)).toEqual([1, 2])
     const { rows: equipment } = await db.query('SELECT equipment_id FROM uranius_catalog.equipment ORDER BY equipment_id')
     expect(equipment.map(row => row.equipment_id)).toEqual(syntheticWorldDraft.equipment)
 

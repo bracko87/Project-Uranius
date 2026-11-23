@@ -438,3 +438,11 @@ Scoped read-only queries confirmed stored project identity sdtsivgtcaoaeoihcwzd 
 Observed 20 teams, 200 riders, two equipment rows, one season, 17 terrain points and 100/150/200 starters on 120/160/200 km routes. All 28 catalog constraints were validated, including six FKs. Seven orphan checks and rider-range checks returned zero. The eight catalog tables have RLS and one SELECT policy each. The two private tables denied direct client ACL checks. Zero Auth users and zero ownership rows. No application triggers, cron extension, network extension, buckets or application publication tables. Confirmation covers database-visible state. No dashboard configuration was changed.
 
 See reference/DB_DRIFT_AUDIT.md for the full reference index and remaining requirements. The offline synthetic world smoke test loaded the reviewed SQL and advanced all three canonical inputs through 90 seconds using the existing hybrid engine. Catalog memberships, route endpoints and unrevealed final results passed. Hosted game login, full reconstruction and the remaining U5.03 imports are still pending. No remote writes were performed during verification.
+
+## U5.02 - Dependency classification and migration 005 rehearsal
+
+Classified 834 literal caller occurrences by section and deduplicated them into 490 kind/name pairs, with 639 section entries. Audited the exact zero-argument club lookup and the club projection expected by Login, App and clubContext. See reference/DB_RECONSTRUCTION_PLAN.md for unresolved dynamic contracts and feature gates.
+
+Migration 005 ran as the restricted role on disposable native PostgreSQL 17.12 after loading all four unchanged foundation migrations. Wrong identity refused, an injected failure rolled back both DDL and the fifth ledger row, a good apply produced five entries and replay was denied. Offline assertions passed for separate manager reads, missing subject, anonymous exposure denial, private schema denial and no client mutations. The synthetic rows inserted for verification were rolled back. The loopback server was stopped. The synthetic stage fixture and frozen no-command tests passed, including the 20 unique fictional club identifiers.
+
+Manifest SHA-256 8d7e8c514e87c2cd8c9d9b7b19bd4d663b4d53e9b144864e9a46bb69e0a9b6ce. Only package 005 awaits approval. The hosted foundation remains unchanged. U5.02 and U5.03 remain open.

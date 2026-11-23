@@ -28,6 +28,11 @@ export const syntheticWorldDraft = {
   season: 1,
   calendar: [1, 2, 3].map(stageId => ({ stageId, seasonDay: stageId + 6 })),
   managers: [{ slot: 'fixture-manager-a', teamId: 1 }, { slot: 'fixture-manager-b', teamId: 2 }],
+  clubProfiles: Array.from({ length: 20 }, (_, i) => ({
+    teamId: i + 1,
+    clubId: '00000000-0000-4000-8000-' + String(i + 11).padStart(12, '0'),
+    countryCode: i % 2 ? 'FR' : 'DE',
+  })),
   balances: Array.from({ length: 20 }, (_, i) => ({ teamId: i + 1, credits: 10_000 })),
   equipment: ['road_base', 'wheel_base'],
 } as const
