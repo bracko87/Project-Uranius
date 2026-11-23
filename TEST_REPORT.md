@@ -587,3 +587,14 @@ Added `tests/uraniusClockNativePg17.mjs`, a purpose-built, credential-free and f
 **Limit:** the assistant environment has no PostgreSQL 17 binaries. Therefore **zero native database runs** of this new runner have been performed. Existing seven-migration disposable PostgreSQL proofs are recorded earlier, but cannot be retroactively treated as execution of 008. The native 008 gate and the management connection/membership restoration procedure remain pending. Candidate 008 remains `REVIEW_ONLY_NOT_AUTHORIZED`, the hosted ledger must remain 7 entries and the real frontend Overview remains unconnected.
 
 Next verification command in the owner's reviewed Windows checkout (no credentials; only isolated local test cluster): `node tests\\uraniusClockNativePg17.mjs --disposable-native-pg17 --postgres-bin "C:\\Users\\Aleks\\Desktop\\Project-Uranius\\.uranius-pin-review\\postgresql-17.12-portable\\bin"`. Record the exact terminal output before advancing status.
+
+## U5.02 - Owner Windows EBUSY diagnostic and native runner repair (2026-11-23)
+
+The owner ran the committed `node tests\\uraniusClockNativePg17.mjs --disposable-native-pg17 --postgres-bin ...` in the Uranius Windows checkout after fast-forwarding to commit `93344bd5`. The command ended with `EBUSY: resource busy or locked, rmdir ...\\Temp\\uranius-008-disposable-mZo9ye\\data` in the runner's `finally` cleanup. **No PG17 PASS lines or original PostgreSQL error were present in the supplied output. Migration 008 has NOT passed its native test.** Because `rmSync` threw while unwinding, the earlier failure was masked; its cause remains unconfirmed. A Windows descendant can also retain inherited stdio pipe handles when `pg_ctl start` is executed via `spawnSync` using default pipes, so a start timeout or dangling process is a possible cause, not an established diagnosis.
+
+The runner was repaired in `tests/uraniusClockNativePg17.mjs`:
+- explicit diagnostics around disposable initdb, server startup and each numbered migration;
+- `pg_ctl start` and `pg_ctl stop` use ignored stdio, avoiding inherited-pipe blocking; startup failure includes a bounded excerpt of the disposable PostgreSQL log;
+- cleanup checks `pg_ctl status` even after an incomplete start, attempts to stop only the fresh temporary cluster, retries Windows `EBUSY`/file locking, and catches cleanup errors so they **do not override** the original SQL/startup error. If the server cannot be proved stopped, its temporary data is deliberately retained rather than deleted.
+
+The final repaired GitHub source passed a V8 JavaScript parse-only check with ESM imports removed for parsing, but the native PostgreSQL rehearsal has **not been rerun** yet. The hosted Uranius ledger stays at 7 entries and 008 is still review-only and unapproved. Owner may use `git pull origin main` and repeat the same local test command; do not enter DB passwords or run the hosted migration.
