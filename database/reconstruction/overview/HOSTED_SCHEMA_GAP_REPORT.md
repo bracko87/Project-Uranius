@@ -117,3 +117,11 @@ node tests\\uraniusOverviewRealIdentityNativePg17.mjs --disposable-native-pg17 -
 ```
 
 The test is a local integration rehearsal, **not an authorization to execute migration 010/012 against hosted Uranius**. Until the real native A/B test succeeds and installable schema/permission migration is separately approved, keep `URANIUS_OVERVIEW_SCHEDULE_READ_APPROVED` unset.
+
+## Real JWT native PG17 gate passed (owner console, 2026-11-23)
+
+Owner executed `node tests\\uraniusOverviewRealIdentityNativePg17.mjs --disposable-native-pg17 --postgres-bin ...` after pulling main at `237dea5`. Result: **19/19 PASS, zero reported failures, temporary PGDATA cleaned up**. This includes exact 001–007 foundation replay, native management 008/009, original nine ledger entries preserved, rollback-only 010/012 rehearsal, two mapped synthetic managers using the actual Uranius `request_uid()` / `get_my_club_id()` RLS ownership path, private A/B race separation, unknown-subject denial, global world-day cards, and read-only reader restrictions. No hosted or production connection was used.
+
+**Impact:** the previously outstanding native full-foundation/JWT ownership test gate is **cleared**. It does *not* establish a hosted read endpoint, authorize executing 010/012, or certify production-like data migrations. The hosted Uranius project remains unchanged and currently lacks the 010/012 tables and policies. Frontend smoke `URANIUS_OVERVIEW_SCHEDULE_READ_APPROVED` must remain disabled.
+
+**Next milestone, one integrated deliverable:** create an exact-hash, target-pinned, migration-ledger-checked 010 schema + 012 restrictive policy management package for **isolated Uranius only**; review the source grant scopes and verify rollback/duplicate-failure behavior against native PG17 with 001–009; request explicit hosted migration approval with the canonical digest; only then apply and verify hosted A/B reads. Separately update the local UI to call the authenticated schedule endpoint after hosted permissions are verified. Do not expand the project into unrelated tests or apply changes to original ProPeloton.
