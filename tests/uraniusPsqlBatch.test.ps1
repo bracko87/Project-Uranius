@@ -19,6 +19,7 @@ if ($LASTEXITCODE -ne 0) { throw 'SCRAM verifier differs from independent calcul
 if ((New-UraniusScramVerifier $fixture) -ceq $value) { throw 'Verifier reused its salt.' }
 
 $exe = Join-Path ([IO.Path]::GetTempPath()) ('uranius-psql-test-' + [Guid]::NewGuid().ToString('N') + '.exe')
+$pidFile = $exe + '.pid'
 try {
     Add-Type -Language CSharp -OutputAssembly $exe -OutputType ConsoleApplication -TypeDefinition @'
 using System;
@@ -26,12 +27,20 @@ using System.Threading;
 public static class PsqlFixture {
     public static int Main(string[] args) {
         string password = Environment.GetEnvironmentVariable("PGPASSWORD");
-        if (String.IsNullOrEmpty(password) || Array.IndexOf(args, "-w") < 0 ||
+        if (String.IsNullOrEmpty(password) || Array.IndexOf(args, "--no-password") < 0 ||
             Array.IndexOf(args, "-W") >= 0 || String.Join(" ", args).Contains(password) ||
             Environment.GetEnvironmentVariable("PGSERVICE") != null) return 9;
+        if (Environment.GetEnvironmentVariable("PGOPTIONS") == "offline-slow-fixture") Thread.Sleep(6000);
         string sql = Console.In.ReadToEnd();
-        if (sql == "wait") { Thread.Sleep(30000); return 0; }
-        if (sql == "fail") { Console.Error.WriteLine(password); return 1; }
+        if (sql.Length == 16000 && sql.Trim('x') == "") { Console.WriteLine("all-input"); return 0; }
+        if (sql == "wait") {
+            System.IO.File.WriteAllText(Environment.GetEnvironmentVariable("PGOPTIONS"), System.Diagnostics.Process.GetCurrentProcess().Id.ToString());
+            Thread.Sleep(30000); return 0;
+        }
+        if (sql == "auth") { Console.Error.WriteLine("FATAL:  28P01 " + password); return 2; }
+        if (sql == "connect-timeout") { Console.Error.WriteLine("connection to server: timeout expired " + password); return 2; }
+        if (sql == "sql") { Console.Error.WriteLine("ERROR:  42501 " + password); return 3; }
+        if (sql == "io") { Console.Error.WriteLine("could not read from input " + password); return 1; }
         Console.WriteLine(sql == "read-only" ? "batch-ok" : "unexpected input");
         return 0;
     }
@@ -40,18 +49,38 @@ public static class PsqlFixture {
     $savedService = $env:PGSERVICE
     try {
         $env:PGSERVICE = 'should-not-reach-child'
-        $settings = @{ Executable = $exe; Password = $fixture; Connection = @{}; Stage = 'offline batch' }
+        $connection = @{ PGHOST = 'db.sdtsivgtcaoaeoihcwzd.supabase.co'; PGPORT = '5432'; PGDATABASE = 'postgres'
+            PGUSER = 'uranius_migrator'; PGSSLMODE = 'verify-full'; PGGSSENCMODE = 'disable'; PGSSLROOTCERT = 'unused' }
+        $settings = @{ Executable = $exe; Password = $fixture; Connection = $connection; Stage = 'offline batch' }
         if ((Invoke-UraniusPsqlBatch @settings -Sql 'read-only').Trim() -ne 'batch-ok') { throw 'Batch probe failed.' }
-        foreach ($case in @(@{ Sql = 'wait'; Message = 'timed out' }, @{ Sql = 'fail'; Message = 'psql exit 1' })) {
+        try {
+            $connection.PGOPTIONS = 'offline-slow-fixture'
+            if ((Invoke-UraniusPsqlBatch @settings -Sql ('x' * 16000) -TimeoutSeconds 12).Trim() -ne 'all-input') {
+                throw 'Batch did not survive slow startup with complete SQL input.'
+            }
+        }
+        finally { $connection.Remove('PGOPTIONS') }
+        foreach ($case in @(
+            @{ Sql = 'wait'; Message = 'process timeout' },
+            @{ Sql = 'auth'; Message = 'authentication failure (SQLSTATE 28P01)' },
+            @{ Sql = 'connect-timeout'; Message = 'connection timeout' },
+            @{ Sql = 'sql'; Message = 'SQL execution failure (SQLSTATE 42501)' },
+            @{ Sql = 'io'; Message = 'process I/O failure' }
+        )) {
             $observed = ''
-            try { Invoke-UraniusPsqlBatch @settings -Sql $case.Sql -TimeoutSeconds 1 | Out-Null }
+            $connection.PGOPTIONS = $pidFile
+            try { Invoke-UraniusPsqlBatch @settings -Sql $case.Sql -TimeoutSeconds 2 | Out-Null }
             catch { $observed = $_.Exception.Message }
             if ($observed -notlike ('*' + $case.Message + '*') -or $observed.Contains($fixture)) {
                 throw 'Batch timeout or sanitized failure regression.'
             }
         }
+        $childPid = [int](Get-Content -LiteralPath $pidFile)
+        if (Get-Process -Id $childPid -ErrorAction SilentlyContinue) { throw 'Timed-out child remained alive.' }
     }
     finally { $env:PGSERVICE = $savedService }
 }
-finally { if (Test-Path -LiteralPath $exe) { Remove-Item -LiteralPath $exe } }
-Write-Output 'Windows PowerShell 5.1 private SCRAM and bounded psql batch tests passed.'
+finally {
+    foreach ($file in @($exe, $pidFile)) { if (Test-Path -LiteralPath $file) { Remove-Item -LiteralPath $file } }
+}
+Write-Output 'PowerShell 5.1 SCRAM, slow startup, complete input, deadline, and sanitized error tests passed.'

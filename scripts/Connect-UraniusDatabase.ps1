@@ -130,6 +130,8 @@ try {
     $migrationPassword = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($migrationPtr)
     if (!$migrationPassword) { throw 'Migration password was empty.' }
     $connection.PGUSER = 'uranius_migrator'
+    Invoke-UraniusPsqlBatch -Executable $psql -Connection $connection -Password $migrationPassword -Stage 'Read-only migration login probe' -Sql 'BEGIN READ ONLY; SELECT 1; ROLLBACK;' | Out-Null
+    Write-Host 'Read-only migration login probe passed.'
     $preflight = Get-Content -Raw -LiteralPath (Join-Path $dir 'preflight.sql')
     Invoke-UraniusPsqlBatch -Executable $psql -Connection $connection -Password $migrationPassword -Stage 'Read-only migration-role and empty-ledger check' -Sql ('BEGIN READ ONLY;' + $preflight + 'ROLLBACK;') | Out-Null
     Write-Host 'Restricted migration login, TLS and fresh-state checks passed.'

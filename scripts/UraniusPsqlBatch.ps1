@@ -33,38 +33,49 @@ function Invoke-UraniusPsqlBatch {
         [string]$Stage,
         [int]$TimeoutSeconds = 60
     )
+    if ($Sql.Length -gt 24000) { throw "$Stage - SQL exceeds the bounded local batch size." }
+    $node = Get-Command node -CommandType Application -ErrorAction Stop | Select-Object -First 1
+    $runner = Join-Path $PSScriptRoot 'run-uranius-psql-batch.mjs'
     $info = New-Object Diagnostics.ProcessStartInfo
-    $info.FileName = $Executable
-    $info.Arguments = '-X -w --set=ON_ERROR_STOP=1 -P pager=off -f -'
+    $info.FileName = $node.Source
+    $info.Arguments = '"' + $runner + '"'
     $info.UseShellExecute = $false
     $info.CreateNoWindow = $true
-    $info.RedirectStandardInput = $true
     $info.RedirectStandardOutput = $true
     $info.RedirectStandardError = $true
     foreach ($name in @($info.EnvironmentVariables.Keys)) {
-        if ($name -like 'PG*') { $info.EnvironmentVariables.Remove($name) }
+        if ($name -match '^(PG|URANIUS_|NODE_)') { $info.EnvironmentVariables.Remove($name) }
     }
     foreach ($name in $Connection.Keys) { $info.EnvironmentVariables[$name] = $Connection[$name] }
     $info.EnvironmentVariables['PGPASSWORD'] = $Password
+    $info.EnvironmentVariables['URANIUS_BATCH_SQL'] = $Sql
+    $info.EnvironmentVariables['URANIUS_BATCH_PSQL'] = $Executable
+    $info.EnvironmentVariables['URANIUS_BATCH_TIMEOUT_MS'] = [string]($TimeoutSeconds * 1000)
 
     $child = New-Object Diagnostics.Process
     $child.StartInfo = $info
     $started = $false
     try {
-        $started = $child.Start()
+        try { $started = $child.Start() }
+        catch { throw "$Stage - process I/O failure while starting the batch runner." }
         if (-not $started) { throw "$Stage could not start psql." }
         $info.EnvironmentVariables.Remove('PGPASSWORD')
+        $info.EnvironmentVariables.Remove('URANIUS_BATCH_SQL')
         $out = $child.StandardOutput.ReadToEndAsync()
         $err = $child.StandardError.ReadToEndAsync()
-        $write = $child.StandardInput.WriteAsync($Sql)
-        if (-not $write.Wait(5000)) { throw "$Stage could not send SQL to psql within 5 seconds." }
-        $child.StandardInput.Close()
-        if (-not $child.WaitForExit($TimeoutSeconds * 1000)) { throw "$Stage timed out after $TimeoutSeconds seconds." }
-        if ($child.ExitCode -ne 0) { throw "$Stage failed (psql exit $($child.ExitCode)). Check the project password, TLS, or database state before retrying." }
+        if (-not $child.WaitForExit(($TimeoutSeconds + 5) * 1000)) { throw "$Stage - process timeout waiting for the batch runner." }
+        if ($child.ExitCode -ne 0) {
+            $detail = $err.GetAwaiter().GetResult().Trim()
+            if ($detail -match '^PostgreSQL batch: (authentication failure|connection timeout|connection or TLS failure|SQL execution failure|process I/O failure|process timeout)( \(SQLSTATE [0-9A-Z]{5}\))?\.$') {
+                throw ($Stage + ': ' + $Matches[1] + $Matches[2] + '.')
+            }
+            throw "$Stage - process I/O failure in the batch runner."
+        }
         $out.GetAwaiter().GetResult()
     }
     finally {
         $info.EnvironmentVariables.Remove('PGPASSWORD')
+        $info.EnvironmentVariables.Remove('URANIUS_BATCH_SQL')
         if ($started -and -not $child.HasExited) { $child.Kill() }
         $child.Dispose()
     }

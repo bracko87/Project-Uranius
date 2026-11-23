@@ -1,4 +1,4 @@
-import { spawnSync } from 'node:child_process'
+import { runPsqlBatch } from './run-uranius-psql-batch.mjs'
 import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { assertSandboxTarget } from './assert-sandbox-target.mjs'
@@ -51,17 +51,14 @@ function initialize(env, expectedDigest) {
     PGCONNECT_TIMEOUT: '10',
     PGOPTIONS: '-c statement_timeout=30000 -c lock_timeout=10000',
   })
-  const result = spawnSync(env.URANIUS_PSQL_PATH || 'psql', [
-    '--no-psqlrc', '--no-password', '--quiet', '--set=ON_ERROR_STOP=1', '--set=VERBOSITY=sqlstate',
-    '--single-transaction', '--file=-',
-  ], { env: childEnv, input: statements.join('\n'), encoding: 'utf8', timeout: 120_000, stdio: ['pipe', 'pipe', 'pipe'] })
-  if (result.error || result.status !== 0) {
-    const file = [...(result.stdout ?? '').matchAll(/^URANIUS_MIGRATION (\d{3}_[a-z_]+\.sql)\r?$/gm)].at(-1)?.[1]
-    const sqlstate = (result.stderr ?? '').match(/\b(?:ERROR|FATAL):\s+([0-9A-Z]{5})\b/)?.[1]
-    const stage = file || 'connection or preflight'
-    const code = result.error?.code === 'ETIMEDOUT' ? 'timeout' : sqlstate || 'no SQLSTATE'
-    throw new Error('Sandbox initialization stopped at ' + stage + ' (' + code + '). Verify the migration ledger before retrying.')
-  }
+  runPsqlBatch({
+    executable: env.URANIUS_PSQL_PATH || 'psql',
+    input: statements.join('\n'),
+    env: childEnv,
+    timeout: 120_000,
+    transaction: true,
+    stage: 'Sandbox initialization stopped',
+  })
   console.log('Sandbox preparation migrations applied.')
 }
 
