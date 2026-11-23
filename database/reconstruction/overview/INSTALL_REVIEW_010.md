@@ -58,3 +58,17 @@ Run after pulling:
 node tests\uraniusOverviewCombinedInstallNativePg17.mjs --disposable-native-pg17 --postgres-bin "C:\Users\Aleks\Desktop\Project-Uranius\.uranius-pin-review\postgresql-17.12-portable\bin"
 ```
 This command has **no production or hosted Supabase access**. Its result is currently pending. Do not run `--apply-reviewed-overview` until this passes and explicit approval for the exact manifest digest is obtained.
+
+## Final native rehearsal passed; approval now required (2026-11-23)
+
+Owner pulled `0433ef1` and ran the **exact combined-migration disposable PostgreSQL 17 test**:
+`node tests\\uraniusOverviewCombinedInstallNativePg17.mjs --disposable-native-pg17 --postgres-bin ...`
+Result **17/17 PASS, zero failures**, including full historical 001–009 reconstruction, failed DDL forced rollback to nine ledger rows, combined 010 schema/policy install only in disposable PG17, ten-row ledger and all four FORCE RLS table checks, duplicate migration rejection, unknown/anonymous/read-only-denial checks, and `INFO Disposable PostgreSQL files cleaned up`. Test deliberately substitutes the TLS preflight expression **in memory only** for disposable localhost; hosted TLS remains a separate enforced guard.
+
+Separately, owner confirmed **4/4 package-review tests pass** and ran `node scripts\\apply-uranius-overview.mjs --review` obtaining the expected exact hashes:
+- SQL candidate: `56f52ac20c84aaf70ea63c68e0435da20084a3fe42e375a372c3d613cfa445af`
+- Approval manifest: `26cdce51966cf2264ff2ec49affe8c987f5cbcb447040807c61354382092a170`
+
+Fresh **read-only hosted** Uranius metadata inspection after the final local test: PostgreSQL 17; ledger **9**; four race tables **absent**; season-one clock paused; owner mappings **2**; riders **200**. Hosted migration remains **NOT APPLIED**. No original ProPeloton production modifications.
+
+**The outstanding gate is now explicit owner permission for the reviewed isolated Uranius schema/permissions change**, tied to the manifest SHA and project ref. Do not run the apply mode based on a generic “proceed” or any pre-existing authorization. After exact approval, perform an immediate ledger recheck, run the pinned atomic installer, verify its postflight and hosted RLS, then enable and validate read-only schedule for both managers.
