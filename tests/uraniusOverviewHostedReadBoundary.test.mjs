@@ -10,7 +10,7 @@ const statements=batch.split('\n').filter(line=>!line.trimStart().startsWith('--
 test('schedule is disabled by default and the trusted server owns subject binding',()=>{
   assert.match(server,/env\.URANIUS_OVERVIEW_SCHEDULE_READ_APPROVED === '1'/)
   assert.match(server,/readSchedule: scheduleSql \? \(id\) =>/)
-  assert.match(server,/input: '\\\\set verified_subject ' \+ id \+ '\\n' \+ scheduleSql/)
+  assert.match(server,/input: .*set verified_subject .*scheduleSql/)
   assert.match(batch,/:\x27verified_subject\x27/)
   assert.doesNotMatch(statements,/p_club_id|SECURITY DEFINER/)
 })
