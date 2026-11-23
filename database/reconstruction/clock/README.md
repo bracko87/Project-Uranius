@@ -26,8 +26,8 @@ The full original `game_state` creation DDL and `get_overview_race_schedule_v1` 
 
 - `008_game_clock_v1.sql`: creates one RLS-protected, paused, non-advancing synthetic clock and the three original read RPC signatures. Dates are backed by fixed `game_state`, not `current_date` or JavaScript time.
 - `manifest.json`: explicitly unapproved candidate with exact seven prerequisite ledger hashes.
-- `../../../../tests/uraniusGameClockMigrationPreflight.test.mjs`: offline static guard test for source hash, project pinning, permissions, role prerequisites, legacy RPC signatures, and prohibition on scheduler/writer access.
-- `../overview/game-clock-contract.mjs` and `../../../../tests/uraniusGameClockContract.test.mjs`: offline behavior mapping and fixture schedule fail-closed checks.
+- `../../../tests/uraniusGameClockMigrationPreflight.test.mjs`: offline static guard test for source hash, project pinning, permissions, role prerequisites, legacy RPC signatures, and prohibition on scheduler/writer access.
+- `../overview/game-clock-contract.mjs` and `../../../tests/uraniusGameClockContract.test.mjs`: offline behavior mapping and fixture schedule fail-closed checks.
 
 Canonical SQL SHA-256:
 
