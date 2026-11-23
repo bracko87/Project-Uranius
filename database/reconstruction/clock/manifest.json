@@ -49,5 +49,12 @@
     "execution": "disposable local PostgreSQL 17; no hosted connection",
     "evidence": "TEST_REPORT.md",
     "sqlSha256": "f3dadf7b7934e1c8677d24af2d0a57b2be19768f0bc2dc6b45729618c28e349b"
+  },
+  "managementWrapper": {
+    "file": "008_management_REVIEW_ONLY.sql",
+    "sha256": "a1317dca31d768c6fc73dd2090c58ad3e97498a83b1422ad194e1336b30fc92c",
+    "statementCountFromCanonical": 17,
+    "status": "REVIEW_ONLY_NATIVE_NOT_TESTED",
+    "tests": "tests/uraniusClockManagementWrapper.test.mjs"
   }
 }
