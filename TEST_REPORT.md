@@ -567,3 +567,13 @@ Source provenance review found an early `current_date` stub, **superseded** by t
 Added offline-only `database/reconstruction/overview/game-clock-contract.mjs` and `tests/uraniusGameClockContract.test.mjs`. **9/9 Node tests passed locally** using the same code slice: authoritative clock required (no browser-current-date fallback), season 1/2, leap day, invalid date rejection, three-stage ordering without invented calendar dates or accepted entries, and fail-closed Overview schedule gating. Command: `node --test tests\\uraniusGameClockContract.test.mjs`.
 
 No original React route was switched to a fixture adapter; no hosted schema, Auth, account, worker, API exposure, payment or scheduling settings were modified. The `game_state`/accepted-entry DB contract reconstruction is still required before a full-game browser baseline. Status remains **U5.02 BLOCKED, U5.03 IN_PROGRESS, 49/60**.
+
+## U5.02 — Clock migration 008 review-only package (2026-11-23)
+
+Prepared (not executed): `database/reconstruction/clock/008_game_clock_v1.sql`, manifest SHA-256 `f3dadf7b7934e1c8677d24af2d0a57b2be19768f0bc2dc6b45729618c28e349b`, `tests/uraniusGameClockMigrationPreflight.test.mjs`, and detailed `database/reconstruction/clock/README.md`.
+
+Based on the original *later* sanitized game-date SQL, the candidate is a **frozen synthetic Season 1/2000-01-01 clock**, with a single `id = true` row, `is_paused = true`, PostgreSQL calendar validation and three `SECURITY INVOKER` RPCs with original return signatures. Owner-backed SELECT RLS is for `authenticated` only. No `anon`/smoke-reader grants, table writers, clock jobs, scheduler, result publication or changes to the restricted reader's existing privileges. This does **not** implement the missing accepted-entry/RPC Overview schedule and is not wired into the real frontend.
+
+The candidate SQL independently passed **eight static source/permission guard checks** against the fetched GitHub file and the exact seven existing migration hashes. The seven additional Node test cases were authored and committed, but **were not executed in the native checkout** during this session. **No disposable PostgreSQL 17 rehearsal or management-connection apply wrapper has been completed**; the source DDL for the complete original `game_state` is absent. These are mandatory approval blockers, not mere documentation gaps.
+
+A final **read-only** Supabase inspection after the commits confirmed `sdtsivgtcaoaeoihcwzd`, seven ledger entries, zero 008 entries, no `uranius_game.game_state`, two owner mappings, 200 riders and three stages. No hosted DDL or write occurred. Progress **49/60**: U5.02 BLOCKED; U5.03 IN_PROGRESS.
