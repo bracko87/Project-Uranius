@@ -86,3 +86,11 @@ The existing local HTTPS dashboard adapter now recognizes `GET /fixture/overview
 Added `tests/uraniusOverviewScheduleRouteIsolation.test.mjs` with A/B, origin/method/URL-tenant/logout and malformed reader assertions; execution **pending**.
 
 Added `database/reconstruction/overview/012_owner_schedule_reader_DISPOSABLE_REVIEW_ONLY.sql` and `tests/uraniusOverviewReaderPrivilegesReview.test.mjs`. This **ROLLBACK-only** policy candidate separates global world races/stages from owner-private race preparations and accepted entries, grants only specific SELECT columns to the existing restricted server reader, and uses `get_my_club_id()` for owner checks. Both code and permission tests **not yet executed**. In particular, native PG17 policy semantics, role membership, deny-by-default and safe read path must pass before building any installable migration or setting reader flags. No hosted permissions or production data changed.
+
+## Owner seven route and ACL static checks passed; native role test pending (2026-11-23)
+
+Owner's Windows console: `node --test tests\\uraniusOverviewScheduleRouteIsolation.test.mjs tests\\uraniusOverviewReaderPrivilegesReview.test.mjs` **7/7 PASS**, 0 failures, 0 skipped. This confirms A/B session routing and 012 static review only.
+
+New `tests/uraniusOverviewReaderNativePg17.mjs` uses the owner's portable PostgreSQL 17 executable in a **fresh loopback-only disposable PGDATA**. It replays original rollback-only 010 and 012 files without persistence, then installs only inside the disposable instance to test actual native role privileges, RLS, owner A/B upcoming schedule separation, global today race visibility, anonymous and authenticated denial, reader write denial, and complete cleanup. Fixture `get_my_club_id()` is a **disposable mock** derived from a test-only setting, not equivalent to the real Uranius Auth/JWT resolver: a later full 001–009 replay against the original owner mapping is still required before any hosted migration.
+
+This new native file **has not yet been run**. Do not count native RLS as passed until owner reports a clean PostgreSQL 17 run. It changes no hosted schema or role.
