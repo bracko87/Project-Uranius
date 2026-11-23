@@ -75,5 +75,8 @@
     "roleGrantsRestored": true,
     "ownerMappings": 2,
     "riders": 200
-  }
+  },
+  "historicalReviewSnapshot": true,
+  "liveStatusRecord": "database/reconstruction/clock/009_DEPLOYMENT_STATUS.json",
+  "snapshotClarification": "This file freezes pre-approval test prerequisites; status and hostedApplied refer to the historical review state, not the current live sandbox. Consult liveStatusRecord for installed state. Original tested bytes are unchanged."
 }
