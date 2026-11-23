@@ -12,7 +12,8 @@ const sha = bytes => createHash('sha256').update(bytes).digest('hex')
 test('review-only management wrapper pins exact canonical 008 SHA and project', () => {
   assert.equal(sha(source), manifest.candidate.sha256)
   assert.equal(sha(wrapper), manifest.managementWrapper.sha256)
-  assert.equal(manifest.managementWrapper.status, 'REVIEW_ONLY_NATIVE_NOT_TESTED')
+  assert.equal(manifest.managementWrapper.status, 'OWNER_REPORTED_NATIVE_PASS_12_OF_12_REVIEW_ONLY')
+  assert.equal(manifest.managementWrapper.nativeRehearsal.result, 'OWNER_REPORTED_PASS_12_OF_12')
   assert.equal(manifest.status, 'REVIEW_ONLY_NOT_AUTHORIZED')
   assert.match(wrapper, /REVIEW ONLY\. DO NOT EXECUTE ON ANY HOSTED DATABASE/)
   assert.ok(wrapper.includes(manifest.candidate.sha256))
@@ -58,10 +59,10 @@ test('protects the existing ledger, manager mappings and RLS while adding 008', 
   assert.doesNotMatch(wrapper, /\b(?:CREATE EXTENSION|cron\.schedule|pg_cron)\b/)
 })
 
-test('non-superuser role semantics require disposable native management rehearsal before approval', () => {
-  assert.match(wrapper, /Native management-role replay and failure injection NOT YET TESTED/)
+test('native rehearsal evidence does not constitute hosted deployment approval', () => {
+  assert.equal(manifest.managementWrapper.nativeRehearsal.result, 'OWNER_REPORTED_PASS_12_OF_12')
   assert.equal(manifest.status, 'REVIEW_ONLY_NOT_AUTHORIZED')
-  assert.ok(manifest.notReadyReasons.some(x => /No reviewed atomic management-connection execution wrapper yet/.test(x)))
+  assert.ok(manifest.notReadyReasons.some(x => /No owner approval to apply migration 008/.test(x)))
 })
 
 test('native wrapper rehearsal is explicitly disposable, pinned and exercises membership rollback', () => {
