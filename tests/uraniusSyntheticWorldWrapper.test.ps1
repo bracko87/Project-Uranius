@@ -126,6 +126,19 @@ try {
     if ((Local-Sql "SELECT count(*)=2 AND bool_and(user_id::text='00000000-0000-4000-8000-00000000000'||team_id) FROM uranius_catalog.team_owners;") -ne 't') { throw 'Verified manager binding mismatch.' }
     if ((Local-Sql 'SELECT count(*) FROM auth.users;') -ne '0') { throw 'Bind procedure unexpectedly inserted Auth users.' }
     Write-Output 'Mocked Auth verification and native TLS binding path passed.'
+    Local-Sql 'CREATE ROLE uranius_smoke_reader LOGIN NOINHERIT; GRANT authenticated TO uranius_smoke_reader;' | Out-Null
+    Local-Sql 'CREATE DATABASE uranius_006_test_dashboard TEMPLATE postgres;' | Out-Null
+    $oldPsql = $env:URANIUS_SMOKE_PSQL
+    $oldPort = $env:URANIUS_SMOKE_DB_PORT
+    try {
+        $env:URANIUS_SMOKE_PSQL = $psql
+        $env:URANIUS_SMOKE_DB_PORT = '45680'
+        & node (Join-Path $repo 'database/synthetic-world/login-browser-check.mjs') --postgres-fixture
+        if ($LASTEXITCODE -ne 0) { throw 'Database-backed browser smoke failed.' }
+    } finally {
+        $env:URANIUS_SMOKE_PSQL = $oldPsql
+        $env:URANIUS_SMOKE_DB_PORT = $oldPort
+    }
     Write-Output 'PowerShell 5.1 wrapper and PostgreSQL 17 TLS migration rehearsal passed.'
 }
 finally { & $pgctl -D $data -m fast -w stop }

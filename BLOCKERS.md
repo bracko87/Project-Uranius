@@ -91,3 +91,7 @@ The owner confirmed both intended accounts exist and reported a gateway HTTP 555
 ## U5.03 - Independent Auth verification pending
 
 Confirmed and repaired a Windows PowerShell 5.1 UTF-8 serialization fault offline. Run the project-pinned official SDK verifier once in the private terminal. Do not recreate accounts or update passwords. The next hosted step depends on the sanitized result. Ownership remains gated.
+
+## U5.03 - Owner-bound managers, hosted UI access review pending
+
+The owner confirmed successful hosted Auth and ownership binding. Local authenticated login/dashboard/logout and native RLS checks passed. Hosted UI smoke requires review of the minimal dedicated server-side reader and pinned Auth connection in database/synthetic-world/HOSTED_SMOKE_REVIEW.md. The Auth security setting recommendation is a separate owner decision.

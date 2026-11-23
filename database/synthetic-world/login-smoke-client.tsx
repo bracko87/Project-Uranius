@@ -8,7 +8,8 @@ import { getMyClubContext } from '../../src/lib/clubContext'
 function ClubDashboard() {
   const [name, setName] = useState('')
   const navigate = useNavigate()
-  const data = getFixtureDashboard(fixture.club.teamId)
+  const [data, setData] = useState<{ riders: number; credits: number; calendar: number } | null>(null)
+  useEffect(() => { void Promise.resolve(getFixtureDashboard(fixture.club.teamId)).then(setData) }, [])
   useEffect(() => { void getMyClubContext().then(club => setName(club.mainClub?.name ?? '')) }, [])
   return <main className="min-h-screen bg-slate-950 text-white">
     <section className="mx-auto max-w-5xl rounded-xl bg-slate-900 p-6">
@@ -44,7 +45,7 @@ async function waitFor<T>(check: () => T) {
 }
 
 async function smoke() {
-  if (getFixtureDashboard(fixture.club.teamId) !== null) throw new Error('Anonymous dashboard access')
+  if (await getFixtureDashboard(fixture.club.teamId) !== null) throw new Error('Anonymous dashboard access')
   const form = await waitFor(() => document.querySelector('form'))
   const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!
   for (const [name, value] of [['email', fixture.email], ['password', 'offline-fixture-only']]) {
@@ -54,13 +55,14 @@ async function smoke() {
   }
   form.requestSubmit()
   await waitFor(() => document.querySelector('[data-club]')?.textContent === fixture.name)
+  await waitFor(() => document.querySelector('[data-riders]')?.textContent === '10')
   if (document.querySelector('[data-riders]')?.textContent !== '10' ||
       document.querySelector('[data-balance]')?.textContent !== '10000' ||
       document.querySelector('[data-calendar]')?.textContent !== '3' ||
-      getFixtureDashboard(manager === 'a' ? 2 : 1) !== null) throw new Error('Invalid dashboard scope')
+      await getFixtureDashboard(manager === 'a' ? 2 : 1) !== null) throw new Error('Invalid dashboard scope')
   document.querySelector<HTMLButtonElement>('[data-sign-out]')!.click()
   await waitFor(() => document.querySelector('form'))
-  if (getFixtureDashboard(fixture.club.teamId) !== null || document.querySelector('[data-club]')) throw new Error('Stale dashboard after logout')
+  if (await getFixtureDashboard(fixture.club.teamId) !== null || document.querySelector('[data-club]')) throw new Error('Stale dashboard after logout')
   document.body.dataset.smoke = 'passed-' + manager
 }
 

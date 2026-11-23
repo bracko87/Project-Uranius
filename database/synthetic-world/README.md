@@ -11,3 +11,7 @@ For the offline fixture test, set URANIUS_PGLITE_ENTRY to the absolute file path
 ## Local login smoke
 
 Run `node database/synthetic-world/login-browser-check.mjs` from the repository root. The check bundles the original Login page and existing club-context lookup with an offline-only Auth fixture. Each headless browser session uses a different fictional manager, submits the original form and checks the club label after dashboard navigation. The fixture dashboard is a limited projection, while the full Overview still requires its own database contract tranche. Native SQL rehearsal of 006 separately verifies cross-manager riders and opening balances under RLS.
+
+## Native PostgreSQL dashboard smoke
+
+The full Windows terminal test in tests/uraniusSyntheticWorldWrapper.test.ps1 starts a disposable loopback PostgreSQL 17.12 database, applies all six reviewed files, creates two fixture mappings, then runs login-browser-check.mjs in postgres-fixture mode. The browser follows the original Login flow and reads the dashboard through the local session adapter and native RLS. It also tests private HTTP rejection before sign-in and after logout. The fixture mode refuses any non-loopback database target by construction and only accepts its disposable database name. See HOSTED_SMOKE_REVIEW.md for the proposed real sandbox connection.

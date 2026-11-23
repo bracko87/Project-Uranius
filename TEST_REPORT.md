@@ -484,3 +484,11 @@ Offline PowerShell 5.1 cases passed for 400 invalid credentials, 400 unconfirmed
 A native Windows PowerShell 5.1 HTTP loopback comparison confirmed the old application/json string-body path replaced non-ASCII password characters. Sending explicit UTF-8 bytes and charset preserved the exact fixture password. The repaired PowerShell request helper and regression tests passed. The official Supabase JS client 2.98.0 verifier passed four offline tests, including exact Unicode/space preservation, pinned phase sequencing, cleanup, HTTP 400/555 sanitization without retries and key-format rejection. A Windows terminal test confirmed hidden input and pre-network rejection of an invalid fixture key.
 
 The owner reported repeated hosted invalid_credentials. Hosted verification requires the owner's private local input. No hosted request, password reset, account recreation, binding change or migration was performed. The independent verification and separately gated existing-UUID password-update procedure are in AUTH_BINDING_REVIEW.md.
+
+## U5.03 - Owner binding confirmation and database-backed frontend smoke
+
+The owner reported both hosted logins and committed mappings A/Team 1 and B/Team 2, ten riders and 10,000 opening credits per team, no ownership orphans, and all six migrations and fictional race data preserved. Hosted mapping evidence is owner-supplied. No hosted change or server credential was used this turn.
+
+The disposable native PostgreSQL 17.12 TLS rehearsal applied the exact six migrations and committed only synthetic test bindings to the fixture. The loopback dashboard then used the existing Login and club-context UI with offline identity transport and native PostgreSQL reads under RLS. Both browser managers passed sign-in, own club, ten riders, own balance 10,000, shared three-entry calendar and logout. Direct HTTP assertions covered anonymous rejection, wrong origin, each manager's distinct club and invalidation of the previous cookie after logout. The database suite separately verified cross-manager club, rider and balance exclusions. The loopback PostgreSQL server was stopped. No original UI or engine files were changed.
+
+The proposed hosted access and leaked-password-protection recommendation are in database/synthetic-world/HOSTED_SMOKE_REVIEW.md. Live browser login against hosted Auth and the full Overview remain pending.
