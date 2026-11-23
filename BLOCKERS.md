@@ -67,3 +67,7 @@ The owner completed initialization and live read-only verification passed for th
 ## U5.02 - Reviewed club identity package pending approval
 
 Migration 005 is ready for owner review. The package adds the initial read-only game club contract and private-table RLS hardening. No remote writes or API exposure were performed. Approve only the exact manifest and target in database/reconstruction/README.md. Remaining reconstruction work is tracked in reference/DB_RECONSTRUCTION_PLAN.md. U5.03 requires separately authorized account creation and seed import after the dependent contracts are ready.
+
+## U5.02 - 005 approved, existing login requires private entry
+
+The owner approved the exact 005 checksum for sdtsivgtcaoaeoihcwzd and scoped read-only verification passed. The agent session has no migration credential. Run the private terminal command in database/reconstruction/README.md, using the existing migration-role password at the masked prompt. Any failure requires read-only ledger inspection before attempting a retry.

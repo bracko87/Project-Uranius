@@ -20,3 +20,18 @@ node scripts/apply-club-reconstruction.mjs --apply-reviewed-club-reconstruction 
 An error before commit rolls back both migration DDL and its ledger entry. Inspect live catalog and ledger read-only after any failure. Never retry blindly or delete ledger rows. Following a successful apply, a correction requires a separately approved forward migration. If a rollback is needed, review dependent objects and downtime first, then reverse only the reviewed package in a new migration. Keep the ledger append-only and prefer retaining bookkeeping RLS.
 
 The offline-only verify-offline.sql suite requires a loopback disposable database whose name starts uranius_005_test_. It inserts two synthetic identities inside a transaction and rolls back. Do not run that file against Supabase. After an authorized hosted apply, verify the expected object counts, policy and privileges, empty club table and fifth ledger hash with read-only catalog queries. No client API exposure is needed for these checks.
+
+## Private Windows execution
+
+Run this approved package in an interactive PowerShell terminal. The script uses a masked prompt for the existing migration role, runs a read-only login probe and dispatches the original guarded 005 runner. It does not recreate the role.
+
+```powershell
+Set-Location 'C:\Users\Aleks\Desktop\Project-Uranius\.uranius-upload-review'
+.\scripts\Connect-UraniusDatabase.ps1 `
+  -PsqlPath '..\.uranius-pin-review\postgresql-17.12-portable\bin\psql.exe' `
+  -CaFile (Join-Path $env:USERPROFILE 'Downloads\prod-ca-2021.crt') `
+  -ResumeExistingRole -ClubReconstruction -Apply `
+  -ApprovedManifestSha256 '8d7e8c514e87c2cd8c9d9b7b19bd4d663b4d53e9b144864e9a46bb69e0a9b6ce'
+```
+
+The success message is **Reviewed club reconstruction applied.** Then verify hosted state read-only. The service still has no manager accounts or club profiles seeded by this package. Cross-manager isolation comes from the disposable PostgreSQL rehearsal until separately approved hosted synthetic accounts are available.
