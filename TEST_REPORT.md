@@ -598,3 +598,29 @@ The runner was repaired in `tests/uraniusClockNativePg17.mjs`:
 - cleanup checks `pg_ctl status` even after an incomplete start, attempts to stop only the fresh temporary cluster, retries Windows `EBUSY`/file locking, and catches cleanup errors so they **do not override** the original SQL/startup error. If the server cannot be proved stopped, its temporary data is deliberately retained rather than deleted.
 
 The final repaired GitHub source passed a V8 JavaScript parse-only check with ESM imports removed for parsing, but the native PostgreSQL rehearsal has **not been rerun** yet. The hosted Uranius ledger stays at 7 entries and 008 is still review-only and unapproved. Owner may use `git pull origin main` and repeat the same local test command; do not enter DB passwords or run the hosted migration.
+
+## U5.02 — Owner-confirmed native PostgreSQL 17 clock 008 rehearsal PASS (2026-11-23)
+
+The owner executed the **updated** GitHub runner (`git pull origin main` fast-forward `93344bd..6e92048`) in their Windows Uranius checkout with the existing, portable PostgreSQL 17 binaries:
+
+```cmd
+node tests\uraniusClockNativePg17.mjs --disposable-native-pg17 --postgres-bin "C:\Users\Aleks\Desktop\Project-Uranius\.uranius-pin-review\postgresql-17.12-portable\bin"
+```
+
+Owner-supplied console evidence shows successful `initdb`, local loopback PostgreSQL start, all seven canonical migrations 001–007 applied, **12/12 PASS**, and `INFO Disposable PostgreSQL files cleaned up`. The 12 native checks explicitly covered:
+1. All seven exact historical migrations replayed.
+2. Two synthetic managers, 200 riders and three stages preserved.
+3. Forced failure rolled back the 008 DDL.
+4. Incorrect project identity rejected.
+5. Ledger hash drift rejected and rolled back.
+6. Execution under the wrong role rejected.
+7. 008 installed in **disposable local database only**, with eighth temporary ledger entry.
+8. Both manager subjects received all three original game-date RPC output shapes.
+9. Unknown subject denied by RLS.
+10. Anonymous and restricted smoke-reader roles denied.
+11. Unauthorized UPDATE, attempted unpause, invalid date all rejected.
+12. Duplicate 008 rejected with unchanged fixture.
+
+This closes the previously observed Windows `EBUSY` cleanup problem for the provided run. The exact candidate **`008_game_clock_v1.sql` SHA-256 remains `f3dadf7b7934e1c8677d24af2d0a57b2be19768f0bc2dc6b45729618c28e349b`**. Node contract tests previously passed 16/16. The native result is **owner-provided evidence** from the disposable local database, not a live Supabase execution.
+
+**Outstanding gates:** a separately reviewed management-connection wrapper/transaction that preserves existing temporary role memberships and records the canonical ledger SHA; verification of its disposable PostgreSQL behavior; independent hosted-read/permissions acceptance after explicit owner approval; and reconstruction of accepted-race/Overview/Squad/Calendar contracts. No original ProPeloton Manager change or hosted migration is authorized here. U5.02 remains BLOCKED on remaining full DB contracts, U5.03 IN_PROGRESS, **49/60**.
