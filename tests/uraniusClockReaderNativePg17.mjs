@@ -55,7 +55,7 @@ assert.equal(hash(clock), proposal.candidate.sha256)
 const readerManifest = JSON.parse(readFileSync(join(root, 'database/reconstruction/clock/009_clock_reader_manifest.json'), 'utf8'))
 const readerSql = readFileSync(join(root, 'database/reconstruction/clock/009_clock_smoke_reader_REVIEW_ONLY.sql'), 'utf8')
 assert.equal(readerManifest.status, 'REVIEW_ONLY_NOT_APPROVED')
-assert.equal(readerManifest.projectRef, projectRef)
+assert.equal(readerManifest.projectRef, 'sdtsivgtcaoaeoihcwzd')
 assert.equal(readerManifest.prerequisiteLedgerEntries, 8)
 assert.equal(hash(readerSql), readerManifest.candidate.sha256)
 
