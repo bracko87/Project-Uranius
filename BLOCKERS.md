@@ -71,3 +71,7 @@ Migration 005 is ready for owner review. The package adds the initial read-only 
 ## U5.02 - 005 approved, existing login requires private entry
 
 The owner approved the exact 005 checksum for sdtsivgtcaoaeoihcwzd and scoped read-only verification passed. The agent session has no migration credential. Run the private terminal command in database/reconstruction/README.md, using the existing migration-role password at the masked prompt. Any failure requires read-only ledger inspection before attempting a retry.
+
+## U5.02/U5.03 - Migration 006 review pending
+
+Migration 005 is complete per the owner's independent verification. U5.02 stays open pending further clone dependencies. 006 was tested offline and awaits approval of the exact manifest in database/reconstruction/world/README.md. Hosted Auth users, ownership binding and login are separate actions and remain pending. The fixture-only browser smoke passed for both fictional managers.

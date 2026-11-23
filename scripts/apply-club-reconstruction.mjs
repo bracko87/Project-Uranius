@@ -1,21 +1,32 @@
 import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
+import { pathToFileURL } from 'node:url'
 import { assertSandboxTarget } from './assert-sandbox-target.mjs'
 import { runPsqlBatch } from './run-uranius-psql-batch.mjs'
 
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex')
 
-function apply(env, approvedDigest) {
+const packages = {
+  club: { directory: '', file: '005_club_identity.sql' },
+  world: { directory: 'world/', file: '006_synthetic_world.sql' },
+}
+
+function apply(env, approvedDigest, scope) {
+  const pkg = packages[scope]
   assertSandboxTarget('migrate', env)
   if (!env.URANIUS_DATABASE_CA_FILE) throw new Error('Sandbox database CA file is required.')
-  const dir = new URL('../database/reconstruction/', import.meta.url)
+  const dir = new URL('../database/reconstruction/' + pkg.directory, import.meta.url)
   const manifestBytes = readFileSync(new URL('manifest.json', dir))
   if (sha256(manifestBytes) !== approvedDigest.toLowerCase()) throw new Error('Approved manifest SHA-256 does not match.')
   const { projectRef, postgresMajor, requires, migrations } = JSON.parse(manifestBytes)
-  const foundation = readFileSync(new URL('../database/preparation/manifest.json', import.meta.url), 'utf8')
+  const foundation = JSON.parse(readFileSync(new URL('../database/preparation/manifest.json', import.meta.url), 'utf8'))
+  if (scope === 'world') {
+    const previous = JSON.parse(readFileSync(new URL('../database/reconstruction/manifest.json', import.meta.url), 'utf8'))
+    foundation.push(...previous.migrations)
+  }
   if (projectRef !== env.URANIUS_SUPABASE_PROJECT_REF || postgresMajor !== 17 ||
-      JSON.stringify(requires) !== JSON.stringify(JSON.parse(foundation)) ||
-      migrations.length !== 1 || migrations[0].file !== '005_club_identity.sql') {
+      JSON.stringify(requires) !== JSON.stringify(foundation) ||
+      migrations.length !== 1 || migrations[0].file !== pkg.file) {
     throw new Error('Unexpected reconstruction manifest scope.')
   }
   const { file, sha256: hash } = migrations[0]
@@ -23,7 +34,7 @@ function apply(env, approvedDigest) {
   if (sha256(sql) !== hash || !/^[a-f0-9]{64}$/.test(hash)) throw new Error('Migration checksum mismatch.')
 
   const dependencyRows = requires.map(row => {
-    if (!/^00[1-4]_[a-z_]+\.sql$/.test(row.file) || !/^[a-f0-9]{64}$/.test(row.sha256)) {
+    if (!/^00[1-5]_[a-z_]+\.sql$/.test(row.file) || !/^[a-f0-9]{64}$/.test(row.sha256)) {
       throw new Error('Invalid foundation ledger dependency.')
     }
     return "('" + row.file + "', '" + row.sha256 + "')"
@@ -68,17 +79,23 @@ $$;
     input: [preflight, '\\echo URANIUS_MIGRATION ' + file, sql,
       "INSERT INTO uranius_private.migration_ledger (version, sha256) VALUES ('" + file + "', '" + hash + "');",
     ].join('\n'),
-    env: childEnv, timeout: 120_000, transaction: true, stage: 'Club reconstruction stopped',
+    env: childEnv, timeout: 120_000, transaction: true, stage: 'Reviewed reconstruction stopped',
   })
-  console.log('Reviewed club reconstruction applied.')
+  console.log(scope === 'club' ? 'Reviewed club reconstruction applied.' : 'Reviewed synthetic world migration applied.')
 }
 
-try {
-  if (process.argv.length !== 4 || process.argv[2] !== '--apply-reviewed-club-reconstruction' || !/^[0-9a-f]{64}$/i.test(process.argv[3])) {
-    throw new Error('Explicit club reconstruction manifest approval is required.')
+export function runReviewedReconstruction(scope, flag) {
+  try {
+    if (process.argv.length !== 4 || process.argv[2] !== flag || !/^[0-9a-f]{64}$/i.test(process.argv[3])) {
+      throw new Error('Explicit reconstruction manifest approval is required.')
+    }
+    apply(process.env, process.argv[3], scope)
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : 'Reviewed reconstruction failed.')
+    process.exitCode = 1
   }
-  apply(process.env, process.argv[3])
-} catch (error) {
-  console.error(error instanceof Error ? error.message : 'Club reconstruction failed.')
-  process.exitCode = 1
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  runReviewedReconstruction('club', '--apply-reviewed-club-reconstruction')
 }

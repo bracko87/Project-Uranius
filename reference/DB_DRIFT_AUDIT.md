@@ -25,3 +25,7 @@ U5.02 remains open. This audit completes the observed foundation inventory and d
 ## Reconstruction follow-up
 
 The [dependency map and reconstruction order](DB_RECONSTRUCTION_PLAN.md) identify the concrete reference and call-site gaps. [Migration 005](../database/reconstruction/README.md) covers the first main-club identity dependency and bookkeeping RLS defense in depth. The hosted drift snapshot stays unchanged until the package is approved and applied. It does not advance the U5.02 gate on its own.
+
+## Owner-verified 005 state
+
+The owner verified all five matching ledger entries, the club_profiles table with RLS, the security-invoker clubs view and RLS on both private bookkeeping tables after 005. The 20 teams, 200 riders and 450 starters were unchanged. No manager accounts or ownership mappings existed. The owner reported no security-critical advisor findings and two informational private-table RLS notices. The committed earlier catalog JSON is a pre-005 read-only snapshot. No remote SQL was run to replace it during this turn. The next proposed 006 adds the fixture calendar, balances and two manager slots. Full clone reconstruction remains open.
