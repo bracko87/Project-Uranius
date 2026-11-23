@@ -39,7 +39,7 @@ export function projectOverviewScheduleResponse(response, { ownerVerified = fals
       'raceCountryCode', 'race_country_code', 'country_iso2', 'country']))
     const id = text(row.id, label + ':' + index)
     const href = text(row.href)
-    if (href && !/^\/(?!\/)[a-zA-Z0-9/_?=&.%-]*$/.test(href)) {
+    if (href && !(/^\/(?!\/)[a-zA-Z0-9/_?=&.%-]*$/.test(href) || /^#\/dashboard\/races\/[0-9a-f-]{36}$/i.test(href))) {
       throw new Error('Unreviewed schedule navigation')
     }
     return Object.freeze({
