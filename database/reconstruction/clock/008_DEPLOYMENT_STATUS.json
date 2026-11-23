@@ -1,0 +1,64 @@
+{
+  "projectRef": "sdtsivgtcaoaeoihcwzd",
+  "migration": "008_game_clock_v1.sql",
+  "eventDate": "2026-11-23",
+  "status": "HOSTED_SANDBOX_APPLIED_VERIFIED",
+  "dbName": "postgres",
+  "pgMajor": 17,
+  "mechanism": "Exact reviewed single DO-statement from 008_management_REVIEW_ONLY.sql via scoped Supabase SQL execution; custom uranius_private.migration_ledger maintained; no Supabase migration ledger automatically introduced",
+  "wrapperSha256": "a1317dca31d768c6fc73dd2090c58ad3e97498a83b1422ad194e1336b30fc92c",
+  "canonicalSqlSha256": "f3dadf7b7934e1c8677d24af2d0a57b2be19768f0bc2dc6b45729618c28e349b",
+  "priorLedger": 7,
+  "afterLedger": 8,
+  "expectedClock": {
+    "season_number": 1,
+    "month_number": 1,
+    "day_number": 1,
+    "hour_number": 0,
+    "minute_number": 0,
+    "is_paused": true,
+    "singleton": true
+  },
+  "observed": {
+    "ledgerCount": 8,
+    "ledger008ShaMatches": true,
+    "clockRows": 1,
+    "frozenClockRows": 1,
+    "rlsEnabled": true,
+    "clockSelectPolicies": 1,
+    "invokerFunctions": 3,
+    "owners": 2,
+    "teams": 20,
+    "riders": 200,
+    "starters": 450,
+    "stages": 3,
+    "calendarRows": 3,
+    "openingBalances": 20,
+    "anonymousClockAccess": false,
+    "smokeReaderClockAccess": false,
+    "authenticatedHasColumnRead": true,
+    "authenticatedHasTableWrites": false,
+    "managementRoleMembershipRestored": true,
+    "priorPolicyCount": 11
+  },
+  "securityAdvisors": {
+    "newClockAdvisorIssues": 0,
+    "unchangedWarnings": [
+      "Auth leaked-password protection disabled"
+    ],
+    "unchangedInformational": [
+      "three uranius_private RLS-enabled internal tables intentionally have no policies"
+    ]
+  },
+  "notVerified": [
+    "new clock RPC calls through player browser/session and hosted Data API",
+    "complete original Overview, Squad and Calendar integration",
+    "full game clock progression and accepted race-team entry contracts",
+    "automatic race simulation"
+  ],
+  "originalProductionGameModified": false,
+  "existingTestFixturesModified": false,
+  "plannedNext": "Server-mediated read-only clock adapter and two-manager hosted integration smoke, plus original Overview accepted race-entry contract reconstruction",
+  "evidence": "TEST_REPORT.md and database/reconstruction/clock/008_HOSTED_APPLICATION_REPORT.md",
+  "preapprovalArtifact": "database/reconstruction/clock/manifest.json intentionally remains a frozen review-only test manifest; current application state is this deployment record"
+}
