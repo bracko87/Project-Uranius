@@ -1,0 +1,84 @@
+{
+  "projectRef": "sdtsivgtcaoaeoihcwzd",
+  "postgresMajor": 17,
+  "status": "REVIEW_ONLY_NOT_APPROVED",
+  "hostedApplied": false,
+  "expectedLedgerEntries": 9,
+  "requires": [
+    {
+      "file": "001_identity.sql",
+      "sha256": "87755f1d12a0b983d016e039d4ceb22aea1e5c165b65c2e6888049805fefbadd"
+    },
+    {
+      "file": "002_reference_schema.sql",
+      "sha256": "6cad841d012117a02daf7e89555cc870da5f9a5f90b4e4c8b7dfee52b84ed45f"
+    },
+    {
+      "file": "003_access.sql",
+      "sha256": "b42c96b647afd9b62573c75cd922b4f8de3eff9e39c5b1c8dd2ccd2f40afe8ee"
+    },
+    {
+      "file": "004_synthetic_reference.sql",
+      "sha256": "e788bf6cab85f12adce0a9227534cca57e318b15aaa69474ef2e5a950472b317"
+    },
+    {
+      "file": "005_club_identity.sql",
+      "sha256": "9550e9ef78288f9286387c43595e6649bd8bcea378d29b0db665d0b048a065fc"
+    },
+    {
+      "file": "006_synthetic_world.sql",
+      "sha256": "56f1a9f08ff1fba3f3ad9a91688c512316b74b2f37fb8806668147ae8813a9a3"
+    },
+    {
+      "file": "007_smoke_reader.sql",
+      "sha256": "dd0e9663adc2bf0717d4debc8b291ee04e859592369e381bbde7a42546a8f91b"
+    },
+    {
+      "file": "008_game_clock_v1.sql",
+      "sha256": "f3dadf7b7934e1c8677d24af2d0a57b2be19768f0bc2dc6b45729618c28e349b"
+    },
+    {
+      "file": "009_clock_smoke_reader.sql",
+      "sha256": "1be3ce5418ff8a03a787fae81fe2cbd543ad6002cc592222bc2b011245cc4c37"
+    }
+  ],
+  "candidate": {
+    "file": "010_overview_race_reader_REVIEW_ONLY.sql",
+    "ledgerVersion": "010_overview_race_reader.sql",
+    "sha256": "56f52ac20c84aaf70ea63c68e0435da20084a3fe42e375a372c3d613cfa445af"
+  },
+  "sources": [
+    {
+      "file": "010_race_schema_DISPOSABLE_REVIEW_ONLY.sql",
+      "sha256": "0ba08cbd951dcf74a9669767a4b3b24670ba0a2e08941934721d8525262e5738"
+    },
+    {
+      "file": "012_owner_schedule_reader_DISPOSABLE_REVIEW_ONLY.sql",
+      "sha256": "02f55d08d1a9a190e504ee4aae68a6de99f3f6c334b0ccd8350f54d65b037ef7"
+    }
+  ],
+  "scope": {
+    "createsTables": [
+      "uranius_game.races",
+      "uranius_game.race_stages",
+      "uranius_game.race_team_entries",
+      "uranius_game.race_preparations"
+    ],
+    "rls": "FORCE RLS on all new tables; owner-private race preparations and entries; world races/stages read only by restricted server role",
+    "writes": "Empty schema + policies + one custom migration ledger row only",
+    "excluded": [
+      "original ProPeloton project",
+      "Auth settings",
+      "Data API exposure",
+      "gameplay scheduler",
+      "player records",
+      "finance, equipment, country FKs pending reconstruction"
+    ]
+  },
+  "approvalRequired": true,
+  "offlineNativeResults": {
+    "foundationJwt": "OWNER_REPORTED_PASS_19_OF_19",
+    "packageCandidate": "NOT_YET_TESTED"
+  },
+  "rollback": "One transaction with fail-closed preflight; reject duplicate ledger; no automatic destructive down migration."
+}
