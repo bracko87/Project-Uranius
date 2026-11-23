@@ -53,13 +53,26 @@ The candidate migration does not insert into `migration_ledger`: a *separately r
 
 ## Verification state
 
-A review of the committed SQL against the existing seven-entry ledger manifest passed eight source/permissions checks. **The Node test file was committed but its repository test run has not been verified in this environment.** Neither a disposable PostgreSQL native rehearsal nor the original full-game browser integration has been completed. Never label this candidate validated for deployment based solely on static checks.
+The two committed Node test files were executed against matching source blobs: **16/16 tests passed** (nine game-clock behavior tests and seven migration/preflight tests). The original 008 SQL SHA-256 and the native runner's Git blob SHA were independently matched to the repository. The new native PostgreSQL 17 runner passed JavaScript syntax checks and fail-fast invocation/path checks, but **the actual PostgreSQL 17 database rehearsal has NOT run** because no PostgreSQL server binaries are installed in the assistant's local environment. The original full-game browser integration is also pending. Do not treat static/Node tests as deployment acceptance.
 
 To run the static tests in a local verified Uranius checkout:
 
 ```cmd
 node --test tests\uraniusGameClockContract.test.mjs tests\uraniusGameClockMigrationPreflight.test.mjs
 ```
+
+
+### Disposable native PostgreSQL 17 rehearsal runner
+
+Added [`tests/uraniusClockNativePg17.mjs`](../../../tests/uraniusClockNativePg17.mjs) for the next verification gate. It does not use any existing database server, Supabase credentials, public ports or production data. It requires the `--disposable-native-pg17` guard; checks the portable PostgreSQL 17 binary versions and SHA-256 of all seven canonical historical migrations; creates a unique temporary local PostgreSQL cluster on `127.0.0.1` with a randomized port; replays 001–007; binds two fictional UUIDs; tests 008 against forced rollback, wrong project, ledger drift, wrong execution role, authenticated manager A/B and unrelated-user RLS, anonymous/smoke reader rejection, write/unpause/invalid-date denial and duplicate-apply rejection. The fixture cluster is stopped and discarded. Local trust authentication is used ONLY inside that disposable loopback cluster and MUST NEVER be used on the hosted project.
+
+From Windows Command Prompt in the project checkout (the portable binaries already used for earlier 007 rehearsals):
+
+```bat
+node tests\uraniusClockNativePg17.mjs --disposable-native-pg17 --postgres-bin "C:\Users\Aleks\Desktop\Project-Uranius\.uranius-pin-review\postgresql-17.12-portable\bin"
+```
+
+This runner was authored and syntax-checked, **not yet executed against PostgreSQL 17**. Preserve its actual console output as the acceptance artifact before updating the checklist. Any SQL failure must be fixed in a new reviewed version with an updated candidate SHA, never applied to the live sandbox while unresolved.
 
 ### Mandatory before any approval request
 
