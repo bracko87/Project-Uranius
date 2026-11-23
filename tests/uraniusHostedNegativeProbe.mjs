@@ -55,9 +55,15 @@ await expect('Forged cookie denied', '/fixture/dashboard', 401, {
 await expect('Wrong Origin denied for dashboard', '/fixture/dashboard', 403, {
   headers: { Origin: 'https://127.0.0.1:1' },
 })
-await assert.rejects(send('/fixture/dashboard', { headers: { Host: 'localhost:' + url.port } }), { code: 'ERR_TLS_CERT_ALTNAME_INVALID' })
+try {
+  const spoofedHostStatus = await send('/fixture/dashboard', { headers: { Host: 'localhost:' + url.port } })
+  assert.equal(spoofedHostStatus, 403, 'Wrong Host must be rejected')
+  console.log('PASS Wrong Host rejected by application host validation (HTTP 403)')
+} catch (error) {
+  if (error?.code !== 'ERR_TLS_CERT_ALTNAME_INVALID') throw error
+  console.log('PASS Wrong Host rejected by TLS certificate identity validation')
+}
 passed++
-console.log('PASS Wrong Host is rejected by TLS certificate identity validation')
 await expect('Missing Origin denied for login', '/fixture/login', 403, {
   method: 'POST', body: JSON.stringify({ email: 'unused', password: 'unused' }),
 })
