@@ -1,9 +1,10 @@
 import { randomBytes } from 'node:crypto'
 import { projectManagerClock } from './manager-clock-projection.mjs'
+import { projectOverviewScheduleResponse } from '../reconstruction/overview/overview-schedule-response.mjs'
 
 const uuid = /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i
 
-export function createClubDashboardAdapter({ verifyLogin, readDashboard, readClock, origin, secureCookie = true }) {
+export function createClubDashboardAdapter({ verifyLogin, readDashboard, readClock, readSchedule, origin, secureCookie = true }) {
   const sessions = new Map()
   const cookieName = secureCookie ? '__Host-uranius_club_session' : 'uranius_club_session'
   async function revoke(key) {
@@ -14,7 +15,7 @@ export function createClubDashboardAdapter({ verifyLogin, readDashboard, readClo
   const cookieFlags = '; HttpOnly; SameSite=Strict; Path=/' + (secureCookie ? '; Secure' : '')
   async function handle(req, res) {
     const path = req.url
-    if (!['/fixture/login', '/fixture/logout', '/fixture/dashboard', '/fixture/clock'].includes(path)) return false
+    if (!['/fixture/login', '/fixture/logout', '/fixture/dashboard', '/fixture/clock', '/fixture/overview-schedule'].includes(path)) return false
     const send = (status, value) => {
       res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' })
       res.end(JSON.stringify(value))
@@ -72,6 +73,16 @@ export function createClubDashboardAdapter({ verifyLogin, readDashboard, readClo
         // reviewed, RLS-limited clock read is available, never invent a date.
         if (typeof readClock !== 'function') return send(503, { error: 'Game clock read not connected' })
         return send(200, projectManagerClock(await readClock(current.subject)))
+      }
+      if (path === '/fixture/overview-schedule' && req.method === 'GET') {
+        const current = sessions.get(sessionKey)
+        if (!current) return send(401, { error: 'Sign in required' })
+        // The callback is trusted server code only. It must resolve club scope
+        // from this verified Auth subject, not any browser-supplied club ID.
+        // No fixture stage calendar may masquerade as an accepted schedule.
+        if (typeof readSchedule !== 'function') return send(503, { error: 'Overview schedule not connected' })
+        const data = await readSchedule(current.subject)
+        return send(200, projectOverviewScheduleResponse(data, { ownerVerified: true }))
       }
       return send(405, { error: 'Method rejected' })
     } catch {
