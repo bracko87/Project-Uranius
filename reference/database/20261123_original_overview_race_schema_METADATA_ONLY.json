@@ -1,0 +1,929 @@
+{
+  "scope": "metadata_only_no_rows",
+  "tables": {
+    "races": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "required": true
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "default": null,
+          "required": true
+        },
+        {
+          "name": "short_name",
+          "type": "text",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "start_date",
+          "type": "date",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "end_date",
+          "type": "date",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "country_code",
+          "type": "text",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "host_city",
+          "type": "text",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "category",
+          "type": "text",
+          "default": "'uncategorized'::text",
+          "required": true
+        },
+        {
+          "name": "race_type",
+          "type": "text",
+          "default": "'one_day'::text",
+          "required": true
+        },
+        {
+          "name": "is_stage_race",
+          "type": "boolean",
+          "default": "false",
+          "required": true
+        },
+        {
+          "name": "stage_count",
+          "type": "integer",
+          "default": "1",
+          "required": true
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "default": "'scheduled'::text",
+          "required": true
+        },
+        {
+          "name": "profile_image_url",
+          "type": "text",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "metadata",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "required": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "required": true
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "required": true
+        },
+        {
+          "name": "logo_url",
+          "type": "text",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "start_time_region_code",
+          "type": "text",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "planned_start_hour_number",
+          "type": "integer",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "planned_start_minute",
+          "type": "integer",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "planned_start_time_label",
+          "type": "text",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "planned_start_assigned_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "required": false
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "f",
+          "name": "races_country_code_fkey",
+          "definition": "FOREIGN KEY (country_code) REFERENCES countries(code)"
+        },
+        {
+          "kind": "c",
+          "name": "races_date_order_chk",
+          "definition": "CHECK (end_date >= start_date)"
+        },
+        {
+          "kind": "p",
+          "name": "races_pkey",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "kind": "c",
+          "name": "races_planned_start_hour_number_chk",
+          "definition": "CHECK (planned_start_hour_number IS NULL OR planned_start_hour_number >= 0 AND planned_start_hour_number <= 23)"
+        },
+        {
+          "kind": "c",
+          "name": "races_planned_start_minute_chk",
+          "definition": "CHECK (planned_start_minute = ANY (ARRAY[0, 15, 30, 45]))"
+        },
+        {
+          "kind": "c",
+          "name": "races_race_type_chk",
+          "definition": "CHECK (race_type = ANY (ARRAY['one_day'::text, 'stage_race'::text]))"
+        },
+        {
+          "kind": "c",
+          "name": "races_stage_count_chk",
+          "definition": "CHECK (stage_count > 0)"
+        },
+        {
+          "kind": "c",
+          "name": "races_start_time_region_code_chk",
+          "definition": "CHECK (start_time_region_code IS NULL OR (start_time_region_code = ANY (ARRAY['apac'::text, 'emea'::text, 'americas'::text])))"
+        },
+        {
+          "kind": "c",
+          "name": "races_status_chk",
+          "definition": "CHECK (status = ANY (ARRAY['draft'::text, 'scheduled'::text, 'active'::text, 'completed'::text, 'cancelled'::text, 'archived'::text]))"
+        }
+      ]
+    },
+    "race_stages": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "required": true
+        },
+        {
+          "name": "race_id",
+          "type": "uuid",
+          "default": null,
+          "required": true
+        },
+        {
+          "name": "stage_number",
+          "type": "integer",
+          "default": null,
+          "required": true
+        },
+        {
+          "name": "stage_date",
+          "type": "date",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "start_city",
+          "type": "text",
+          "default": null,
+          "required": true
+        },
+        {
+          "name": "finish_city",
+          "type": "text",
+          "default": null,
+          "required": true
+        },
+        {
+          "name": "host_city",
+          "type": "text",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "host_country_code",
+          "type": "text",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "distance_km",
+          "type": "numeric(7,2)",
+          "default": null,
+          "required": true
+        },
+        {
+          "name": "terrain_type",
+          "type": "text",
+          "default": null,
+          "required": true
+        },
+        {
+          "name": "finish_type",
+          "type": "text",
+          "default": "'flat_finish'::text",
+          "required": true
+        },
+        {
+          "name": "is_summit_finish",
+          "type": "boolean",
+          "default": "false",
+          "required": true
+        },
+        {
+          "name": "flat_pct",
+          "type": "numeric(5,2)",
+          "default": "100",
+          "required": true
+        },
+        {
+          "name": "hilly_pct",
+          "type": "numeric(5,2)",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "mountain_pct",
+          "type": "numeric(5,2)",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "cobbled_pct",
+          "type": "numeric(5,2)",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "elevation_gain_m",
+          "type": "integer",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "profile_image_url",
+          "type": "text",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "weather_snapshot",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "required": true
+        },
+        {
+          "name": "rules_snapshot",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "required": true
+        },
+        {
+          "name": "metadata",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "required": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "required": true
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "required": true
+        },
+        {
+          "name": "start_city_name",
+          "type": "text",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "finish_city_name",
+          "type": "text",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "profile_type",
+          "type": "text",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "notes",
+          "type": "text",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "intermediate_sprints_json",
+          "type": "jsonb",
+          "default": "'[]'::jsonb",
+          "required": true
+        },
+        {
+          "name": "mountain_climbs_json",
+          "type": "jsonb",
+          "default": "'[]'::jsonb",
+          "required": true
+        },
+        {
+          "name": "weather_summary",
+          "type": "text",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "start_time_region_code",
+          "type": "text",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "planned_start_hour_number",
+          "type": "integer",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "planned_start_minute",
+          "type": "integer",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "planned_start_time_label",
+          "type": "text",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "planned_start_assigned_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "stage_format",
+          "type": "text",
+          "default": "'road_race'::text",
+          "required": true
+        },
+        {
+          "name": "weather_cancelled",
+          "type": "boolean",
+          "default": "false",
+          "required": true
+        },
+        {
+          "name": "weather_cancellation_reason",
+          "type": "text",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "weather_cancelled_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "required": false
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "c",
+          "name": "race_stages_distance_km_chk",
+          "definition": "CHECK (distance_km > 0::numeric)"
+        },
+        {
+          "kind": "c",
+          "name": "race_stages_elevation_gain_chk",
+          "definition": "CHECK (elevation_gain_m IS NULL OR elevation_gain_m >= 0)"
+        },
+        {
+          "kind": "c",
+          "name": "race_stages_finish_type_chk",
+          "definition": "CHECK (finish_type = ANY (ARRAY['flat_finish'::text, 'uphill_finish'::text, 'summit_finish'::text, 'time_trial_finish'::text, 'team_time_trial_finish'::text, 'prologue_finish'::text, 'cobbled_finish'::text]))"
+        },
+        {
+          "kind": "f",
+          "name": "race_stages_host_country_code_fkey",
+          "definition": "FOREIGN KEY (host_country_code) REFERENCES countries(code)"
+        },
+        {
+          "kind": "p",
+          "name": "race_stages_pkey",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "kind": "c",
+          "name": "race_stages_planned_start_hour_number_chk",
+          "definition": "CHECK (planned_start_hour_number IS NULL OR planned_start_hour_number >= 0 AND planned_start_hour_number <= 23)"
+        },
+        {
+          "kind": "c",
+          "name": "race_stages_planned_start_minute_chk",
+          "definition": "CHECK (planned_start_minute = ANY (ARRAY[0, 15, 30, 45]))"
+        },
+        {
+          "kind": "f",
+          "name": "race_stages_race_id_fkey",
+          "definition": "FOREIGN KEY (race_id) REFERENCES races(id) ON DELETE CASCADE"
+        },
+        {
+          "kind": "c",
+          "name": "race_stages_stage_format_chk",
+          "definition": "CHECK (stage_format IS NULL OR (stage_format = ANY (ARRAY['road_race'::text, 'individual_time_trial'::text, 'team_time_trial'::text, 'pair_time_trial'::text, 'prologue'::text])))"
+        },
+        {
+          "kind": "c",
+          "name": "race_stages_stage_number_chk",
+          "definition": "CHECK (stage_number > 0)"
+        },
+        {
+          "kind": "c",
+          "name": "race_stages_start_time_region_code_chk",
+          "definition": "CHECK (start_time_region_code IS NULL OR (start_time_region_code = ANY (ARRAY['apac'::text, 'emea'::text, 'americas'::text])))"
+        },
+        {
+          "kind": "c",
+          "name": "race_stages_terrain_percent_ranges_chk",
+          "definition": "CHECK (flat_pct >= 0::numeric AND flat_pct <= 100::numeric AND hilly_pct >= 0::numeric AND hilly_pct <= 100::numeric AND mountain_pct >= 0::numeric AND mountain_pct <= 100::numeric AND cobbled_pct >= 0::numeric AND cobbled_pct <= 100::numeric)"
+        },
+        {
+          "kind": "c",
+          "name": "race_stages_terrain_percent_sum_chk",
+          "definition": "CHECK ((flat_pct + hilly_pct + mountain_pct + cobbled_pct) >= 99.00 AND (flat_pct + hilly_pct + mountain_pct + cobbled_pct) <= 101.00)"
+        },
+        {
+          "kind": "c",
+          "name": "race_stages_terrain_type_chk",
+          "definition": "CHECK (terrain_type = ANY (ARRAY['flat'::text, 'hilly'::text, 'mountain'::text, 'individual_time_trial'::text, 'team_time_trial'::text, 'prologue'::text, 'cobbled'::text]))"
+        },
+        {
+          "kind": "u",
+          "name": "race_stages_unique_race_stage_number",
+          "definition": "UNIQUE (race_id, stage_number)"
+        }
+      ]
+    },
+    "race_preparations": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "required": true
+        },
+        {
+          "name": "race_id",
+          "type": "uuid",
+          "default": null,
+          "required": true
+        },
+        {
+          "name": "club_id",
+          "type": "uuid",
+          "default": null,
+          "required": true
+        },
+        {
+          "name": "race_team_entry_id",
+          "type": "uuid",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "default": "'draft'::text",
+          "required": true
+        },
+        {
+          "name": "startlist_status",
+          "type": "text",
+          "default": "'draft'::text",
+          "required": true
+        },
+        {
+          "name": "setup_window_opens_on",
+          "type": "date",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "rider_submission_deadline_on",
+          "type": "date",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "submitted_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "locked_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "default_equipment_setup_id",
+          "type": "uuid",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "rider_count",
+          "type": "integer",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "staff_count",
+          "type": "integer",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "participation_cost_cash",
+          "type": "bigint",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "travel_cost_cash",
+          "type": "bigint",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "staff_travel_cost_cash",
+          "type": "bigint",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "asset_transport_cost_cash",
+          "type": "bigint",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "supplies_cost_cash",
+          "type": "bigint",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "operations_cost_cash",
+          "type": "bigint",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "total_cost_cash",
+          "type": "bigint",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "finance_transaction_id",
+          "type": "uuid",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "cost_breakdown_json",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "required": true
+        },
+        {
+          "name": "team_policies_snapshot_json",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "required": true
+        },
+        {
+          "name": "validation_snapshot_json",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "required": true
+        },
+        {
+          "name": "engine_payload_json",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "required": true
+        },
+        {
+          "name": "metadata",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "required": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "required": true
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "required": true
+        },
+        {
+          "name": "participating_club_id",
+          "type": "uuid",
+          "default": null,
+          "required": true
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "c",
+          "name": "race_preparations_asset_transport_cost_cash_check",
+          "definition": "CHECK (asset_transport_cost_cash >= 0)"
+        },
+        {
+          "kind": "f",
+          "name": "race_preparations_club_id_fkey",
+          "definition": "FOREIGN KEY (club_id) REFERENCES clubs(id) ON DELETE CASCADE"
+        },
+        {
+          "kind": "f",
+          "name": "race_preparations_default_equipment_setup_id_fkey",
+          "definition": "FOREIGN KEY (default_equipment_setup_id) REFERENCES club_equipment_setup_presets(id) ON DELETE SET NULL"
+        },
+        {
+          "kind": "f",
+          "name": "race_preparations_finance_transaction_id_fkey",
+          "definition": "FOREIGN KEY (finance_transaction_id) REFERENCES finance.transactions(id) ON DELETE SET NULL"
+        },
+        {
+          "kind": "c",
+          "name": "race_preparations_operations_cost_cash_check",
+          "definition": "CHECK (operations_cost_cash >= 0)"
+        },
+        {
+          "kind": "f",
+          "name": "race_preparations_participating_club_id_fkey",
+          "definition": "FOREIGN KEY (participating_club_id) REFERENCES clubs(id) ON DELETE RESTRICT"
+        },
+        {
+          "kind": "c",
+          "name": "race_preparations_participation_cost_cash_check",
+          "definition": "CHECK (participation_cost_cash >= 0)"
+        },
+        {
+          "kind": "p",
+          "name": "race_preparations_pkey",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "kind": "f",
+          "name": "race_preparations_race_id_fkey",
+          "definition": "FOREIGN KEY (race_id) REFERENCES races(id) ON DELETE CASCADE"
+        },
+        {
+          "kind": "f",
+          "name": "race_preparations_race_team_entry_id_fkey",
+          "definition": "FOREIGN KEY (race_team_entry_id) REFERENCES race_team_entries(id) ON DELETE SET NULL"
+        },
+        {
+          "kind": "c",
+          "name": "race_preparations_rider_count_check",
+          "definition": "CHECK (rider_count >= 0)"
+        },
+        {
+          "kind": "c",
+          "name": "race_preparations_staff_count_check",
+          "definition": "CHECK (staff_count >= 0)"
+        },
+        {
+          "kind": "c",
+          "name": "race_preparations_staff_travel_cost_cash_check",
+          "definition": "CHECK (staff_travel_cost_cash >= 0)"
+        },
+        {
+          "kind": "c",
+          "name": "race_preparations_startlist_status_check",
+          "definition": "CHECK (startlist_status = ANY (ARRAY['draft'::text, 'submitted'::text, 'locked'::text, 'auto_defaulted'::text, 'missed_startlist'::text]))"
+        },
+        {
+          "kind": "c",
+          "name": "race_preparations_status_check",
+          "definition": "CHECK (status = ANY (ARRAY['draft'::text, 'submitted'::text, 'locked'::text, 'auto_defaulted'::text, 'missed_startlist'::text, 'sent_to_engine'::text, 'cancelled'::text]))"
+        },
+        {
+          "kind": "c",
+          "name": "race_preparations_supplies_cost_cash_check",
+          "definition": "CHECK (supplies_cost_cash >= 0)"
+        },
+        {
+          "kind": "c",
+          "name": "race_preparations_total_cost_cash_check",
+          "definition": "CHECK (total_cost_cash >= 0)"
+        },
+        {
+          "kind": "c",
+          "name": "race_preparations_travel_cost_cash_check",
+          "definition": "CHECK (travel_cost_cash >= 0)"
+        },
+        {
+          "kind": "u",
+          "name": "race_preparations_unique_race_club",
+          "definition": "UNIQUE (race_id, club_id)"
+        }
+      ]
+    },
+    "race_team_entries": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "required": true
+        },
+        {
+          "name": "race_id",
+          "type": "uuid",
+          "default": null,
+          "required": true
+        },
+        {
+          "name": "club_id",
+          "type": "uuid",
+          "default": null,
+          "required": true
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "default": "'under_review'::text",
+          "required": true
+        },
+        {
+          "name": "commitment_score_snapshot",
+          "type": "integer",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "acceptance_score",
+          "type": "numeric",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "review_round",
+          "type": "integer",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "decision_reason",
+          "type": "text",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "reviewed_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "final_decision_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "withdrawn_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "missed_startlist_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "required": true
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "required": true
+        },
+        {
+          "name": "entry_source",
+          "type": "text",
+          "default": "'user'::text",
+          "required": true
+        },
+        {
+          "name": "is_ai_filler",
+          "type": "boolean",
+          "default": "false",
+          "required": true
+        },
+        {
+          "name": "auto_filled_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "required": false
+        },
+        {
+          "name": "participating_club_id",
+          "type": "uuid",
+          "default": null,
+          "required": true
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "f",
+          "name": "race_team_entries_club_id_fkey",
+          "definition": "FOREIGN KEY (club_id) REFERENCES clubs(id) ON DELETE CASCADE"
+        },
+        {
+          "kind": "f",
+          "name": "race_team_entries_participating_club_id_fkey",
+          "definition": "FOREIGN KEY (participating_club_id) REFERENCES clubs(id) ON DELETE RESTRICT"
+        },
+        {
+          "kind": "p",
+          "name": "race_team_entries_pkey",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "kind": "f",
+          "name": "race_team_entries_race_id_fkey",
+          "definition": "FOREIGN KEY (race_id) REFERENCES races(id) ON DELETE CASCADE"
+        },
+        {
+          "kind": "c",
+          "name": "race_team_entries_status_check",
+          "definition": "CHECK (status IS NOT NULL AND btrim(status) <> ''::text)"
+        }
+      ]
+    }
+  }
+}
