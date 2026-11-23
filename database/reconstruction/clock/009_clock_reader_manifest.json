@@ -10,7 +10,6 @@
   "intendedPermissions": "Restricted reader SELECT on season_number/month_number/day_number/is_paused only; reuse existing owner-bound game_state RLS policy; no public Data API exposure",
   "evidence": "tests/uraniusClockReaderReview.test.mjs",
   "unmet": [
-    "Execute and pass disposable native PostgreSQL 17 management-wrapper regression including post-DDL failure and exact role grant restoration",
     "Explicit owner authorization for additional hosted clock-reader ACL changes"
   ],
   "hostedApplied": false,
@@ -34,8 +33,47 @@
     "file": "009_management_REVIEW_ONLY.sql",
     "sha256": "df7eb7ba0fd39cb4dbb826ecfdb1b80f6101b4fda1f79373b7e1509d967c5bab",
     "canonicalStatementCount": 4,
-    "status": "REVIEW_ONLY_NATIVE_NOT_TESTED",
+    "status": "OWNER_REPORTED_NATIVE_PASS_13_OF_13_REVIEW_ONLY",
     "testFile": "tests/uraniusClockReaderManagementWrapper.test.mjs",
-    "nativeRunner": "tests/uraniusClockReaderManagedPg17.mjs"
+    "nativeRunner": "tests/uraniusClockReaderManagedPg17.mjs",
+    "nodeTests": {
+      "status": "OWNER_REPORTED_PASS_7_OF_7",
+      "observedDate": "2026-11-23",
+      "evidence": "owner Windows terminal output; 0 failed"
+    },
+    "nativeRehearsal": {
+      "result": "OWNER_REPORTED_PASS_13_OF_13",
+      "observedDate": "2026-11-23",
+      "environment": "disposable PostgreSQL 17, owner Windows checkout at f906d14",
+      "features": [
+        "canonical 001–007 replay",
+        "reviewed 008 management wrapper fixture replay",
+        "non-superuser ADMIN-only role permission boundary",
+        "wrong project/role/digest rejection",
+        "post-temporary-grant rollback",
+        "post-ACL/RLS change rollback",
+        "exact membership restoration",
+        "reader A/B and unknown subject RLS",
+        "anonymous/write/id restrictions",
+        "duplicate 009 denied"
+      ],
+      "cleanup": "INFO Disposable PostgreSQL files cleaned up",
+      "evidence": "TEST_REPORT.md"
+    }
+  },
+  "hostedPreflight": {
+    "observedDate": "2026-11-23",
+    "result": "PASS_READ_ONLY",
+    "projectRef": "sdtsivgtcaoaeoihcwzd",
+    "pgMajor": 17,
+    "migrationCount": 8,
+    "ledgerHashMismatches": 0,
+    "migration009Absent": true,
+    "pausedClockRows": 1,
+    "readerClockSelect": false,
+    "anonClockSelect": false,
+    "roleGrantsRestored": true,
+    "ownerMappings": 2,
+    "riders": 200
   }
 }
