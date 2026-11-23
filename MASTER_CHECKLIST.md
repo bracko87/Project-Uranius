@@ -86,7 +86,7 @@ Gate: PASSED
 | ID | Task | Status | Evidence / commit |
 |---|---|---|---|
 | U5.01 | Authorize and provision isolated infrastructure | PASS | Owner provisioned the approved Micro. Scoped verification and exact project guard evidence in TEST_REPORT.md. |
-| U5.02 | Reconstruct existing sandbox DB | BLOCKED | 005 applied and owner-verified. 006 rehearsed offline. Further clone contracts and migration approval pending. See BLOCKERS.md. |
+| U5.02 | Reconstruct existing sandbox DB | BLOCKED | 005 owner-verified. 006 Windows TLS path rehearsed. Hosted 006 and further clone contracts pending. See BLOCKERS.md. |
 | U5.03 | Seed full test world | TODO | Two fictional manager fixtures, world seed and browser smoke tested offline. Hosted seed and isolated login pending. |
 | U5.04 | Implement hybrid DB contracts | TODO | — |
 | U5.05 | Secure sandbox APIs and storage | TODO | — |

@@ -75,3 +75,7 @@ The owner approved the exact 005 checksum for sdtsivgtcaoaeoihcwzd and scoped re
 ## U5.02/U5.03 - Migration 006 review pending
 
 Migration 005 is complete per the owner's independent verification. U5.02 stays open pending further clone dependencies. 006 was tested offline and awaits approval of the exact manifest in database/reconstruction/world/README.md. Hosted Auth users, ownership binding and login are separate actions and remain pending. The fixture-only browser smoke passed for both fictional managers.
+
+## U5.02/U5.03 - 006 Windows path ready for private execution
+
+The owner accepted 006 in principle and requested an offline-only Windows workflow correction. Full loopback TLS rehearsal passed. Hosted application remains pending owner execution with the unchanged manifest. Auth account setup, binding and live login are separate gates.

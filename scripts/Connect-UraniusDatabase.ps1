@@ -5,6 +5,7 @@ param(
     [Parameter(ParameterSetName = 'Connect')][switch]$Apply,
     [Parameter(ParameterSetName = 'Connect')][switch]$ResumeExistingRole,
     [Parameter(ParameterSetName = 'Connect')][switch]$ClubReconstruction,
+    [Parameter(ParameterSetName = 'Connect')][switch]$SyntheticWorld,
     [Parameter(ParameterSetName = 'Connect')][string]$ApprovedManifestSha256,
     [Parameter(Mandatory, ParameterSetName = 'Offline')][switch]$VerifyManifest
 )
@@ -28,8 +29,16 @@ if ($VerifyManifest) {
     return
 }
 
-if ($ClubReconstruction -and -not $ResumeExistingRole) { throw 'Club reconstruction requires the existing migration role.' }
-$approvedManifestPath = if ($ClubReconstruction) { Join-Path $repo 'database/reconstruction/manifest.json' } else { Join-Path $dir 'manifest.json' }
+if ($ClubReconstruction -and $SyntheticWorld) { throw 'Select only one reconstruction package.' }
+$isReconstruction = $ClubReconstruction -or $SyntheticWorld
+if ($isReconstruction -and -not $ResumeExistingRole) { throw 'Reconstruction requires the existing migration role.' }
+$approvedManifestPath = if ($SyntheticWorld) {
+    Join-Path $repo 'database/reconstruction/world/manifest.json'
+} elseif ($ClubReconstruction) {
+    Join-Path $repo 'database/reconstruction/manifest.json'
+} else {
+    Join-Path $dir 'manifest.json'
+}
 if ($Apply -and ((Get-FileHash -LiteralPath $approvedManifestPath -Algorithm SHA256).Hash -ine $ApprovedManifestSha256)) {
     throw 'Explicit approval of the exact migration manifest SHA-256 is required.'
 }
@@ -135,7 +144,7 @@ try {
     $connection.PGUSER = 'uranius_migrator'
     Invoke-UraniusPsqlBatch -Executable $psql -Connection $connection -Password $migrationPassword -Stage 'Read-only migration login probe' -Sql 'BEGIN READ ONLY; SELECT 1; ROLLBACK;' | Out-Null
     Write-Host 'Read-only migration login probe passed.'
-    if (-not $ClubReconstruction) {
+    if (-not $isReconstruction) {
         $preflight = Get-Content -Raw -LiteralPath (Join-Path $dir 'preflight.sql')
         Invoke-UraniusPsqlBatch -Executable $psql -Connection $connection -Password $migrationPassword -Stage 'Read-only migration-role and empty-ledger check' -Sql ('BEGIN READ ONLY;' + $preflight + 'ROLLBACK;') | Out-Null
         Write-Host 'Restricted migration login, TLS and fresh-state checks passed.'
@@ -151,7 +160,9 @@ try {
         $env:URANIUS_DATABASE_CA_FILE = $ca
         $env:URANIUS_PSQL_PATH = $psql
         $env:URANIUS_DATABASE_URL = 'postgresql://uranius_migrator:{0}@{1}:5432/postgres?sslmode=verify-full' -f [Uri]::EscapeDataString($migrationPassword),$dbHost
-        if ($ClubReconstruction) {
+        if ($SyntheticWorld) {
+            & node (Join-Path $PSScriptRoot 'apply-synthetic-world.mjs') --apply-reviewed-synthetic-world $ApprovedManifestSha256
+        } elseif ($ClubReconstruction) {
             & node (Join-Path $PSScriptRoot 'apply-club-reconstruction.mjs') --apply-reviewed-club-reconstruction $ApprovedManifestSha256
         } else {
             & node (Join-Path $PSScriptRoot 'initialize-sandbox-database.mjs') --apply-reviewed-initial-migrations $ApprovedManifestSha256
@@ -162,7 +173,7 @@ try {
         foreach ($key in $keys) { [Environment]::SetEnvironmentVariable($key, $saved[$key], 'Process') }
     }
 
-    if ($ClubReconstruction) { return }
+    if ($isReconstruction) { return }
 
     $verify = for ($i = 0; $i -lt $manifest.Count; $i++) { '\set hash' + ($i + 1) + ' ' + $manifest[$i].sha256 }
     $verifySql = ($verify -join [Environment]::NewLine) + [Environment]::NewLine + (Get-Content -Raw -LiteralPath (Join-Path $dir 'verify-initialization.sql'))

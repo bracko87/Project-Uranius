@@ -1,0 +1,103 @@
+param([string]$PostgresBin, [string]$OpenSsl, [string]$ScratchRoot)
+$ErrorActionPreference='Stop'
+if ([Console]::IsInputRedirected) { throw 'Run in an interactive Windows PowerShell terminal.' }
+$repo=Split-Path -Parent $PSScriptRoot
+$wrapper=Join-Path $repo 'scripts/Connect-UraniusDatabase.ps1'
+$world=Join-Path $repo 'database/reconstruction/world'
+$psql=(Resolve-Path (Join-Path $PostgresBin 'psql.exe')).ProviderPath
+$pgctl=Join-Path $PostgresBin 'pg_ctl.exe'
+$root=Join-Path $ScratchRoot ('uranius-006-test-'+[Guid]::NewGuid().ToString('N'))
+[IO.Directory]::CreateDirectory($root) | Out-Null
+$data=Join-Path $root 'data'
+$ca=Join-Path $root 'ca.crt'
+$key=Join-Path $root 'fixture.key'
+$shim=Join-Path $root 'psql.exe'
+$hostName='db.sdtsivgtcaoaeoihcwzd.supabase.co'
+$digest='7df2b37dec41fa6ddd93eb22f48bcb149f72b49f7857705805d572cb98995081'
+
+function Expect-Denial([scriptblock]$Run,[string]$Pattern) {
+    try { & $Run; throw 'Expected rejection.' }
+    catch { if ($_.Exception.Message -notlike $Pattern) { throw } }
+}
+Expect-Denial { & $wrapper -PsqlPath unused -CaFile unused -ClubReconstruction -SyntheticWorld -ResumeExistingRole -Apply } '*only one*'
+Expect-Denial { & $wrapper -PsqlPath unused -CaFile unused -SyntheticWorld -Apply } '*existing migration role*'
+Expect-Denial { & $wrapper -PsqlPath unused -CaFile unused -SyntheticWorld -ResumeExistingRole -Apply -ApprovedManifestSha256 ('0' * 64) } '*exact migration manifest*'
+
+try {
+    $ErrorActionPreference = 'Continue'
+    & $OpenSsl req -x509 -newkey rsa:2048 -nodes -days 1 -subj "/CN=$hostName" -addext "subjectAltName=DNS:$hostName" -out $ca -keyout $key 2>$null
+    $certificateExitCode = $LASTEXITCODE
+} finally { $ErrorActionPreference = 'Stop' }
+if ($certificateExitCode -ne 0) { throw 'Fixture certificate generation failed.' }
+& (Join-Path $PostgresBin 'initdb.exe') -D $data -U postgres -A trust --no-locale --no-sync -E UTF8 | Out-Null
+if ($LASTEXITCODE -ne 0) { throw 'Fixture database initialization failed.' }
+Copy-Item -LiteralPath $ca -Destination (Join-Path $data 'server.crt')
+Copy-Item -LiteralPath $key -Destination (Join-Path $data 'server.key')
+$proxy=@'
+using System;
+using System.Diagnostics;
+public static class PsqlProxy {
+  public static int Main(string[] args) {
+    if (Array.IndexOf(args,"--version") >= 0) { Console.WriteLine("psql (PostgreSQL) 17.12"); return 0; }
+    if (Environment.GetEnvironmentVariable("PGHOST") != "db.sdtsivgtcaoaeoihcwzd.supabase.co" ||
+        Environment.GetEnvironmentVariable("PGPORT") != "5432" ||
+        Environment.GetEnvironmentVariable("PGSSLMODE") != "verify-full" ||
+        Environment.GetEnvironmentVariable("PGUSER") != "uranius_migrator") return 77;
+    var p = new ProcessStartInfo(@"__PSQL__", String.Join(" ",args));
+    p.UseShellExecute=false; p.CreateNoWindow=true;
+    p.RedirectStandardInput=true; p.RedirectStandardOutput=true; p.RedirectStandardError=true;
+    p.EnvironmentVariables["PGHOSTADDR"]="127.0.0.1"; p.EnvironmentVariables["PGPORT"]="45680";
+    using (var c=Process.Start(p)) {
+      var o=c.StandardOutput.ReadToEndAsync(); var e=c.StandardError.ReadToEndAsync();
+      c.StandardInput.Write(Console.In.ReadToEnd()); c.StandardInput.Close();
+      if (!c.WaitForExit(20000)) { c.Kill(); return 78; }
+      Console.Write(o.GetAwaiter().GetResult()); Console.Error.Write(e.GetAwaiter().GetResult());
+      return c.ExitCode;
+    }
+  }
+}
+'@
+Add-Type -Language CSharp -OutputAssembly $shim -OutputType ConsoleApplication -TypeDefinition ($proxy.Replace('__PSQL__',$psql))
+
+function Local-Sql([string]$Sql,[string]$User='postgres',[string]$Database='postgres') {
+    $connection="host=127.0.0.1 hostaddr=127.0.0.1 port=45680 dbname=$Database user=$User sslmode=disable connect_timeout=5"
+    $result=$Sql | & $psql -X -q -w -At -v ON_ERROR_STOP=1 -d $connection -f -
+    if ($LASTEXITCODE -ne 0) { throw 'Disposable SQL failed.' }
+    return $result
+}
+function Read-Host {
+    param([string]$Prompt,[switch]$AsSecureString)
+    if (!$AsSecureString -or $Prompt -notlike '*Existing*') { throw 'Unexpected prompt.' }
+    ConvertTo-SecureString 'offline-loopback-fixture-only' -AsPlainText -Force
+}
+
+& $pgctl -D $data -l (Join-Path $root 'postgres.log') -o '-h 127.0.0.1 -p 45680 -c ssl=on' -w start
+if ($LASTEXITCODE -ne 0) { throw 'Fixture database start failed.' }
+try {
+    Local-Sql 'CREATE ROLE uranius_migrator LOGIN NOINHERIT; CREATE ROLE anon; CREATE ROLE authenticated; CREATE SCHEMA auth; CREATE TABLE auth.users(id uuid PRIMARY KEY); GRANT CONNECT, CREATE ON DATABASE postgres TO uranius_migrator;' | Out-Null
+    $manifest=ConvertFrom-Json -InputObject (Get-Content -Raw (Join-Path $world 'manifest.json'))
+    $sql="BEGIN; SELECT set_config('uranius.approved_project_ref','sdtsivgtcaoaeoihcwzd',true);"
+    foreach ($entry in $manifest.requires) {
+        $folder=if ($entry.file.StartsWith('005_')) {'database/reconstruction'} else {'database/preparation'}
+        $file=Join-Path (Join-Path $repo $folder) $entry.file
+        if ((Get-FileHash -LiteralPath $file).Hash -ine $entry.sha256) { throw 'Foundation checksum mismatch.' }
+        $sql+=(Get-Content -Raw $file)+" INSERT INTO uranius_private.migration_ledger(version,sha256) VALUES ('$($entry.file)','$($entry.sha256)');"
+    }
+    Local-Sql ($sql+'COMMIT;') uranius_migrator | Out-Null
+    $options=@{PsqlPath=$shim; CaFile=$ca; ResumeExistingRole=$true; SyntheticWorld=$true; Apply=$true; ApprovedManifestSha256=$digest}
+    $prior=$manifest.requires[4].sha256
+    Local-Sql "UPDATE uranius_private.migration_ledger SET sha256=repeat('0',64) WHERE version='005_club_identity.sql';" | Out-Null
+    Expect-Denial { & $wrapper @options } '*Inspect the Uranius ledger*'
+    if ((Local-Sql "SELECT to_regclass('uranius_game.stage_calendar') IS NULL;") -ne 't') { throw 'Ledger drift bypassed.' }
+    Local-Sql "UPDATE uranius_private.migration_ledger SET sha256='$prior' WHERE version='005_club_identity.sql'; CREATE TABLE uranius_game.opening_balances(collision integer);" | Out-Null
+    Expect-Denial { & $wrapper @options } '*Inspect the Uranius ledger*'
+    if ((Local-Sql "SELECT count(*)=5 AND to_regclass('uranius_game.stage_calendar') IS NULL FROM uranius_private.migration_ledger;") -ne 't') { throw 'Rollback failed.' }
+    Local-Sql 'DROP TABLE uranius_game.opening_balances;' | Out-Null
+    & $wrapper @options
+    if ((Local-Sql "SELECT count(*)=6 AND EXISTS (SELECT 1 FROM uranius_private.migration_ledger WHERE version='006_synthetic_world.sql' AND sha256='$($manifest.migrations[0].sha256)') AND NOT EXISTS (SELECT 1 FROM auth.users) AND NOT EXISTS (SELECT 1 FROM uranius_catalog.team_owners) FROM uranius_private.migration_ledger;") -ne 't') { throw 'Unexpected ledger or accounts.' }
+    Expect-Denial { & $wrapper @options } '*Inspect the Uranius ledger*'
+    Local-Sql 'CREATE DATABASE uranius_006_test_wrapper TEMPLATE postgres;' | Out-Null
+    Local-Sql (Get-Content -Raw (Join-Path $world 'verify-offline.sql')) -Database uranius_006_test_wrapper | Out-Null
+    Write-Output 'PowerShell 5.1 wrapper and PostgreSQL 17 TLS migration rehearsal passed.'
+}
+finally { & $pgctl -D $data -m fast -w stop }
