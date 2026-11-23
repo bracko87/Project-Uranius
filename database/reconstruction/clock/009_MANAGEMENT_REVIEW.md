@@ -48,3 +48,11 @@ Expected **count and detailed PASS lines are not claimed until actually observed
 Successful tests would make 009 **eligible for a hosted authorization request**, not automatically authorized. Before any application, review an independent post-commit rollback/retirement plan, perform a fresh hosted read-only project/ledger/membership preflight, and obtain the owner's explicit approval of the **exact target and both hashes**. The original production ProPeloton Manager is out of scope. The loopback clock feature flag stays off until authorized 009 is applied and A/B session and new HTTPS negative probes are verified.
 
 Current project progress stays **49/60**. U5.02 remains BLOCKED on complete legacy game contracts; U5.03 remains IN_PROGRESS until real frontend acceptance is demonstrated.
+
+## Final local verification outcome — 2026-11-23
+
+The owner completed the exact test commands above, reporting **7/7 PASS** from Node's management-wrapper static suite and **13/13 PASS** from the disposable PostgreSQL 17 management-wrapper rehearsal. The native regression confirmed exact temporary role grant restoration after both injected-failure paths, denied incorrect project/role/digest inputs, four-column-only ownership-scoped clock reads after the successful local apply, duplicate rejection and clean temporary database removal. **The earlier warning that the wrapper had not been native-tested is historical and superseded by this result.**
+
+Source and management SQL hashes remain unchanged. This project is **READY FOR A SEPARATE HOSTED APPROVAL DECISION**, not automatically approved. The live hosted project still contains only migrations 001–008, with `uranius_smoke_reader` unable to SELECT clock fields.
+
+Use the reviewed [`009_HOSTED_APPROVAL_GATE.md`](009_HOSTED_APPROVAL_GATE.md) for exact targeted authorization, just-in-time preflight and postflight checks. Use [`009_ROLLBACK_REVIEW.md`](009_ROLLBACK_REVIEW.md) for the non-executable post-commit incident/recovery plan. Do **not** rerun the review-only wrapper against hosted SQL without explicit approval.
