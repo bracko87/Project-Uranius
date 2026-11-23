@@ -49,10 +49,14 @@ async function expect(label, path, expected, opts) {
 }
 
 await expect('Anonymous dashboard denied', '/fixture/dashboard', 401)
+await expect('Anonymous game clock denied', '/fixture/clock', 401)
 await expect('Forged cookie denied', '/fixture/dashboard', 401, {
   headers: { Cookie: '__Host-uranius_club_session=' + '0'.repeat(64) },
 })
 await expect('Wrong Origin denied for dashboard', '/fixture/dashboard', 403, {
+  headers: { Origin: 'https://127.0.0.1:1' },
+})
+await expect('Wrong Origin denied for game clock', '/fixture/clock', 403, {
   headers: { Origin: 'https://127.0.0.1:1' },
 })
 try {
@@ -78,6 +82,10 @@ await expect('Wrong Origin denied for logout', '/fixture/logout', 403, {
   method: 'POST', headers: { Origin: 'https://127.0.0.1:1' },
 })
 await expect('Disallowed logout method rejected', '/fixture/logout', 405)
+await expect('Disallowed clock method rejected', '/fixture/clock', 405, {
+  method: 'POST', headers: { Origin: origin },
+})
 await expect('Tenant query is not accepted', '/fixture/dashboard?team_id=2', 404)
+await expect('Clock tenant query is not accepted', '/fixture/clock?team_id=2', 404)
 await expect('Unknown route is not exposed', '/uranius_private', 404)
 console.log('PASS ' + passed + ' loopback HTTPS negative checks. No real credentials, sessions, or hosted data were accessed.')
