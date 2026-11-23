@@ -38,7 +38,6 @@
     "sha256": "f3dadf7b7934e1c8677d24af2d0a57b2be19768f0bc2dc6b45729618c28e349b"
   },
   "notReadyReasons": [
-    "No reviewed atomic management-connection execution wrapper yet",
     "No owner approval to apply migration 008",
     "No original game_state table DDL available in sanitized source inventory; subset is intentionally synthetic"
   ],
@@ -54,7 +53,39 @@
     "file": "008_management_REVIEW_ONLY.sql",
     "sha256": "a1317dca31d768c6fc73dd2090c58ad3e97498a83b1422ad194e1336b30fc92c",
     "statementCountFromCanonical": 17,
-    "status": "REVIEW_ONLY_NATIVE_NOT_TESTED",
-    "tests": "tests/uraniusClockManagementWrapper.test.mjs"
+    "status": "OWNER_REPORTED_NATIVE_PASS_12_OF_12_REVIEW_ONLY",
+    "tests": "tests/uraniusClockManagementWrapper.test.mjs",
+    "nativeRehearsal": {
+      "result": "OWNER_REPORTED_PASS_12_OF_12",
+      "staticTests": "6/6 PASS",
+      "observedDate": "2026-11-23",
+      "execution": "disposable PostgreSQL 17 on owner Windows checkout; no hosted connection",
+      "evidence": "TEST_REPORT.md",
+      "cleanup": "INFO Disposable PostgreSQL files cleaned up"
+    }
+  },
+  "hostedReadOnlyPreflight": {
+    "observedDate": "2026-11-23",
+    "result": "PASS",
+    "projectRef": "sdtsivgtcaoaeoihcwzd",
+    "ledgerEntries": 7,
+    "ledgerDigestDrift": 0,
+    "gameStateAbsent": true,
+    "managerMappings": 2,
+    "riderCount": 200,
+    "stageCount": 3,
+    "postgresNonSuperuser": true,
+    "postgresCannotSetOrInheritMigrator": true,
+    "independentAdminOnlyGrantCount": 1,
+    "source": "connected Supabase read-only SQL inspection"
+  },
+  "securityAdvisorReview": {
+    "observedDate": "2026-11-23",
+    "result": "Reviewed, no hosted setting changed",
+    "securityLints": [
+      "INFO: three uranius_private RLS-enabled tables intentionally have no policies",
+      "WARN: Auth leaked password protection is disabled; separate Auth-security task, not migration 008"
+    ],
+    "source": "connected Supabase security advisors"
   }
 }
