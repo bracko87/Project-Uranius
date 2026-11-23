@@ -128,3 +128,11 @@ The owner supplied successful results from the exact wrapper candidate: **6/6 No
 Hosted read-only preflight independently confirmed exact seven-migration history with zero digest drift, two manager mappings, 200 riders, three stages, no 008 clock and the required independent ADMIN-only membership. Supabase security advisors also identified **WARN: Auth leaked-password protection disabled**, tracked outside this clock migration scope, and three private RLS tables without policies (INFO).
 
 The status is **NATIVE_TESTED / HOSTED_NOT_AUTHORIZED**. Review [`008_HOSTED_APPROVAL_GATE.md`](008_HOSTED_APPROVAL_GATE.md) for exact SHA-256s, scope, approvals, deployment verification, security-advisor findings and rollback considerations. **Do not execute this wrapper on hosted Supabase until explicit owner approval.** The fixture still does not provide accepted-race schedules, engine time progression or a functioning original Overview.
+
+## Current hosted status — migration 008 applied (2026-11-23)
+
+**The previously reviewed and locally verified 008 management wrapper has now been applied to the isolated Uranius hosted sandbox.** Read-only postflight verified ledger 8, exact canonical candidate SHA, singleton paused clock, original three invoker clock RPC signatures, manager RLS, no anon/reader/writer grants, original management membership and unchanged fixture counts. Neither the original ProPeloton Manager nor its production database was accessed.
+
+Current deployment evidence: [`008_HOSTED_APPLICATION_REPORT.md`](008_HOSTED_APPLICATION_REPORT.md) and [`008_DEPLOYMENT_STATUS.json`](008_DEPLOYMENT_STATUS.json). The earlier review-only manifest and approval gate record the **historical testing state**; their warnings that hosted 008 has not yet been applied are superseded by this installation result. Keep them available for reproducible test/approval provenance.
+
+**Next:** fresh real hosted manager A/B read-only clock and session-isolation smoke, then original Overview/Calendar contract reconstruction. No game-time acceleration, scheduling jobs, full clone activation, accepted race entries or public-facing game deployment yet. Do not rerun 008; if there is a post-commit issue, follow the separate retirement review instead of retrying the migration.
