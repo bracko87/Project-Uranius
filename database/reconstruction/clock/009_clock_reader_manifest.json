@@ -11,8 +11,7 @@
   "evidence": "tests/uraniusClockReaderReview.test.mjs",
   "unmet": [
     "Separate project-pinned management wrapper with exact membership restoration",
-    "Explicit owner authorization for additional hosted clock-reader ACL changes",
-    "Rerun amended Node clock isolation test on owner Windows checkout"
+    "Explicit owner authorization for additional hosted clock-reader ACL changes"
   ],
   "hostedApplied": false,
   "nativeRehearsal": {
@@ -27,6 +26,8 @@
     "observedDate": "2026-11-23",
     "originalResult": "7/8 pass, 1 test harness failure parsing empty 404 JSON",
     "correctiveCommit": "070346b1d5e30f9c08eaf98a04851543e76677c8",
-    "retest": "PENDING"
+    "retest": "OWNER_REPORTED_PASS_8_OF_8",
+    "retestDate": "2026-11-23",
+    "retestEvidence": "Owner provided Node v20 Windows terminal: tests 8, pass 8, fail 0, duration 291ms after pulling commit 320dba0"
   }
 }
