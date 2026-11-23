@@ -109,6 +109,9 @@ try {
   const beforeMembers = membership()
   const state = () => sql("SELECT pg_has_role('postgres','uranius_migrator','SET')::text||':'||pg_has_role('postgres','uranius_migrator','USAGE')::text;", 'uranius_fixture_admin')
   assert.equal(state(), 'false:false', 'Existing management membership must be ADMIN-only')
+  sql('SET ROLE uranius_migrator;', 'postgres', true)
+  assert.equal(membership(), beforeMembers)
+  pass('Non-superuser management session cannot SET ROLE before temporary grant')
   const preflight = () => { assert.equal(snapshot(),'7:2:200:3:false'); assert.equal(membership(),beforeMembers); assert.equal(state(),'false:false') }
   pass('Management user is non-superuser with independently granted ADMIN-only, not SET role')
 
@@ -159,6 +162,8 @@ try {
 
   sql('BEGIN; SET LOCAL ROLE anon; SELECT uranius_game.get_current_game_date_date(); ROLLBACK;', 'uranius_fixture_admin', true)
   sql('SELECT uranius_game.get_current_game_date_date();', 'uranius_smoke_reader', true)
+  assert.equal(sql("SELECT has_table_privilege('uranius_smoke_reader','uranius_game.game_state','SELECT')::text;", 'uranius_fixture_admin'), 'false')
+  assert.equal(sql("SELECT has_function_privilege('uranius_smoke_reader','uranius_game.get_current_game_date_date()','EXECUTE')::text;", 'uranius_fixture_admin'), 'false')
   sql('BEGIN; SET LOCAL ROLE authenticated; UPDATE uranius_game.game_state SET hour_number=1; ROLLBACK;', 'uranius_fixture_admin', true)
   sql("UPDATE uranius_game.game_state SET is_paused=false;", 'uranius_migrator', true)
   pass('Anonymous, smoke reader, unauthorized writes and clock unpause all rejected')
