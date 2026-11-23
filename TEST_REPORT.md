@@ -537,3 +537,23 @@ node tests\uraniusHostedNegativeProbe.mjs https://127.0.0.1:64055
 ```
 
 Use the actual port printed by the locally running runner, which can change after each restart. The script discovers mkcert's trusted local CA using `mkcert -CAROOT` and never disables TLS verification. Never run this against a public host. No other hosted writes or project settings changed. U5.03 is IN_PROGRESS pending owner-executed negative probe and full clone baseline smoke.
+
+## U5.03 - Live loopback HTTPS denial probe: owner-observed PASS (2026-11-23)
+
+The owner ran `node tests\\uraniusHostedNegativeProbe.mjs https://127.0.0.1:59403` from the Project Uranius checkout with the reviewed local HTTPS adapter running against the hosted Uranius Auth/database integration. The owner supplied the terminal output from this live listener. **All 11 checks passed**:
+
+| Check | Observed result |
+|---|---|
+| Anonymous dashboard | HTTP 401 |
+| Forged cookie | HTTP 401 |
+| Wrong Origin for dashboard | HTTP 403 |
+| Wrong Host | Rejected by TLS certificate identity validation |
+| Missing Origin for login | HTTP 403 |
+| Wrong Origin for login | HTTP 403 |
+| Wrong login Content-Type | HTTP 403 |
+| Wrong Origin for logout | HTTP 403 |
+| Disallowed logout method | HTTP 405 |
+| Unknown tenant query path | HTTP 404 |
+| Unknown private path | HTTP 404 |
+
+The script verified loopback TLS identity and sent **no real credentials, sessions or hosted data**. This supplements the prior owner's actual Manager A/Manager B successful browser logins and logout isolation. The negative requests do not prove a complete cross-owner data breach test against arbitrary authenticated endpoints, and do not exercise the full game Overview. No database change, deployment, scheduled job or original ProPeloton Manager action occurred. U5.03 remains **IN_PROGRESS** until the complete game baseline smoke under the sandbox-only integration is verified and recorded.
