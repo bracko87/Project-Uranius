@@ -86,8 +86,8 @@ Gate: PASSED
 | ID | Task | Status | Evidence / commit |
 |---|---|---|---|
 | U5.01 | Authorize and provision isolated infrastructure | PASS | Owner provisioned the approved Micro. Scoped verification and exact project guard evidence in TEST_REPORT.md. |
-| U5.02 | Reconstruct existing sandbox DB | BLOCKED | Restricted-role repair and resume rehearsed on PostgreSQL 17. Revised migration manifest awaits approval. See BLOCKERS.md. |
-| U5.03 | Seed full test world | TODO | — |
+| U5.02 | Reconstruct existing sandbox DB | BLOCKED | Hosted foundation verified. Drift audit records unresolved retained contracts and follow-up DDL approval. See BLOCKERS.md. |
+| U5.03 | Seed full test world | TODO | Offline fixture preparation verified. Hosted import and login remain pending after U5.02. |
 | U5.04 | Implement hybrid DB contracts | TODO | — |
 | U5.05 | Secure sandbox APIs and storage | TODO | — |
 | U5.06 | Deploy sandbox workers and schedule | TODO | — |

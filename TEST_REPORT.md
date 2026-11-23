@@ -423,3 +423,18 @@ A Windows PowerShell 5.1 fixture delayed reading stdin for seven seconds. The ol
 PowerShell now passes its bounded batch to the local Node runner through the child environment. The runner supervises psql noninteractively with one deadline for process and pipe I/O, and reports sanitized connection, authentication, SQL and process failures. The numbered initializer uses the same runner. The resume path performs SELECT 1 in a separate read-only transaction before the fresh-state preflight. Exact host, project identity and verify-full remain enforced. The owner reports an existing restricted role and an empty application catalog. No hosted connection or write was attempted.
 
 PowerShell 5.1 regression passed delayed startup, all 16,000 input characters, forced timeout with verified child exit, and sanitized errors including SQLSTATE 28P01 and 42501. A native local psql 17.12 read-only SELECT 1 also passed. All four manifest hashes, six guard tests and two offline PostgreSQL rehearsals passed. The four numbered files and manifest had no diff.
+
+## U5.02 - Hosted foundation verification and U5.03 offline preparation
+
+Scoped read-only queries confirmed stored project identity sdtsivgtcaoaeoihcwzd and the four ledger hashes below. The same hashes were verified against the local manifest and numbered files.
+
+| Migration | Applied SHA-256 |
+|---|---|
+| 001_identity.sql | 87755f1d12a0b983d016e039d4ceb22aea1e5c165b65c2e6888049805fefbadd |
+| 002_reference_schema.sql | 6cad841d012117a02daf7e89555cc870da5f9a5f90b4e4c8b7dfee52b84ed45f |
+| 003_access.sql | b42c96b647afd9b62573c75cd922b4f8de3eff9e39c5b1c8dd2ccd2f40afe8ee |
+| 004_synthetic_reference.sql | e788bf6cab85f12adce0a9227534cca57e318b15aaa69474ef2e5a950472b317 |
+
+Observed 20 teams, 200 riders, two equipment rows, one season, 17 terrain points and 100/150/200 starters on 120/160/200 km routes. All 28 catalog constraints were validated, including six FKs. Seven orphan checks and rider-range checks returned zero. The eight catalog tables have RLS and one SELECT policy each. The two private tables denied direct client ACL checks. Zero Auth users and zero ownership rows. No application triggers, cron extension, network extension, buckets or application publication tables. Confirmation covers database-visible state. No dashboard configuration was changed.
+
+See reference/DB_DRIFT_AUDIT.md for the full reference index and remaining requirements. The offline synthetic world smoke test loaded the reviewed SQL and advanced all three canonical inputs through 90 seconds using the existing hybrid engine. Catalog memberships, route endpoints and unrevealed final results passed. Hosted game login, full reconstruction and the remaining U5.03 imports are still pending. No remote writes were performed during verification.

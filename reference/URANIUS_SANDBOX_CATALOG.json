@@ -1,0 +1,696 @@
+{
+  "catalog": {
+    "role": {
+      "login": true,
+      "super": false,
+      "inherit": false,
+      "createdb": false,
+      "bypassrls": false,
+      "createrole": false,
+      "memberships": 0,
+      "replication": false
+    },
+    "ledger": [
+      {
+        "file": "001_identity.sql",
+        "sha256": "87755f1d12a0b983d016e039d4ceb22aea1e5c165b65c2e6888049805fefbadd"
+      },
+      {
+        "file": "002_reference_schema.sql",
+        "sha256": "6cad841d012117a02daf7e89555cc870da5f9a5f90b4e4c8b7dfee52b84ed45f"
+      },
+      {
+        "file": "003_access.sql",
+        "sha256": "b42c96b647afd9b62573c75cd922b4f8de3eff9e39c5b1c8dd2ccd2f40afe8ee"
+      },
+      {
+        "file": "004_synthetic_reference.sql",
+        "sha256": "e788bf6cab85f12adce0a9227534cca57e318b15aaa69474ef2e5a950472b317"
+      }
+    ],
+    "tables": [
+      {
+        "rls": true,
+        "anon": false,
+        "name": "uranius_catalog.equipment",
+        "authenticated_read": true,
+        "authenticated_write": false
+      },
+      {
+        "rls": true,
+        "anon": false,
+        "name": "uranius_catalog.riders",
+        "authenticated_read": true,
+        "authenticated_write": false
+      },
+      {
+        "rls": true,
+        "anon": false,
+        "name": "uranius_catalog.seasons",
+        "authenticated_read": true,
+        "authenticated_write": false
+      },
+      {
+        "rls": true,
+        "anon": false,
+        "name": "uranius_catalog.stages",
+        "authenticated_read": true,
+        "authenticated_write": false
+      },
+      {
+        "rls": true,
+        "anon": false,
+        "name": "uranius_catalog.startlists",
+        "authenticated_read": true,
+        "authenticated_write": false
+      },
+      {
+        "rls": true,
+        "anon": false,
+        "name": "uranius_catalog.team_owners",
+        "authenticated_read": true,
+        "authenticated_write": false
+      },
+      {
+        "rls": true,
+        "anon": false,
+        "name": "uranius_catalog.teams",
+        "authenticated_read": true,
+        "authenticated_write": false
+      },
+      {
+        "rls": true,
+        "anon": false,
+        "name": "uranius_catalog.terrain",
+        "authenticated_read": true,
+        "authenticated_write": false
+      },
+      {
+        "rls": false,
+        "anon": false,
+        "name": "uranius_private.migration_ledger",
+        "authenticated_read": false,
+        "authenticated_write": false
+      },
+      {
+        "rls": false,
+        "anon": false,
+        "name": "uranius_private.project_identity",
+        "authenticated_read": false,
+        "authenticated_write": false
+      }
+    ],
+    "identity": "sdtsivgtcaoaeoihcwzd",
+    "policies": [
+      "equipment.equipment_read:SELECT",
+      "riders.riders_read:SELECT",
+      "seasons.seasons_read:SELECT",
+      "stages.stages_read:SELECT",
+      "startlists.startlists_read:SELECT",
+      "team_owners.team_owners_read:SELECT",
+      "teams.teams_read:SELECT",
+      "terrain.terrain_read:SELECT"
+    ],
+    "triggers": 0,
+    "functions": [
+      "uranius_catalog.request_uid",
+      "uranius_private.assert_project"
+    ],
+    "cron_table": null,
+    "extensions": [
+      "pg_stat_statements",
+      "pgcrypto",
+      "plpgsql",
+      "supabase_vault",
+      "uuid-ossp"
+    ],
+    "constraints": [
+      {
+        "name": "equipment_pkey",
+        "type": "p",
+        "table": "uranius_catalog.equipment",
+        "valid": true,
+        "definition": "PRIMARY KEY (equipment_id)"
+      },
+      {
+        "name": "riders_climbing_check",
+        "type": "c",
+        "table": "uranius_catalog.riders",
+        "valid": true,
+        "definition": "CHECK (((climbing >= 1) AND (climbing <= 100)))"
+      },
+      {
+        "name": "riders_flat_check",
+        "type": "c",
+        "table": "uranius_catalog.riders",
+        "valid": true,
+        "definition": "CHECK (((flat >= 1) AND (flat <= 100)))"
+      },
+      {
+        "name": "riders_pkey",
+        "type": "p",
+        "table": "uranius_catalog.riders",
+        "valid": true,
+        "definition": "PRIMARY KEY (rider_id)"
+      },
+      {
+        "name": "riders_resistance_check",
+        "type": "c",
+        "table": "uranius_catalog.riders",
+        "valid": true,
+        "definition": "CHECK (((resistance >= 1) AND (resistance <= 100)))"
+      },
+      {
+        "name": "riders_rider_id_check",
+        "type": "c",
+        "table": "uranius_catalog.riders",
+        "valid": true,
+        "definition": "CHECK ((rider_id > 0))"
+      },
+      {
+        "name": "riders_stamina_check",
+        "type": "c",
+        "table": "uranius_catalog.riders",
+        "valid": true,
+        "definition": "CHECK (((stamina >= 1) AND (stamina <= 100)))"
+      },
+      {
+        "name": "riders_team_id_fkey",
+        "type": "f",
+        "table": "uranius_catalog.riders",
+        "valid": true,
+        "definition": "FOREIGN KEY (team_id) REFERENCES uranius_catalog.teams(team_id)"
+      },
+      {
+        "name": "riders_team_id_rider_id_key",
+        "type": "u",
+        "table": "uranius_catalog.riders",
+        "valid": true,
+        "definition": "UNIQUE (team_id, rider_id)"
+      },
+      {
+        "name": "seasons_pkey",
+        "type": "p",
+        "table": "uranius_catalog.seasons",
+        "valid": true,
+        "definition": "PRIMARY KEY (season_no)"
+      },
+      {
+        "name": "seasons_season_no_check",
+        "type": "c",
+        "table": "uranius_catalog.seasons",
+        "valid": true,
+        "definition": "CHECK ((season_no > 0))"
+      },
+      {
+        "name": "stages_distance_m_check",
+        "type": "c",
+        "table": "uranius_catalog.stages",
+        "valid": true,
+        "definition": "CHECK ((distance_m > 0))"
+      },
+      {
+        "name": "stages_pkey",
+        "type": "p",
+        "table": "uranius_catalog.stages",
+        "valid": true,
+        "definition": "PRIMARY KEY (stage_id)"
+      },
+      {
+        "name": "stages_season_no_fkey",
+        "type": "f",
+        "table": "uranius_catalog.stages",
+        "valid": true,
+        "definition": "FOREIGN KEY (season_no) REFERENCES uranius_catalog.seasons(season_no)"
+      },
+      {
+        "name": "stages_season_no_stage_no_key",
+        "type": "u",
+        "table": "uranius_catalog.stages",
+        "valid": true,
+        "definition": "UNIQUE (season_no, stage_no)"
+      },
+      {
+        "name": "stages_stage_id_check",
+        "type": "c",
+        "table": "uranius_catalog.stages",
+        "valid": true,
+        "definition": "CHECK ((stage_id > 0))"
+      },
+      {
+        "name": "stages_stage_no_check",
+        "type": "c",
+        "table": "uranius_catalog.stages",
+        "valid": true,
+        "definition": "CHECK ((stage_no > 0))"
+      },
+      {
+        "name": "startlists_pkey",
+        "type": "p",
+        "table": "uranius_catalog.startlists",
+        "valid": true,
+        "definition": "PRIMARY KEY (stage_id, rider_id)"
+      },
+      {
+        "name": "startlists_stage_id_fkey",
+        "type": "f",
+        "table": "uranius_catalog.startlists",
+        "valid": true,
+        "definition": "FOREIGN KEY (stage_id) REFERENCES uranius_catalog.stages(stage_id)"
+      },
+      {
+        "name": "startlists_team_id_rider_id_fkey",
+        "type": "f",
+        "table": "uranius_catalog.startlists",
+        "valid": true,
+        "definition": "FOREIGN KEY (team_id, rider_id) REFERENCES uranius_catalog.riders(team_id, rider_id)"
+      },
+      {
+        "name": "team_owners_pkey",
+        "type": "p",
+        "table": "uranius_catalog.team_owners",
+        "valid": true,
+        "definition": "PRIMARY KEY (team_id)"
+      },
+      {
+        "name": "team_owners_team_id_fkey",
+        "type": "f",
+        "table": "uranius_catalog.team_owners",
+        "valid": true,
+        "definition": "FOREIGN KEY (team_id) REFERENCES uranius_catalog.teams(team_id)"
+      },
+      {
+        "name": "teams_label_key",
+        "type": "u",
+        "table": "uranius_catalog.teams",
+        "valid": true,
+        "definition": "UNIQUE (label)"
+      },
+      {
+        "name": "teams_pkey",
+        "type": "p",
+        "table": "uranius_catalog.teams",
+        "valid": true,
+        "definition": "PRIMARY KEY (team_id)"
+      },
+      {
+        "name": "teams_team_id_check",
+        "type": "c",
+        "table": "uranius_catalog.teams",
+        "valid": true,
+        "definition": "CHECK ((team_id > 0))"
+      },
+      {
+        "name": "terrain_distance_m_check",
+        "type": "c",
+        "table": "uranius_catalog.terrain",
+        "valid": true,
+        "definition": "CHECK ((distance_m >= 0))"
+      },
+      {
+        "name": "terrain_pkey",
+        "type": "p",
+        "table": "uranius_catalog.terrain",
+        "valid": true,
+        "definition": "PRIMARY KEY (stage_id, distance_m)"
+      },
+      {
+        "name": "terrain_stage_id_fkey",
+        "type": "f",
+        "table": "uranius_catalog.terrain",
+        "valid": true,
+        "definition": "FOREIGN KEY (stage_id) REFERENCES uranius_catalog.stages(stage_id)"
+      }
+    ],
+    "oauth_hooks": 0,
+    "event_triggers": 0,
+    "managed_history": null,
+    "storage_buckets": 0,
+    "catalog_publications": 0,
+    "private_schema_usage": {
+      "anon": false,
+      "authenticated": false
+    }
+  },
+  "integrity": {
+    "counts": {
+      "teams": 20,
+      "owners": 0,
+      "riders": 200,
+      "seasons": 1,
+      "terrain": 17,
+      "equipment": 2,
+      "auth_users": 0
+    },
+    "stages": [
+      {
+        "stage_id": 1,
+        "starters": 100,
+        "distance_m": 120000,
+        "valid_terrain": true
+      },
+      {
+        "stage_id": 2,
+        "starters": 150,
+        "distance_m": 160000,
+        "valid_terrain": true
+      },
+      {
+        "stage_id": 3,
+        "starters": 200,
+        "distance_m": 200000,
+        "valid_terrain": true
+      }
+    ],
+    "orphans": {
+      "owner_auth": 0,
+      "owner_team": 0,
+      "rider_team": 0,
+      "stage_season": 0,
+      "terrain_stage": 0,
+      "startlist_stage": 0,
+      "startlist_rider_team": 0
+    },
+    "app_indices": 14,
+    "private_acl": [
+      {
+        "owner": "uranius_migrator",
+        "table": "migration_ledger",
+        "anon_column": false,
+        "authenticated_column": false
+      },
+      {
+        "owner": "uranius_migrator",
+        "table": "project_identity",
+        "anon_column": false,
+        "authenticated_column": false
+      }
+    ],
+    "app_sequences": 0,
+    "storage_policies": 0,
+    "authenticated_can_login": false,
+    "invalid_rider_attributes": 0,
+    "private_function_client_execute": false
+  },
+  "definitions": {
+    "pgnet": null,
+    "columns": [
+      {
+        "name": "equipment_id",
+        "table": "uranius_catalog.equipment",
+        "default": null,
+        "nullable": "NO",
+        "data_type": "text"
+      },
+      {
+        "name": "label",
+        "table": "uranius_catalog.equipment",
+        "default": null,
+        "nullable": "NO",
+        "data_type": "text"
+      },
+      {
+        "name": "rider_id",
+        "table": "uranius_catalog.riders",
+        "default": null,
+        "nullable": "NO",
+        "data_type": "integer"
+      },
+      {
+        "name": "team_id",
+        "table": "uranius_catalog.riders",
+        "default": null,
+        "nullable": "NO",
+        "data_type": "integer"
+      },
+      {
+        "name": "label",
+        "table": "uranius_catalog.riders",
+        "default": null,
+        "nullable": "NO",
+        "data_type": "text"
+      },
+      {
+        "name": "flat",
+        "table": "uranius_catalog.riders",
+        "default": null,
+        "nullable": "NO",
+        "data_type": "smallint"
+      },
+      {
+        "name": "climbing",
+        "table": "uranius_catalog.riders",
+        "default": null,
+        "nullable": "NO",
+        "data_type": "smallint"
+      },
+      {
+        "name": "stamina",
+        "table": "uranius_catalog.riders",
+        "default": null,
+        "nullable": "NO",
+        "data_type": "smallint"
+      },
+      {
+        "name": "resistance",
+        "table": "uranius_catalog.riders",
+        "default": null,
+        "nullable": "NO",
+        "data_type": "smallint"
+      },
+      {
+        "name": "season_no",
+        "table": "uranius_catalog.seasons",
+        "default": null,
+        "nullable": "NO",
+        "data_type": "integer"
+      },
+      {
+        "name": "label",
+        "table": "uranius_catalog.seasons",
+        "default": null,
+        "nullable": "NO",
+        "data_type": "text"
+      },
+      {
+        "name": "stage_id",
+        "table": "uranius_catalog.stages",
+        "default": null,
+        "nullable": "NO",
+        "data_type": "integer"
+      },
+      {
+        "name": "season_no",
+        "table": "uranius_catalog.stages",
+        "default": null,
+        "nullable": "NO",
+        "data_type": "integer"
+      },
+      {
+        "name": "stage_no",
+        "table": "uranius_catalog.stages",
+        "default": null,
+        "nullable": "NO",
+        "data_type": "integer"
+      },
+      {
+        "name": "label",
+        "table": "uranius_catalog.stages",
+        "default": null,
+        "nullable": "NO",
+        "data_type": "text"
+      },
+      {
+        "name": "distance_m",
+        "table": "uranius_catalog.stages",
+        "default": null,
+        "nullable": "NO",
+        "data_type": "integer"
+      },
+      {
+        "name": "stage_id",
+        "table": "uranius_catalog.startlists",
+        "default": null,
+        "nullable": "NO",
+        "data_type": "integer"
+      },
+      {
+        "name": "team_id",
+        "table": "uranius_catalog.startlists",
+        "default": null,
+        "nullable": "NO",
+        "data_type": "integer"
+      },
+      {
+        "name": "rider_id",
+        "table": "uranius_catalog.startlists",
+        "default": null,
+        "nullable": "NO",
+        "data_type": "integer"
+      },
+      {
+        "name": "team_id",
+        "table": "uranius_catalog.team_owners",
+        "default": null,
+        "nullable": "NO",
+        "data_type": "integer"
+      },
+      {
+        "name": "user_id",
+        "table": "uranius_catalog.team_owners",
+        "default": null,
+        "nullable": "NO",
+        "data_type": "uuid"
+      },
+      {
+        "name": "team_id",
+        "table": "uranius_catalog.teams",
+        "default": null,
+        "nullable": "NO",
+        "data_type": "integer"
+      },
+      {
+        "name": "label",
+        "table": "uranius_catalog.teams",
+        "default": null,
+        "nullable": "NO",
+        "data_type": "text"
+      },
+      {
+        "name": "stage_id",
+        "table": "uranius_catalog.terrain",
+        "default": null,
+        "nullable": "NO",
+        "data_type": "integer"
+      },
+      {
+        "name": "distance_m",
+        "table": "uranius_catalog.terrain",
+        "default": null,
+        "nullable": "NO",
+        "data_type": "integer"
+      },
+      {
+        "name": "elevation_m",
+        "table": "uranius_catalog.terrain",
+        "default": null,
+        "nullable": "NO",
+        "data_type": "integer"
+      },
+      {
+        "name": "version",
+        "table": "uranius_private.migration_ledger",
+        "default": null,
+        "nullable": "NO",
+        "data_type": "text"
+      },
+      {
+        "name": "sha256",
+        "table": "uranius_private.migration_ledger",
+        "default": null,
+        "nullable": "NO",
+        "data_type": "text"
+      },
+      {
+        "name": "applied_at",
+        "table": "uranius_private.migration_ledger",
+        "default": "now()",
+        "nullable": "NO",
+        "data_type": "timestamp with time zone"
+      },
+      {
+        "name": "singleton",
+        "table": "uranius_private.project_identity",
+        "default": "true",
+        "nullable": "NO",
+        "data_type": "boolean"
+      },
+      {
+        "name": "project_ref",
+        "table": "uranius_private.project_identity",
+        "default": null,
+        "nullable": "NO",
+        "data_type": "text"
+      }
+    ],
+    "role_settings": null,
+    "policy_details": [
+      {
+        "name": "equipment_read",
+        "roles": [
+          "authenticated"
+        ],
+        "table": "equipment",
+        "select_predicate": "(( SELECT uranius_catalog.request_uid() AS request_uid) IS NOT NULL)"
+      },
+      {
+        "name": "riders_read",
+        "roles": [
+          "authenticated"
+        ],
+        "table": "riders",
+        "select_predicate": "(EXISTS ( SELECT 1\n   FROM uranius_catalog.team_owners owner\n  WHERE ((owner.team_id = riders.team_id) AND (owner.user_id = ( SELECT uranius_catalog.request_uid() AS request_uid)))))"
+      },
+      {
+        "name": "seasons_read",
+        "roles": [
+          "authenticated"
+        ],
+        "table": "seasons",
+        "select_predicate": "(( SELECT uranius_catalog.request_uid() AS request_uid) IS NOT NULL)"
+      },
+      {
+        "name": "stages_read",
+        "roles": [
+          "authenticated"
+        ],
+        "table": "stages",
+        "select_predicate": "(( SELECT uranius_catalog.request_uid() AS request_uid) IS NOT NULL)"
+      },
+      {
+        "name": "startlists_read",
+        "roles": [
+          "authenticated"
+        ],
+        "table": "startlists",
+        "select_predicate": "(EXISTS ( SELECT 1\n   FROM uranius_catalog.team_owners owner\n  WHERE ((owner.team_id = startlists.team_id) AND (owner.user_id = ( SELECT uranius_catalog.request_uid() AS request_uid)))))"
+      },
+      {
+        "name": "team_owners_read",
+        "roles": [
+          "authenticated"
+        ],
+        "table": "team_owners",
+        "select_predicate": "(user_id = ( SELECT uranius_catalog.request_uid() AS request_uid))"
+      },
+      {
+        "name": "teams_read",
+        "roles": [
+          "authenticated"
+        ],
+        "table": "teams",
+        "select_predicate": "(( SELECT uranius_catalog.request_uid() AS request_uid) IS NOT NULL)"
+      },
+      {
+        "name": "terrain_read",
+        "roles": [
+          "authenticated"
+        ],
+        "table": "terrain",
+        "select_predicate": "(( SELECT uranius_catalog.request_uid() AS request_uid) IS NOT NULL)"
+      }
+    ],
+    "private_functions": [
+      {
+        "name": "assert_project",
+        "security_definer": false
+      },
+      {
+        "name": "request_uid",
+        "security_definer": false
+      }
+    ],
+    "edge_or_cron_extensions": 0,
+    "private_membership_routes": 0
+  }
+}

@@ -59,3 +59,7 @@ The portable client and verify-full connection to the exact Uranius host now wor
 ## U5.02 - Revised manifest awaiting approval
 
 The existing restricted hosted role is retained. The owner reports no application tables and no committed migrations. The original numbered files fail the restricted-role rehearsal at the managed Auth dependency. The replacement manifest is rehearsed offline and requires explicit approval before any remote write. See INFRASTRUCTURE_PLAN.md for the exact digest and resume procedure.
+
+## U5.02 - Foundation applied, remaining reconstruction requires review
+
+The owner completed initialization and live read-only verification passed for the four-file foundation. U5.02 remains blocked on reconciliation of the retained app contracts, review of missing source dependencies and approval of any additional pinned migrations. See reference/DB_DRIFT_AUDIT.md. U5.03 synthetic world preparation is available offline. Hosted seed/login work follows the U5.02 gate.

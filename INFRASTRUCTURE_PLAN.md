@@ -153,3 +153,7 @@ Keep the existing migration login unchanged. For a new installation only, the bo
 ```
 
 Keep -Apply for an authorized write or omit it for a read-only preflight. The resume path asks only for the existing migration password and bypasses role creation entirely. It checks the exact TLS target, fresh application schemas and database privileges, then runs the same four numbered files and ledger writes in one transaction. Errors show a fixed migration filename and SQLSTATE or timeout without printing raw PostgreSQL text. If it stops, inspect the ledger and catalog before any retry.
+
+## U5.02 actual hosted foundation
+
+The owner applied the approved four-file manifest on sdtsivgtcaoaeoihcwzd. Project-scoped read-only verification confirmed the existing restricted role, custom ledger, 10 application tables, two invoker functions, 14 indexes, eight SELECT policies and no hosted app triggers or schedules. The [live catalog](reference/URANIUS_SANDBOX_CATALOG.json) records all four exact SHA-256 values. The [drift audit](reference/DB_DRIFT_AUDIT.md) describes comparison limits, legacy reconstruction gaps and bookkeeping access. The custom ledger remains the single migration authority while the Supabase standard history is empty. An additional write requires reviewed, pinned authorization. The [U5.03 fixture draft](database/synthetic-world/README.md) stays offline pending the reconstruction gate.
