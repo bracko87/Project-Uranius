@@ -87,7 +87,7 @@ Gate: PASSED
 |---|---|---|---|
 | U5.01 | Authorize and provision isolated infrastructure | PASS | Owner provisioned the approved Micro. Scoped verification and exact project guard evidence in TEST_REPORT.md. |
 | U5.02 | Reconstruct existing sandbox DB | BLOCKED | 006 hosted ledger and seed confirmed. Further clone contracts pending. See BLOCKERS.md. |
-| U5.03 | Seed full test world | TODO | Hosted Auth and bindings owner-confirmed. 007 reader and HTTPS smoke rehearsed. Hosted reader approval and live acceptance pending. |
+| U5.03 | Seed full test world | TODO | Hosted Auth and bindings owner-confirmed. 007 reader and HTTPS smoke rehearsed. Hosted reader approved. Private DBA bootstrap and live acceptance pending. |
 | U5.04 | Implement hybrid DB contracts | TODO | — |
 | U5.05 | Secure sandbox APIs and storage | TODO | — |
 | U5.06 | Deploy sandbox workers and schedule | TODO | — |

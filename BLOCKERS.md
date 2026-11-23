@@ -96,6 +96,6 @@ Confirmed and repaired a Windows PowerShell 5.1 UTF-8 serialization fault offlin
 
 The owner confirmed successful hosted Auth and ownership binding. Local authenticated login/dashboard/logout and native RLS checks passed. Hosted UI smoke requires review of the minimal dedicated server-side reader and pinned Auth connection in database/synthetic-world/HOSTED_SMOKE_REVIEW.md. The Auth security setting recommendation is a separate owner decision.
 
-## U5.03 - 007 package and HTTPS smoke await hosted approval
+## U5.03 - 007 approved; private DBA session pending
 
-Prepared the dedicated restricted reader bootstrap, 007 manifest and hosted-capable loopback HTTPS adapter. Native offline TLS database and session tests passed. The next gate is explicit approval of the two role operations, manifest and two-manager hosted smoke on sdtsivgtcaoaeoihcwzd. No hosted writes, Auth calls or exposure changes occurred.
+Prepared the dedicated restricted reader bootstrap, 007 manifest and hosted-capable loopback HTTPS adapter. Native offline TLS database and session tests passed. The owner approved the operations on sdtsivgtcaoaeoihcwzd. The private DBA bootstrap is the first pending operation. See database/reconstruction/smoke/HOSTED_ACTIVATION.md. No hosted writes, Auth calls or exposure changes occurred.
