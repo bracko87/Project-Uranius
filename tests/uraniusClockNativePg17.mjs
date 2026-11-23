@@ -1,0 +1,128 @@
+// Offline-only PostgreSQL 17 rehearsal. No hosted access, credentials or production DB.
+import assert from 'node:assert/strict'
+import { createHash } from 'node:crypto'
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { basename, delimiter, join, resolve } from 'node:path'
+import { createServer } from 'node:net'
+import { spawnSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
+
+const args = process.argv.slice(2)
+if (args.length !== 3 || args[0] !== '--disposable-native-pg17' || args[1] !== '--postgres-bin') {
+  throw new Error('Usage: node tests/uraniusClockNativePg17.mjs --disposable-native-pg17 --postgres-bin "C:\\path\\to\\postgresql-17.12-portable\\bin"')
+}
+const root = fileURLToPath(new URL('../', import.meta.url))
+const bin = resolve(args[2])
+const ext = process.platform === 'win32' ? '.exe' : ''
+const exe = Object.fromEntries(['initdb','pg_ctl','psql'].map(n => [n, join(bin, n + ext)]))
+for (const file of Object.values(exe)) if (!existsSync(file)) throw new Error('Missing PostgreSQL binary: ' + file)
+const env = { PATH: bin + delimiter + (process.env.PATH || ''), SYSTEMROOT: process.env.SYSTEMROOT || '', WINDIR: process.env.WINDIR || '', TEMP: process.env.TEMP || tmpdir(), TMP: process.env.TMP || tmpdir() }
+function run(file, argv, options = {}) {
+  const r = spawnSync(file, argv, { env: options.env || env, input: options.input, encoding: 'utf8', timeout: 30000, windowsHide: true, maxBuffer: 4e6 })
+  if (r.error) throw r.error
+  if (options.reject) { assert.notEqual(r.status, 0, 'Expected a denial but the command succeeded'); return }
+  if (r.status !== 0) throw new Error(basename(file) + ' failed: ' + (r.stderr || r.stdout || 'Unknown error').slice(0, 1600))
+  return (r.stdout || '').trim()
+}
+for (const file of Object.values(exe)) assert.match(run(file, ['--version']), /\b17\.\d+/)
+const baseManifest = JSON.parse(readFileSync(join(root, 'database/reconstruction/smoke/manifest.json')))
+const proposal = JSON.parse(readFileSync(join(root, 'database/reconstruction/clock/manifest.json')))
+assert.equal(proposal.status, 'REVIEW_ONLY_NOT_AUTHORIZED')
+assert.equal(proposal.projectRef, 'sdtsivgtcaoaeoihcwzd')
+const files = new Map([
+ ['001_identity.sql', 'database/preparation/001_identity.sql'],
+ ['002_reference_schema.sql', 'database/preparation/002_reference_schema.sql'],
+ ['003_access.sql', 'database/preparation/003_access.sql'],
+ ['004_synthetic_reference.sql', 'database/preparation/004_synthetic_reference.sql'],
+ ['005_club_identity.sql', 'database/reconstruction/005_club_identity.sql'],
+ ['006_synthetic_world.sql', 'database/reconstruction/world/006_synthetic_world.sql'],
+ ['007_smoke_reader.sql', 'database/reconstruction/smoke/007_smoke_reader.sql'],
+])
+const revisions = [...baseManifest.requires, ...baseManifest.migrations]
+assert.equal(revisions.length, 7)
+assert.deepEqual(proposal.requires, revisions)
+const hash = bytes => createHash('sha256').update(bytes).digest('hex')
+for (const item of revisions) {
+  assert.ok(files.has(item.file))
+  assert.equal(hash(readFileSync(join(root, files.get(item.file)))), item.sha256, 'Source checksum drift: ' + item.file)
+}
+const clock = readFileSync(join(root, 'database/reconstruction/clock/008_game_clock_v1.sql'), 'utf8')
+assert.equal(hash(clock), proposal.candidate.sha256)
+
+// A fresh, isolated PGDATA under the user's temp directory; the server binds 127.0.0.1 only.
+const scratch = mkdtempSync(join(tmpdir(), 'uranius-008-disposable-'))
+const data = join(scratch, 'data')
+const listener = createServer()
+await new Promise((yes, no) => listener.once('error', no).listen(0, '127.0.0.1', yes))
+const port = listener.address().port
+await new Promise(yes => listener.close(yes))
+const dbEnv = { ...env, PGHOST: '127.0.0.1', PGHOSTADDR: '127.0.0.1', PGPORT: String(port), PGDATABASE: 'postgres', PGSSLMODE: 'disable', PGCONNECT_TIMEOUT: '5', PGOPTIONS: '-c statement_timeout=10000' }
+function sql(query, user = 'uranius_migrator', reject = false) {
+  const output = run(exe.psql, ['-X','-w','-qAt','-v','ON_ERROR_STOP=1','-U',user,'-f','-'], { env: dbEnv, input: query, reject })
+  return reject ? undefined : output.split(/\r?\n/).at(-1)
+}
+const project = 'sdtsivgtcaoaeoihcwzd'
+const wrap = query => 'BEGIN;\nSELECT set_config(\'uranius.approved_project_ref\',\'' + project + '\',true);\n' + query + '\nCOMMIT;'
+const a = '00000000-0000-4000-8000-000000000001', b = '00000000-0000-4000-8000-000000000002'
+const snapshot = () => sql("SELECT (SELECT count(*) FROM uranius_private.migration_ledger)::text || ':' || (SELECT count(*) FROM uranius_catalog.team_owners)::text || ':' || (SELECT count(*) FROM uranius_catalog.riders)::text || ':' || (SELECT count(*) FROM uranius_game.stage_calendar)::text || ':' || (to_regclass('uranius_game.game_state') IS NOT NULL)::text;")
+let started = false, stopped = false, tests = 0
+const pass = label => { tests++; console.log('PASS ' + label) }
+try {
+  run(exe.initdb, ['-D',data,'-U','postgres','-A','trust','--no-locale','--no-sync','-E','UTF8'])
+  run(exe.pg_ctl, ['-D',data,'-l',join(scratch,'postgres.log'),'-o','-h 127.0.0.1 -p ' + port + ' -c fsync=off','-w','start'])
+  started = true
+  sql('CREATE ROLE uranius_migrator LOGIN NOINHERIT; CREATE ROLE anon NOLOGIN; CREATE ROLE authenticated NOLOGIN; CREATE ROLE uranius_smoke_reader LOGIN NOINHERIT; GRANT CONNECT,CREATE ON DATABASE postgres TO uranius_migrator;', 'postgres')
+  for (const entry of revisions) {
+    const ddl = readFileSync(join(root, files.get(entry.file)), 'utf8')
+    sql(wrap(ddl + "\nINSERT INTO uranius_private.migration_ledger(version,sha256) VALUES ('" + entry.file + "','" + entry.sha256 + "');"))
+  }
+  pass('Exact historical 001–007 migrations applied in disposable PostgreSQL 17')
+  sql(wrap("SELECT uranius_private.bind_synthetic_managers('" + a + "'::uuid,'" + b + "'::uuid);"))
+  assert.equal(snapshot(), '7:2:200:3:false')
+  pass('Two managers, 200 riders and three stages remain intact')
+  sql(wrap(clock + "\nDO $$ BEGIN RAISE EXCEPTION 'forced rollback'; END $$;"), 'uranius_migrator', true)
+  assert.equal(snapshot(), '7:2:200:3:false')
+  pass('Forced SQL failure rolls back every 008 schema change')
+  sql("BEGIN; SELECT set_config('uranius.approved_project_ref','xxxxxxxxxxxxxxxxxxxx',true);\n" + clock + '\nCOMMIT;', 'uranius_migrator', true)
+  assert.equal(snapshot(), '7:2:200:3:false')
+  pass('Incorrect project identity rejected')
+  sql("BEGIN; SELECT set_config('uranius.approved_project_ref','" + project + "',true); UPDATE uranius_private.migration_ledger SET sha256=repeat('0',64) WHERE version='007_smoke_reader.sql';\n" + clock + '\nCOMMIT;', 'uranius_migrator', true)
+  assert.equal(snapshot(), '7:2:200:3:false')
+  pass('Ledger drift rejected and rolled back')
+  sql(wrap(clock), 'postgres', true)
+  assert.equal(snapshot(), '7:2:200:3:false')
+  pass('Wrong execution role rejected')
+  sql(wrap(clock + "\nINSERT INTO uranius_private.migration_ledger(version,sha256) VALUES ('008_game_clock_v1.sql','" + proposal.candidate.sha256 + "');"))
+  assert.equal(snapshot(), '8:2:200:3:true')
+  pass('008 installed only in disposable database')
+  function scoped(subject, select) {
+    return sql("BEGIN; SELECT set_config('request.jwt.claims','{\"sub\":\"" + subject + "\"}',true); SET LOCAL ROLE authenticated; SELECT " + select + '; ROLLBACK;', 'postgres')
+  }
+  for (const subject of [a,b]) {
+    assert.equal(scoped(subject, 'uranius_game.get_current_game_date_date()::text'), '2000-01-01')
+    assert.equal(scoped(subject, 'row_to_json(t)::text FROM uranius_game.get_current_game_date_parts() t'), '{"current_game_date":"2000-01-01","season_number":1,"month_number":1,"day_number":1}')
+    assert.equal(scoped(subject, 'row_to_json(t)::text FROM uranius_game.get_current_game_date() t'), '{"season_number":1,"month_number":1,"day_number":1}')
+  }
+  pass('Both owner sessions receive all three original clock output shapes')
+  assert.equal(scoped('00000000-0000-4000-8000-000000000003', "coalesce(uranius_game.get_current_game_date_date()::text,'denied')"), 'denied')
+  pass('Unknown manager denied by RLS')
+  sql('BEGIN; SET LOCAL ROLE anon; SELECT uranius_game.get_current_game_date_date(); ROLLBACK;', 'postgres', true)
+  sql('SELECT uranius_game.get_current_game_date_date();', 'uranius_smoke_reader', true)
+  pass('Anonymous and smoke-reader roles denied')
+  sql('BEGIN; SET LOCAL ROLE authenticated; UPDATE uranius_game.game_state SET hour_number=1; ROLLBACK;', 'postgres', true)
+  sql('UPDATE uranius_game.game_state SET is_paused=false;', 'uranius_migrator', true)
+  sql('UPDATE uranius_game.game_state SET month_number=2,day_number=30;', 'uranius_migrator', true)
+  pass('Unauthorized update, unpause and invalid game date rejected')
+  sql(wrap(clock), 'uranius_migrator', true)
+  assert.equal(snapshot(), '8:2:200:3:true')
+  pass('Duplicate 008 migration rejected; fixture unchanged')
+  console.log('PASS ' + tests + ' native PostgreSQL 17 disposable migration checks')
+} finally {
+  if (started) {
+    try { run(exe.pg_ctl, ['-D', data, '-m', 'immediate', '-w', 'stop']); stopped = true }
+    catch (e) { console.error('Disposable PostgreSQL stop failed: ' + e.message) }
+  }
+  if (stopped || !started) rmSync(scratch, { recursive: true, force: true })
+  else console.error('Disposable server may still be active; retained temporary PGDATA: ' + scratch)
+}
