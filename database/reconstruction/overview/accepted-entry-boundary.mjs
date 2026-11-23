@@ -6,6 +6,17 @@
  * The original consumer requires accepted race_team_entries AND a submitted
  * race_preparations record for the same (club_id, race_id) pair.
  */
+// Exact predicates from original Overview.tsx isSubmittedRacePreparationStatus.
+// No unknown, draft, pending or accepted-only preparation status is sufficient.
+export const OVERVIEW_SUBMITTED_STATUSES = Object.freeze([
+  'submitted', 'finalised', 'finalized', 'locked',
+])
+
+export function isOverviewSubmittedPreparationStatus(value) {
+  return typeof value === 'string' &&
+    OVERVIEW_SUBMITTED_STATUSES.includes(value.trim().toLowerCase())
+}
+
 const uuid = /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i
 
 function requireUuid(value, label) {
@@ -20,26 +31,23 @@ function requireUuid(value, label) {
  * Never accept that list directly from a browser parameter.
  */
 export function filterAcceptedEntriesForOwnedClubs({
-  ownedClubIds, entries, preparations, submittedStatuses,
+  ownedClubIds, entries, preparations,
 } = {}) {
   if (!Array.isArray(ownedClubIds) || !Array.isArray(entries) ||
-      !Array.isArray(preparations) || !Array.isArray(submittedStatuses)) {
-    throw new TypeError('Expected verified owner clubs, entries, preparations and status policy')
+      !Array.isArray(preparations)) {
+    throw new TypeError('Expected verified owner clubs, entries and preparations')
   }
   if (!ownedClubIds.length) return Object.freeze([])
   const owned = new Set(ownedClubIds.map(value => requireUuid(value, 'owned club id')))
   if (owned.size !== ownedClubIds.length) throw new Error('Duplicate verified club id')
-  const submitted = new Set(submittedStatuses)
-  if (!submitted.size || [...submitted].some(s => typeof s !== 'string' || !s)) {
-    throw new TypeError('Missing verified submitted-status policy')
-  }
   const preparationPairs = new Set()
   for (const row of preparations) {
     if (!row || typeof row !== 'object') throw new TypeError('Invalid preparation row')
     const clubId = requireUuid(row.club_id, 'preparation club id')
     const raceId = requireUuid(row.race_id, 'preparation race id')
     if (owned.has(clubId) &&
-      (submitted.has(row.status) || submitted.has(row.startlist_status))) {
+      (isOverviewSubmittedPreparationStatus(row.status) ||
+       isOverviewSubmittedPreparationStatus(row.startlist_status))) {
       preparationPairs.add(clubId + ':' + raceId)
     }
   }
