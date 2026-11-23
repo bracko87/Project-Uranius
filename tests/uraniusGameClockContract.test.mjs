@@ -58,6 +58,7 @@ test('fixture stage projection is ordered and does not invent calendar dates or 
 test('rejects duplicate stages and invalid source fields', () => {
   assert.throws(() => projectFixtureStageListing([fixtureStages[0], fixtureStages[0]]), /Duplicate/)
   assert.throws(() => projectFixtureStageListing([{ ...fixtureStages[0], season_day: 0 }]), /Invalid/)
+  assert.equal(projectFixtureStageListing([{ ...fixtureStages[0], season_day: 367 }])[0].seasonDay, 367)
   assert.throws(() => projectFixtureStageListing([{ ...fixtureStages[0], label: '' }]), /Missing/)
   assert.throws(() => projectFixtureStageListing({}), /Expected/)
 })
