@@ -54,3 +54,9 @@ Explicit owner decision requested before hosted execution:
 > Approve applying Uranius migration 008 **only to sandbox project `sdtsivgtcaoaeoihcwzd`**, using management-wrapper SHA-256 `a1317dca31d768c6fc73dd2090c58ad3e97498a83b1422ad194e1336b30fc92c` and canonical SQL SHA-256 `f3dadf7b7934e1c8677d24af2d0a57b2be19768f0bc2dc6b45729618c28e349b`. No original game/production changes.
 
 Until that approval is explicitly received, this remains **REVIEW-ONLY, NOT APPLIED**.
+
+## Decision record — authorization used, 008 installed (2026-11-23)
+
+This document's preceding section was the **historical pre-deployment approval request**. The owner replied “ok, what next?” to the direct sandbox-only approval question and the exact already tested wrapper was subsequently run against **only** `sdtsivgtcaoaeoihcwzd`. A read-only postflight confirmed migration 008 in ledger, paused clock, grants/RLS, privilege restoration and fixture preservation.
+
+**Current status is HOSTED_SANDBOX_APPLIED_VERIFIED**, documented in [`008_HOSTED_APPLICATION_REPORT.md`](008_HOSTED_APPLICATION_REPORT.md) and [`008_DEPLOYMENT_STATUS.json`](008_DEPLOYMENT_STATUS.json). Do not run the wrapper again. The rollback review remains separate and unapproved, and full original game integration remains outstanding.
