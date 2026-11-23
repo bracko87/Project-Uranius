@@ -521,3 +521,19 @@ The previously approved migration 007 was applied once through the project-scope
 An additional **offline-only** Node.js regression, `tests/uraniusSessionIsolation.mjs`, ran successfully with a copy of the unchanged reviewed `club-dashboard-adapter.mjs` using localhost and fictional credentials. It verifies anonymous and forged-cookie denial, invalid login, missing/wrong Origin denial, cross-tenant subject/team spoof attempts, simultaneous manager independence, logout and replay rejection, session expiration, and rejection of an old session despite a simulated upstream logout error. This tests the adapter logic, **not** hostile HTTP requests to the owner's running hosted loopback service. Run in the repository with `node tests/uraniusSessionIsolation.mjs`; the existing TLS-specific regression remains `node tests/uraniusHttpsSessions.mjs <cert.pem> <key.pem>`.
 
 U5.03 remains **IN_PROGRESS**, not PASS: the complete cloned game's baseline smoke and hosted adversarial HTTP requests have not been independently recorded. GitHub Actions were not enabled, and no hosted database writes, account changes, production connections or application deployments occurred in this verification step. The original ProPeloton Manager was not modified.
+
+## U5.03 - Credential-free loopback HTTPS denial probe (2026-11-23)
+
+Added `tests/uraniusHostedNegativeProbe.mjs`. The pinned-target script accepts only `https://127.0.0.1:PORT`, loads the local mkcert `rootCA.pem` (or an explicit `--ca` file), and uses Node HTTPS with full certificate verification. It sends no real account names, passwords, publishable keys, database credentials or valid cookies. Its 11 non-mutating negative checks cover anonymous dashboard access (401), forged cookie (401), unauthorized Origin (403), forged Host rejected by TLS name validation, absent Origin and wrong Content-Type for login (403), cross-origin logout (403), unsupported logout method (405), an unrecognized tenant-query route (404) and an unknown private path (404). Login requests deliberately use invalid placeholder values and are denied before reaching Auth.
+
+**Execution evidence:** The new probe was executed in an isolated local HTTPS fixture using the unchanged Uranius session adapter and a temporary certificate signed for loopback. All 11 checks passed. The independent offline session-isolation regression (`tests/uraniusSessionIsolation.mjs`) was also executed and passed, including expiry and replay denial after a simulated upstream logout error. These tests did not reach the owner's actual running localhost server or hosted Supabase, so hosted negative acceptance is still pending.
+
+Safe owner command after pulling latest GitHub main, while the existing reviewed HTTPS runner is active in a *separate* terminal:
+
+```cmd
+cd /d "C:\Users\Aleks\Desktop\Project-Uranius\.uranius-upload-review"
+git pull origin main
+node tests\uraniusHostedNegativeProbe.mjs https://127.0.0.1:64055
+```
+
+Use the actual port printed by the locally running runner, which can change after each restart. The script discovers mkcert's trusted local CA using `mkcert -CAROOT` and never disables TLS verification. Never run this against a public host. No other hosted writes or project settings changed. U5.03 is IN_PROGRESS pending owner-executed negative probe and full clone baseline smoke.
