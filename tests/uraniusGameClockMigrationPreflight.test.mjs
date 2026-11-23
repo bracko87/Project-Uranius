@@ -1,11 +1,13 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { readFileSync } from 'node:fs'
+import { createHash } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 
 const migration = readFileSync(new URL('../database/reconstruction/clock/008_game_clock_v1.sql', import.meta.url), 'utf8')
 const manifest = JSON.parse(readFileSync(new URL('../database/reconstruction/smoke/manifest.json', import.meta.url), 'utf8'))
 const game = readFileSync(new URL('../database/reconstruction/overview/game-clock-contract.mjs', import.meta.url), 'utf8')
+const review = JSON.parse(readFileSync(new URL('../database/reconstruction/clock/manifest.json', import.meta.url), 'utf8'))
 const prior = [...manifest.requires, ...manifest.migrations]
 
 test('008 is explicitly review-only and isolated to approved project', () => {
@@ -58,5 +60,16 @@ test('source still rejects fabricated current dates and schedules', () => {
   assert.match(game, /missing_authoritative_game_state/)
   assert.match(game, /missing_verified_accepted_team_entries/)
   assert.match(game, /overview_schedule_response_contract_not_reviewed/)
-  assert.doesNotMatch(game, /Date\.now\(\)/)
+  const executable = game.split('\n').filter(line => !line.trim().startsWith('*') && !line.trim().startsWith('//')).join('\n')
+  assert.doesNotMatch(executable, /Date\.now\(\)/)
+})
+
+test('review manifest pins the exact candidate bytes and forbids hosted execution', () => {
+  const digest = createHash('sha256').update(migration, 'utf8').digest('hex')
+  assert.equal(review.candidate.sha256, digest)
+  assert.equal(review.candidate.file, '008_game_clock_v1.sql')
+  assert.equal(review.status, 'REVIEW_ONLY_NOT_AUTHORIZED')
+  assert.equal(review.currentLedgerEntries, 7)
+  assert.deepEqual(review.requires, prior)
+  assert.ok(review.notReadyReasons.some(reason => /No owner approval/.test(reason)))
 })
