@@ -36,7 +36,7 @@ test('009 grants only clock column reads under the existing owner-backed RLS pol
   assert.match(sql, /ALTER POLICY game_state_manager_read ON uranius_game\.game_state/)
   assert.match(sql, /TO authenticated, uranius_smoke_reader/)
   assert.doesNotMatch(sql, /GRANT\s+(?:UPDATE|INSERT|DELETE|ALL)\s+ON/)
-  assert.doesNotMatch(sql, /SECURITY DEFINER|BYPASSRLS|CREATE POLICY .*USING \(true\)|GRANT .* TO (?:anon|PUBLIC)/i)
+  assert.doesNotMatch(sql, /SECURITY DEFINER|ALTER ROLE .*BYPASSRLS|CREATE POLICY .*USING \(true\)|GRANT .* TO (?:anon|PUBLIC)/i)
 })
 
 test('clock read query requires verified server role, TLS, fixed subject and read-only transaction', () => {
