@@ -167,3 +167,9 @@ Proposed `009_clock_smoke_reader_REVIEW_ONLY.sql` would grant only `SELECT (seas
 Current hosted read-only evidence: custom ledger 8, proposed 009 absent, clock singleton 1, two owners and 200 riders, smoke reader has no clock SELECT, `anon` has no clock SELECT, policy roles only `authenticated`. Do not set `URANIUS_CLOCK_READ_APPROVED=1` or run 009 on Supabase until a disposable native rehearsal, reviewed atomic wrapper/rollback and **separate explicit owner approval**. When allowed, verify the real A/B HTTPS clock access, logout replay and newly expanded 15 negative checks. The actual original Overview/Squad/Calendar and accepted-race schedule remain larger outstanding work.
 
 Source and commands: `reference/U503_CLOCK_FRONTEND_READ_SLICE.md`. Overall progress 49/60; U5.03 IN_PROGRESS; U5.02 BLOCKED on broader source contracts.
+
+## U5.03 — 009 native rehearsal completed; Node route 404 parsing regression pending rerun (2026-11-23)
+
+Owner executed the prepared native clock-reader test in disposable PostgreSQL 17 and confirmed **21/21 PASS** and clean cleanup. This closes the native candidate 009 rehearsal blocker (not hosted approval). The companion Node tests returned **7/8**; the lone failure was the test helper attempting to `JSON.parse` an intentionally empty 404 response on an unauthorized `/fixture/clock?subject=...` URL. Patch `070346b1d5e30f9c08eaf98a04851543e76677c8` fixes the empty-body parser and asserts no reader call for the blocked query; isolated HTTP reproduction passed. Owner needs only rerun the updated Node suite, not the 21 native checks.
+
+**Remaining:** corrected 8-case Node result; separate 009 atomic wrapper/rehearsal and approval; hosted A/B clock read/browser checks after 009; full Overview/Squad/Calendar source contracts. 009 remains review-only and absent from Supabase.
