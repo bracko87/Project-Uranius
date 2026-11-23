@@ -557,3 +557,13 @@ The owner ran `node tests\\uraniusHostedNegativeProbe.mjs https://127.0.0.1:5940
 | Unknown private path | HTTP 404 |
 
 The script verified loopback TLS identity and sent **no real credentials, sessions or hosted data**. This supplements the prior owner's actual Manager A/Manager B successful browser logins and logout isolation. The negative requests do not prove a complete cross-owner data breach test against arbitrary authenticated endpoints, and do not exercise the full game Overview. No database change, deployment, scheduled job or original ProPeloton Manager action occurred. U5.03 remains **IN_PROGRESS** until the complete game baseline smoke under the sandbox-only integration is verified and recorded.
+
+## U5.02/U5.03 - Authoritative game-clock compatibility first slice (2026-11-23)
+
+After 11/11 live loopback HTTPS negative-access checks, development advanced to the real clone's game clock and Overview schedule prerequisites. Read-only Supabase inspection confirmed three synthetic stages (IDs 1/2/3, season 1 days 7/8/9, distances 120/160/200 km, starters 100/150/200 and participating teams 10/15/20). The live Uranius DB currently lacks an authoritative `game_state` table, accepted team-entry records, and the `get_current_game_date_date()` RPC; only `request_uid()` and `get_my_club_id()` are present in the Uranius application schemas.
+
+Source provenance review found an early `current_date` stub, **superseded** by the sanitized later `get_current_game_date_date()` from `game_state`, with season year `2000 + season_number - 1`; `get_current_game_date_parts()` exposes four read-only fields. The original Overview RPC `get_overview_race_schedule_v1` is called in React but has no definition in the sanitized inventory. Its accepted-race contract is not approved for reconstruction. These findings and file references are recorded in `database/reconstruction/overview/README.md`.
+
+Added offline-only `database/reconstruction/overview/game-clock-contract.mjs` and `tests/uraniusGameClockContract.test.mjs`. **9/9 Node tests passed locally** using the same code slice: authoritative clock required (no browser-current-date fallback), season 1/2, leap day, invalid date rejection, three-stage ordering without invented calendar dates or accepted entries, and fail-closed Overview schedule gating. Command: `node --test tests\\uraniusGameClockContract.test.mjs`.
+
+No original React route was switched to a fixture adapter; no hosted schema, Auth, account, worker, API exposure, payment or scheduling settings were modified. The `game_state`/accepted-entry DB contract reconstruction is still required before a full-game browser baseline. Status remains **U5.02 BLOCKED, U5.03 IN_PROGRESS, 49/60**.
