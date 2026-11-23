@@ -651,3 +651,17 @@ node tests\uraniusClockManagedPg17.mjs --disposable-native-pg17 --postgres-bin "
 ```
 
 The runner must return all `PASS` messages and `INFO Disposable PostgreSQL files cleaned up`. Record the full output and investigate failures before any hosted approval request. No hosted migration, remote scheduler, client API change, or original production write occurred.
+
+## U5.02 — Owner-confirmed management wrapper 12/12 PASS and hosted preflight (2026-11-23)
+
+Owner pulled main to `2897277` on Windows and supplied direct console evidence of BOTH:
+- `node --test tests\uraniusClockManagementWrapper.test.mjs`: **6/6 PASS, 0 fail**, original unmodified source and manifest from that checkout.
+- `node tests\uraniusClockManagedPg17.mjs --disposable-native-pg17 --postgres-bin "...\postgresql-17.12-portable\bin"`: **12/12 PASS** under a disposable native PostgreSQL 17 cluster, including exact 001–007 replay, non-superuser admin-only membership, denial of direct SET ROLE, wrong role/project, ledger drift, failure injected after temporary grant and after clock DDL/ledger, exact grant membership restoration, owner A/B reads, unknown subject, anon/reader/writer denial and duplicate protection. The owner log concluded `INFO Disposable PostgreSQL files cleaned up`.
+
+This definitively **closes the native management-wrapper rehearsal blocker for the tested artifact**, not the full-game reconstruction gate. The canonical 008 SQL SHA remains `f3dadf7b7934e1c8677d24af2d0a57b2be19768f0bc2dc6b45729618c28e349b`. The management wrapper SHA remains `a1317dca31d768c6fc73dd2090c58ad3e97498a83b1422ad194e1336b30fc92c`. Neither SQL file was modified for this status update. Repository manifest and metadata-only tests were updated to record the completed native rehearsal, but those updated metadata tests have not independently been re-run on the owner's machine.
+
+**Fresh connected Supabase read-only preflight:** isolated project ref `sdtsivgtcaoaeoihcwzd`; database `postgres`; seven ledger entries with **zero digest mismatches** against the exact expected manifest; 008 clock table absent; 2 manager mappings, 200 riders, 3 stages; management `postgres` non-superuser, cannot SET or inherit `uranius_migrator`, and has exactly one independent ADMIN-only grant. Therefore the hosted substrate matches the tested prerequisite model. No hosted DDL was executed.
+
+The Supabase security advisors returned **INFO** about three internal RLS-enabled `uranius_private` tables without policies (intentional private-only data) and **WARN** that Auth leaked-password protection is disabled. Record the Auth warning separately under security work, not as authorization to change Auth settings under migration 008. Security reference: https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection
+
+New review document: `database/reconstruction/clock/008_HOSTED_APPROVAL_GATE.md`. **Migration 008 remains REVIEW_ONLY_NOT_AUTHORIZED and hosted ledger remains 7.** Applying the exact wrapper to the isolated hosted sandbox requires an explicit owner decision plus a final just-in-time preflight and rollback-review. Original ProPeloton Manager is unchanged. U5.02 BLOCKED by broader database-contract reconstruction, U5.03 IN_PROGRESS; project 49/60.
