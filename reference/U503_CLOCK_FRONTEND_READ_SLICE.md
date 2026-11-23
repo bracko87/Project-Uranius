@@ -1,0 +1,33 @@
+# U5.03 — authenticated clock interface slice (review/implementation record)
+
+**Date:** 2026-11-23. **Project:** isolated Uranius `sdtsivgtcaoaeoihcwzd`. **Hosted state:** migration 008 already installed (paused synthetic clock). **009 NOT applied.** No original ProPeloton Manager changes, public signup, scheduler, game-time advancement or real race-result writer.
+
+## Code committed
+
+- `database/synthetic-world/manager-clock-projection.mjs` maps **only** the authoritative `season_number`, `month_number`, `day_number`, `is_paused` fields into a small validated read-only JSON response with `current_game_date`. It reuses the original game clock mapping (2000 + season - 1); it does not default to the real-world date, the shared stage calendar, or a client-supplied value. Extra source fields are removed.
+- `database/synthetic-world/club-dashboard-adapter.mjs` handles `GET /fixture/clock` only for the short-lived, server-verified manager session. The endpoint uses the same Host, Origin, Secure/HttpOnly cookie and logout lifecycle as the existing dashboard. URL tenant/subject selectors do not match any route. The callback receives **only the verified server-owned subject**. A missing authorized clock-reading backend returns **HTTP 503** after authentication, not a fabricated date.
+- `database/synthetic-world/hosted-smoke-client.tsx` renders a small **Game clock** section in the existing limited test dashboard. While not connected it honestly says clock data is unavailable and calendar entries remain fixtures. It does not navigate away from the working club dashboard solely because clock reading is unavailable.
+- `database/synthetic-world/hosted-clock-read_REVIEW_ONLY.sql` is a **fixed, parameterized read-only TLS query** with current-role guard, no arbitrary client SQL and no client-selected club. It selects exactly the four clock fields and requires the server to inject the Auth-verified subject.
+- `scripts/run-uranius-hosted-smoke.mjs` wires this fixed query behind `URANIUS_CLOCK_READ_APPROVED=1`. **The flag is off by default** and no new database permission is installed yet. With default settings the established dashboard remains functional and the new clock endpoint returns 503 for logged-in managers.
+
+## Tests and evidence
+
+- `tests/uraniusClockRouteIsolation.test.mjs`: Node test coverage of server-owned A/B identity, anonymous/forged cookie rejection, cross-origin/method rejection, query-string tenant denial, logout replay, other-manager session preservation, strict projection and missing-provider fallback.
+- `tests/uraniusHostedNegativeProbe.mjs`: extended the existing 11 negative HTTPS checks to **15 checks** by adding unauthenticated clock, wrong Origin, wrong method, and tenant query denial. These four new checks have **not yet been run against the owner's loopback HTTPS listener**.
+- A separate **in-process JS adapter probe** executed against the exact committed modules with synthetic request/response objects and passed **14 assertions**, including manager isolation and no invented date. This is not a substitute for the Node HTTP and real browser tests.
+- `tests/uraniusClockReaderReview.test.mjs`: **5/5 source/contract assertions passed** in an isolated JS harness against GitHub-backed SQL, transport, adapter and manifest. Native Node test-runner execution is still pending.
+- `tests/uraniusClockReaderNativePg17.mjs`: new disposable PostgreSQL 17 test runner. It replays original 001–007 and canonical 008, then tests proposed 009 under strict RLS/ACL, denied roles, cross-manager identity, error rollback, project/ledger drift, duplicate application and cleanup. The source passed a JavaScript parse check, with the mock JWT JSON literal verified. It has **not** been executed against PostgreSQL 17 yet.
+
+## New permission needed for actual hosted clock read
+
+The existing `uranius_smoke_reader` was intentionally denied clock privileges by migration 008. A newly approved **009** would grant only `SELECT (season_number,month_number,day_number,is_paused)` to that existing server-only reader and add the reader to the existing owner-backed game clock RLS policy; it would not grant the anonymous role or table writes.
+
+Proposed **not approved** artifacts:
+- `database/reconstruction/clock/009_clock_smoke_reader_REVIEW_ONLY.sql`
+- `database/reconstruction/clock/009_clock_reader_manifest.json` with the exact SHA-256 and status `REVIEW_ONLY_NOT_APPROVED`.
+
+The proposed 009 SQL checks the project's identity, role, schema, single paused clock, current eight-entry ledger including **all eight exact digests**, and the expected pre-grant policy state. It is a *candidate*, not a management-connection execution package.
+
+**Next gates:** (1) run Node contract/route tests in a verified checkout, (2) run the new 009 disposable native PostgreSQL 17 test and fix any findings, (3) prepare and separately test an atomic 009 management wrapper and rollback review, (4) request **explicit, target- and SHA-scoped owner approval** before *any* hosted 009 ACL change, (5) only afterward set the local clock-read feature flag and test both managers on the actual loopback HTTPS server, including the 15 negative checks. The original Overview and accepted-race/finance/squad/calendar contracts remain a separate milestone. Do not claim the entire original game is connected.
+
+**Checklist:** U5.02 BLOCKED on broader DB contract parity; U5.03 IN_PROGRESS; total **49/60** unchanged.
