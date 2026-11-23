@@ -508,3 +508,7 @@ Verified approved local and GitHub commit 3a3215af4ff0367e3441362a0b7e7faaafd906
 ## U5.03 - 007 management-connection rehearsal
 
 Native PostgreSQL 17.12 and Windows PowerShell 5.1 applied the exact management statement as postgres in the disposable fixture. Wrong project, wrong ledger hash, BYPASSRLS reader and duplicate execution were rejected. A forced ledger insert error after grants verified rollback of those grants and preservation of six ledger entries. Success recorded the canonical seventh hash, preserved fixture rows and RLS predicates, and passed both scoped reader queries over local verify-full TLS. The existing anonymous, isolation and sign-out browser checks also passed against the disposable database. No hosted database connection or write was made.
+
+## U5.03 - Management role ownership and restoration
+
+PostgreSQL 17.12 rehearsed the exact revised SQL with a real non-superuser postgres session, a separate bootstrap administrator and migrator-owned objects. Direct SET ROLE and private ledger reads failed beforehand. The statement applied 007, restored the original grant rows exactly and again denied SET ROLE. Wrong project, checksum drift, a BYPASSRLS reader and duplicate execution were rejected. A forced final ledger failure restored membership and rolled back grants. Both manager-scoped reads passed after the successful run. No hosted SQL was executed.

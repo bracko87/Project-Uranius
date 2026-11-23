@@ -29,7 +29,8 @@ try {
     $certificateExitCode = $LASTEXITCODE
 } finally { $ErrorActionPreference = 'Stop' }
 if ($certificateExitCode -ne 0) { throw 'Fixture certificate generation failed.' }
-& (Join-Path $PostgresBin 'initdb.exe') -D $data -U postgres -A trust --no-locale --no-sync -E UTF8 | Out-Null
+$fixtureAdmin=if ($ManagementSmoke) {'fixture_admin'} else {'postgres'}
+& (Join-Path $PostgresBin 'initdb.exe') -D $data -U $fixtureAdmin -A trust --no-locale --no-sync -E UTF8 | Out-Null
 if ($LASTEXITCODE -ne 0) { throw 'Fixture database initialization failed.' }
 Copy-Item -LiteralPath $ca -Destination (Join-Path $data 'server.crt')
 Copy-Item -LiteralPath $key -Destination (Join-Path $data 'server.key')
@@ -59,7 +60,7 @@ public static class PsqlProxy {
 '@
 Add-Type -Language CSharp -OutputAssembly $shim -OutputType ConsoleApplication -TypeDefinition ($proxy.Replace('__PSQL__',$psql))
 
-function Local-Sql([string]$Sql,[string]$User='postgres',[string]$Database='postgres') {
+function Local-Sql([string]$Sql,[string]$User=$fixtureAdmin,[string]$Database='postgres') {
     $connection="host=127.0.0.1 hostaddr=127.0.0.1 port=45680 dbname=$Database user=$User sslmode=disable connect_timeout=5"
     $result=$Sql | & $psql -X -q -w -At -v ON_ERROR_STOP=1 -d $connection -f -
     if ($LASTEXITCODE -ne 0) { throw 'Disposable SQL failed.' }
@@ -148,12 +149,18 @@ try {
     Local-Sql 'ALTER ROLE uranius_smoke_reader LOGIN;' | Out-Null
     $digest=(Get-FileHash -LiteralPath (Join-Path $smoke 'manifest.json')).Hash
     if ($ManagementSmoke) {
+        Local-Sql 'CREATE ROLE postgres LOGIN CREATEROLE NOSUPERUSER; GRANT uranius_migrator TO postgres WITH ADMIN TRUE, SET FALSE, INHERIT FALSE;' | Out-Null
+        $membershipQuery="SELECT row_to_json(m) FROM pg_auth_members m WHERE roleid='uranius_migrator'::regrole ORDER BY oid;"
+        $membershipBefore=Local-Sql $membershipQuery
+        Expect-Denial { Local-Sql 'SET ROLE uranius_migrator;' postgres } '*Disposable SQL failed*'
+        Expect-Denial { Local-Sql 'SELECT count(*) FROM uranius_private.migration_ledger;' postgres } '*Disposable SQL failed*'
         $managedSql=Get-Content -Raw (Join-Path $smoke '007_management.sql')
         function Deny-Management([string]$Sql) {
-            Expect-Denial { Local-Sql $Sql } '*Disposable SQL failed*'
+            Expect-Denial { Local-Sql $Sql postgres } '*Disposable SQL failed*'
             if ((Local-Sql "SELECT count(*)=6 AND NOT has_schema_privilege('uranius_smoke_reader','uranius_game','USAGE') FROM uranius_private.migration_ledger;") -ne 't') {
                 throw 'Management rejection left grants or changed the ledger.'
             }
+            if ((Local-Sql $membershipQuery) -cne $membershipBefore) { throw 'Failed transaction changed role membership.' }
         }
         Deny-Management ($managedSql.Replace('sdtsivgtcaoaeoihcwzd', ('x' * 20)))
         Deny-Management ($managedSql.Replace($reader.requires[0].sha256, ('0' * 64)))
@@ -163,8 +170,10 @@ try {
         Local-Sql "ALTER TABLE uranius_private.migration_ledger ADD CONSTRAINT fixture_reject_007 CHECK (version <> '007_smoke_reader.sql');" | Out-Null
         Deny-Management $managedSql
         Local-Sql 'ALTER TABLE uranius_private.migration_ledger DROP CONSTRAINT fixture_reject_007;' | Out-Null
-        Local-Sql $managedSql | Out-Null
-        Expect-Denial { Local-Sql $managedSql } '*Disposable SQL failed*'
+        Local-Sql $managedSql postgres | Out-Null
+        Expect-Denial { Local-Sql $managedSql postgres } '*Disposable SQL failed*'
+        if ((Local-Sql $membershipQuery) -cne $membershipBefore) { throw 'Successful transaction changed role membership.' }
+        Expect-Denial { Local-Sql 'SET ROLE uranius_migrator;' postgres } '*Disposable SQL failed*'
     } else {
         & $wrapper -PsqlPath $shim -CaFile $ca -ResumeExistingRole -SmokeReader -Apply -ApprovedManifestSha256 $digest
     }

@@ -6,6 +6,8 @@ DECLARE
   data_now jsonb;
   policies_before jsonb;
   policies_now jsonb;
+  membership_before jsonb;
+  membership_now jsonb;
 BEGIN
   PERFORM set_config('search_path', 'pg_catalog', true);
   PERFORM set_config('lock_timeout', '5s', true);
@@ -13,8 +15,32 @@ BEGIN
      OR current_setting('server_version_num')::integer / 10000 <> 17 THEN
     RAISE EXCEPTION 'Expected PostgreSQL 17 management connection as postgres';
   END IF;
+  IF (SELECT rolsuper FROM pg_roles WHERE rolname = 'postgres')
+     OR pg_has_role('postgres', 'uranius_migrator', 'SET')
+     OR pg_has_role('postgres', 'uranius_migrator', 'USAGE') THEN
+    RAISE EXCEPTION 'Unexpected management role privileges';
+  END IF;
 
   PERFORM pg_advisory_xact_lock(410501);
+  SELECT jsonb_agg(to_jsonb(m) ORDER BY m.oid) INTO membership_before
+  FROM pg_auth_members AS m WHERE roleid = 'uranius_migrator'::regrole;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_auth_members WHERE roleid = 'uranius_migrator'::regrole
+      AND member = 'postgres'::regrole AND grantor <> member
+      AND admin_option AND NOT set_option AND NOT inherit_option
+  ) OR EXISTS (
+    SELECT 1 FROM pg_auth_members WHERE roleid = 'uranius_migrator'::regrole
+      AND member = 'postgres'::regrole AND grantor = member
+  ) THEN
+    RAISE EXCEPTION 'Expected independent admin-only membership';
+  END IF;
+
+  GRANT uranius_migrator TO postgres WITH ADMIN FALSE, INHERIT FALSE, SET TRUE GRANTED BY postgres;
+  PERFORM set_config('role', 'uranius_migrator', true);
+  IF current_user <> 'uranius_migrator' OR session_user <> 'postgres' THEN
+    RAISE EXCEPTION 'Expected temporary object owner role';
+  END IF;
+
   LOCK TABLE uranius_private.project_identity, uranius_private.migration_ledger IN SHARE ROW EXCLUSIVE MODE;
   PERFORM set_config('uranius.approved_project_ref', 'sdtsivgtcaoaeoihcwzd', true);
   PERFORM uranius_private.assert_project();
@@ -142,6 +168,15 @@ BEGIN
 
   INSERT INTO uranius_private.migration_ledger (version, sha256)
     VALUES ('007_smoke_reader.sql', 'dd0e9663adc2bf0717d4debc8b291ee04e859592369e381bbde7a42546a8f91b');
+  PERFORM set_config('role', 'none', true);
+  REVOKE uranius_migrator FROM postgres GRANTED BY postgres RESTRICT;
+  SELECT jsonb_agg(to_jsonb(m) ORDER BY m.oid) INTO membership_now
+  FROM pg_auth_members AS m WHERE roleid = 'uranius_migrator'::regrole;
+  IF current_user <> 'postgres' OR membership_before IS DISTINCT FROM membership_now
+     OR pg_has_role('postgres', 'uranius_migrator', 'SET')
+     OR pg_has_role('postgres', 'uranius_migrator', 'USAGE') THEN
+    RAISE EXCEPTION 'Original management membership was not restored';
+  END IF;
   RAISE NOTICE 'Uranius 007 applied. Seven ledger entries. Fixture rows and policy predicates unchanged.';
 END
 $uranius_007$;
