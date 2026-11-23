@@ -3,6 +3,7 @@ import { spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { test } from 'node:test'
+import { fileURLToPath } from 'node:url'
 
 const root = new URL('../', import.meta.url)
 const read = name => readFileSync(new URL(name, root))
@@ -40,7 +41,7 @@ test('integrated 010 includes all 4 FORCE RLS tables and scoped reader policies'
 })
 test('offline installer review checksums without credentials or network', () => {
   const command = new URL('../scripts/apply-uranius-overview.mjs',import.meta.url)
-  const result = spawnSync(process.execPath,[command.pathname.replace(/^\/(\w:)\//,'$1/'),'--review'],
+  const result = spawnSync(process.execPath,[fileURLToPath(command),'--review'],
     {encoding:'utf8',timeout:15000,env:{PATH:process.env.PATH||'',SYSTEMROOT:process.env.SYSTEMROOT||'',WINDIR:process.env.WINDIR||''}})
   assert.equal(result.status,0, result.stderr)
   assert.match(result.stdout,/no database connection/)
@@ -48,7 +49,7 @@ test('offline installer review checksums without credentials or network', () => 
 })
 test('installer rejects missing approval; cannot apply without digest', () => {
   const command = new URL('../scripts/apply-uranius-overview.mjs',import.meta.url)
-  const result = spawnSync(process.execPath,[command.pathname.replace(/^\/(\w:)\//,'$1/'),'--apply-reviewed-overview','0'.repeat(64)],
+  const result = spawnSync(process.execPath,[fileURLToPath(command),'--apply-reviewed-overview','0'.repeat(64)],
     {encoding:'utf8',timeout:15000,env:{PATH:process.env.PATH||'',SYSTEMROOT:process.env.SYSTEMROOT||'',WINDIR:process.env.WINDIR||''}})
   assert.notEqual(result.status,0)
   assert.match(result.stderr,/Explicit approval for exact Overview manifest digest required/)
