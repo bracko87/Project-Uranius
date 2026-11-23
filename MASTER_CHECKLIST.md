@@ -87,7 +87,7 @@ Gate: PASSED
 |---|---|---|---|
 | U5.01 | Authorize and provision isolated infrastructure | PASS | Owner provisioned the approved Micro. Scoped verification and exact project guard evidence in TEST_REPORT.md. |
 | U5.02 | Reconstruct existing sandbox DB | BLOCKED | 006 hosted ledger and seed confirmed. Further clone contracts pending. See BLOCKERS.md. |
-| U5.03 | Seed full test world | TODO | Hosted Auth and bindings owner-confirmed. 007 reader and HTTPS smoke rehearsed. Reader creation owner-confirmed. 007 non-superuser owner-context rehearsal passed, pending approval and hosted acceptance. |
+| U5.03 | Seed full test world | IN_PROGRESS | Hosted migration 007 verified (seven canonical hashes, restricted read role and preserved RLS/mappings). Owner's 2026-11-23 browser screenshots confirmed Manager A/Team 1 and Manager B/Team 2, each with 10 riders, 10,000 credits, three calendar entries; Manager B logout denied dashboard re-entry while Manager A remained signed in. Independent offline session isolation/replay test passed and is committed at `tests/uraniusSessionIsolation.mjs` (commit `c8e297bf`). Full game baseline smoke/hosted adversarial HTTP checks not yet evidenced. See TEST_REPORT.md. |
 | U5.04 | Implement hybrid DB contracts | TODO | — |
 | U5.05 | Secure sandbox APIs and storage | TODO | — |
 | U5.06 | Deploy sandbox workers and schedule | TODO | — |
