@@ -10,9 +10,23 @@
   "intendedPermissions": "Restricted reader SELECT on season_number/month_number/day_number/is_paused only; reuse existing owner-bound game_state RLS policy; no public Data API exposure",
   "evidence": "tests/uraniusClockReaderReview.test.mjs",
   "unmet": [
-    "Native disposable PostgreSQL 17 rehearsal against exact 001–008 state, including reader RLS and rollback",
     "Separate project-pinned management wrapper with exact membership restoration",
-    "Explicit owner authorization for additional hosted clock-reader ACL changes"
+    "Explicit owner authorization for additional hosted clock-reader ACL changes",
+    "Rerun amended Node clock isolation test on owner Windows checkout"
   ],
-  "hostedApplied": false
+  "hostedApplied": false,
+  "nativeRehearsal": {
+    "observedDate": "2026-11-23",
+    "result": "OWNER_REPORTED_PASS_21_OF_21",
+    "execution": "local disposable PostgreSQL 17",
+    "source": "owner Windows terminal output",
+    "cleanup": "INFO Disposable PostgreSQL files cleaned up",
+    "evidence": "TEST_REPORT.md"
+  },
+  "nodeTests": {
+    "observedDate": "2026-11-23",
+    "originalResult": "7/8 pass, 1 test harness failure parsing empty 404 JSON",
+    "correctiveCommit": "070346b1d5e30f9c08eaf98a04851543e76677c8",
+    "retest": "PENDING"
+  }
 }
