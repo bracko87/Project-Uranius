@@ -113,3 +113,11 @@ Read-only live inspection on 2026-11-23: the isolated Uranius database has stage
 Prepared a test-only `database/reconstruction/overview/game-clock-contract.mjs` and deterministic `tests/uraniusGameClockContract.test.mjs` (9/9 passed locally); these cannot substitute for missing backend contracts. In particular, shared fixture stages must not be represented as an individual manager's accepted schedule or as published results.
 
 **Next action:** reconcile original `game_state` table, clock initialization/pause/speed/advance rules and exact accepted-entry schedule response from reviewed source. Prepare a target-scoped versioned migration with RLS, consumer shape tests, digest and rollback for **separate owner approval**. Until then, no real Overview switch, hosted DDL, API exposure, jobs or simulation writes. U5.02 remains BLOCKED; U5.03 IN_PROGRESS, progress 49/60. See `database/reconstruction/overview/README.md`.
+
+## U5.02 - Clock 008 prepared but not yet eligible for hosted approval
+
+A minimal RLS-protected, paused synthetic clock and the three original game-date read signatures are prepared in `database/reconstruction/clock/008_game_clock_v1.sql` and SHA-pinned in the review-only manifest. The exact candidate hash is `f3dadf7b7934e1c8677d24af2d0a57b2be19768f0bc2dc6b45729618c28e349b`. Eight static safety checks passed; authored Node tests are not yet locally executed.
+
+**Blockers before submitting 008 for approval:** (1) native disposable PostgreSQL 17 migration/RLS and rollback rehearsal; (2) exact owner-context management wrapper restoring temporary role membership; (3) test both verified manager subjects versus anonymous/reader denial, and confirm the frozen singleton cannot be updated; (4) verify the full original game clock table source is unavailable and clearly treat this as a sandbox fixture, not as production parity; (5) separate owner approval for an exact hashed atomic package. The actual Overview race schedule still lacks accepted-entry relations and a verified response contract.
+
+A final live read-only inspection confirmed 007 is still the last migration and the two manager mappings and synthetic stages remain unchanged. **Do not apply 008, expose new schema APIs or change any worker/scheduler now.** See `database/reconstruction/clock/README.md`.
