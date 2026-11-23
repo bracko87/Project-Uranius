@@ -37,7 +37,7 @@ BEGIN
       EXCEPT SELECT version,sha256 FROM uranius_private.migration_ledger
     )
     OR EXISTS (
-      SELECT * FROM uranius_private.migration_ledger
+      SELECT version,sha256 FROM uranius_private.migration_ledger
       EXCEPT SELECT * FROM (VALUES
         ('001_identity.sql','87755f1d12a0b983d016e039d4ceb22aea1e5c165b65c2e6888049805fefbadd'),
         ('002_reference_schema.sql','6cad841d012117a02daf7e89555cc870da5f9a5f90b4e4c8b7dfee52b84ed45f'),
