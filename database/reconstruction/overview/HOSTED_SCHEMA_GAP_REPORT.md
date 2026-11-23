@@ -54,3 +54,17 @@ Owner reran original Overview offline tests after source-valid hash-link fix: **
 Created `database/reconstruction/overview/010_race_schema_DISPOSABLE_REVIEW_ONLY.sql` directly from the exact recovered live metadata (23+40+18+29 = **110 columns**). It carries all captured PK, UNIQUE and CHECK constraints; maps original club UUID foreign keys to `uranius_game.club_profiles(club_id)`; preserves the four intra-race foreign key relationships; enables and FORCEs RLS on every new table; revokes client privileges; and wraps the entire candidate in `BEGIN ... ROLLBACK` to prevent accidental persistent application. It is **not** a deployable migration, does not append the ledger, has no public-facing RPC and performs no inserts. It deliberately defers original `countries`, finance and equipment foreign keys, original triggers and status transitions until corresponding synthetic catalog contracts are reviewed.
 
 Added `tests/uraniusOverviewSchemaCandidateReview.test.mjs` to compare column/types/defaults and PK/check constraints against the source snapshot, verify known FK rewiring, and require restrictive RLS and rollback. **This new suite has not yet been executed.** Next: run Node static review, then use a disposable PostgreSQL 17 fixture to validate SQL and row ownership before preparing any hosted installation package. No new database writes or changes executed against either project.
+
+## Owner 010 static review PASS; native fixture runner prepared (2026-11-23)
+
+Owner pulled commit `3dfc086` and ran `node --test tests\\uraniusOverviewSchemaCandidateReview.test.mjs`: **5/5 PASS, zero failures**. This verifies the checked-in generated source structure only, **not** PostgreSQL execution.
+
+Added `tests/uraniusOverviewSchemaNativePg17.mjs` for an isolated, disposable PostgreSQL 17 test database. It requires the owner's existing portable PG17 binaries; creates a fresh loopback-only PGDATA, runs the exact unmodified rollback-only schema candidate, confirms zero persistent race tables, then performs a temporary in-transaction schema/security/foreign-key rehearsal and rolls back again. It never connects to any hosted Supabase database, has no production DSN, and cleans up the local fixture after shutdown. Native runtime results **pending** and must not be reported as passed before owner execution.
+
+Owner command in the reviewed Windows checkout:
+
+```bat
+node tests\\uraniusOverviewSchemaNativePg17.mjs --disposable-native-pg17 --postgres-bin "C:\\Users\\Aleks\\Desktop\\Project-Uranius\\.uranius-pin-review\\postgresql-17.12-portable\\bin"
+```
+
+If this fails, inspect the first SQL/PG17 error and correct the review candidate or harness; do not retry repeatedly or apply migration 010 to hosted. The candidate remains `REVIEW_ONLY_NOT_APPROVED`, and the authoritative Uranius ledger is still at nine installed entries. Separate ownership/RLS policy and existing schema integration tests are required before a hosted upgrade is even considered.
