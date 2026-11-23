@@ -135,3 +135,16 @@ Prepared `database/reconstruction/overview/010_overview_race_reader_REVIEW_ONLY.
 A fresh **read-only hosted** Uranius preflight confirms 9/9 expected custom ledger hashes, PostgreSQL 17, two synthetic managers, 200 riders, frozen season-one clock, absent four race tables, and existing restricted reader role. No hosted schema or data modification.
 
 **Do not mistake this for applied or fully native-tested.** The new integrated 010 candidate and installer tests **have not been executed in PostgreSQL as a combined package**. Before approval/install, owner should first run `node --test tests\\uraniusOverviewInstallPackageReview.test.mjs` and `node scripts\\apply-uranius-overview.mjs --review` locally (offline); then a disposable full native combined-package rehearsal is required. After passing, separately request exact manifest digest approval and only then apply. The original ProPeloton production project was not changed, and no paid Supabase branch was created.
+
+## Owner package review PASS; final combined migration native rehearsal staged (2026-11-23)
+
+Owner's Windows log after pulling `413c88e`:
+- `node --test tests\\uraniusOverviewInstallPackageReview.test.mjs`: **4/4 PASS, 0 failed**.
+- `node scripts\\apply-uranius-overview.mjs --review`: verified canonical candidate SHA-256 `56f52ac20c84aaf70ea63c68e0435da20084a3fe42e375a372c3d613cfa445af`; manifest approval SHA-256 `26cdce51966cf2264ff2ec49affe8c987f5cbcb447040807c61354382092a170`; **no database connection**.
+
+Added `tests/uraniusOverviewCombinedInstallNativePg17.mjs`, a combined 010 **single-transaction** failure-injection, post-migration schema/ACL/ledger, duplicate rejection, and unknown/anon/read-only tests on actual replayed 001–009 Uranius foundation. It is newly created and **NOT YET RUN**. To preserve the exact source and target guards, the test first checks the source SHA, then substitutes the sole TLS assertion *in memory for its SSL-disabled disposable localhost database*. This tests all remaining combined SQL and ledger guards except actual TLS handshake, which remains enforced in the intact hosted source and runner.
+
+Next is one new local command:
+`node tests\\uraniusOverviewCombinedInstallNativePg17.mjs --disposable-native-pg17 --postgres-bin "C:\\Users\\Aleks\\Desktop\\Project-Uranius\\.uranius-pin-review\\postgresql-17.12-portable\\bin"`
+
+**No source-production or hosted database changes performed.** Migration installation still needs explicit owner approval of exact manifest digest after final rehearsal.
