@@ -53,3 +53,13 @@ Migration 009's exact reviewed management wrapper is now **installed and read-ba
 The optional `GET /fixture/clock` source and dashboard panel were committed earlier, but the local HTTPS runner still needs **fresh real Manager A/B acceptance**. In the owner's original trusted HTTPS environment, restart with `URANIUS_CLOCK_READ_APPROVED=1`; do not bypass TLS or expose the listener off `127.0.0.1`. Then run `tests/uraniusHostedClockAcceptance.mjs` (private Manager A/B password prompts, positive and logout assertions) and the extended `tests/uraniusHostedNegativeProbe.mjs` (**15** unauthenticated negative checks) against the actual printed `https://127.0.0.1:PORT` URL. Neither test has run against the newly installed hosted clock from this chat.
 
 No production ProPeloton or full original game functionality is affected. Still 49/60; U5.03 IN_PROGRESS.
+
+## Verified owner-hosted HTTPS acceptance (2026-11-23)
+
+Owner-provided Windows console results against an actual local loopback HTTPS listener at `https://127.0.0.1:61475` (ephemeral port, not a hosted public deployment):
+
+- `tests/uraniusHostedClockAcceptance.mjs`: **14/14 PASS**. Both existing Manager A and B signed in using hidden terminal passwords; each read their own dashboard and paused Season 1 clock; separate clubs/users and sessions verified; old sessions invalid after logout; anonymous clock denied.
+- `tests/uraniusHostedNegativeProbe.mjs`: **15/15 PASS**. Anonymous and forged session requests denied; wrong Origin/Host, invalid methods, tenant-query routes and unknown paths rejected; certificate identity validated.
+- No hosted database writes were performed by these tests. Original ProPeloton production untouched.
+
+The prior pending acceptance sentences in this file are historical. **The migration 009 read-only clock slice is now verified**. This does *not* certify rendering the full original Overview, accepted race entries, running game clock or other production flows. Project task U5.03 remains IN_PROGRESS, 49/60 unchanged until full task criteria are satisfied. Next work: reconstruct and verify the source contract of `get_overview_race_schedule_v1`, accepted team entry ownership, and schedule gating before connecting the full Overview.
