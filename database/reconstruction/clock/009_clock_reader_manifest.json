@@ -1,0 +1,18 @@
+{
+  "projectRef": "sdtsivgtcaoaeoihcwzd",
+  "status": "REVIEW_ONLY_NOT_APPROVED",
+  "installedPrerequisite": "008_game_clock_v1.sql",
+  "prerequisiteLedgerEntries": 8,
+  "candidate": {
+    "file": "009_clock_smoke_reader_REVIEW_ONLY.sql",
+    "sha256": "1be3ce5418ff8a03a787fae81fe2cbd543ad6002cc592222bc2b011245cc4c37"
+  },
+  "intendedPermissions": "Restricted reader SELECT on season_number/month_number/day_number/is_paused only; reuse existing owner-bound game_state RLS policy; no public Data API exposure",
+  "evidence": "tests/uraniusClockReaderReview.test.mjs",
+  "unmet": [
+    "Native disposable PostgreSQL 17 rehearsal against exact 001–008 state, including reader RLS and rollback",
+    "Separate project-pinned management wrapper with exact membership restoration",
+    "Explicit owner authorization for additional hosted clock-reader ACL changes"
+  ],
+  "hostedApplied": false
+}
