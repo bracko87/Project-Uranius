@@ -67,7 +67,8 @@ function Local-Sql([string]$Sql,[string]$User='postgres',[string]$Database='post
 }
 function Read-Host {
     param([string]$Prompt,[switch]$AsSecureString)
-    if (!$AsSecureString -or $Prompt -notlike '*Existing*') { throw 'Unexpected prompt.' }
+    if ($Prompt -like '*publishable API key*' -and !$AsSecureString) { return 'sb_publishable_offlinefixture' }
+    if (!$AsSecureString -or ($Prompt -notlike '*Existing*' -and $Prompt -notlike '*fixture manager*')) { throw 'Unexpected prompt.' }
     ConvertTo-SecureString 'offline-loopback-fixture-only' -AsPlainText -Force
 }
 
@@ -98,6 +99,33 @@ try {
     Expect-Denial { & $wrapper @options } '*Inspect the Uranius ledger*'
     Local-Sql 'CREATE DATABASE uranius_006_test_wrapper TEMPLATE postgres;' | Out-Null
     Local-Sql (Get-Content -Raw (Join-Path $world 'verify-offline.sql')) -Database uranius_006_test_wrapper | Out-Null
+    # Simulate only the Auth transport. PostgreSQL below remains native and TLS-verified.
+    function Invoke-RestMethod {
+        param($Uri,$Method,$Headers,$MaximumRedirection,$TimeoutSec,$ErrorAction,$ContentType,$Body)
+        $prefix='https://sdtsivgtcaoaeoihcwzd.supabase.co/auth/v1'
+        if ($MaximumRedirection -ne 0 -or $Headers.apikey -cne 'sb_publishable_offlinefixture') { throw 'Unsafe fixture request.' }
+        if ($Uri -ceq ($prefix + '/token?grant_type=password') -and $Method -eq 'Post') {
+            $email=(ConvertFrom-Json -InputObject $Body).email
+            $slot=if ($email -ceq ('fixture-manager-a'+'@'+'uranius.example')) { 1 } elseif ($email -ceq ('fixture-manager-b'+'@'+'uranius.example')) { 2 } else { throw 'Unexpected fixture email.' }
+            return @{ access_token=('offline-token-' + $slot); user=@{id=('00000000-0000-4000-8000-00000000000'+$slot)} }
+        }
+        $slot=if ($Headers.Authorization -ceq 'Bearer offline-token-1') { 1 } elseif ($Headers.Authorization -ceq 'Bearer offline-token-2') { 2 } else { throw 'Unexpected fixture session.' }
+        if ($Uri -ceq ($prefix + '/user') -and $Method -eq 'Get') {
+            $letter=if ($slot -eq 1) { 'a' } else { 'b' }
+            $email='fixture-manager-'+$letter+'@'+'uranius.example'
+            return @{ id=('00000000-0000-4000-8000-00000000000'+$slot); email=$email; email_confirmed_at='2000-01-01T00:00:00Z' }
+        }
+        if ($Uri -ceq ($prefix + '/logout?scope=local') -and $Method -eq 'Post') { return }
+        throw 'Unexpected fixture Auth endpoint.'
+    }
+    $bind=Join-Path $repo 'scripts/Bind-UraniusSyntheticManagers.ps1'
+    & $bind -PsqlPath $shim -CaFile $ca
+    if ((Local-Sql 'SELECT count(*) FROM uranius_catalog.team_owners;') -ne '0') { throw 'Proof-only mode wrote a mapping.' }
+    & $bind -PsqlPath $shim -CaFile $ca -BindReviewedManagers
+    & $bind -PsqlPath $shim -CaFile $ca -BindReviewedManagers
+    if ((Local-Sql "SELECT count(*)=2 AND bool_and(user_id::text='00000000-0000-4000-8000-00000000000'||team_id) FROM uranius_catalog.team_owners;") -ne 't') { throw 'Verified manager binding mismatch.' }
+    if ((Local-Sql 'SELECT count(*) FROM auth.users;') -ne '0') { throw 'Bind procedure unexpectedly inserted Auth users.' }
+    Write-Output 'Mocked Auth verification and native TLS binding path passed.'
     Write-Output 'PowerShell 5.1 wrapper and PostgreSQL 17 TLS migration rehearsal passed.'
 }
 finally { & $pgctl -D $data -m fast -w stop }

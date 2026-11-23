@@ -5,7 +5,7 @@ function fixture(manager: 'a' | 'b') {
   const club = syntheticWorldDraft.clubProfiles[ordinal]
   return {
     id: syntheticWorldDraft.managers[ordinal].slot,
-    email: 'offline-manager-' + manager + '@' + 'fixture.invalid',
+    email: 'fixture-manager-' + manager + '@' + 'uranius.example',
     name: 'Fixture Team ' + club.teamId,
     club,
   }
@@ -13,6 +13,12 @@ function fixture(manager: 'a' | 'b') {
 
 export const CharacterData = { a: fixture('a'), b: fixture('b') }
 let session: ReturnType<typeof fixture> | undefined
+
+// Fixture-only reads. PostgreSQL RLS is tested separately by the native rehearsal.
+export function getFixtureDashboard(ownerTeam: number) {
+  if (session?.club.teamId !== ownerTeam) return null
+  return { riders: 10, credits: syntheticWorldDraft.balances[ownerTeam - 1].credits, calendar: syntheticWorldDraft.calendar.length }
+}
 
 export const supabase = {
   auth: {
@@ -24,6 +30,7 @@ export const supabase = {
       }
       return { data: { session: {} }, error: null }
     },
+    async signOut() { session = undefined; return { error: null } },
     async getUser() { return { data: { user: session }, error: null } },
   },
   async rpc(name: string) {

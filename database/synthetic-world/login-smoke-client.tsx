@@ -1,16 +1,25 @@
 import React, { useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import { CharacterData } from './login-smoke-supabase'
-import { MemoryRouter, Route, Routes } from 'react-router'
+import { CharacterData, getFixtureDashboard, supabase } from './login-smoke-supabase'
+import { MemoryRouter, Route, Routes, useNavigate } from 'react-router'
 import LoginPage from '../../src/pages/Login'
 import { getMyClubContext } from '../../src/lib/clubContext'
 
 function ClubDashboard() {
   const [name, setName] = useState('')
+  const navigate = useNavigate()
+  const data = getFixtureDashboard(fixture.club.teamId)
   useEffect(() => { void getMyClubContext().then(club => setName(club.mainClub?.name ?? '')) }, [])
   return <main className="min-h-screen bg-slate-950 text-white">
     <section className="mx-auto max-w-5xl rounded-xl bg-slate-900 p-6">
       <h1 data-club>{name}</h1>
+      <p data-riders>{data?.riders}</p>
+      <p data-balance>{data?.credits}</p>
+      <p data-calendar>{data?.calendar}</p>
+      <button data-sign-out onClick={async () => {
+        await supabase.auth.signOut()
+        navigate('/login', { replace: true })
+      }}>Sign out</button>
     </section>
   </main>
 }
@@ -35,6 +44,7 @@ async function waitFor<T>(check: () => T) {
 }
 
 async function smoke() {
+  if (getFixtureDashboard(fixture.club.teamId) !== null) throw new Error('Anonymous dashboard access')
   const form = await waitFor(() => document.querySelector('form'))
   const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!
   for (const [name, value] of [['email', fixture.email], ['password', 'offline-fixture-only']]) {
@@ -44,6 +54,13 @@ async function smoke() {
   }
   form.requestSubmit()
   await waitFor(() => document.querySelector('[data-club]')?.textContent === fixture.name)
+  if (document.querySelector('[data-riders]')?.textContent !== '10' ||
+      document.querySelector('[data-balance]')?.textContent !== '10000' ||
+      document.querySelector('[data-calendar]')?.textContent !== '3' ||
+      getFixtureDashboard(manager === 'a' ? 2 : 1) !== null) throw new Error('Invalid dashboard scope')
+  document.querySelector<HTMLButtonElement>('[data-sign-out]')!.click()
+  await waitFor(() => document.querySelector('form'))
+  if (getFixtureDashboard(fixture.club.teamId) !== null || document.querySelector('[data-club]')) throw new Error('Stale dashboard after logout')
   document.body.dataset.smoke = 'passed-' + manager
 }
 

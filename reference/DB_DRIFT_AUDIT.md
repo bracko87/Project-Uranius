@@ -29,3 +29,7 @@ The [dependency map and reconstruction order](DB_RECONSTRUCTION_PLAN.md) identif
 ## Owner-verified 005 state
 
 The owner verified all five matching ledger entries, the club_profiles table with RLS, the security-invoker clubs view and RLS on both private bookkeeping tables after 005. The 20 teams, 200 riders and 450 starters were unchanged. No manager accounts or ownership mappings existed. The owner reported no security-critical advisor findings and two informational private-table RLS notices. The committed earlier catalog JSON is a pre-005 read-only snapshot. No remote SQL was run to replace it during this turn. The next proposed 006 adds the fixture calendar, balances and two manager slots. Full clone reconstruction remains open.
+
+## Read-only post-006 check
+
+The hosted ledger contained six expected hashes. The fictional foundation now includes 20 club profiles and opening balances, three calendar entries and two private manager slots. Auth and ownership remained empty. Client roles had no private schema USAGE or bind EXECUTE. See database/synthetic-world/AUTH_BINDING_REVIEW.md for the next gated action.

@@ -79,3 +79,7 @@ Migration 005 is complete per the owner's independent verification. U5.02 stays 
 ## U5.02/U5.03 - 006 Windows path ready for private execution
 
 The owner accepted 006 in principle and requested an offline-only Windows workflow correction. Full loopback TLS rehearsal passed. Hosted application remains pending owner execution with the unchanged manifest. Auth account setup, binding and live login are separate gates.
+
+## U5.03 - Two-manager Auth and ownership approval pending
+
+The hosted six-entry foundation and empty Auth and ownership state were verified read-only. The exact two-account and binding procedure is ready in database/synthetic-world/AUTH_BINDING_REVIEW.md. Hosted account creation, temporary Auth sessions and two ownership writes require approval. Data API exposure and full dashboard integration remain separate work.
