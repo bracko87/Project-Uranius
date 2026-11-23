@@ -104,3 +104,16 @@ Added guarded `database/synthetic-world/hosted-overview-schedule-read_REVIEW_ONL
 Fixed a real contract issue in read-only `011`: removed `game_state.id` reference because the existing restricted reader was granted only `season_number`, `month_number`, `day_number` and `is_paused` in 009. New `tests/uraniusOverviewHostedReadBoundary.test.mjs` covers trusted server binding, TLS/role constraints and the paused clock column ACL; **not yet run**.
 
 The complete source-backed read model, 010/012 permissions and frontend integration remain uninstalled pending 001–009 native ownership integration, audit of the SQL batch result, separately reviewed migration with recorded exact hash and hosted A/B read tests. There have been no writes to hosted Uranius or original ProPeloton production.
+
+## Real JWT ownership full-foundation native test prepared (2026-11-23)
+
+Owner confirmed `node --test tests\\uraniusOverviewHostedReadBoundary.test.mjs`: **4/4 PASS**. These establish that the read-only server wrapper's offline contract matches trusted session binding, owner check, TLS guard and approved clock columns; they are not a hosted end-to-end PASS.
+
+New `tests/uraniusOverviewRealIdentityNativePg17.mjs` derives from the existing *actual 001–009 management replay* harness. It creates only a fresh disposable local PostgreSQL 17 cluster, replays all exact historical 001–007 files with digest assertions, applies the native 008/009 management wrappers, binds two synthetic manager UUIDs through the original Uranius ownership function, tests the exact rollback-only 010/012 candidates and then installs them **only into that disposable fixture**. It seeds synthetic manager A/B and world races, restores FORCE RLS after local seeding, and asserts that the real `request_uid()` JWT resolver + `get_my_club_id()` invoker filters private race preparations and entries, global today cards remain visible, unknown subjects have no private entries, anonymous and reader writes fail, and the original nine historical migration ledger rows remain intact. Cleanup stops and removes the temporary cluster. **Not run yet**. Never run the fixture against a hosted Supabase endpoint; it has no external network configuration.
+
+Recommended command after pull:
+```bat
+node tests\\uraniusOverviewRealIdentityNativePg17.mjs --disposable-native-pg17 --postgres-bin "C:\\Users\\Aleks\\Desktop\\Project-Uranius\\.uranius-pin-review\\postgresql-17.12-portable\\bin"
+```
+
+The test is a local integration rehearsal, **not an authorization to execute migration 010/012 against hosted Uranius**. Until the real native A/B test succeeds and installable schema/permission migration is separately approved, keep `URANIUS_OVERVIEW_SCHEDULE_READ_APPROVED` unset.
