@@ -103,3 +103,20 @@ The **review-only** file [`008_management_REVIEW_ONLY.sql`](008_management_REVIE
 - No hosted execution is authorized. Do not copy/paste this wrapper into Supabase SQL editor or a migration CLI until its new native tests, permission review and explicit owner approval are recorded.
 
 The fixture clock is frozen and does not yet implement race entries, actual accepted-race schedule, or the complete React Overview/Squad/Calendar contract.
+
+### Disposable PostgreSQL 17 *management-wrapper* rehearsal
+
+A separate native runner is committed at [`tests/uraniusClockManagedPg17.mjs`](../../../tests/uraniusClockManagedPg17.mjs). This test is **not** the earlier 12/12 candidate SQL test. It exercises the exact SHA-pinned `008_management_REVIEW_ONLY.sql` as a single transaction, using a fresh loopback-only PostgreSQL 17 installation with a non-superuser `postgres` account that has **ADMIN only** (not SET or INHERIT) on `uranius_migrator`.
+
+It checks canonical 001–007 replay, pre-grant SET ROLE denial, original independent membership snapshots, wrong superuser/target/ledger drift, failure injected after the temporary grant, failure injected after DDL/ledger insertion, exact successful membership restoration, both managers' read-only clock output, unknown-user/anon/reader denial, forbidden writes, duplicate execution, and cleanup. It refuses missing explicit test flags or binary paths and verifies the candidate SQL and management-wrapper hashes before creating its temporary cluster.
+
+Run in Windows Command Prompt from the existing Uranius checkout **only after pulling latest `main`**:
+
+```bat
+cd /d "C:\Users\Aleks\Desktop\Project-Uranius\.uranius-upload-review"
+git pull origin main
+node --test tests\uraniusClockManagementWrapper.test.mjs
+node tests\uraniusClockManagedPg17.mjs --disposable-native-pg17 --postgres-bin "C:\Users\Aleks\Desktop\Project-Uranius\.uranius-pin-review\postgresql-17.12-portable\bin"
+```
+
+The runner uses an isolated temporary PostgreSQL cluster with loopback trust authentication, **never** an existing server or hosted Supabase. No Supabase password, publishable key, hosted URL, or user credential is needed. The wrapper is still `REVIEW_ONLY_NATIVE_NOT_TESTED` until actual native console evidence is reviewed. **Do not paste the wrapper into Supabase or activate new API schemas.**
