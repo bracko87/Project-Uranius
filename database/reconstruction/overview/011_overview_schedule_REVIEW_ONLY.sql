@@ -14,7 +14,7 @@ WITH
   game_day AS (
     SELECT make_date(1999 + season_number, month_number, day_number) AS current_game_date
     FROM uranius_game.game_state
-    WHERE id IS TRUE AND is_paused IS TRUE
+    WHERE is_paused IS TRUE
   ),
   prepared AS (
     SELECT DISTINCT ON (r.id)
