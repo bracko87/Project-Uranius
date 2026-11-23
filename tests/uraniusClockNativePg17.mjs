@@ -66,12 +66,16 @@ const project = 'sdtsivgtcaoaeoihcwzd'
 const wrap = query => 'BEGIN;\nSELECT set_config(\'uranius.approved_project_ref\',\'' + project + '\',true);\n' + query + '\nCOMMIT;'
 const a = '00000000-0000-4000-8000-000000000001', b = '00000000-0000-4000-8000-000000000002'
 const snapshot = () => sql("SELECT (SELECT count(*) FROM uranius_private.migration_ledger)::text || ':' || (SELECT count(*) FROM uranius_catalog.team_owners)::text || ':' || (SELECT count(*) FROM uranius_catalog.riders)::text || ':' || (SELECT count(*) FROM uranius_game.stage_calendar)::text || ':' || (to_regclass('uranius_game.game_state') IS NOT NULL)::text;")
-let started = false, stopped = false, tests = 0
+let startAttempted = false, started = false, tests = 0
 const pass = label => { tests++; console.log('PASS ' + label) }
 try {
+  console.log('INFO Initializing an isolated PostgreSQL 17 fixture in a new temporary directory')
   run(exe.initdb, ['-D',data,'-U','postgres','-A','trust','--no-locale','--no-sync','-E','UTF8'])
+  console.log('INFO Disposable initdb completed')
+  startAttempted = true
   run(exe.pg_ctl, ['-D',data,'-l',join(scratch,'postgres.log'),'-o','-h 127.0.0.1 -p ' + port + ' -c fsync=off','-w','start'])
   started = true
+  console.log('INFO Disposable PostgreSQL started on loopback')
   sql('CREATE ROLE uranius_migrator LOGIN NOINHERIT; CREATE ROLE anon NOLOGIN; CREATE ROLE authenticated NOLOGIN; CREATE ROLE uranius_smoke_reader LOGIN NOINHERIT; GRANT CONNECT,CREATE ON DATABASE postgres TO uranius_migrator;', 'postgres')
   for (const entry of revisions) {
     const ddl = readFileSync(join(root, files.get(entry.file)), 'utf8')
@@ -119,10 +123,48 @@ try {
   pass('Duplicate 008 migration rejected; fixture unchanged')
   console.log('PASS ' + tests + ' native PostgreSQL 17 disposable migration checks')
 } finally {
-  if (started) {
-    try { run(exe.pg_ctl, ['-D', data, '-m', 'immediate', '-w', 'stop']); stopped = true }
-    catch (e) { console.error('Disposable PostgreSQL stop failed: ' + e.message) }
+  // Windows may hold PGDATA files briefly after a failed initdb/pg_ctl or after
+  // PostgreSQL has stopped. Cleanup must NEVER replace the original failure.
+  // A failed pg_ctl start may still have launched a postmaster: check status
+  // even when the start command did not return successfully.
+  let safeToRemove = !startAttempted
+  if (startAttempted) {
+    try {
+      const status = spawnSync(exe.pg_ctl, ['-D', data, 'status'], {
+        env, encoding: 'utf8', timeout: 5000, windowsHide: true,
+      })
+      if (status.error) {
+        console.error('WARNING Could not inspect disposable PostgreSQL status: ' + status.error.message)
+      } else if (status.status === 0 || started) {
+        try {
+          run(exe.pg_ctl, ['-D', data, '-m', 'immediate', '-w', 'stop'])
+          safeToRemove = true
+        } catch (error) {
+          console.error('WARNING Disposable PostgreSQL shutdown failed: ' + error.message)
+        }
+      } else if (status.status === 3 || status.status === 4) {
+        // pg_ctl 3/4 means the managed server is not running or PGDATA is invalid.
+        safeToRemove = true
+      } else {
+        console.error('WARNING Unexpected PostgreSQL status code: ' + status.status)
+      }
+    } catch (error) {
+      console.error('WARNING Disposable PostgreSQL status/stop check failed: ' + error.message)
+    }
   }
-  if (stopped || !started) rmSync(scratch, { recursive: true, force: true })
-  else console.error('Disposable server may still be active; retained temporary PGDATA: ' + scratch)
+  if (safeToRemove) {
+    try {
+      // Node retries EBUSY/EPERM/ENOTEMPTY for recursive removal on Windows.
+      rmSync(scratch, { recursive: true, force: true, maxRetries: 12, retryDelay: 500 })
+      console.log('INFO Disposable PostgreSQL files cleaned up')
+    } catch (error) {
+      // Preserve the actual SQL/initdb failure that caused this finally clause.
+      console.error('WARNING Temporary PostgreSQL files could not yet be removed: ' + error.message)
+      console.error('WARNING Review the stopped disposable fixture folder later: ' + scratch)
+      process.exitCode = 1
+    }
+  } else {
+    console.error('WARNING Cannot prove disposable PostgreSQL is stopped; retained fixture: ' + scratch)
+    process.exitCode = 1
+  }
 }
