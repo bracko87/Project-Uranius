@@ -83,3 +83,7 @@ The owner accepted 006 in principle and requested an offline-only Windows workfl
 ## U5.03 - Two-manager Auth and ownership approval pending
 
 The hosted six-entry foundation and empty Auth and ownership state were verified read-only. The exact two-account and binding procedure is ready in database/synthetic-world/AUTH_BINDING_REVIEW.md. Hosted account creation, temporary Auth sessions and two ownership writes require approval. Data API exposure and full dashboard integration remain separate work.
+
+## U5.03 - Owner verification-only Auth retry pending
+
+The owner confirmed both intended accounts exist and reported a gateway HTTP 555 during Manager A sign-in. Offline diagnostics and retry handling are verified. One private verification-only attempt with NoRetry is ready. Hosted identity proof and ownership binding remain pending.

@@ -1,8 +1,9 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)][string]$PsqlPath,
-    [Parameter(Mandatory)][string]$CaFile,
-    [switch]$BindReviewedManagers
+    [string]$PsqlPath,
+    [string]$CaFile,
+    [switch]$BindReviewedManagers,
+    [switch]$NoRetry
 )
 
 $ErrorActionPreference = 'Stop'
@@ -10,19 +11,22 @@ if ([Console]::IsInputRedirected) { throw 'Run in an interactive Windows PowerSh
 . (Join-Path $PSScriptRoot 'UraniusSyntheticManagerAuth.ps1')
 . (Join-Path $PSScriptRoot 'UraniusPsqlBatch.ps1')
 $repo = Split-Path -Parent $PSScriptRoot
-$psql = (Resolve-Path -LiteralPath $PsqlPath).ProviderPath
-$ca = (Resolve-Path -LiteralPath $CaFile).ProviderPath
-if ([IO.Path]::GetFileName($psql) -ne 'psql.exe' -or $ca.StartsWith($repo + '\', [StringComparison]::OrdinalIgnoreCase)) {
-    throw 'Use the trusted psql executable and a CA file outside the checkout.'
+if ($BindReviewedManagers) {
+    if (!$PsqlPath -or !$CaFile) { throw 'Binding requires trusted psql and the Uranius CA file.' }
+    $psql = (Resolve-Path -LiteralPath $PsqlPath).ProviderPath
+    $ca = (Resolve-Path -LiteralPath $CaFile).ProviderPath
+    if ([IO.Path]::GetFileName($psql) -ne 'psql.exe' -or $ca.StartsWith($repo + '\', [StringComparison]::OrdinalIgnoreCase)) {
+        throw 'Use the trusted psql executable and a CA file outside the checkout.'
+    }
+    $version = & $psql --version
+    if ($LASTEXITCODE -ne 0 -or $version -notmatch '^psql \(PostgreSQL\) 17\.') { throw 'Expected PostgreSQL 17 psql.' }
 }
-$version = & $psql --version
-if ($LASTEXITCODE -ne 0 -or $version -notmatch '^psql \(PostgreSQL\) 17\.') { throw 'Expected PostgreSQL 17 psql.' }
 
 function Read-VerifiedManagerId([string]$Slot, [string]$Key) {
     $secret = Read-Host ('Uranius fixture manager ' + $Slot.ToUpperInvariant() + ' password') -AsSecureString
     $ptr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secret)
     try {
-        Get-VerifiedUraniusManagerId -Slot $Slot -PublishableKey $Key -Password ([Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr))
+        Get-VerifiedUraniusManagerId -Slot $Slot -PublishableKey $Key -NoRetry:$NoRetry -Password ([Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr))
     } finally {
         [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr)
         $secret.Dispose()

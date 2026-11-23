@@ -29,3 +29,15 @@ The wrapper re-verifies both users with Auth before opening a database transacti
 Once accounts and mappings are approved and verified, the next live smoke test should use an approved local API path. Two separate browser profiles sign in and out through the existing Login page. Expect one own club, ten own riders, one own opening balance, and three shared calendar entries. Check unauthorized team reads and private table/function access, then confirm a signed-out session cannot recover private data. Keep Data API schema exposure unchanged until separately reviewed. The native loopback rehearsal already exercises PostgreSQL ownership policies with two disposable subjects. The offline browser exercises the original Login page and the club-context lookup, using fixture Auth and a limited dashboard projection. It verifies login, logout, cross-manager and anonymous denial at the fixture boundary. It does not validate hosted Auth or the real Overview.
 
 The full Overview still needs the audited read contracts for the game clock, race schedule/results, active operations, squad pulse, finance summaries and notification fallback. No sporting, finance, signup, replay or production behavior changed. See reference/DB_RECONSTRUCTION_PLAN.md.
+
+## Verification-only diagnostics
+
+The owner reports both synthetic accounts are present and confirmed. A reported HTTP 555 from the token endpoint is treated as a gateway failure. By default the client retries selected transient 5xx responses once after two seconds, with 15-second request timeouts. Rate limits, invalid credentials, confirmation failures and timeouts are reported without an automatic retry. NoRetry disables the single retry for correlating a diagnostic run with gateway logs.
+
+For one verification-only run, omit BindReviewedManagers and run:
+
+```powershell
+& 'C:\Users\Aleks\Desktop\Project-Uranius\.uranius-upload-review\scripts\Bind-UraniusSyntheticManagers.ps1' -NoRetry
+```
+
+Use the Uranius publishable key and existing manager passwords only in the private terminal. No database client or CA file is required in this mode. Report only the sanitized status, classification and request ID, or the aggregate success message. Verification signs each confirmed account out and does not bind ownership.
