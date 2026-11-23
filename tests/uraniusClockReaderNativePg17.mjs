@@ -176,7 +176,7 @@ try {
   assert.equal(snapshot(), '9:2:200:3:true')
   pass('009 grants only four clock columns, leaving fixture data intact')
 
-  const readerFor = (id, value) => sql("BEGIN READ ONLY; SELECT set_config('request.jwt.claims','{\\\"sub\\\":\\\"" + id + "\\\"}',true); SELECT " + value + "; ROLLBACK;", 'uranius_smoke_reader')
+  const readerFor = (id, value) => sql("BEGIN READ ONLY; SELECT set_config('request.jwt.claims','" + JSON.stringify({ sub: id }) + "',true); SELECT " + value + "; ROLLBACK;", 'uranius_smoke_reader')
   for (const id of [a,b]) {
     const output = readerFor(id, "row_to_json(c)::text FROM (SELECT season_number,month_number,day_number,is_paused FROM uranius_game.game_state LIMIT 1) c")
     assert.equal(output, '{"season_number":1,"month_number":1,"day_number":1,"is_paused":true}')
