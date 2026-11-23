@@ -79,7 +79,12 @@ try {
   sql('CREATE ROLE uranius_migrator LOGIN NOINHERIT; CREATE ROLE anon NOLOGIN; CREATE ROLE authenticated NOLOGIN; CREATE ROLE uranius_smoke_reader LOGIN NOINHERIT; GRANT CONNECT,CREATE ON DATABASE postgres TO uranius_migrator;', 'postgres')
   for (const entry of revisions) {
     const ddl = readFileSync(join(root, files.get(entry.file)), 'utf8')
-    sql(wrap(ddl + "\nINSERT INTO uranius_private.migration_ledger(version,sha256) VALUES ('" + entry.file + "','" + entry.sha256 + "');"))
+    try {
+      sql(wrap(ddl + "\nINSERT INTO uranius_private.migration_ledger(version,sha256) VALUES ('" + entry.file + "','" + entry.sha256 + "');"))
+    } catch (error) {
+      throw new Error('Disposable migration ' + entry.file + ' failed: ' + error.message)
+    }
+    console.log('INFO Disposable migration ' + entry.file + ' applied')
   }
   pass('Exact historical 001–007 migrations applied in disposable PostgreSQL 17')
   sql(wrap("SELECT uranius_private.bind_synthetic_managers('" + a + "'::uuid,'" + b + "'::uuid);"))
