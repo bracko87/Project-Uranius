@@ -38,10 +38,16 @@
     "sha256": "f3dadf7b7934e1c8677d24af2d0a57b2be19768f0bc2dc6b45729618c28e349b"
   },
   "notReadyReasons": [
-    "No native PostgreSQL disposable end-to-end rehearsal yet",
     "No reviewed atomic management-connection execution wrapper yet",
     "No owner approval to apply migration 008",
     "No original game_state table DDL available in sanitized source inventory; subset is intentionally synthetic"
   ],
-  "permissions": "Authenticated manager-owned SELECT only. No anonymous access, table writes, reader-role changes, cron or Data API exposure."
+  "permissions": "Authenticated manager-owned SELECT only. No anonymous access, table writes, reader-role changes, cron or Data API exposure.",
+  "nativeRehearsal": {
+    "result": "OWNER_REPORTED_PASS_12_OF_12",
+    "observedDate": "2026-11-23",
+    "execution": "disposable local PostgreSQL 17; no hosted connection",
+    "evidence": "TEST_REPORT.md",
+    "sqlSha256": "f3dadf7b7934e1c8677d24af2d0a57b2be19768f0bc2dc6b45729618c28e349b"
+  }
 }
