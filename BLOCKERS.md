@@ -105,3 +105,11 @@ Prepared the dedicated restricted reader bootstrap, 007 manifest and hosted-capa
 The owner reports reader creation succeeded and 007 was not applied after direct authentication failures. The password-based migration route is paused. The alternative in database/reconstruction/smoke/MANAGEMENT_REVIEW.md passed native offline rehearsal and awaits approval for the exact management SQL. The hosted dashboard and remaining game contracts stay open.
 
 The owner confirmed the live management role has ADMIN OPTION with SET and INHERIT disabled and that all application objects are migrator-owned. The reviewed owner-context replacement uses an atomic temporary self-grant and awaits approval. No hosted SQL ran.
+
+## U5.02/U5.03 - Full-game Overview clock and accepted-schedule contract missing
+
+Read-only live inspection on 2026-11-23: the isolated Uranius database has stage fixtures for season 1 days 7, 8 and 9 (100/150/200 starters) and both synthetic owners, but **no** `uranius_game.game_state`, `race_team_entries` or `get_current_game_date_date`. Source inspection confirms that the original Overview's authoritative date comes from one `game_state` row, not `current_date`. The original `get_overview_race_schedule_v1(p_club_id)` consumer exists, but no verified definition is available in the sanitized inventory.
+
+Prepared a test-only `database/reconstruction/overview/game-clock-contract.mjs` and deterministic `tests/uraniusGameClockContract.test.mjs` (9/9 passed locally); these cannot substitute for missing backend contracts. In particular, shared fixture stages must not be represented as an individual manager's accepted schedule or as published results.
+
+**Next action:** reconcile original `game_state` table, clock initialization/pause/speed/advance rules and exact accepted-entry schedule response from reviewed source. Prepare a target-scoped versioned migration with RLS, consumer shape tests, digest and rollback for **separate owner approval**. Until then, no real Overview switch, hosted DDL, API exposure, jobs or simulation writes. U5.02 remains BLOCKED; U5.03 IN_PROGRESS, progress 49/60. See `database/reconstruction/overview/README.md`.
