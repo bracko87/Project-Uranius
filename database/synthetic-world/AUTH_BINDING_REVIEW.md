@@ -41,3 +41,18 @@ For one verification-only run, omit BindReviewedManagers and run:
 ```
 
 Use the Uranius publishable key and existing manager passwords only in the private terminal. No database client or CA file is required in this mode. Report only the sanitized status, classification and request ID, or the aggregate success message. Verification signs each confirmed account out and does not bind ownership.
+
+## Independent Node verification and credential-preserving fallback
+
+Run once in a private Windows terminal from the sanitized checkout:
+
+```powershell
+Set-Location 'C:\Users\Aleks\Desktop\Project-Uranius\.uranius-upload-review'
+node scripts/verify-uranius-auth.mjs
+```
+
+Enter the Uranius publishable key and existing passwords only at the hidden prompts. The official SDK verifies and signs out Manager A before prompting for B. The script preserves password characters and whitespace, stores sessions only in memory, and makes one request per Auth phase with a deadline. It reports only sanitized phase/status/category/request ID or aggregate success. It cannot bind ownership or call any database endpoint. If A fails, the script stops before asking for B's password.
+
+A native PowerShell 5.1 loopback test reproduced corruption of a non-ASCII password when a JSON string was posted with application/json and no explicit UTF-8 encoding. The PowerShell binding verifier now sends UTF-8 bytes with the charset, verified against the same local HTTP receiver. That defect explains failures for passwords affected by the encoding. The hosted password contents and whether this caused the reported incident remain unverified. If both Node checks pass, use the repaired PowerShell verifier only when the separate ownership-binding step is authorized. [Supabase password sign-in](https://supabase.com/docs/reference/javascript/auth-signinwithpassword)
+
+If the official SDK still reports invalid credentials, stop. Compare the actual confirmed account's email against its expected slot, verify the exact project, then correlate the request ID in Uranius Auth logs. A stored hash alone does not establish that the entered password matches it. A password update remains on hold. If separately authorized after the investigation, use a project-only server-side Auth Admin client outside the browser. Resolve the existing account through Admin getUserById and compare the exact UUID, confirmed email and intended slot. Prompt for and confirm the new password locally, then call admin.updateUserById(existingUuid, { password: newPassword }) for that account only. Re-read the same UUID and verify sign-in once via the independent script. Do not recreate users, reset via email or write auth.users directly. Leave any undisclosed project secret in protected local memory. [Supabase Admin updateUserById](https://supabase.com/docs/reference/javascript/auth-admin-updateuserbyid)

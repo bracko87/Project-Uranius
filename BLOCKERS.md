@@ -87,3 +87,7 @@ The hosted six-entry foundation and empty Auth and ownership state were verified
 ## U5.03 - Owner verification-only Auth retry pending
 
 The owner confirmed both intended accounts exist and reported a gateway HTTP 555 during Manager A sign-in. Offline diagnostics and retry handling are verified. One private verification-only attempt with NoRetry is ready. Hosted identity proof and ownership binding remain pending.
+
+## U5.03 - Independent Auth verification pending
+
+Confirmed and repaired a Windows PowerShell 5.1 UTF-8 serialization fault offline. Run the project-pinned official SDK verifier once in the private terminal. Do not recreate accounts or update passwords. The next hosted step depends on the sanitized result. Ownership remains gated.

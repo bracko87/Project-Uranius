@@ -93,8 +93,8 @@ function Get-VerifiedUraniusManagerId {
     try {
         $login = $request.Clone()
         $login.Method = 'Post'
-        $login.ContentType = 'application/json'
-        $login.Body = ConvertTo-Json -Compress @{ email=$email; password=$Password }
+        $login.ContentType = 'application/json; charset=utf-8'
+        $login.Body = [Text.Encoding]::UTF8.GetBytes((ConvertTo-Json -Compress @{ email=$email; password=$Password }))
         $login.Uri = $origin + '/token?grant_type=password'
         $session = Invoke-UraniusAuthRequest -Slot $Slot -Phase 'sign-in' -Request $login -NoRetry:$NoRetry
         if (!$session.access_token) { throw 'Uranius Auth sign-in returned no session.' }

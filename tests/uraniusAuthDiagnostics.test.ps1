@@ -15,7 +15,7 @@ public sealed class OfflineUraniusAuthException : Exception {
 '@
 
 $script:requestId = '43211310-eda9-49e0-a0ea-ee6b79f802ed'
-$script:fixtureSecret = 'offline-secret-do-not-output'
+$script:fixtureSecret = 'offline-secret-do-not-output-' + [char]0x00e4 + [char]0x6f22
 $script:steps = @()
 $script:count = 0
 $script:sleeps = 0
@@ -28,6 +28,12 @@ function Invoke-RestMethod {
     param($Uri,$Method,$Headers,$MaximumRedirection,$TimeoutSec,$ErrorAction,$ContentType,$Body)
     if ($Uri -cnotlike 'https://sdtsivgtcaoaeoihcwzd.supabase.co/auth/v1/*' -or
         $MaximumRedirection -ne 0 -or $TimeoutSec -ne 15) { throw 'Unexpected request settings' }
+    if ($Uri.EndsWith('/token?grant_type=password')) {
+        if ($ContentType -cne 'application/json; charset=utf-8' -or $Body -isnot [byte[]]) { throw 'Expected explicit UTF-8 JSON bytes' }
+        if ((ConvertFrom-Json -InputObject ([Text.Encoding]::UTF8.GetString($Body))).password -cne $script:fixtureSecret) {
+            throw 'Password did not survive UTF-8 JSON encoding'
+        }
+    }
     $step = $script:steps[$script:count]
     $script:count++
     if ($step.Endpoint -and !$Uri.EndsWith($step.Endpoint)) { throw 'Unexpected Auth phase' }

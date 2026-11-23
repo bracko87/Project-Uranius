@@ -105,7 +105,7 @@ try {
         $prefix='https://sdtsivgtcaoaeoihcwzd.supabase.co/auth/v1'
         if ($MaximumRedirection -ne 0 -or $Headers.apikey -cne 'sb_publishable_offlinefixture') { throw 'Unsafe fixture request.' }
         if ($Uri -ceq ($prefix + '/token?grant_type=password') -and $Method -eq 'Post') {
-            $email=(ConvertFrom-Json -InputObject $Body).email
+            $email=(ConvertFrom-Json -InputObject ([Text.Encoding]::UTF8.GetString($Body))).email
             $slot=if ($email -ceq ('fixture-manager-a'+'@'+'uranius.example')) { 1 } elseif ($email -ceq ('fixture-manager-b'+'@'+'uranius.example')) { 2 } else { throw 'Unexpected fixture email.' }
             return @{ access_token=('offline-token-' + $slot); user=@{id=('00000000-0000-4000-8000-00000000000'+$slot)} }
         }
