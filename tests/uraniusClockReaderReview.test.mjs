@@ -46,7 +46,8 @@ test('clock read query requires verified server role, TLS, fixed subject and rea
   assert.match(read, /:'verified_subject'/)
   assert.match(read, /SELECT season_number, month_number, day_number, is_paused/)
   assert.match(read, /ROLLBACK;/)
-  assert.doesNotMatch(read, /\b(?:UPDATE|DELETE|INSERT|EXECUTE|GRANT)\b/i)
+  const executableRead = read.split('\n').filter(line => !line.trim().startsWith('--')).join('\n')
+  assert.doesNotMatch(executableRead, /\b(?:UPDATE|DELETE|INSERT|EXECUTE|GRANT)\b/i)
   assert.doesNotMatch(read, /request\.jwt\.claims.*team_id|current_date|clock_timestamp/i)
 })
 
