@@ -44,7 +44,7 @@ const adapter = dbMode && createClubDashboardAdapter({
       ['PATH', 'SYSTEMROOT', 'WINDIR', 'TEMP', 'TMP'].includes(key.toUpperCase())))
     const result = spawnSync(dbPsql, ['-X', '-w', '-qAt', '-v', 'ON_ERROR_STOP=1', '-f', '-'], {
       env: { ...system, PGHOST: '127.0.0.1', PGHOSTADDR: '127.0.0.1', PGPORT: dbPort,
-        PGUSER: 'uranius_smoke_reader', PGDATABASE: 'uranius_006_test_dashboard', PGCONNECT_TIMEOUT: '5',
+        PGUSER: 'uranius_fixture_reader', PGDATABASE: 'uranius_006_test_dashboard', PGCONNECT_TIMEOUT: '5',
         PGOPTIONS: '-c statement_timeout=5000' },
       input: readSql.replace('__VERIFIED_SUBJECT__', id), encoding: 'utf8', timeout: 7000, windowsHide: true,
     })

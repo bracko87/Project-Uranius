@@ -126,7 +126,7 @@ try {
     if ((Local-Sql "SELECT count(*)=2 AND bool_and(user_id::text='00000000-0000-4000-8000-00000000000'||team_id) FROM uranius_catalog.team_owners;") -ne 't') { throw 'Verified manager binding mismatch.' }
     if ((Local-Sql 'SELECT count(*) FROM auth.users;') -ne '0') { throw 'Bind procedure unexpectedly inserted Auth users.' }
     Write-Output 'Mocked Auth verification and native TLS binding path passed.'
-    Local-Sql 'CREATE ROLE uranius_smoke_reader LOGIN NOINHERIT; GRANT authenticated TO uranius_smoke_reader;' | Out-Null
+    Local-Sql 'CREATE ROLE uranius_fixture_reader LOGIN NOINHERIT; GRANT authenticated TO uranius_fixture_reader;' | Out-Null
     Local-Sql 'CREATE DATABASE uranius_006_test_dashboard TEMPLATE postgres;' | Out-Null
     $oldPsql = $env:URANIUS_SMOKE_PSQL
     $oldPort = $env:URANIUS_SMOKE_DB_PORT
@@ -139,6 +139,31 @@ try {
         $env:URANIUS_SMOKE_PSQL = $oldPsql
         $env:URANIUS_SMOKE_DB_PORT = $oldPort
     }
+    $smoke=Join-Path $repo 'database/reconstruction/smoke'
+    $reader=ConvertFrom-Json -InputObject (Get-Content -Raw (Join-Path $smoke 'manifest.json'))
+    foreach ($entry in @($reader.bootstrap) + @($reader.migrations)) {
+        if ((Get-FileHash -LiteralPath (Join-Path $smoke $entry.file)).Hash -ine $entry.sha256) { throw '007 package hash mismatch.' }
+    }
+    Local-Sql (Get-Content -Raw (Join-Path $smoke 'bootstrap-reader.sql')) | Out-Null
+    Local-Sql 'ALTER ROLE uranius_smoke_reader LOGIN;' | Out-Null
+    $digest=(Get-FileHash -LiteralPath (Join-Path $smoke 'manifest.json')).Hash
+    & $wrapper -PsqlPath $shim -CaFile $ca -ResumeExistingRole -SmokeReader -Apply -ApprovedManifestSha256 $digest
+    if ((Local-Sql "SELECT count(*)=7 AND EXISTS (SELECT 1 FROM uranius_private.migration_ledger WHERE version='007_smoke_reader.sql' AND sha256='$($reader.migrations[0].sha256)') FROM uranius_private.migration_ledger;") -ne 't') { throw '007 ledger mismatch.' }
+    $sqlPath=Join-Path $repo 'database/synthetic-world/hosted-club-dashboard-read.sql'
+    $trustedCa=$ca.Replace('\','/')
+    $readerConnection="host=$hostName hostaddr=127.0.0.1 port=45680 dbname=postgres user=uranius_smoke_reader sslmode=verify-full sslrootcert='$trustedCa' connect_timeout=5"
+    foreach ($n in 1,2) {
+        $value='00000000-0000-4000-8000-00000000000'+$n
+        $packet = & $psql -X -qAtw -v ON_ERROR_STOP=1 -v "verified_subject=$value" -d $readerConnection -f $sqlPath
+        if ($LASTEXITCODE -ne 0) { throw 'Dedicated reader SQL failed.' }
+        $result = ConvertFrom-Json -InputObject $packet[-1]
+        if ($result.club.name -cne ('Fixture Team '+$n) -or $result.riders -ne 10 -or $result.credits -ne 10000 -or $result.calendar -ne 3) {
+            throw 'Dedicated role returned invalid manager scope.'
+        }
+    }
+    $audit=Local-Sql "SELECT NOT has_schema_privilege('uranius_smoke_reader','uranius_private','USAGE') AND NOT has_any_column_privilege('uranius_smoke_reader','uranius_catalog.riders','UPDATE') AND NOT has_column_privilege('uranius_smoke_reader','uranius_catalog.riders','label','SELECT') AND NOT pg_has_role('uranius_smoke_reader','authenticated','MEMBER');"
+    if ($audit -ne 't') { throw 'Unexpected smoke role permissions.' }
+    Write-Output '007 exact column grants, RLS and native reader TLS query passed.'
     Write-Output 'PowerShell 5.1 wrapper and PostgreSQL 17 TLS migration rehearsal passed.'
 }
 finally { & $pgctl -D $data -m fast -w stop }

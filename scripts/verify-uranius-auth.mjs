@@ -31,7 +31,7 @@ function safeResponse(status, code) {
 }
 
 // The fetch parameter is used only by offline tests. The terminal always uses native fetch.
-export async function verifyManager(slot, key, password, fetcher = globalThis.fetch) {
+export async function openVerifiedManager(slot, key, password, fetcher = globalThis.fetch) {
   if (!['a', 'b'].includes(slot) || !/^sb_publishable_[A-Za-z0-9_-]+$/.test(key) || !password) {
     throw new AuthDiagnostic('Expected a manager slot, Uranius publishable key and existing password.')
   }
@@ -88,13 +88,24 @@ export async function verifyManager(slot, key, password, fetcher = globalThis.fe
   } catch (failure) {
     proofFailure = failure
   }
-  const { error: logoutError } = await client.auth.signOut({ scope: 'local' })
-  if (proofFailure) throw proofFailure
-  if (logoutError || lastFailure) throw fail('logout', 'sign-out failed')
-  return data.user.id
+  const close = async () => {
+    const { error: logoutError } = await client.auth.signOut({ scope: 'local' })
+    if (logoutError || lastFailure) throw fail('logout', 'sign-out failed')
+  }
+  if (proofFailure) {
+    await close().catch(() => {})
+    throw proofFailure
+  }
+  return { id: data.user.id, expiresAt: data.session.expires_at * 1000, close }
 }
 
-async function privatePrompt(label) {
+export async function verifyManager(slot, key, password, fetcher = globalThis.fetch) {
+  const verified = await openVerifiedManager(slot, key, password, fetcher)
+  await verified.close()
+  return verified.id
+}
+
+export async function privatePrompt(label) {
   const mute = new Writable({ write(_bytes, _encoding, done) { done() } })
   const line = createInterface({ input: process.stdin, output: mute, terminal: true, historySize: 0 })
   const cancel = new AbortController()

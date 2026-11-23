@@ -8,7 +8,7 @@ function fixture(manager: 'a' | 'b') {
 
 export const CharacterData = { a: fixture('a'), b: fixture('b') }
 
-async function request(path: string, method = 'GET', body?: object) {
+export async function request(path: string, method = 'GET', body?: object) {
   const response = await fetch('/fixture/' + path, {
     method, headers: body ? { 'Content-Type': 'application/json' } : undefined,
     body: body ? JSON.stringify(body) : undefined,

@@ -9,6 +9,7 @@ const sha256 = bytes => createHash('sha256').update(bytes).digest('hex')
 const packages = {
   club: { directory: '', file: '005_club_identity.sql' },
   world: { directory: 'world/', file: '006_synthetic_world.sql' },
+  smoke: { directory: 'smoke/', file: '007_smoke_reader.sql' },
 }
 
 function apply(env, approvedDigest, scope) {
@@ -18,11 +19,19 @@ function apply(env, approvedDigest, scope) {
   const dir = new URL('../database/reconstruction/' + pkg.directory, import.meta.url)
   const manifestBytes = readFileSync(new URL('manifest.json', dir))
   if (sha256(manifestBytes) !== approvedDigest.toLowerCase()) throw new Error('Approved manifest SHA-256 does not match.')
-  const { projectRef, postgresMajor, requires, migrations } = JSON.parse(manifestBytes)
+  const { projectRef, postgresMajor, requires, migrations, bootstrap: manifestBootstrap } = JSON.parse(manifestBytes)
   const foundation = JSON.parse(readFileSync(new URL('../database/preparation/manifest.json', import.meta.url), 'utf8'))
-  if (scope === 'world') {
+  if (scope === 'world' || scope === 'smoke') {
     const previous = JSON.parse(readFileSync(new URL('../database/reconstruction/manifest.json', import.meta.url), 'utf8'))
     foundation.push(...previous.migrations)
+  }
+  if (scope === 'smoke') {
+    const previous = JSON.parse(readFileSync(new URL('../database/reconstruction/world/manifest.json', import.meta.url), 'utf8'))
+    foundation.push(...previous.migrations)
+    const bootstrap = readFileSync(new URL('bootstrap-reader.sql', dir))
+    if (manifestBootstrap?.file !== 'bootstrap-reader.sql' || sha256(bootstrap) !== manifestBootstrap.sha256) {
+      throw new Error('Reader bootstrap checksum mismatch.')
+    }
   }
   if (projectRef !== env.URANIUS_SUPABASE_PROJECT_REF || postgresMajor !== 17 ||
       JSON.stringify(requires) !== JSON.stringify(foundation) ||
@@ -34,7 +43,7 @@ function apply(env, approvedDigest, scope) {
   if (sha256(sql) !== hash || !/^[a-f0-9]{64}$/.test(hash)) throw new Error('Migration checksum mismatch.')
 
   const dependencyRows = requires.map(row => {
-    if (!/^00[1-5]_[a-z_]+\.sql$/.test(row.file) || !/^[a-f0-9]{64}$/.test(row.sha256)) {
+    if (!/^00[1-6]_[a-z_]+\.sql$/.test(row.file) || !/^[a-f0-9]{64}$/.test(row.sha256)) {
       throw new Error('Invalid foundation ledger dependency.')
     }
     return "('" + row.file + "', '" + row.sha256 + "')"
@@ -81,7 +90,9 @@ $$;
     ].join('\n'),
     env: childEnv, timeout: 120_000, transaction: true, stage: 'Reviewed reconstruction stopped',
   })
-  console.log(scope === 'club' ? 'Reviewed club reconstruction applied.' : 'Reviewed synthetic world migration applied.')
+  const messages = { club: 'Reviewed club reconstruction applied.', world: 'Reviewed synthetic world migration applied.',
+    smoke: 'Reviewed smoke reader migration applied.' }
+  console.log(messages[scope])
 }
 
 export function runReviewedReconstruction(scope, flag) {

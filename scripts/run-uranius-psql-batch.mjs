@@ -20,12 +20,13 @@ function failureCategory(result) {
   return sqlstate ? category + ' (SQLSTATE ' + sqlstate + ')' : category
 }
 
-export function runPsqlBatch({ executable, input, env, timeout, transaction = false, stage }) {
+export function runPsqlBatch({ executable, input, env, timeout, transaction = false, stage, extraArgs = [] }) {
   const args = [
     '--no-psqlrc', '--no-password', '--quiet', '--set=ON_ERROR_STOP=1',
     '--set=VERBOSITY=sqlstate', '--pset=pager=off', '--file=-',
   ]
   if (transaction) args.unshift('--single-transaction')
+  args.push(...extraArgs)
 
   // Node supervises both pipe I/O and process exit on the same deadline.
   const result = spawnSync(executable, args, {

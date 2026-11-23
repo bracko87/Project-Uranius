@@ -2,6 +2,7 @@ import { pathToFileURL } from 'node:url'
 
 const databaseRoles = new Map([
   ['migrate', 'uranius_migrator'],
+  ['read', 'uranius_smoke_reader'],
   ['write', 'uranius_worker'],
   ['schedule', 'uranius_scheduler'],
 ])

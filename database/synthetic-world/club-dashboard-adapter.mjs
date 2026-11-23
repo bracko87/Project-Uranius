@@ -1,12 +1,17 @@
 import { randomBytes } from 'node:crypto'
 
 const uuid = /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i
-const cookieName = 'uranius_club_session'
 
 export function createClubDashboardAdapter({ verifyLogin, readDashboard, origin, secureCookie = true }) {
   const sessions = new Map()
+  const cookieName = secureCookie ? '__Host-uranius_club_session' : 'uranius_club_session'
+  async function revoke(key) {
+    const active = sessions.get(key)
+    sessions.delete(key)
+    await active?.close?.()
+  }
   const cookieFlags = '; HttpOnly; SameSite=Strict; Path=/' + (secureCookie ? '; Secure' : '')
-  return async function handle(req, res) {
+  async function handle(req, res) {
     const path = req.url
     if (!['/fixture/login', '/fixture/logout', '/fixture/dashboard'].includes(path)) return false
     const send = (status, value) => {
@@ -16,9 +21,11 @@ export function createClubDashboardAdapter({ verifyLogin, readDashboard, origin,
     }
     if (req.headers.host !== new URL(origin()).host ||
         (req.headers.origin && req.headers.origin !== origin())) return send(403, { error: 'Forbidden origin' })
-    const sessionKey = req.headers.cookie?.match(/(?:^|;\s*)uranius_club_session=([a-f0-9]{64})(?:;|$)/)?.[1]
-    const active = sessions.get(sessionKey)
-    if (active && active.expiresAt <= Date.now()) sessions.delete(sessionKey)
+    const sessionKey = req.headers.cookie?.split(';').map(cookie => cookie.trim()).find(cookie =>
+      cookie.startsWith(cookieName + '='))?.slice(cookieName.length + 1)
+    for (const [key, active] of sessions) {
+      if (active.expiresAt <= Date.now()) void revoke(key).catch(() => {})
+    }
     try {
       if (path === '/fixture/login' && req.method === 'POST') {
         if (req.headers.origin !== origin() ||
@@ -32,18 +39,24 @@ export function createClubDashboardAdapter({ verifyLogin, readDashboard, origin,
         }
         const { email, password } = JSON.parse(Buffer.concat(chunks).toString('utf8'))
         if (typeof email !== 'string' || typeof password !== 'string') return send(400, { error: 'Invalid input' })
+        if (sessions.size >= 16 && !sessions.has(sessionKey)) return send(429, { error: 'Too many local sessions' })
         const identity = await verifyLogin(email, password)
         if (!uuid.test(identity?.id ?? '')) return send(401, { error: 'Login rejected' })
-        sessions.delete(sessionKey)
+        await revoke(sessionKey).catch(() => {})
         const key = randomBytes(32).toString('hex')
-        sessions.set(key, { subject: identity.id, expiresAt: Date.now() + 15 * 60_000 })
+        const expiresAt = Math.min(identity.expiresAt ?? Infinity, Date.now() + 15 * 60_000)
+        if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
+          await identity.close?.()
+          return send(401, { error: 'Invalid session lifetime' })
+        }
+        sessions.set(key, { subject: identity.id, expiresAt, close: identity.close })
         res.setHeader('Set-Cookie', cookieName + '=' + key + cookieFlags)
         return send(200, { ok: true })
       }
       if (path === '/fixture/logout' && req.method === 'POST') {
         if (req.headers.origin !== origin()) return send(403, { error: 'Forbidden request' })
-        sessions.delete(sessionKey)
         res.setHeader('Set-Cookie', cookieName + '=' + cookieFlags + '; Max-Age=0')
+        await revoke(sessionKey)
         return send(200, { ok: true })
       }
       if (path === '/fixture/dashboard' && req.method === 'GET') {
@@ -56,4 +69,6 @@ export function createClubDashboardAdapter({ verifyLogin, readDashboard, origin,
       return send(500, { error: 'Dashboard smoke request failed' })
     }
   }
+  handle.close = () => Promise.allSettled([...sessions.keys()].map(revoke))
+  return handle
 }

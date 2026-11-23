@@ -6,6 +6,7 @@ param(
     [Parameter(ParameterSetName = 'Connect')][switch]$ResumeExistingRole,
     [Parameter(ParameterSetName = 'Connect')][switch]$ClubReconstruction,
     [Parameter(ParameterSetName = 'Connect')][switch]$SyntheticWorld,
+    [Parameter(ParameterSetName = 'Connect')][switch]$SmokeReader,
     [Parameter(ParameterSetName = 'Connect')][string]$ApprovedManifestSha256,
     [Parameter(Mandatory, ParameterSetName = 'Offline')][switch]$VerifyManifest
 )
@@ -29,10 +30,12 @@ if ($VerifyManifest) {
     return
 }
 
-if ($ClubReconstruction -and $SyntheticWorld) { throw 'Select only one reconstruction package.' }
-$isReconstruction = $ClubReconstruction -or $SyntheticWorld
+if (@($ClubReconstruction, $SyntheticWorld, $SmokeReader).Where({ $_ }).Count -gt 1) { throw 'Select only one reconstruction package.' }
+$isReconstruction = $ClubReconstruction -or $SyntheticWorld -or $SmokeReader
 if ($isReconstruction -and -not $ResumeExistingRole) { throw 'Reconstruction requires the existing migration role.' }
-$approvedManifestPath = if ($SyntheticWorld) {
+$approvedManifestPath = if ($SmokeReader) {
+    Join-Path $repo 'database/reconstruction/smoke/manifest.json'
+} elseif ($SyntheticWorld) {
     Join-Path $repo 'database/reconstruction/world/manifest.json'
 } elseif ($ClubReconstruction) {
     Join-Path $repo 'database/reconstruction/manifest.json'
@@ -160,7 +163,9 @@ try {
         $env:URANIUS_DATABASE_CA_FILE = $ca
         $env:URANIUS_PSQL_PATH = $psql
         $env:URANIUS_DATABASE_URL = 'postgresql://uranius_migrator:{0}@{1}:5432/postgres?sslmode=verify-full' -f [Uri]::EscapeDataString($migrationPassword),$dbHost
-        if ($SyntheticWorld) {
+        if ($SmokeReader) {
+            & node (Join-Path $PSScriptRoot 'apply-smoke-reader.mjs') --apply-reviewed-smoke-reader $ApprovedManifestSha256
+        } elseif ($SyntheticWorld) {
             & node (Join-Path $PSScriptRoot 'apply-synthetic-world.mjs') --apply-reviewed-synthetic-world $ApprovedManifestSha256
         } elseif ($ClubReconstruction) {
             & node (Join-Path $PSScriptRoot 'apply-club-reconstruction.mjs') --apply-reviewed-club-reconstruction $ApprovedManifestSha256

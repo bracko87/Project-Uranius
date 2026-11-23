@@ -19,3 +19,15 @@ Approval requested for this design, then review the exact SQL/manifest and ask s
 ## Leaked-password protection
 
 The Supabase warning concerns a project Auth setting. The Pro plan supports rejecting passwords known to the Pwned Passwords service. Recommend enabling leaked-password protection only in the Uranius Auth settings after separate approval. Verify the warning clears and test both existing managers. The warning alone does not establish either password was leaked. Preserve working credentials unless Auth reports an account-specific weak-password result and any necessary password change is separately approved. Keep signup closed and make no production configuration changes. [Supabase password security](https://supabase.com/docs/guides/auth/password-security)
+
+## Implemented HTTPS runner and approval boundary
+
+The reviewed [007 package](../reconstruction/smoke/README.md) is prepared. The runnable adapter is scripts/run-uranius-hosted-smoke.mjs. Once the role, SQL and hosted verification are separately approved, launch the runner from an interactive terminal with:
+
+- URANIUS_SMOKE_TLS_CERT and URANIUS_SMOKE_TLS_KEY pointing to a locally trusted certificate and private key for IP SAN 127.0.0.1, outside Git.
+- URANIUS_DATABASE_CA_FILE pointing to the Uranius Supabase CA from the project dashboard.
+- URANIUS_PSQL_PATH pointing to the trusted local PostgreSQL 17 client.
+
+Run `node scripts/run-uranius-hosted-smoke.mjs --reviewed-hosted-smoke`. Enter the reader password and publishable key at masked startup prompts. Open the printed loopback HTTPS URL in an isolated browser profile whose trust store trusts the loopback certificate. Never bypass certificate validation or expose the listener externally. Use the two existing manager passwords only on the local HTTPS Login form. The server uses the pinned official Supabase Auth flow, retrieves the confirmed user, keeps Auth tokens in memory, then binds only the returned UUID as a quoted psql value for a fixed TLS read-only query. The Auth credential is not sent to PostgreSQL. The browser receives an opaque Secure, HttpOnly, SameSite=Strict session cookie. Session expiry is capped at the earlier of 15 minutes or Auth token expiry. Logout deletes the local session and attempts Supabase local-scope sign-out. A previous cookie is unusable even if upstream logout fails.
+
+Acceptance uses both managers, an anonymous browser, an old cookie after logout and an attempted cross-origin request. The smoke serves the original Login page, existing stylesheet and club-context helper, plus a limited dashboard projection. It exposes no new Supabase schemas. The full Overview is a separate integration task. The leaked-password-protection setting remains unchanged.
