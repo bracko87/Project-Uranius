@@ -200,19 +200,19 @@ try {
   const policies012 = readFileSync(join(root, 'database/reconstruction/overview/012_owner_schedule_reader_DISPOSABLE_REVIEW_ONLY.sql'), 'utf8')
   const schedule011 = readFileSync(join(root, 'database/reconstruction/overview/011_overview_schedule_REVIEW_ONLY.sql'), 'utf8')
   const unwrap = value => {
-    assert.match(value, /\\nROLLBACK;\\s*$/)
-    assert.doesNotMatch(value, /\\bCOMMIT\\s*;/i)
-    return value.replace(/\\nROLLBACK;\\s*$/, '\\n')
+    assert.match(value, /\nROLLBACK;\s*$/)
+    assert.doesNotMatch(value, /\bCOMMIT\s*;/i)
+    return value.replace(/\nROLLBACK;\s*$/, '\n')
   }
   sql(schema010)
   assert.equal(sql("SELECT to_regclass('uranius_game.races') IS NULL"), 't')
   pass('Exact 010 original rollback-only schema candidate leaves historical 001–009 intact')
 
-  sql(unwrap(schema010) + '\\nCOMMIT;')
+  sql(unwrap(schema010) + '\nCOMMIT;')
   sql(policies012)
   assert.equal(sql("SELECT count(*) FROM pg_policy WHERE polrelid='uranius_game.race_preparations'::regclass"), '0')
   pass('Exact 012 owner policy preview rolls back in fully replayed database')
-  sql(unwrap(policies012) + '\\nCOMMIT;')
+  sql(unwrap(policies012) + '\nCOMMIT;')
 
   const raceA = '11111111-1111-4111-8111-111111111111'
   const raceB = '22222222-2222-4222-8222-222222222222'
@@ -245,9 +245,9 @@ try {
   }
   pass('Two synthetic owner clubs and world race inserted with FORCE RLS restored')
 
-  const scheduleFor = subject => JSON.parse(sql("BEGIN READ ONLY;\\n" +
-    "SELECT set_config('request.jwt.claims','" + JSON.stringify({sub:subject}) + "',true);\\n" +
-    schedule011 + "\\nROLLBACK;", 'uranius_smoke_reader'))
+  const scheduleFor = subject => JSON.parse(sql("BEGIN READ ONLY;\n" +
+    "SELECT set_config('request.jwt.claims','" + JSON.stringify({sub:subject}) + "',true);\n" +
+    schedule011 + "\nROLLBACK;", 'uranius_smoke_reader'))
   for (const [subject, own, other] of [[a,raceA,raceB],[b,raceB,raceA]]) {
     const response = scheduleFor(subject)
     assert.equal(response.upcomingSchedule.length, 1)
