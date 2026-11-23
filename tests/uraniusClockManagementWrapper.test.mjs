@@ -6,6 +6,7 @@ import { createHash } from 'node:crypto'
 const source = readFileSync(new URL('../database/reconstruction/clock/008_game_clock_v1.sql', import.meta.url), 'utf8')
 const wrapper = readFileSync(new URL('../database/reconstruction/clock/008_management_REVIEW_ONLY.sql', import.meta.url), 'utf8')
 const manifest = JSON.parse(readFileSync(new URL('../database/reconstruction/clock/manifest.json', import.meta.url), 'utf8'))
+const nativeRunner = readFileSync(new URL('./uraniusClockManagedPg17.mjs', import.meta.url), 'utf8')
 const sha = bytes => createHash('sha256').update(bytes).digest('hex')
 
 test('review-only management wrapper pins exact canonical 008 SHA and project', () => {
@@ -61,4 +62,18 @@ test('non-superuser role semantics require disposable native management rehearsa
   assert.match(wrapper, /Native management-role replay and failure injection NOT YET TESTED/)
   assert.equal(manifest.status, 'REVIEW_ONLY_NOT_AUTHORIZED')
   assert.ok(manifest.notReadyReasons.some(x => /No reviewed atomic management-connection execution wrapper yet/.test(x)))
+})
+
+test('native wrapper rehearsal is explicitly disposable, pinned and exercises membership rollback', () => {
+  assert.match(nativeRunner, /--disposable-native-pg17/)
+  assert.match(nativeRunner, /mkdtempSync\(join\(tmpdir\(\), 'uranius-008-managed-disposable-'\)\)/)
+  assert.match(nativeRunner, /PGHOST: '127\.0\.0\.1'/)
+  assert.match(nativeRunner, /assert\.equal\(hash\(management\), proposal\.managementWrapper\.sha256\)/)
+  assert.match(nativeRunner, /CREATE ROLE postgres LOGIN NOSUPERUSER NOCREATEROLE NOCREATEDB NOINHERIT/)
+  assert.match(nativeRunner, /GRANT uranius_migrator TO postgres WITH ADMIN TRUE, INHERIT FALSE, SET FALSE/)
+  assert.match(nativeRunner, /forced after temp grant/)
+  assert.match(nativeRunner, /forced after 008 DDL and ledger/)
+  assert.match(nativeRunner, /assert\.equal\(membership\(\), beforeMembers\)/)
+  assert.match(nativeRunner, /INFO Disposable PostgreSQL files cleaned up/)
+  assert.doesNotMatch(nativeRunner, /https:\/\/|supabase\.co|SUPABASE_SERVICE_ROLE_KEY/)
 })
