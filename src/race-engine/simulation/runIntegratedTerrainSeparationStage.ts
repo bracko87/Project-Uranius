@@ -138,6 +138,8 @@ export interface IntegratedTerrainSeparationOptions {
   readonly experimentalPreserveRecedingDroppedGroups?: boolean
   /** OFFLINE POC ONLY: apply actual initial attack speed for one movement tick. */
   readonly experimentalPhysicalAttackLaunch?: boolean
+  /** OFFLINE POC ONLY: executed final sprint and lead-out affect finish rank/energy. */
+  readonly experimentalFinishTacticsEnabled?: boolean
 
   /**
    * Disabled by default so all earlier Phase 7B.8 diagnostics retain their
@@ -1443,6 +1445,8 @@ export function simulateIntegratedTerrainSeparationTick(
           movement.movement,
         subTickInterpolationEnabled:
           subTickFinishInterpolationEnabled,
+        experimentalFinishTacticsEnabled:
+          options.experimentalFinishTacticsEnabled === true,
       },
     )
 
