@@ -19,11 +19,11 @@ const input:StageInput={
   {orderId:'sprint-a',type:'sprint',status:'scheduled',
    teamId:selected.teamId,riderId:selected.riderId,priority:1,
    eligibleFromKm:8,eligibleUntilKm:10,
-   targetRiderId:null,maximumFollowers:null},
+   targetRiderId:null,maximumFollowers:null,metadata:{}},
   {orderId:'leadout-a',type:'leadout',status:'scheduled',
    teamId:helper.teamId,riderId:helper.riderId,priority:1,
    eligibleFromKm:8,eligibleUntilKm:10,
-   targetRiderId:selected.riderId,maximumFollowers:null},
+   targetRiderId:selected.riderId,maximumFollowers:null,metadata:{}},
  ],
 }
 function run(enabled:boolean){
