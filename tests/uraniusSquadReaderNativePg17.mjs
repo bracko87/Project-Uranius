@@ -373,7 +373,7 @@ try {
   const candidate013 = readFileSync(join(root,'database/reconstruction/squad/013_squad_reader_grant_REVIEW_ONLY.sql'),'utf8')
   sql('REVOKE SELECT (label,flat,climbing,stamina,resistance) ON uranius_catalog.riders FROM uranius_smoke_reader')
   assert.equal(sql(grantCheck),'false')
-  assert.equal(sql("SELECT has_column_privilege('uranius_smoke_reader','uranius_catalog.riders','team_id','SELECT')"),'false')
+  assert.equal(sql("SELECT has_column_privilege('uranius_smoke_reader','uranius_catalog.riders','team_id','SELECT')"),'f')
   sql(wrap(candidate013),'uranius_migrator',true)
   assert.equal(sql(grantCheck),'false')
   pass('Unmodified 013 forward candidate rejects local non-TLS and leaves ACL unchanged')
@@ -389,7 +389,7 @@ try {
 
   sql(wrap(fixtureCandidate013),'uranius_migrator')
   assert.equal(sql(grantCheck),'true')
-  assert.equal(sql("SELECT has_column_privilege('uranius_smoke_reader','uranius_catalog.riders','team_id','SELECT')"),'false')
+  assert.equal(sql("SELECT has_column_privilege('uranius_smoke_reader','uranius_catalog.riders','team_id','SELECT')"),'f')
   assert.equal(sql("SELECT count(*) FROM uranius_private.migration_ledger"),'10')
   sql(wrap(fixtureCandidate013),'uranius_migrator',true)
   pass('Proposed 013 grant is least-privilege and repeated application fails closed')
