@@ -24,7 +24,8 @@ try {
   $env:URANIUS_PSQL_PATH = (Resolve-Path -LiteralPath $psql).Path
   $env:URANIUS_CLOCK_READ_APPROVED = '1'
   $env:URANIUS_OVERVIEW_SCHEDULE_READ_APPROVED = '1'
-  Write-Host 'Local HTTPS Overview smoke: isolated Uranius project sdtsivgtcaoaeoihcwzd only.'
+  $env:URANIUS_SQUAD_READ_APPROVED = '1'
+  Write-Host 'Local HTTPS Overview + Squad smoke: isolated Uranius project sdtsivgtcaoaeoihcwzd only.'
   Write-Host 'No schema writes, external listener, original production access or client Data API grants.'
   Write-Host 'The Node process will prompt privately for the uranius_smoke_reader password and Uranius publishable API key.'
   & node $runner --reviewed-hosted-smoke
@@ -32,7 +33,8 @@ try {
 } finally {
   foreach ($name in @('URANIUS_SMOKE_TLS_CERT','URANIUS_SMOKE_TLS_KEY',
     'URANIUS_DATABASE_CA_FILE','URANIUS_PSQL_PATH',
-    'URANIUS_CLOCK_READ_APPROVED','URANIUS_OVERVIEW_SCHEDULE_READ_APPROVED')) {
+    'URANIUS_CLOCK_READ_APPROVED','URANIUS_OVERVIEW_SCHEDULE_READ_APPROVED',
+    'URANIUS_SQUAD_READ_APPROVED')) {
     Remove-Item "Env:$name" -ErrorAction SilentlyContinue
   }
 }
