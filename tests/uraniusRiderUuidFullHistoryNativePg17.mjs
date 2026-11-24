@@ -422,12 +422,12 @@ try {
   const tls014="OR NOT EXISTS (SELECT 1 FROM pg_stat_ssl WHERE pid=pg_backend_pid() AND ssl)"
   assert.equal(raw014.split(tls014).length,2)
   sql(wrap(raw014),'uranius_migrator',true)
-  assert.equal(sql("SELECT to_regclass('uranius_game.synthetic_rider_identity') IS NULL"),'true')
+  assert.equal(sql("SELECT to_regclass('uranius_game.synthetic_rider_identity') IS NULL"),'t')
   pass('Exact reviewed 014 refuses non-TLS transaction with no table created')
 
   const local014=raw014.replace(tls014,'OR FALSE /* offline disposable fixture only */')
   sql(wrap(local014),'postgres',true)
-  assert.equal(sql("SELECT to_regclass('uranius_game.synthetic_rider_identity') IS NULL"),'true')
+  assert.equal(sql("SELECT to_regclass('uranius_game.synthetic_rider_identity') IS NULL"),'t')
   pass('014 rejects wrong database identity even after all eleven prerequisites')
 
   sql(wrap(local014))
@@ -442,7 +442,7 @@ try {
   pass('All 200 mappings are unique, valid, fully joined and synthetic-provenance only')
 
   for(const role of ['anon','authenticated','uranius_smoke_reader'])
-    assert.equal(sql("SELECT has_any_column_privilege('"+role+"','uranius_game.synthetic_rider_identity','SELECT')"),'false')
+    assert.equal(sql("SELECT has_any_column_privilege('"+role+"','uranius_game.synthetic_rider_identity','SELECT')"),'f')
   sql("SELECT * FROM uranius_game.synthetic_rider_identity",'uranius_smoke_reader',true)
   sql("UPDATE uranius_game.synthetic_rider_identity SET identity_provenance='tampered'",'uranius_smoke_reader',true)
   pass('Direct anonymized and restricted mapping access denied; reader cannot mutate UUIDs')
