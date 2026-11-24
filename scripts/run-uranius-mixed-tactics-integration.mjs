@@ -41,6 +41,11 @@ try{
   for(const tick of scenario.chaseTimeline.slice(0,4))
    console.log('ESTABLISHED CHASE PHYSICS '+label+' | '+JSON.stringify(tick))
  }
+ if(!report.physicalChaseEvidence||
+  report.physicalChaseEvidence.pairedEligibleTicks<1||
+  report.physicalChaseEvidence.positiveAppliedSpeedDifference!==true||
+  report.physicalChaseEvidence.positiveTickEnergyDifference!==true)
+  throw Error('Established-breakaway physical speed and per-tick energy evidence missing: '+JSON.stringify(report.physicalChaseEvidence))
  if(!report.establishedPhysicalComparison||
   ['bothCompleted','bothClassified','allFourOrdersExecuted','eligibleChaseExists']
    .some(key=>report.establishedPhysicalComparison[key]!==true))
