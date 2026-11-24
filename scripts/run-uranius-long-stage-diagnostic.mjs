@@ -34,6 +34,8 @@ try{
    'survivedBirth '+p.survivingNewDropTransitions,
    'multiTicks '+p.multiGroupTicks,'positiveGapTicks '+p.positiveGapTicks,
    'peakTickGapKm '+p.peakTickSpatialGapKm,
+   'preCatchPositiveGapTicks '+p.positivePreCatchGapTicks,
+   'relativeSpeedTicks '+p.nonzeroRelativeSpeedTicks,
    'speed '+p.winnerAverageKmh+'km/h',
    'ms '+p.runtimeMs,'technical '+(p.technicalIssues.join(',')||'none'),
    'sporting '+(p.sportingWarnings.join(',')||'none')].join(' | '))
