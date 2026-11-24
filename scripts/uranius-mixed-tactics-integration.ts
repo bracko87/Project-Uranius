@@ -3,6 +3,7 @@
 import {createHash} from 'node:crypto'
 import {syntheticTenRiderStage} from '../src/race-engine/tests/fixtures/syntheticTenRiderStage'
 import {createInitialState} from '../src/race-engine/simulation/createInitialState'
+import {createBreakawayGroup} from '../src/race-engine/simulation/createBreakawayGroup'
 import {runCalibratedTerrainSeparationStage} from '../src/race-engine/simulation/runCalibratedTerrainSeparationStage'
 import type {StageInput} from '../src/race-engine/domain/StageInput'
 
@@ -10,6 +11,7 @@ const sprinter=syntheticTenRiderStage.riders[0]
 const leadout=syntheticTenRiderStage.riders[1]
 const pursuer=syntheticTenRiderStage.riders[2]
 const attacker=syntheticTenRiderStage.riders[5]
+const establishedEscape=syntheticTenRiderStage.riders[7]
 const stageInput:StageInput={
  ...syntheticTenRiderStage,
  raceId:'offline-mixed-tactics',stageId:'offline-24km-mixed',
@@ -38,8 +40,19 @@ const stageInput:StageInput={
    maximumFollowers:null,targetRiderId:null,metadata:{}},
  ],
 }
-function run(enabled:boolean){
- const result=runCalibratedTerrainSeparationStage(createInitialState(stageInput),{
+function createStartingState(withEstablishedBreakaway:boolean){
+ const state=createInitialState(stageInput)
+ if(!withEstablishedBreakaway)return state
+ const pelotons=Object.values(state.groups).filter(g=>g.active&&g.groupType==='peloton')
+ if(pelotons.length!==1)throw Error('One initial peloton required')
+ // Explicit scenario setup only. The breakaway is already ~90 seconds ahead
+ // at the moment our observation begins, as in the prior chase lifecycle POC.
+ // NOT evidence that the engine's attack order created a 90-second gap.
+ return createBreakawayGroup({state,sourceGroupId:pelotons[0].groupId,
+  riderIds:[establishedEscape.riderId],speedKmh:38,initialGapSeconds:90}).state
+}
+function run(enabled:boolean,withEstablishedBreakaway=false){
+ const result=runCalibratedTerrainSeparationStage(createStartingState(withEstablishedBreakaway),{
   experimentalPhysicalAttackLaunch:enabled,
   experimentalChaseOrdersEnabled:enabled,
   experimentalFinishTacticsEnabled:enabled,
@@ -113,6 +126,8 @@ function run(enabled:boolean){
 }
 const off=run(false)
 const on=run(true)
+const establishedOff=run(false,true)
+const establishedOn=run(true,true)
 const requiredOrderIds=['mixed-attack','mixed-chase','mixed-leadout','mixed-sprint']
 const checks={
  bothRacesCompleted:off.completed&&on.completed,
@@ -124,9 +139,33 @@ const checks={
  physicalLaunchApplied:on.launchSpeedKmh!==null&&on.firstAttackMovementSpeedKmh!==null&&
   on.firstAttackMovementSpeedKmh>=on.launchSpeedKmh-1e-9,
 }
+const establishedPhysicalComparison={
+ bothCompleted:establishedOff.completed&&establishedOn.completed,
+ bothClassified:establishedOff.allFinished&&establishedOn.allFinished&&
+  establishedOff.uniquePositions&&establishedOn.uniquePositions&&
+  establishedOff.allTimesFinite&&establishedOn.allTimesFinite,
+ allFourOrdersExecuted:requiredOrderIds.every(id=>
+  establishedOff.executedOrders.includes(id)&&establishedOn.executedOrders.includes(id)),
+ eligibleChaseExists:establishedOn.chaseTimeline.some(t=>t.pursuitEligibleBeforeMovement),
+ // This test reports rather than forces a particular catch or sprint outcome.
+ totalChaseEligibleTicks:establishedOn.chaseTimeline.filter(t=>t.pursuitEligibleBeforeMovement).length,
+}
+const matchingEligibleTicks=establishedOn.chaseTimeline.filter(t=>t.pursuitEligibleBeforeMovement)
+ .map(onTick=>({on:onTick,off:establishedOff.chaseTimeline.find(
+  offTick=>offTick.raceSecond===onTick.raceSecond)}))
+ .filter(pair=>pair.off&&pair.off.pursuitEligibleBeforeMovement)
+const physicalChaseEvidence={
+ pairedEligibleTicks:matchingEligibleTicks.length,
+ positiveAppliedSpeedDifference:matchingEligibleTicks.some(
+  pair=>pair.on.pelotonSpeedKmh>(pair.off?.pelotonSpeedKmh??Infinity)),
+ positiveTickEnergyDifference:matchingEligibleTicks.some(
+  pair=>pair.on.chaseRiderEnergyUsedThisTick>(pair.off?.chaseRiderEnergyUsedThisTick??Infinity)),
+ pursuerFinalEnergyDifference:establishedOff.pursuerEnergy-establishedOn.pursuerEnergy,
+}
+
 process.stdout.write(JSON.stringify({reportVersion:'uranius-mixed-tactics-v1',
  scope:'OFFLINE 24km flat 10-rider same-input A/B, four actual orders',
- off,on,checks,comparison:{
+ off,on,establishedOff,establishedOn,establishedPhysicalComparison,physicalChaseEvidence,checks,comparison:{
  classificationChanged:off.classificationHash!==on.classificationHash,
  sprintRankDifference:off.sprinterRank!==null&&on.sprinterRank!==null?
   off.sprinterRank-on.sprinterRank:null,
