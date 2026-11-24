@@ -98,6 +98,49 @@ function run(course:typeof profiles[number],distribution:Distribution){
     attack.breakawayGroupId),
    activeAfter:!!tick.state.groups[attack.breakawayGroupId]?.active}
  }).filter(t=>t.gapKm!==null):[]
+ const attackLaunchAudit=attack?result.ticks.slice(attack.index,attack.index+4).map(tick=>{
+  const born=tick.appliedOrderEffects.state.groups[attack.breakawayGroupId]
+  const pelotonAtLaunch=Object.values(tick.appliedOrderEffects.state.groups).find(
+   g=>g.active&&g.groupType==='peloton')
+  const attackProposal=tick.movement.movement.proposals.find(
+   p=>p.groupId===attack.breakawayGroupId)
+  const pelotonProposal=tick.movement.movement.proposals.find(
+   p=>p.groupType==='peloton')
+  const beforeCatch=tick.reconciledBreakaways.previousState.groups[
+   attack.breakawayGroupId]
+  const pelotonBeforeCatch=Object.values(tick.reconciledBreakaways.previousState.groups).find(
+   g=>g.active&&g.groupType==='peloton')
+  const selectedRider=tick.appliedOrderEffects.state.riders[input.riders[8].riderId]
+  return {second:tick.state.raceSecond,
+   birthSecond:born?.createdAtRaceSecond??null,
+   groupActiveBeforeCatch:beforeCatch?.active??null,
+   sourceGapKm:born&&pelotonAtLaunch?born.distanceKm-pelotonAtLaunch.distanceKm:null,
+   attackerEnergyBeforeMovement:selectedRider?.energy??null,
+   attackAppliedSpeedKmh:attackProposal?.appliedSpeedKmh??null,
+   pelotonAppliedSpeedKmh:pelotonProposal?.appliedSpeedKmh??null,
+   gapBeforeCatchKm:beforeCatch&&pelotonBeforeCatch?
+    beforeCatch.distanceKm-pelotonBeforeCatch.distanceKm:null,
+   caught:tick.reconciledBreakaways.reabsorbedBreakawayGroupIds.includes(
+    attack.breakawayGroupId),
+   remainsActive:!!tick.state.groups[attack.breakawayGroupId]?.active}
+ }):[]:[]
+ const terrainDropAudit=result.ticks.flatMap(tick=>tick.transitions.filter(
+  transition=>transition.transitionKind==='created').map(transition=>{
+  const dropped=tick.reconciledBreakaways.previousState.groups[transition.targetGroupId]
+  const peloton=Object.values(tick.reconciledBreakaways.previousState.groups).find(
+   g=>g.active&&g.groupType==='peloton')
+  const groupFinal=result.finalState.groups[transition.targetGroupId]
+  const movedFinal=transition.movedRiderIds.map(id=>result.finalState.riders[id])
+  return {second:tick.state.raceSecond,km:tick.state.currentKm,
+   movedRiders:transition.movedRiderIds.length,
+   dropGapAtBirthKm:dropped&&peloton?dropped.distanceKm-peloton.distanceKm:null,
+   caughtAtBirth:tick.reconciledBreakaways.reabsorbedBreakawayGroupIds.includes(
+    transition.targetGroupId),
+   groupActiveAtFinish:groupFinal?.active??null,
+   finalRiderFinishSeconds:movedFinal.map(r=>r?.finishTimeSeconds??null),
+   pressureAtPostTick:transition.movedRiderIds.map(
+    id=>tick.pressureDurationByRiderId[id]??null)}
+ }))
  const catchTick=attackTrace.find(t=>t.caught)
  const positiveGapTicks=attackTrace.filter(t=>(t.gapKm??0)>0.000001).length
  const peakGapKm=attackTrace.length?Math.max(...attackTrace.map(t=>t.gapKm??0)):0
@@ -144,6 +187,7 @@ function run(course:typeof profiles[number],distribution:Distribution){
   maxSeparationPressureSeconds,
   terrainDropsCreated,terrainDropsCaughtSameTick,terrainDropsLaterCaught,
   finishingTimeUniqueCount,riderEnergyRange,
+  attackLaunchAudit,terrainDropAudit,
   attackEvents:attacks.length,
   orderExecuted:result.finalState.orders['profile-attack']?.status==='executed',
   attackSecond:attack?.second??null,
