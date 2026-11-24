@@ -4,8 +4,8 @@ import {readFileSync} from 'node:fs'
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8')
 const source=read('scripts/uranius-course-field-realism.ts')
 const launcher=read('scripts/run-uranius-course-field-realism.mjs')
-test('three courses and two rider field distributions without historical claims',()=>{
- for(const profile of ['flat_120','rolling_120','mountain_160'])
+test('four courses and two rider field distributions without historical claims',()=>{
+ for(const profile of ['flat_120','rolling_120','mountain_160','steep_160'])
   assert.match(source,new RegExp("'"+profile+"'"))
  for(const distribution of ['heterogeneous','uniform'])
   assert.match(source,new RegExp("'"+distribution+"'"))
@@ -22,7 +22,7 @@ test('attack originates in the actual order lifecycle and not a fake initial gap
  assert.doesNotMatch(source,/createBreakawayGroup|initialGapSeconds|syntheticGapKm/)
 })
 test('multi-scenario runner fails closed on missing riders and invalid classifications',()=>{
- for(const label of ['sixScenarios','allCompleted','rostersExact',
+ for(const label of ['eightScenarios','allCompleted','rostersExact',
   'classificationsValid','allAttacksReal'])
   assert.match(source,new RegExp(label+':'))
  assert.match(source,/replayRosterValid:/)
@@ -44,4 +44,12 @@ test('realism evidence distinguishes gradient, pressure, drops and official fini
  assert.match(launcher,/uniqueFinishTimes /)
  assert.match(launcher,/pressureMaxSec /)
  assert.match(launcher,/terrainDrops /)
+})
+
+test('steep climbing route actually challenges the >8 percent severity boundary',()=>{
+ assert.match(source,/profile:'steep_160',distance:160/)
+ assert.match(source,/1300,1700,1300,300/)
+ assert.match(source,/1400,1800,1200/)
+ assert.match(source,/eightScenarios:scenarios.length===8/)
+ assert.match(launcher,/EIGHT 128-RIDER RACES/)
 })
