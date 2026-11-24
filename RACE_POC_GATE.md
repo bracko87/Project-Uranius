@@ -368,3 +368,22 @@ node scripts\run-uranius-rolling-tactical-sensitivity.mjs --out tactical-local.j
 ```
 
 The tactical responsiveness question remains pending until executable A/B results are captured; no sporting GO. Checklist 49/60.
+
+
+## 2026-11-24 — Player tactical attack accepted, but only 0.016459452s finish difference; first-tick launch trace added
+
+Owner's Windows tactical boundary tests **4/4 PASS**. The 120km rolling/128-rider no-order control and same-seed scheduled-attack run both finished **128/128** with **one observed active group, zero group gap and zero overall finish-time spread**. The attack run emitted exactly one ORDER_EXECUTED and one ATTACK_STARTED. The selected rider remained 128th with unchanged final energy (71.1825023680002), but was **0.016459452 seconds faster** (10593.375872657 → 10593.359413205). The digest changed but this is **not meaningful validated tactical performance**. Group-count summaries cannot prove the attack never existed between snapshots.
+
+Source inspection: `applyExecutedTeamOrderEffects` gives the new breakaway a launchSpeedKmh (source speed + up to 4km/h), and `createBreakawayGroup` puts that in group speed. The following `calculateTerrainAwareMultiGroupMovement` computes each active group's next speed anew from group terrain pace and does **not directly use the group's launchSpeedKmh** in its pace proposal. In addition, `reconcileBreakawayGroups` has five-second catch logic and first-tick protection only while the breakaway is physically ahead. It is therefore *plausible* that the launch impulse is not physically applied and the rider is reabsorbed, but the exact first-tick proposals/catches are **not yet observed**; do not claim a confirmed root cause.
+
+Augmented the **same two-race** offline comparison with explicit `attackTrace` and `subsequentAttackTrace`: launch speed; first movement proposed speed; peloton movement speed; signed physical distance immediately before reconciliation; whether caught; and group state over the first five ticks after the attack. The CLI prints these to distinguish lack of launch acceleration from legitimate catch. No engine physics, race rules or golden results changed.
+
+Run only:
+
+```bat
+git pull origin main
+node --test tests\uraniusRollingTacticalSensitivityBoundary.test.mjs
+node scripts\run-uranius-rolling-tactical-sensitivity.mjs --out tactical-local.json
+```
+
+Inspect the new `LAUNCH` and `ATTACK TICK` rows. If launch speed is discarded by movement, design a realistic, opt-in physical launch impulse with corresponding energy accounting; if first physical gap exists but is small and caught, do not force attacker success. No production, hosted game or database changes. Checklist remains **49/60**; sporting GO not granted.
