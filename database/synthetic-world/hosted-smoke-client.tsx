@@ -164,6 +164,7 @@ function isSyntheticSquad(value: unknown, expectedClubId: string): value is Synt
 function SquadPreview() {
   const navigate = useNavigate()
   const [data,setData] = useState<SyntheticSquadPacket|null>(null)
+  const [selectedRiderId,setSelectedRiderId] = useState<number|null>(null)
   const [state,setState] = useState<'loading'|'ready'|'unavailable'>('loading')
   useEffect(() => {
     let active = true
@@ -190,12 +191,32 @@ function SquadPreview() {
         {state === 'unavailable' && <p className="text-amber-200">Squad data is unavailable or your club could not be verified. No fixture roster is displayed.</p>}
         {state === 'ready' && data && <>
           <p className="mb-3 text-slate-300" data-squad-count>{data.riders.length} riders in this club</p>
+          <p className="mb-2 text-sm text-slate-400">Select a rider to inspect the currently available profile fields. No edits are possible.</p>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm" data-squad-table>
               <thead><tr className="border-b border-slate-600"><th className="p-2">Rider</th><th className="p-2">Flat</th><th className="p-2">Climbing</th><th className="p-2">Stamina</th><th className="p-2">Resistance</th></tr></thead>
-              <tbody>{data.riders.map(r => <tr key={r.syntheticRiderId} className="border-b border-slate-800"><td className="p-2">{r.label}</td><td className="p-2">{r.flat}</td><td className="p-2">{r.climbing}</td><td className="p-2">{r.stamina}</td><td className="p-2">{r.resistance}</td></tr>)}</tbody>
+              <tbody>{data.riders.map(r => <tr key={r.syntheticRiderId} className="border-b border-slate-800"><td className="p-2"><button type="button" className="text-left underline underline-offset-4 hover:text-cyan-200" onClick={() => setSelectedRiderId(r.syntheticRiderId)} data-select-rider={r.syntheticRiderId}>{r.label}</button></td><td className="p-2">{r.flat}</td><td className="p-2">{r.climbing}</td><td className="p-2">{r.stamina}</td><td className="p-2">{r.resistance}</td></tr>)}</tbody>
             </table>
           </div>
+          {selectedRiderId !== null && (() => {
+            const rider = data.riders.find(row => row.syntheticRiderId === selectedRiderId)
+            if (!rider) return null
+            return <section aria-label="Synthetic rider profile" data-rider-profile className="mt-5 rounded-lg border border-slate-600 bg-slate-950 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div><h2 className="text-lg font-semibold">{rider.label}</h2>
+                  <p className="text-xs text-slate-400">Synthetic rider #{rider.syntheticRiderId} — not an original rider UUID</p></div>
+                <button type="button" onClick={() => setSelectedRiderId(null)} className="rounded border border-slate-500 px-3 py-1">Close profile</button>
+              </div>
+              <dl className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {(['flat','climbing','stamina','resistance'] as const).map(skill => <div key={skill}>
+                  <dt className="text-xs capitalize text-slate-400">{skill}</dt>
+                  <dd className="text-lg font-semibold">{rider[skill]}</dd>
+                </div>)}
+              </dl>
+              <p className="mt-4 text-sm text-amber-200">Original rider identity, nationality, birth date, age, role, overall, fitness, morale, potential, health and contract details are not available in this synthetic database. No values have been inferred.</p>
+              <p className="mt-2 text-xs text-slate-400">Read-only profile. No training, transfers, health actions or contract changes.</p>
+            </section>
+          })()}
           <p className="mt-4 text-xs text-slate-400">Original-game fields including role, age, overall, fatigue, availability and contracts are not yet reconstructed. Transfers, training and rider changes are disabled.</p>
         </>}
       </div>
