@@ -415,3 +415,20 @@ Owner pulled through commit `403dbc5`. Tactical boundary tests **6/6 PASS**. The
 Further source review: `multiGroupFinishCandidates.ts` already ranks riders who cross the line in the same group by **sprint score → acceleration → energy → rider ID** after comparing exact group crossing times, while `applyMultiGroupFinish.ts` assigns distinct rank with equal group time. This makes zero group finish-time spread consistent with a mass sprint and **not a defect by itself**. However, `applyExecutedTeamOrderEffects.ts` explicitly handles only `attack` and places `sprint`, `leadout`, `chase`, etc. in `ignoredOrders`. Therefore the next product gap is **meaningful execution of sprint/leadout/chase decisions**, not whether a mass sprint must show elapsed-time gaps.
 
 Before adding tactical modifiers: define narrow, auditable effects that conserve riders and preserve same-group official time, account for higher effort/energy, and respect legal order eligibility. Keep new capabilities isolated or behind an explicit opt-in until validated. Do not activate production; sporting GO withheld. Checklist remains **49/60**.
+
+
+## 2026-11-24 — First sprint/lead-out tactic prototype committed (NOT RUN)
+
+After the owner verified the physically correct one-tick launch impulse (6/6 tests PASS and observed 33.144m positive launch lead, then catch), source analysis confirmed the engine already ranks same-group finishers by sprint → acceleration → energy while assigning one group crossing time. It also confirms the tactical effect handler supports `attack` but treats `sprint` and `leadout` as lifecycle-only.
+
+Added an **experimental, default-off finishing tactic** to the calibrated/integrated stage via `experimentalFinishTacticsEnabled`; did not change canonical option defaults, canonical golden fixtures, hosted runtime, or player DB. Pure `experimentalFinishTactics.ts` applies only to previously **executed** sprint/leadout orders with an eligible start within the final 3km. A rider's `sprint` order adds +8 candidate ranking score, and up to two same-team/same-finishing-group lead-out riders who targeted that rider each add +4 (experimental POC values, NOT sporting calibration). A sprinter executing the order spends up to 1 energy unit; an assisting rider with valid same-group teammate target spends up to 0.75, charged on finish. These values are *hypotheses for functional tests*, not approved physiology. No speed, official group finish time, distance, rank uniqueness or rider membership is fabricated. Without the option, candidate ranking and rider energy are unmodified. The main `applyExecutedTeamOrderEffects` still labels sprint/lead-out as ignored tactical effects, but their order lifecycle can advance to `executed`, and the new finish-time evaluator explicitly interprets those executed statuses when opted in.
+
+Added **10km / 10-rider same-seed same-orders** A/B script `scripts/uranius-finish-tactics-poc.ts` with launcher `scripts/run-uranius-finish-tactics-poc.mjs` and static boundary tests `tests/uraniusFinishTacticsBoundary.test.mjs`. It schedules a sprint and a lead-out for teammates at 8–10km, compares default-off versus experiment-on, checks actual order execution, valid classifications, individual energy, increased sprint rank and exact unchanged crossing time; fail-closed if assertions do not hold. This prototype and tests are **committed but have NOT been executed by owner**. If output fails, correct the precise contract/bug; do not modify rankings to fabricate passage. Run:
+
+```bat
+git pull origin main
+node --test tests\uraniusFinishTacticsBoundary.test.mjs
+node scripts\run-uranius-finish-tactics-poc.mjs
+```
+
+Next after verified functional test: calibrate fatigue/effort cost, ensure strategy cannot be exploited by multiple orders, and implement chase with physical distance/energy and real pursuit/catch tests. Sporting GO remains withheld; official checklist 49/60.
