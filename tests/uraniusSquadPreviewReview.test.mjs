@@ -52,11 +52,11 @@ test('preview SQL is RLS-scoped to verified subject and cannot mutate hosted sta
  assert.match(sql,/JOIN owned_team own ON own\.team_id=r\.team_id/)
  assert.match(sql,/FROM uranius_catalog\.riders r/)
  // Security prohibitions apply to executable SQL, not explanatory "--" comments.
- const executableSql=sql.replace(/^\\s*--[^\\r\\n]*/gm,'')
- const forbidden=/\\b(?:SECURITY\\s+DEFINER|GRANT\\s+SELECT|ALTER\\s+POLICY|INSERT\\s+INTO|CREATE\\s+TABLE)\\b/i
+ const executableSql=sql.replace(/^\s*--[^\r\n]*/gm,'')
+ const forbidden=/\b(?:SECURITY\s+DEFINER|GRANT\s+SELECT|ALTER\s+POLICY|INSERT\s+INTO|CREATE\s+TABLE)\b/i
  assert.doesNotMatch(executableSql,forbidden)
  // Keep this fail-closed if an actual forbidden command is later added.
- assert.match((executableSql+'\\nGRANT SELECT ON uranius_catalog.riders TO anon;'),forbidden)
+ assert.match((executableSql+'\nGRANT SELECT ON uranius_catalog.riders TO anon;'),forbidden)
 })
 test('source audit distinguishes original UUID club_roster from the integer-only synthetic catalog',()=>{
  for(const term of ['club_roster','rider_id integer','synthetic Squad preview','reader-column'])
