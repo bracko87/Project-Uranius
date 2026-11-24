@@ -124,6 +124,85 @@ function ScheduleStatus() {
   </section>
 }
 
+type SyntheticSquadRider = {
+  syntheticRiderId: number
+  label: string
+  flat: number
+  climbing: number
+  stamina: number
+  resistance: number
+}
+type SyntheticSquadPacket = {
+  kind: 'syntheticSquadPreview'
+  clubId: string
+  riders: SyntheticSquadRider[]
+  missingOriginalFields: string[]
+}
+const expectedSquadMissing = [
+  'assigned_role','age_years','overall','availability_status','fatigue',
+  'country_code','birth_date','morale','potential','contract'
+]
+function isSyntheticSquad(value: unknown, expectedClubId: string): value is SyntheticSquadPacket {
+  if (!value || typeof value !== 'object') return false
+  const packet = value as Partial<SyntheticSquadPacket>
+  const fields = ['syntheticRiderId','label','flat','climbing','stamina','resistance']
+  const ids = new Set<number>()
+  return packet.kind === 'syntheticSquadPreview' && packet.clubId === expectedClubId &&
+    Array.isArray(packet.missingOriginalFields) &&
+    packet.missingOriginalFields.join('|') === expectedSquadMissing.join('|') &&
+    Array.isArray(packet.riders) && packet.riders.length <= 100 &&
+    packet.riders.every(row => {
+      if (!row || !Number.isSafeInteger(row.syntheticRiderId) || row.syntheticRiderId < 1 ||
+          ids.has(row.syntheticRiderId) || typeof row.label !== 'string' || !row.label.trim() ||
+          Object.keys(row).some(field => !fields.includes(field)) ||
+          !(['flat','climbing','stamina','resistance'] as const).every(skill =>
+            Number.isInteger(row[skill]) && row[skill] >= 0 && row[skill] <= 100)) return false
+      ids.add(row.syntheticRiderId)
+      return true
+    })
+}
+function SquadPreview() {
+  const navigate = useNavigate()
+  const [data,setData] = useState<SyntheticSquadPacket|null>(null)
+  const [state,setState] = useState<'loading'|'ready'|'unavailable'>('loading')
+  useEffect(() => {
+    let active = true
+    void Promise.all([getMyClubContext(),request('squad')]).then(([club,packet]) => {
+      if (!active) return
+      const expected = club.mainClub?.id
+      if (typeof expected === 'string' && isSyntheticSquad(packet,expected)) {
+        setData(packet); setState('ready')
+      } else { setData(null); setState('unavailable') }
+    }).catch(() => { if(active){setData(null);setState('unavailable')} })
+    return () => { active = false }
+  },[])
+  return <main className="min-h-screen bg-slate-950 text-white">
+    <section className="mx-auto max-w-5xl rounded-xl bg-slate-900 p-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold">Squad</h1>
+          <p className="text-sm text-slate-300">Verified synthetic riders · read-only preview</p>
+        </div>
+        <button onClick={() => navigate('/dashboard/overview')} className="rounded border border-slate-600 px-3 py-2">Back to Overview</button>
+      </div>
+      <div aria-live="polite" className="mt-6" data-squad-state={state}>
+        {state === 'loading' && <p>Checking your authenticated Squad roster…</p>}
+        {state === 'unavailable' && <p className="text-amber-200">Squad data is unavailable or your club could not be verified. No fixture roster is displayed.</p>}
+        {state === 'ready' && data && <>
+          <p className="mb-3 text-slate-300" data-squad-count>{data.riders.length} riders in this club</p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm" data-squad-table>
+              <thead><tr className="border-b border-slate-600"><th className="p-2">Rider</th><th className="p-2">Flat</th><th className="p-2">Climbing</th><th className="p-2">Stamina</th><th className="p-2">Resistance</th></tr></thead>
+              <tbody>{data.riders.map(r => <tr key={r.syntheticRiderId} className="border-b border-slate-800"><td className="p-2">{r.label}</td><td className="p-2">{r.flat}</td><td className="p-2">{r.climbing}</td><td className="p-2">{r.stamina}</td><td className="p-2">{r.resistance}</td></tr>)}</tbody>
+            </table>
+          </div>
+          <p className="mt-4 text-xs text-slate-400">Original-game fields including role, age, overall, fatigue, availability and contracts are not yet reconstructed. Transfers, training and rider changes are disabled.</p>
+        </>}
+      </div>
+    </section>
+  </main>
+}
+
 function ClubDashboard() {
   const navigate = useNavigate()
   const [data, setData] = useState<{ name: string; riders: number; credits: number; calendar: number }>()
@@ -147,6 +226,7 @@ function ClubDashboard() {
       </dl>}
       {data && <ClockStatus />}
       {data && <ScheduleStatus />}
+      {data && <button onClick={() => navigate('/dashboard/squad')} className="mt-4 mr-4 rounded border border-slate-600 px-3 py-2" data-open-squad>View Squad</button>}
       <button onClick={async () => {
         try { await supabase.auth.signOut() }
         catch { window.alert('The local session is closed. Uranius Auth sign-out could not be confirmed.') }
@@ -160,6 +240,7 @@ createRoot(document.getElementById('root')!).render(<HashRouter>
   <Routes>
     <Route path="/login" element={<LoginPage />} />
     <Route path="/dashboard/overview" element={<ClubDashboard />} />
+    <Route path="/dashboard/squad" element={<SquadPreview />} />
     <Route path="*" element={<Navigate to="/login" replace />} />
   </Routes>
 </HashRouter>)
