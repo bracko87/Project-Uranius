@@ -1,0 +1,44 @@
+{
+  "projectRef": "sdtsivgtcaoaeoihcwzd",
+  "migration": "015_rider_uuid_owner_read.sql",
+  "candidateSha256": "71ade068c5cf5bbdc0e356663a0525f1e74b43e63a9c19f267748f7b46b6161e",
+  "approvedManifestSha256": "f9d835dd58c242d83b7366976810be1eb0525d9e2c401e361ef7b6d66e76ec81",
+  "status": "HOSTED_ISOLATED_APPLIED_VERIFIED",
+  "date": "2026-11-24",
+  "execution": "Owner-authorized exact-hash Windows direct TLS uranius_migrator guarded atomic installer; owner terminal reports successful completion",
+  "postflight": {
+    "source": "Independent Supabase BEGIN READ ONLY / ROLLBACK SQL on isolated project sdtsivgtcaoaeoihcwzd",
+    "ledgerCount": 13,
+    "allThirteenLedgerPairsExact": true,
+    "installed015ShaMatchesApprovedCandidate": true,
+    "syntheticRiders": 200,
+    "uniqueSyntheticUuidMappings": 200,
+    "unmappedRiders": 0,
+    "clubOwners": 2,
+    "pausedSeason1Day1ClockRows": 1,
+    "mappingRlsEnabledAndForced": true,
+    "identityPolicyCount": 1,
+    "ownerRestrictedReadPolicyPresent": true,
+    "policyReferencesRestrictedRiderRls": true,
+    "readerCanSelectRiderId": true,
+    "readerCanSelectRiderUuid": true,
+    "readerCanSelectProvenance": false,
+    "readerCanSelectCreatedAt": false,
+    "readerCanSelectTeamId": false,
+    "readerCanInsert": false,
+    "readerCanUpdate": false,
+    "readerCanDelete": false,
+    "anonCanSelectIdentity": false,
+    "authenticatedCanSelectIdentity": false
+  },
+  "previousVerification": {
+    "staticTests": "16/16 PASS (owner terminal)",
+    "fullHistoryPg17": "48/48 PASS (owner terminal)"
+  },
+  "notes": [
+    "UUIDs belong only to Uranius synthetic riders, not original production identities.",
+    "Independent hosted verification confirms ACL and policy configuration; the earlier native PostgreSQL test established manager A/B cross-club isolation.",
+    "No frontend or HTTP Squad UUID integration delivered by migration 015.",
+    "Original ProPeloton production not targeted."
+  ]
+}
