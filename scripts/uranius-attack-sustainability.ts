@@ -49,9 +49,11 @@ function buildInput(strength:Strength,timing:Timing):StageInput{
    metadata:{uraniusLiveCommand:true}}],
  }
 }
-function evaluate(strength:Strength,timing:Timing){
+function evaluate(strength:Strength,timing:Timing,shelterEnergy=false){
  const input=buildInput(strength,timing)
- const result=runCalibratedTerrainSeparationStage(createInitialState(input),{
+ const initial=createInitialState(input)
+ const result=runCalibratedTerrainSeparationStage({...initial,
+  groupShelterEnergyEnabled:shelterEnergy},{
   experimentalPhysicalAttackLaunch:true,
   experimentalPreserveBirthTickDroppedGroups:true,
   experimentalPreserveRecedingDroppedGroups:true,
@@ -127,7 +129,7 @@ function evaluate(strength:Strength,timing:Timing){
   attackFollowupTick:launch?
    riderEnergyTicks.find(t=>t.second===launch.second+input.settings.tickSeconds)??null:null,
  }
- return {strength,timing,completed:result.completed,
+ return {strength,timing,shelterEnergy,completed:result.completed,
   all128Finish:final.filter(r=>r.finished&&Number.isFinite(r.finishTimeSeconds)).length===field,
   positionsUnique:ranks.every(r=>Number.isInteger(r)&&r!==null&&r>=1&&r<=field)&&new Set(ranks).size===field,
   allTimesFinite:times.every(t=>typeof t==='number'&&Number.isFinite(t)),
@@ -163,6 +165,12 @@ const scenarios=(['original','strong'] as const).flatMap(strength=>
   try{return evaluate(strength,timing)}
   catch(e){return {strength,timing,error:e instanceof Error?e.message:String(e)}}
  }))
+// Paired sensitivity: the 6 historical OFF simulations stay untouched.
+const shelterScenarios=(['original','strong'] as const).flatMap(strength=>
+ (['baseline','early','late'] as const).map(timing=>{
+  try{return evaluate(strength,timing,true)}
+  catch(e){return {strength,timing,error:e instanceof Error?e.message:String(e)}}
+ }))
 const checks={
  sixComplete:scenarios.length===6&&scenarios.every(s=>'completed' in s&&s.completed),
  classificationIntegrity:scenarios.every(s=>'all128Finish' in s&&s.all128Finish&&
@@ -174,8 +182,18 @@ const checks={
  energyAccountingExact:scenarios.every(s=>'effortAudit' in s&&
   Math.abs(s.effortAudit.energyBalanceError)<0.0001&&
   s.effortAudit.chargedTicks>0&&s.effortAudit.actualEnergyCost>=0),
+ shelterComparisonComplete:shelterScenarios.length===6&&shelterScenarios.every(
+  s=>'completed' in s&&s.completed&&s.all128Finish&&s.positionsUnique&&
+  s.allTimesFinite&&s.executed),
+ shelterComparisonLedger:shelterScenarios.every(s=>'effortAudit' in s&&
+  Math.abs(s.effortAudit.energyBalanceError)<0.0001),
+ shelterReallyApplied:shelterScenarios.every(s=>'effortAudit' in s&&
+  s.effortAudit.shelterSaved>0&&s.effortAudit.shelterAppliedTicks>0),
+ unchangedNoShelter:scenarios.every(s=>'shelterEnergy' in s&&!s.shelterEnergy&&
+  s.effortAudit.shelterSaved===0),
+
 
 }
 process.stdout.write(JSON.stringify({reportVersion:'uranius-attack-sustainability-v1',
  scope:'OFFLINE deterministic 120km 128 rider no-attack vs early vs late for original and strengthened single rider',
- scenarios,checks,note:'No simulated gap injected, no winning attack required. Performance and energy are observations only; sporting GO withheld.'},null,2)+'\n')
+ scenarios,shelterScenarios,checks,note:'No simulated gap injected, no winning attack required. Paired opt-in shelter energy tested against preserved OFF baseline; sporting GO withheld.'},null,2)+'\n')
