@@ -568,3 +568,22 @@ node scripts\\run-uranius-mixed-tactics-integration.mjs --out mixed-tactics-loca
 ```
 
 Do not mark full tactical integration verified before owner runs it. Next after confirmed integrated A/B: check that chase was actually eligible while a breakaway was ahead (otherwise this fixture proves only order lifecycle), compare energy charges, golden baseline safety, longer flat/rolling/mountain stages. Official 49/60, sporting GO withheld, production unchanged.
+
+
+## 2026-11-24 — Mixed four-tactic integrated A/B OWNER-VERIFIED; chase coverage limitation identified
+
+Owner ran `node --test tests\\uraniusMixedTacticsBoundary.test.mjs` (**3/3 PASS**) and `node scripts\\run-uranius-mixed-tactics-integration.mjs --out mixed-tactics-local.json` (**runtime PASS**). Both same-input 24km ten-rider races finished all ten with unique ranks, finite finish times, exactly one real `ATTACK_STARTED` and all four orders (`attack`, `chase`, `leadout`, `sprint`) executed. Attack's movement respects first-tick physical launch. Both races caught the attack; two groups appeared during the stage. Sprint/lead-out experiment changed the sprinter's ranking from 10th to 1st, charging 1 and 0.75 energy units respectively. The six committed integrity checks all passed.
+
+**Important limit:** The combined-race comparison printed `chaseEligibleMovementTicks=1`, but the pursuing rider's final energy was **exactly equal** with and without experimental tactics: **95.30799999999982**. This means the combined fixture **does not yet establish a physical chase-speed or energy effect** despite executing a chase order. The count only establishes a movement tick with simultaneously present peloton and breakaway *after an order executed*, not that the distance gap met the 5s pre-movement requirement. In this fixture the attack may launch from the peloton at zero initial separation; reconciliation catches it quickly. Separately, the prior 8-tick and 18-minute chase experiments have already verified meaningful chase speed/gap/energy effects.
+
+**Response:** Keep the mixed result as a confirmed **multi-order lifecycle/attack/finish integration pass** with an explicit chase physical-evidence gap. Added `chaseTimeline` diagnostic to the same combined comparison, exposing true breakaway-to-peloton distance and approximate seconds *before* each movement tick, peloton/escape applied speeds, chase rider energy used in that tick and whether the breakaway survived that tick. The CLI now prints `CHASE PHYSICS` rows; a regression guards the distinction between order acceptance and physical eligibility. No race mechanics, feature defaults, production, hosted game or DB changed.
+
+Diagnostic not yet executed after change:
+
+```bat
+git pull origin main
+node --test tests\\uraniusMixedTacticsBoundary.test.mjs
+node scripts\\run-uranius-mixed-tactics-integration.mjs --out mixed-tactics-local.json
+```
+
+If pre-movement gap is <5s, the zero chase-energy difference is expected behavior for the current model, not a failure. Next integrated experiment should make a *real physically established* leading breakaway and separately test that chase raises applied movement and changes rider energy while sprint and lead-out orders also execute; no fabricated catch or sprint win. Sporting GO withheld, official checklist remains 49/60.
