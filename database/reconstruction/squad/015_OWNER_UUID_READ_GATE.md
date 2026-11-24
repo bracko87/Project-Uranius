@@ -35,3 +35,18 @@ If any native check fails, STOP. Do not run the 015 SQL on hosted Uranius. After
 
 ## Overall project accounting
 No U5.02/U5.03 master task may be marked PASS solely because the UUID reader candidate exists. The nine-skill model, age, role, fatigue, contracts, medical and transfers remain unreconstructed.
+
+## 2026-11-24 — Native test output parsing correction (015 still unapproved)
+
+Owner reports **7/7 initial static tests PASS**. Full disposable native PostgreSQL 17 test passed canonical migrations and all checks up through 015 owner-only policy installation; the next assertion failed when testing the **unknown user's empty aggregated rider-ID list**. The SQL session had correctly returned an empty string for `coalesce(string_agg(...),'')`, but the runner's `sql()` helper splits psql output and takes the last nonempty remaining line after `.trim()`. It accidentally interpreted the earlier `set_config('request.jwt.claims', ...)` output as the result: `{"sub":"00000000-0000-4000-8000-000000000003"}`. This is a **test harness output ambiguity**, not evidence of a UUID data leak or ownership failure.
+
+Test-only correction committed in `tests/uraniusRiderUuidOwnerReadNativePg17.mjs`: use `'<no-owned-riders>'` as the nonempty SQL `coalesce(string_agg(...),...) ` fallback and assert that marker for unknown owners; manager A/B expected ten IDs stay unchanged. Added regression boundary test in `tests/uraniusRiderUuidOwnerReadNativeBoundary.test.mjs`.
+
+Neither the reviewed 015 SQL nor any hosted database was changed. **Do not authorize or install 015 until the corrected full native test passes**, including its remaining UUID uniqueness, field visibility, write-denial and duplicate-install checks.
+
+Run:
+```bat
+git pull origin main
+node --test tests\uraniusRiderUuidOwnerReadReview.test.mjs tests\uraniusRiderUuidOwnerReadNativeBoundary.test.mjs
+node tests\uraniusRiderUuidOwnerReadNativePg17.mjs --disposable-native-pg17 --postgres-bin "C:\Users\Aleks\Desktop\Project-Uranius\.uranius-pin-review\postgresql-17.12-portable\bin"
+```
