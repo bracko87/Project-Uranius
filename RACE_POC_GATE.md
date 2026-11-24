@@ -792,3 +792,17 @@ node --test tests\\uraniusLongMixedTacticsBoundary.test.mjs
 ```
 
 The expensive six-race executable factorial was already owner-verified on this code except for its static assertion, and need not be repeated merely to validate a text-matching test change. Next sporting evidence should address varied field skill distribution and finish-position tie-breaks instead of changing bonuses from a single winning configuration. Official 49/60; no production/hosted game/DB changes; sporting GO withheld.
+
+
+## 2026-11-24 — Owner verifies final static boundary repair; sprint/lead-out factorial gate closed
+
+Owner pulled through `655270a` and ran `node --test tests\\uraniusLongMixedTacticsBoundary.test.mjs`: **7 tests, 7 PASS, 0 FAIL**. This resolves the stale `makeInput` signature assertion without altering any engine logic.
+
+Combined with the immediately preceding owner-executed six-race 120km/128-rider factorial (all **12 executable integrity checks true**), the isolated sprint/leadout integration test is now **complete**:
+- Four physically simulated long-stage tactical orders and bounded chase operation already verified.
+- Selected strong rider sprint 94: **4th** with neither finishing order, **1st** with leadout only (+4 points; helper 0.75 energy), **1st** with sprint only (+8 points; sprinter 1.00 energy), and **1st** with both (+12, both energy costs).
+- Selected low-sprint rider 49: **128th** with effects disabled, **96th** with both bonuses. Same 128-rider field and deterministic fixture.
+- Identical ranks for leadout-only/sprint-only/both once 1st place is reached are a **rank-ceiling effect**, not failure of additive score bonuses.
+- No further rerun of this fixed factorial is necessary absent code changes or new requirements.
+
+**Do not interpret this local integration closure as sporting GO.** Official project checklist stays **49/60**. Next substantive sporting gate should test alternative course profiles and field skill distributions plus actual escape/catch behavior, not repeatedly probe this same 120km 128-rider fixture. No production, hosted DB or canonical default changed.
