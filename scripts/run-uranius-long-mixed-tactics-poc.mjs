@@ -44,6 +44,18 @@ try{
    controlAfterExpiry:report.control.actualChaseBoostTicksAfterExpiry,
    experimentAfterExpiry:report.experiment.actualChaseBoostTicksAfterExpiry}))
 
+ console.log('SPRINT SKILL SENSITIVITY '+JSON.stringify(report.sprintSensitivity))
+ for(const r of [report.strongerControl,report.strongerExperiment]){
+  console.log('STRONGER SPRINTER '+(r.enabled?'ALL-TACTICS':'CONTROL')+' | '+JSON.stringify({
+   strength:r.sprinterStrength,finishRank:r.sprinterRank,
+   finishScore:r.sprintFinishAudit.effectiveSprintScore,
+   awardedBonus:r.sprintFinishAudit.awardedSprintScoreBonus,
+   higherScoringRivals:r.sprintFinishAudit.sameFinishGroupRivalsWithHigherSprintScore,
+   orders:r.ordersExecuted,finished:r.finishers,
+   activeChaseBoostTicks:r.actualChaseBoostTicks,
+   expiredBoostTicks:r.actualChaseBoostTicksAfterExpiry,
+  }))
+ }
  console.log('OBSERVED '+JSON.stringify(report.observations))
  for(const r of [report.control,report.experiment]){
   console.log('LONG CHASE DURATION '+(r.enabled?'EXPERIMENT':'CONTROL')+' | '+JSON.stringify({
