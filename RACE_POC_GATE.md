@@ -51,3 +51,31 @@ A **sporting GO** needs additional human-reviewed evidence: plausible race lengt
 ### Guardrails
 
 No original ProPeloton repository writes, database connections, staging/production workers, clock unpause, payments or new hosting. Do not alter prior frozen engine output hashes merely to pass the POC. Keep new scenarios isolated, with an explicit separate engine-version decision if sporting changes are required.
+
+## 2026-11-24 — Owner's first POC measurements: technical GO, sporting IMPROVE
+
+Owner executed `node --test tests\uraniusRacePocSourceBoundary.test.mjs`: **4/4 PASS**. `node scripts\run-uranius-race-poc.mjs --out race-poc-local.json` completed **6/6 fictional 30km runs** with deterministic identical repeats, all finishers and conserved rosters, and unchanged pre-command history. The local demo runner opened successfully on loopback. The JSON remains on the owner's Windows workstation and was not uploaded to GitHub.
+
+**Measured outputs:**
+| Scenario | Average winner km/h | Final finish spread | Maximum simultaneous active groups | Runtime |
+|---|---:|---:|---:|---:|
+| flat / 24 | 42.353 | 0 s | 1 | 935 ms |
+| hilly / 48 | 40.909 | 0 s | 1 | 1643 ms |
+| mountain / 96 | 36.364 | 0 s | 1 | 4136 ms |
+| flat / 96 | 42.353 | 0 s | 1 | 3971 ms |
+| flat / 96 alternate seed | 42.353 | 0 s | 1 | 4042 ms |
+| mountain / 96 alternate seed | 36.364 | 0 s | 1 | 5558 ms |
+
+The strong attack gained **150 s** while using **0.371 less** of the engine's recorded final energy, and reached **1.725 km** peak separation; the weak attack gained zero finish time and had zero peak gap. The runner verdict was `TECHNICAL_GO_SPORTING_IMPROVEMENT_REQUIRED`. **No sporting GO is warranted.** A zero spread is a measured behavior of these selected inputs and **existing_v1 lane**, not proof that all Uranius engine modes or other fixtures cannot produce separation.
+
+**Important source finding after reviewing results:** `src/race-engine/simulation/runDeterministicRoadRace.ts` defaults to `existing_v1`, which invokes `runMultiGroupStage`. A separate, explicit `terrain_separation_calibrated_v1` invokes `runCalibratedTerrainSeparationStage`, which configures terrain capability influence, sustained separation and drop/transition mechanics. The original POC only selected `existing_v1`. Therefore we **must compare both lanes on identical inputs before declaring the underlying separation system broken or modifying race rules**.
+
+Added source-only `scripts/uranius-race-poc-mode-comparison.ts`, `scripts/run-uranius-race-poc-mode-comparison.mjs`, `tests/uraniusRacePocModeComparisonBoundary.test.mjs`. They compare existing and calibrated lanes using identical same-seed fictional flat, hilly and mountain races with rider conservation, group count, finish spread, event counts, speed and runtime. No engine files, production code or hosted database changed. These are committed but **NOT YET EXECUTED**:
+
+```bat
+git pull origin main
+node --test tests\uraniusRacePocModeComparisonBoundary.test.mjs
+node scripts\run-uranius-race-poc-mode-comparison.mjs --out race-lane-comparison-local.json
+```
+
+A calibrated mode with multiple groups is only *promising*, not sporting validated; confirm actual finish distributions and climbing realism. If both modes remain bunched, investigate terrain-hold pressure and fixture heterogeneity rather than inventing a success. The long-stage/150-rider stress scenario is still outstanding. **Do not proceed to Migration 019 on the basis of the initial POC.**
