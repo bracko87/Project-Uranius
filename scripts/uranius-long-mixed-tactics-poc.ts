@@ -95,7 +95,7 @@ function run(enabled:boolean){
     const terrain=getStageTerrainSample(before.input,group.distanceKm)
     const multiplier=calculateExperimentalChaseMultiplier(
      before,group,terrain.gradientPercent)
-    if(multiplier<=1)return null
+    if(!enabled||multiplier<=1)return null
     const order=before.orders['long-chase']
     const riderEnergyCost=t.appliedEnergy.applications.find(
      a=>a.riderId===pursuer.riderId)?.energyCost??null
