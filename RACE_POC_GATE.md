@@ -336,3 +336,22 @@ Owner ran `tests/uraniusSeedSensitivityBoundary.test.mjs`: **2/2 PASS**. Read-on
 Source inspection adds a useful explanation: `runIntegratedTerrainSeparationStage.ts` does not directly read the seed in the actual per-tick movement/energy/pressure/transition path; `state.seed` is included later in the canonical deterministic report hash. `terrainAwareMultiGroupMovement.ts` also contains no direct seed/RNG references. Therefore the current calibrated path appears to implement **deterministic equations without seed-driven variation for these scenarios**. The seed appears to be part of replay identity rather than a random generator input here. This is a source-level observation over inspected files, not a proof across every transitive dependency or the older separate existing_v1 runner.
 
 **Decision:** Do not add artificial randomness to force different seeds to vary. Cycling performance should respond first to changes in rider strengths, team orders, terrain, weather, fatigue and race events with reproducible outputs. Seed-controlled stochastic incidents/tactical uncertainty require a separate explicit design decision, deterministic RNG and pinned golden tests. Sporting gate remains IMPROVE, particularly the all-bunched rolling race and excessive 160km mountain tail gap. The catch/rejoin and time-normalized energy-accounting sub-investigations are technically resolved, while realism remains unapproved. Keep canonical modes unchanged and no hosted/production change. Official checklist **49/60**.
+
+
+## 2026-11-24 — Sporting calibration: tactical responsiveness before altering physical thresholds
+
+Owner already confirmed all six long-stage seed comparisons have unchanged classification despite differing input digests. Static source review shows no direct seed-driven variation in the inspected calibrated movement/runner. Do not inject randomness merely to make race results differ. A 120km rolling bunch with equal time may be valid; assigning identical time to a same-group sprint finish is not by itself proof of broken sports logic.
+
+Source review identified **a more actionable missing quality gate**: `applyExecutedTeamOrderEffects.ts` implements actual `attack` grouping, but `chase`, `leadout`, `sprint`, `protect` and others are still lifecycle-only in this helper. Therefore an ordinary rolling race with `orders:[]` is not a realistic tactical contest. Before changing pressure/drop margins, validate that an explicit player attack materially changes the simulation using precisely the same field, route and seed.
+
+Added an OFFLINE 120km rolling tactical A/B: `scripts/uranius-rolling-tactical-sensitivity.ts`, runner `scripts/run-uranius-rolling-tactical-sensitivity.mjs`, and source-boundary test `tests/uraniusRollingTacticalSensitivityBoundary.test.mjs`. Both runs use 128 fictional riders, the same terrain and seed, with the existing combined **experimental** birth/receding drop options. Only difference: one real `attack` `TeamOrder` scheduled at 35–42km for a captain, with `metadata.uraniusLiveCommand=true` to avoid an artificial five-second starting gap. The report checks ORDER_EXECUTED and ATTACK_STARTED events, finish classifications, maximum groups/gaps, selected rider time and energy, and final classification+energy digest. It **does not force tactical success**; an attack may legitimately be caught. If it produces no result change, inspect ordering/movement and avoid fabricating a win. No new racing rules or production activation.
+
+New test committed but **NOT YET EXECUTED** on the owner's workstation:
+
+```bat
+git pull origin main
+node --test tests\uraniusRollingTacticalSensitivityBoundary.test.mjs
+node scripts\run-uranius-rolling-tactical-sensitivity.mjs --out tactical-local.json
+```
+
+This is two runs, not the original twelve. Realism review still must cover credible sprint ranking/time rules, meaningful sprint/leadout/chase support, team tactics, fatigue, and a variety of natural mountain time gaps before sporting GO. Official checklist remains 49/60.
