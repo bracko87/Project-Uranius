@@ -1,0 +1,41 @@
+import assert from 'node:assert/strict'
+import {readFileSync} from 'node:fs'
+import {test} from 'node:test'
+const code=readFileSync(new URL('../scripts/apply-uranius-rider-identity.mjs',import.meta.url),'utf8')
+test('014 installer pins exact owner-reviewed source and manifest, and requires separate approval',()=>{
+ assert.match(code,/expectedManifestHash='620d5eacbd836e13a72fdaac9159162061fab8b490a30528b177d25d7952db62'/)
+ assert.match(code,/expectedCandidateHash='f97126ed0a9259bfeac9ebf3c4158ece7a590b3ae77fd7d66f7efdc26894db6f'/)
+ assert.match(code,/hash\(manifestBytes\)!==expectedManifestHash/)
+ assert.match(code,/hash\(bytes\)!==expectedCandidateHash/)
+ assert.match(code,/if\(digest!==expectedManifestHash\)/)
+ assert.match(code,/--apply-approved-014/)
+ assert.match(code,/--review/)
+})
+test('014 installer requires complete exact 11-row historical migration equality in BOTH directions',()=>{
+ assert.match(code,/const history=\[\.\.\.prior\.requires/)
+ assert.match(code,/expectedVersions=\[/)
+ assert.match(code,/JSON\.stringify\(manifest\.requires\)!==JSON\.stringify\(history\)/)
+ assert.match(code,/SELECT version,sha256 FROM uranius_private\.migration_ledger/)
+ assert.match(code,/EXCEPT SELECT version,sha256 FROM uranius_private\.migration_ledger/)
+ assert.match(code,/EXCEPT SELECT version,sha256 FROM \(VALUES/)
+ assert.match(code,/uranius014_history_check/)
+})
+test('014 installer locks exact direct TLS project and uses atomic transaction',()=>{
+ assert.match(code,/assertSandboxTarget\('migrate',env\)/)
+ assert.match(code,/PGUSER:'uranius_migrator'/)
+ assert.match(code,/PGSSLMODE:'verify-full'/)
+ assert.match(code,/PGGSSENCMODE:'disable'/)
+ assert.match(code,/runPsqlBatch\(\{executable:env\.URANIUS_PSQL_PATH,input:sql,env:child,transaction:true/)
+ assert.match(code,/URANIUS_DATABASE_CA_FILE/)
+})
+test('014 transactional ledger and RLS checks preserve all existing owner data',()=>{
+ assert.match(code,/INSERT INTO uranius_private\.migration_ledger\(version,sha256\)/)
+ assert.match(code,/count\(\*\) FROM uranius_private\.migration_ledger\)<>12/)
+ assert.match(code,/relrowsecurity AND relforcerowsecurity/)
+ assert.match(code,/has_any_column_privilege\('anon'/)
+ assert.match(code,/has_any_column_privilege\('uranius_smoke_reader'/)
+ assert.match(code,/count\(\*\) FROM uranius_catalog\.riders\)<>200/)
+ assert.match(code,/count\(\*\) FROM uranius_catalog\.team_owners\)<>2/)
+ assert.match(code,/is_paused\)<>1/)
+ assert.doesNotMatch(code,/service_role|PROPELотon/i)
+})
