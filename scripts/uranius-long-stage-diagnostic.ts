@@ -71,14 +71,40 @@ function run(course:typeof courses[number],seed:string,experiment:Experiment){
  let earliestMultiGroupSecond:number|null=null
  let latestMultiGroupSecond:number|null=null
  let earliestPositiveGapSecond:number|null=null
+ // Inspect the NEXT movement tick for each newborn drop, before catch reconciliation.
+ // Distinguish no movement difference from a positive gap that reconciliation erased.
+ const firstMovementSamples:Array<{groupId:string,bornSecond:number,checkedSecond:number,
+  preCatchGapKm:number,preCatchGroupSpeedKmh:number,preCatchPelotonSpeedKmh:number,
+  preCatchGroupDistanceKm:number,preCatchPelotonDistanceKm:number,
+  reabsorbed:boolean,postCatchActive:boolean}>=[]
+ const pendingBirths=new Map<string,number>()
+ let positivePreCatchGapTicks=0,nonzeroRelativeSpeedTicks=0
  const reabsorptionSamples:Array<{second:number,groupId:string,ageSeconds:number,gapKm:number}>= []
  for(const tick of result.ticks){
   const before=tick.reconciledBreakaways.previousState
   const after=tick.reconciledBreakaways.state
   const reabsorbed=tick.reconciledBreakaways.reabsorbedBreakawayGroupIds
+  const pelotonBefore=Object.values(before.groups).find(g=>g.active&&g.groupType==='peloton')
+  for(const [id,bornSecond] of pendingBirths){
+   const g=before.groups[id]
+   if(!g?.active||!pelotonBefore){pendingBirths.delete(id);continue}
+   if(tick.state.raceSecond<=bornSecond)continue
+   const gap=g.distanceKm-pelotonBefore.distanceKm
+   if(Math.abs(gap)>1e-7)positivePreCatchGapTicks++
+   if(Math.abs(g.speedKmh-pelotonBefore.speedKmh)>1e-7)nonzeroRelativeSpeedTicks++
+   if(firstMovementSamples.length<25)firstMovementSamples.push({
+    groupId:id,bornSecond,checkedSecond:tick.state.raceSecond,
+    preCatchGapKm:gap,preCatchGroupSpeedKmh:g.speedKmh,
+    preCatchPelotonSpeedKmh:pelotonBefore.speedKmh,
+    preCatchGroupDistanceKm:g.distanceKm,preCatchPelotonDistanceKm:pelotonBefore.distanceKm,
+    reabsorbed:reabsorbed.includes(id),postCatchActive:!!after.groups[id]?.active})
+   pendingBirths.delete(id)
+  }
   for(const transition of tick.transitions){
-   if(transition.transitionKind==='created')createdTransitions++
-   else consolidatedTransitions++
+   if(transition.transitionKind==='created'){
+    createdTransitions++
+    pendingBirths.set(transition.targetGroupId,tick.state.raceSecond)
+   }else consolidatedTransitions++
    if(reabsorbed.includes(transition.targetGroupId))reabsorbedSameTick++
    const active=after.groups[transition.targetGroupId]
    if(active?.active&&active.riderIds.length>0)survivingNewDropTransitions++
@@ -131,7 +157,8 @@ function run(course:typeof courses[number],seed:string,experiment:Experiment){
   reabsorbedSameTick,survivingNewDropTransitions,laterReabsorbedGroups,
   multiGroupTicks,positiveGapTicks,peakTickSpatialGapKm:round(peakTickSpatialGapKm),
   earliestMultiGroupSecond,latestMultiGroupSecond,earliestPositiveGapSecond,
-  reabsorptionSamples,
+  reabsorptionSamples,firstMovementSamples,
+  positivePreCatchGapTicks,nonzeroRelativeSpeedTicks,
   transitionKinds:ages.reduce((out,k)=>{
    out[k]=(out[k]??0)+1;return out
   },{} as Record<string,number>),runtimeMs,tickCount:result.tickCount,
