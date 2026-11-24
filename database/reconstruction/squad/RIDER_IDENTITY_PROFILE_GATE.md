@@ -128,3 +128,16 @@ node tests\uraniusRiderUuidFullHistoryNativePg17.mjs --disposable-native-pg17 --
 ```
 
 Caution: this native test evaluates the **reviewed 014 SQL** against the complete synthetic 001–013 fixture; it does not yet execute the CLI installer as a real hosted transaction. That last separately-approved application step and independent read-only hosted verification remain outstanding. No change to either frozen 014 digest. Do not run `--apply-approved-014` yet.
+
+## 2026-11-24 — Full-history native acceptance + independent hosted read-only preflight PASS
+
+Owner supplied terminal output for **3/3 full-history boundary tests** and **40/40 full-history disposable native PostgreSQL 17 checks**, with all temporary PostgreSQL files cleaned up. Native rehearsal replayed 001–010, exercised the existing 013 candidate, compared all 11 historical fingerprints in both directions, rejected a simulated earlier fingerprint mismatch, rejected non-TLS and wrong-user attempts, generated all 200 synthetic UUIDs, checked uniqueness and FK/provenance mapping, verified FORCE RLS access denial, preserved paused clock and owner state, and rejected duplicate application. **No hosted data changes.**
+
+Independent hosted Uranius project `sdtsivgtcaoaeoihcwzd` was inspected using `BEGIN READ ONLY` / `ROLLBACK` on 2026-11-24. Results:
+- Custom ledger count **11**, exact equality with frozen eleven version/digest pairs **true**.
+- `uranius_game.synthetic_rider_identity` table absent (**true**).
+- 200 synthetic riders, 2 synthetic owner mappings, 1 paused Season 1 Day 1 game-state row.
+- Existing `uranius_catalog.riders` RLS enabled; its dedicated `riders_read` owner policy exists.
+- Anonymous rider read denied; restricted reader `team_id` read denied.
+
+**Final status: ready for separate explicit OWNER APPROVAL of exact manifest SHA-256 `620d5eacbd836e13a72fdaac9159162061fab8b490a30528b177d25d7952db62` and exact candidate SHA-256 `f97126ed0a9259bfeac9ebf3c4158ece7a590b3ae77fd7d66f7efdc26894db6f`, for *isolated Uranius only*. Neither hash nor manifest has been changed. Not installed. The on-disk guarded installer `scripts/apply-uranius-rider-identity.mjs` is prepared, but the approved-hosted apply path has not been end-to-end executed; therefore direct TLS credentials and final independent postflight must still be verified if approved. Do not claim original rider identities have been reconstructed: only generated synthetic UUID mapping is in scope.
