@@ -159,3 +159,28 @@ node scripts\apply-uranius-squad.mjs --review
 ```
 
 **Do not run `--apply-reviewed-squad` or the Windows launcher without separate, explicit approval.** Migration 013 remains uninstalled. A successful installation will still need independent read-only hosted postflight and authenticated Squad preview wiring; it does not mean the original complete Squad page is rebuilt.
+
+## 2026-11-24 — First authenticated Squad frontend source integration
+
+The owner approved exactly `013_install_manifest_REVIEW_ONLY.json` SHA-256 `ab63e7949889a49bd33fb584885f4911df6b027eb20d3aed3be43e77f0ccaa7a` for isolated project `sdtsivgtcaoaeoihcwzd`. The owner installed 013 with direct-TLS migrator; an **independent read-only hosted Supabase check** confirmed 11 ledger entries, exact `013_squad_reader_grant.sql` candidate SHA, six selectable preview columns, `team_id` denied to restricted reader, anonymous access/writes denied, 200 synthetic riders, two owners and the unchanged paused clock. Actual riders RLS is **enabled, not FORCE** (existing policy unchanged). No original game production changes.
+
+The first local frontend integration is now source-staged:
+- `database/synthetic-world/hosted-squad-preview-read_REVIEW_ONLY.sql`: owner-scoped **read-only** SQL for the new installed 013 reader grant; verified subject only, TLS guard, no fabricated fields, transaction rollback.
+- `database/synthetic-world/club-dashboard-adapter.mjs`: new `GET /fixture/squad` protected by the same short-lived verified Auth session, origin checks and HttpOnly cookie. No user-controlled team or club identifier; unavailable backend returns **503**, invalid projection fails closed.
+- `scripts/run-uranius-hosted-smoke.mjs`: explicit `URANIUS_SQUAD_READ_APPROVED=1` opt-in bound to the restricted PostgreSQL reader, using the verified server session subject only. Opt-in off otherwise.
+- `database/synthetic-world/hosted-smoke-client.tsx`: `#/dashboard/squad` read-only Squad screen, opened by a link from authenticated Overview. Displays only real owned synthetic rider label and four existing skills, validates club UUID/response contract/unique IDs, and distinguishes missing server data from an empty roster. It does **not** claim original Squad parity or enable writes.
+- `scripts/run-approved-overview-https-windows.ps1` now opts into the installed verified Squad reader alongside completed Overview and clock; it remains loopback HTTPS only.
+
+Added tests:
+`tests/uraniusSquadRouteIsolation.test.mjs` — 4 route/authorization checks including A/B session isolation, wrong origin/method, logout, unknown users, malformed response denial.
+`tests/uraniusSquadHostedFrontendBoundary.test.mjs` — 3 source-boundary checks.
+`tests/uraniusSquadHostedBundle.test.mjs` — actual offline React/esbuild bundle compilation.
+
+**These new tests have not yet been run by the owner.** Next safe offline test command:
+
+```bat
+git pull origin main
+node --test tests\uraniusSquadRouteIsolation.test.mjs tests\uraniusSquadHostedFrontendBoundary.test.mjs tests\uraniusSquadHostedBundle.test.mjs
+```
+
+After offline tests pass, a local HTTPS smoke with real two-manager login can be performed using the existing `scripts/setup-uranius-loopback-tls-windows.ps1` helper and `scripts/run-approved-overview-https-windows.ps1`. The user previously removed CurrentUser Root trust for the short-lived loopback certificate, so **do not assume browser trust is currently installed**; require explicit opt-in for a new/current cert, and remove the same trust after testing. Never paste database passwords or publishable keys into chat. It is important to do manual browser A/B acceptance before marking the frontend complete. No hosted DB schema changes are needed beyond already verified 013.
