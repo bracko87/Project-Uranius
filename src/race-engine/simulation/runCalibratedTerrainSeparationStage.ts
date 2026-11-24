@@ -37,6 +37,8 @@ export interface RunCalibratedTerrainSeparationStageOptions {
   readonly experimentalPhysicalAttackLaunch?: boolean
   /** OFFLINE POC ONLY, explicit and default-off finish scoring. */
   readonly experimentalFinishTacticsEnabled?: boolean
+  /** OFFLINE POC: default-off chase speed. */
+  readonly experimentalChaseOrdersEnabled?: boolean
 }
 
 export interface RunCalibratedTerrainSeparationStageResult
@@ -147,6 +149,8 @@ export function runCalibratedTerrainSeparationStage(
           options.experimentalPhysicalAttackLaunch ?? false,
         experimentalFinishTacticsEnabled:
           options.experimentalFinishTacticsEnabled ?? false,
+        experimentalChaseOrdersEnabled:
+          options.experimentalChaseOrdersEnabled ?? false,
       },
     )
 
