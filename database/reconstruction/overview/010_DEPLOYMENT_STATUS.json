@@ -24,7 +24,7 @@
   "originalProPelotonProductionChanged": false,
   "safeLauncher": "scripts/run-approved-overview-windows.ps1",
   "safeLauncherCommit": "601ff9c9dba51eab1e6c1860d72437cbcfffc797",
-  "nextAction": "Run updated combined disposable PG17 test to confirm nonempty A/B RLS parity, then perform browser UI smoke with trusted localhost TLS; no hosted DML.",
+  "nextAction": "Run local HTTPS browser visual acceptance for the limited synthetic Overview UI using a trusted 127.0.0.1 loopback TLS certificate/key; do not reopen completed 010 or A/B data isolation tests.",
   "appliedDate": "2026-11-24",
   "invocation": "Owner Windows secure launcher using direct TLS uranius_migrator password; owner terminal confirmed atomic transaction postflight passed.",
   "postflight": {
@@ -52,8 +52,7 @@
     "seasonOnePausedClockRows": 1
   },
   "unverified": [
-    "Live non-empty race preparation ownership isolation (four new race tables currently empty)",
-    "Full local HTTPS browser UI end-to-end verification",
+    "Full local HTTPS browser UI end-to-end visual verification",
     "Original full Overview application parity"
   ],
   "securityAdvisors": {
@@ -112,16 +111,18 @@
       "pausedClockRows": 1
     },
     "populatedOwnership": {
-      "status": "NATIVE_TEST_UPDATED_PENDING_OWNER_EXECUTION",
+      "status": "PASS_21_OF_21_DISPOSABLE_NATIVE_PG17",
+      "date": "2026-11-24",
       "script": "tests/uraniusOverviewCombinedInstallNativePg17.mjs",
-      "scope": "Disposable PostgreSQL 17 only",
+      "scope": "Disposable PostgreSQL 17 only; hosted Uranius untouched",
       "checks": [
-        "Exact combined 010 SQL applied after replayed 001–009",
-        "Two separate manager-owned preparations and entries",
-        "Both managers see only own upcoming race while current-day world race cards stay global",
-        "Unknown subject sees no private entries",
-        "Anonymous and reader writes denied",
-        "FORCE RLS and ten ledger entries preserved"
+        "Original 001–009 replay and exact approved combined 010 installed locally",
+        "A and B see one different own upcoming race and entry/preparation",
+        "Both managers see global same-day race cards",
+        "Unknown manager sees zero private rows",
+        "Anonymous and restricted reader writes denied",
+        "FORCE RLS and 10 migration ledger rows preserved",
+        "Local PostgreSQL fixture files cleaned up"
       ],
       "hostedRowsInserted": 0
     }
