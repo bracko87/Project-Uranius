@@ -46,6 +46,10 @@ try{
   'peakGroups '+r.activeGroupPeak,
   'winnerAttributes '+JSON.stringify(r.winnerAttributes),
   'hash '+r.classificationHash].join(' | '))
+ for(const r of report.scenarios.filter(s=>s.profile==='steep_160')){
+  console.log('STEEP ATTACK LAUNCH '+r.distribution+' | '+JSON.stringify(r.attackLaunchAudit))
+  console.log('STEEP TERRAIN DROP FATE '+r.distribution+' | '+JSON.stringify(r.terrainDropAudit))
+ }
  console.log('TECHNICAL CHECKS '+JSON.stringify(report.checks))
  console.log('SPORTING EVIDENCE IS OBSERVATIONAL; NO GO REMAINS')
  if(args.length){
