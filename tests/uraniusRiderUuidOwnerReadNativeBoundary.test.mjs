@@ -29,3 +29,9 @@ test('015 native tests wrong role, TLS, restricted grants, immutable ledger and 
  assert.match(code,/UPDATE uranius_game\.synthetic_rider_identity/)
  assert.match(code,/count\(\*\) FROM uranius_private\.migration_ledger/)
 })
+
+test('015 zero-owned-rider aggregation uses a nonempty sentinel instead of ambiguous blank psql output',()=>{
+ assert.match(code,/coalesce\(string_agg\(rider_id::text,',' ORDER BY rider_id\),'<no-owned-riders>'\)/)
+ assert.match(code,/assert\.equal\(ownerRiderIds\(unknown015\),'<no-owned-riders>'\)/)
+ assert.doesNotMatch(code,/assert\.equal\(ownerRiderIds\(unknown015\),''\)/)
+})
