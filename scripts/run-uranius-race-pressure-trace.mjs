@@ -22,7 +22,7 @@ try{
  if(run.error)throw run.error
  if(run.status!==0)throw Error('Calibrated trace failed: '+(run.stderr||run.stdout||'unknown').slice(0,1400))
  const report=JSON.parse(run.stdout)
- if(report.reportVersion!=='uranius-pressure-trace-v1'||report.results.length!==3)
+ if(report.reportVersion!=='uranius-pressure-trace-v2'||report.results.length!==4)
   throw Error('Unexpected pressure-trace result shape')
  console.log('URANIUS CALIBRATED PRESSURE TRACE — offline, synthetic only')
  for(const p of report.results){
