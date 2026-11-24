@@ -23,3 +23,13 @@ node --test tests\uraniusSquadUuidRouteIsolation.test.mjs tests\uraniusSquadUuid
 After these pass, local HTTPS `--offline-preflight` and a real two-manager authenticated smoke using previously approved `scripts/run-approved-overview-https-windows.ps1` should verify distinct UUIDs per manager and no cross-club data. The HTTPS test requires the owner's private local smoke-reader password and publishable key; never share these with the assistant.
 
 **No additional schema migration or owner approval is necessary to exercise this already-installed 015 read path**, but the local integration remains unverified until tests and live HTTPS smoke pass. Do not deploy a public backend or turn on write actions. The nine-skill, nationality, age, contracts, fatigue, morale and other original rider profile fields remain a separate reconstruction milestone.
+
+## 2026-11-24 — First integrated test acceptance PASS; HTTPS acceptance open
+
+Owner's local Windows terminal confirms all **8/8** requested new integration tests passed, including real client esbuild bundle, read-only TLS SQL boundary, restricted backend subject routing, legacy fallback, UUID projector failures, signed/unsigned sessions, A/B ownership isolation, wrong-origin and query injection rejection. Existing legacy route and other broader regression suite tests were **not** all executed in this run.
+
+Independent **read-only** Supabase SQL against isolated project `sdtsivgtcaoaeoihcwzd` after these commits confirms 13 migration ledger entries, installed 015 digest `71ade068c5cf5bbdc0e356663a0525f1e74b43e63a9c19f267748f7b46b6161e`, 200 distinct synthetic rider UUIDs, one owner-reader policy, FORCE RLS, no `anon` or `authenticated` UUID-mapping SELECT, and paused game clock. No hosted SQL writes.
+
+GitHub Actions API reported **zero workflow runs** at the time of inspection, so the new automated CI workflow cannot yet be claimed passing or even triggered. The owner has independently confirmed local test success.
+
+**Remaining acceptance**: run the existing already-approved `scripts/run-approved-overview-https-windows.ps1` on owner's Windows machine using the previously configured local HTTPS TLS cert/key, Uranius CA, portable PostgreSQL 17 binaries, restricted `uranius_smoke_reader` password and Supabase publishable key entered locally. Authenticate both fixture-manager A and B in separate sessions; each Squad read-only profile should show its own *synthetic* UUID, not a foreign rider; verify no cross-club data, no original rider identity claim, and no mutating UI controls. Neither the assistant nor public clients should receive these passwords/keys. Only after this test can the complete live HTTPS integration be marked verified.
