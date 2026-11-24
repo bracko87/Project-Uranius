@@ -29,6 +29,7 @@ jobs:
       - name: Read-only Squad and UUID A/B route checks
         run: |
           node --test \
+            tests/uraniusOriginalNineSkillAvailability.test.mjs \
             tests/uraniusSquadUuidRouteIsolation.test.mjs \
             tests/uraniusSquadUuidIntegrationBoundary.test.mjs \
             tests/uraniusSquadRouteIsolation.test.mjs \
