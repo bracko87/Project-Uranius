@@ -113,6 +113,29 @@ function run(enabled:boolean){
   r.finishPosition!==null&&spr.finishPosition!==null&&r.finishPosition<spr.finishPosition).length
  const sprinterStrength={sprint:sprinter.attributes.sprint,
   acceleration:sprinter.attributes.acceleration,energy:spr.energy}
+ const finishTick=stage.ticks.find(t=>t.finishDetection.candidates.some(
+  c=>c.riderId===sprinter.riderId))
+ const finishCandidates=finishTick?.finishDetection.candidates??[]
+ const sprinterCandidate=finishCandidates.find(c=>c.riderId===sprinter.riderId)
+ const sameFinishGroupCandidates=finishCandidates.filter(c=>
+  c.groupId===sprinterCandidate?.groupId)
+ const sameFinishGroupRivalsWithHigherSprintScore=sameFinishGroupCandidates.filter(c=>
+  c.riderId!==sprinter.riderId&&sprinterCandidate!==undefined&&
+  c.sprintScore>sprinterCandidate.sprintScore).length
+ const sprintFinishAudit={
+  originalSprintAttribute:sprinter.attributes.sprint,
+  effectiveSprintScore:sprinterCandidate?.sprintScore??null,
+  awardedSprintScoreBonus:sprinterCandidate===undefined?null:
+   sprinterCandidate.sprintScore-sprinter.attributes.sprint,
+  sameFinishGroupCandidateCount:sameFinishGroupCandidates.length,
+  sameFinishGroupRivalsWithHigherSprintScore,
+  sameFinishGroupRivalsAtEqualSprintScore:sameFinishGroupCandidates.filter(c=>
+   c.riderId!==sprinter.riderId&&sprinterCandidate!==undefined&&
+   c.sprintScore===sprinterCandidate.sprintScore).length,
+  sameFinishGroupRank:sameFinishGroupCandidates.findIndex(c=>
+   c.riderId===sprinter.riderId)+1,
+  officialFinishSeconds:spr.finishTimeSeconds,
+ }
  const movementCosts=stage.ticks.reduce((sum,t)=>sum+
   (t.appliedEnergy.applications.find(a=>a.riderId===pursuer.riderId)?.energyCost??0),0)
  const attackCount=stage.events.filter(e=>e.eventType==='ATTACK_STARTED').length
@@ -129,6 +152,7 @@ function run(enabled:boolean){
   firstChaseBoost:actualChaseTicks[0]??null,
   lastChaseBoost:actualChaseTicks.at(-1)??null,
   sprinterStrength,sprinterFinishGroupSize:sprinterFinishGroup.length,
+  sprintFinishAudit,
   sprinterWithinGroupPosition,
 
   sprinterRank:spr.finishPosition,sprinterTime:spr.finishTimeSeconds,
