@@ -527,3 +527,22 @@ Owner ran `git pull origin main` (up to date), `node --test tests\\uraniusChaseO
 **Decision:** Mark default-off physical chase feature as **functionally demonstrated in 8-tick POC**. This does **not** validate the 1.5% cap as realistic, a full chase lifecycle, consistent performance on gradients and long stages, or actual race-level sporting results. Keep canonical and hosted paths unchanged; sporting GO withheld and official checklist remains **49/60**.
 
 Next evidence gate: longer chase with a stronger escape to confirm a FAILED pursuit and energy depletion; a catchable scenario to verify actual group reabsorption; then mixed attack/chase/sprint integration at realistic stage distances/field sizes. Preserve identical-input negative controls, no artificial gap or catch, no production actions.
+
+
+## 2026-11-24 — Chase lifecycle outcome scenarios (committed; not yet executed)
+
+The owner confirmed the eight-tick chase experiment passes (5/5 boundary tests, all seven multistep checks). The physically ahead escape maintained a 0.32066666666666643km gap without chase and 0.2994866666666667km with chase after 4 minutes; chase consumed 0.00414 more energy. No rider was forced into a catch.
+
+Next added `scripts/uranius-chase-lifecycle.ts`, a separate 24km **flat** fictional same-seed multi-tick probe for **two contrasting escape strengths**, each with feature OFF/ON (four simulations). All start from validated `createInitialState` and an actual `createBreakawayGroup`; the weaker rider (flat 40, stamina/resistance 55) gets a 30s launch gap, and the stronger rider (flat 99, stamina/resistance 95) gets 90s. A valid chase order is issued by a rider remaining in the peloton. Each run advances up to **36 actual 30-second ticks**, logging active breakaway's signed physical gap, both movement proposal speeds, rider energy, active group count, reabsorption from `reconcileBreakawayGroups`, and order lifecycle. Catch evidence is tied to physical collocation or the existing 5s catch window; the test never turns groups inactive manually and never forces either outcome.
+
+The launcher `scripts/run-uranius-chase-lifecycle.mjs` fails on roster conservation, order lifecycle, fabricated reabsorption, mismatched tick windows and non-finite/absent gap evidence. It **reports rather than demands** weak catch/strong survival, because scenario outcomes cannot be assumed before real execution. Static assertions: `tests/uraniusChaseLifecycleBoundary.test.mjs`. No engine physics or production settings changed.
+
+**Not runtime-tested yet**. On the Windows checkout:
+
+```bat
+git pull origin main
+node --test tests\uraniusChaseLifecycleBoundary.test.mjs
+node scripts\run-uranius-chase-lifecycle.mjs --out chase-lifecycle-local.json
+```
+
+Review actual reported `caughtAtTick`, physical gap and energy; if it reveals a genuine physical-order/reabsorption bug, repair the cause, not the expected result. Continue to mixed stage tactics only when these scenarios are validated. Keep official checklist **49/60**, sporting gate IMPROVE, all flags default off.
