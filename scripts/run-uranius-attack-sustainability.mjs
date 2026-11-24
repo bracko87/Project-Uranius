@@ -67,6 +67,25 @@ try{
    }))
   }
  }
+ console.log('DRAFTING ENERGY ON/OFF — SIX MATCHED PAIRS')
+ for(const withShelter of report.shelterScenarios){
+  const withoutShelter=report.scenarios.find(s=>s.strength===withShelter.strength&&
+   s.timing===withShelter.timing)
+  console.log('DRAFTING COMPARISON '+withShelter.strength+' '+withShelter.timing+
+   ' | '+JSON.stringify({
+    offFinishSeconds:withoutShelter.selectedFinishSeconds,
+    onFinishSeconds:withShelter.selectedFinishSeconds,
+    offRank:withoutShelter.selectedRank,onRank:withShelter.selectedRank,
+    offEnergyCost:withoutShelter.effortAudit.actualEnergyCost,
+    onEnergyCost:withShelter.effortAudit.actualEnergyCost,
+    offEnergyRemaining:withoutShelter.selectedFinalEnergy,
+    onEnergyRemaining:withShelter.selectedFinalEnergy,
+    shelteredEnergySaved:withShelter.effortAudit.shelterSaved,
+    shelteredTicks:withShelter.effortAudit.shelterAppliedTicks,
+    onChargedTicks:withShelter.effortAudit.chargedTicks,
+    onEnergyBalanceError:withShelter.effortAudit.energyBalanceError,
+  }))
+ }
  if(args.length){
   const path=resolve(args[1])
   writeFileSync(path,JSON.stringify(report,null,2)+'\n',{mode:0o600})
