@@ -13,7 +13,7 @@ test('four legal scheduled tactical orders and no synthetic attack gap',()=>{
  assert.equal((fixture.match(/maximumFollowers:null/g)||[]).length,4)
 })
 test('same-input default-off versus all-explicitly-opted-in experiment',()=>{
- assert.match(fixture,/function run\(enabled:boolean\)/)
+ assert.match(fixture,/function run\(enabled:boolean,withEstablishedBreakaway=false\)/)
  for(const option of ['experimentalPhysicalAttackLaunch',
   'experimentalChaseOrdersEnabled','experimentalFinishTacticsEnabled'])
   assert.match(fixture,new RegExp(option+':enabled'))
