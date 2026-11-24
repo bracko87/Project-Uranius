@@ -30,18 +30,18 @@ $uranius_squad_acl_review$;
 
 -- Distinct from original public.club_roster; no synthetic fields invented.
 -- rider_id SELECT was already granted in migration 007.
-GRANT SELECT (team_id,label,flat,climbing,stamina,resistance)
+GRANT SELECT (label,flat,climbing,stamina,resistance)
 ON uranius_catalog.riders TO uranius_smoke_reader;
 
 DO $uranius_squad_acl_postflight$
 BEGIN
  IF NOT (SELECT bool_and(has_column_privilege(
         'uranius_smoke_reader','uranius_catalog.riders',col,'SELECT'))
-        FROM unnest(ARRAY['rider_id','team_id','label','flat','climbing','stamina','resistance']) AS col)
+        FROM unnest(ARRAY['rider_id','label','flat','climbing','stamina','resistance']) AS col)
     OR has_table_privilege('uranius_smoke_reader','uranius_catalog.riders','UPDATE')
     OR has_table_privilege('uranius_smoke_reader','uranius_catalog.riders','INSERT')
     OR has_table_privilege('uranius_smoke_reader','uranius_catalog.riders','DELETE')
-    OR has_table_privilege('uranius_smoke_reader','uranius_catalog.riders','SELECT')
+    OR has_column_privilege('uranius_smoke_reader','uranius_catalog.riders','team_id','SELECT')
     OR has_table_privilege('anon','uranius_catalog.riders','SELECT')
  THEN RAISE EXCEPTION 'Squad ACL rehearsal unexpected privilege broadening';
  END IF;
