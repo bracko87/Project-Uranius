@@ -36,6 +36,17 @@ try{
    'hash '+r.hash].join(' | '))
  console.log('CHECKS '+JSON.stringify(report.checks))
  console.log('OBSERVED '+JSON.stringify(report.observations))
+ for(const r of [report.control,report.experiment]){
+  console.log('LONG CHASE DURATION '+(r.enabled?'EXPERIMENT':'CONTROL')+' | '+JSON.stringify({
+   eligibleTicks:r.eligibleChaseTicks,actualBoostTicks:r.actualChaseBoostTicks,
+   boostedAfterOrderWindow:r.actualChaseBoostTicksAfterExpiry,
+   first:r.firstChaseBoost,last:r.lastChaseBoost}))
+  console.log('SPRINT FINISH CONTEXT '+(r.enabled?'EXPERIMENT':'CONTROL')+' | '+JSON.stringify({
+   rank:r.sprinterRank,finishGroupSize:r.sprinterFinishGroupSize,
+   placeInsideGroup:r.sprinterWithinGroupPosition,
+   attributes:r.sprinterStrength}))
+ }
+
  if(args.length){
   const target=resolve(args[1])
   writeFileSync(target,JSON.stringify(report,null,2)+'\n',{mode:0o600})
