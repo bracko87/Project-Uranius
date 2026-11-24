@@ -56,6 +56,14 @@ async function main() {
   const squadSql = env.URANIUS_SQUAD_READ_APPROVED === '1'
     ? await readFile(new URL('hosted-squad-preview-read_REVIEW_ONLY.sql', world), 'utf8')
     : null
+  // Separate opt-in for 015 owner-restricted UUID reads; never activate by default.
+  if (env.URANIUS_SQUAD_UUID_READ_APPROVED &&
+      !['0','1'].includes(env.URANIUS_SQUAD_UUID_READ_APPROVED)) {
+    throw new Error('Invalid owner UUID Squad read flag.')
+  }
+  const squadUuidSql = env.URANIUS_SQUAD_UUID_READ_APPROVED === '1'
+    ? await readFile(new URL('hosted-squad-uuid-read_REVIEW_ONLY.sql', world), 'utf8')
+    : null
   startupStage = 'local-css-processing'
   const cssPath = fileURLToPath(new URL('src/shadcn.css', root))
   const css = (await postcss([tailwindcss(fileURLToPath(new URL('tailwind.config.js', root)))]).process(await readFile(cssPath, 'utf8'), { from: cssPath })).css
@@ -153,6 +161,18 @@ async function main() {
         executable: env.URANIUS_PSQL_PATH, env: childEnv,
         input: '\\set verified_subject ' + id + '\n' + scheduleSql,
         timeout: 10000, stage: 'Uranius read-only Overview schedule query',
+        extraArgs: ['--tuples-only', '--no-align'],
+      })
+      return JSON.parse(output.trim().split(/\r?\n/).at(-1))
+    } : undefined,
+    readSquadUuid: squadUuidSql ? (id) => {
+      if (!/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(id)) {
+        throw new Error('Invalid verified subject.')
+      }
+      const output = runPsqlBatch({
+        executable: env.URANIUS_PSQL_PATH, env: childEnv,
+        input: '\\set verified_subject ' + id + '\n' + squadUuidSql,
+        timeout: 10000, stage: 'Uranius owner-only UUID Squad query',
         extraArgs: ['--tuples-only', '--no-align'],
       })
       return JSON.parse(output.trim().split(/\r?\n/).at(-1))
