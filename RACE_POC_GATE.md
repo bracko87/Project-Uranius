@@ -355,3 +355,16 @@ node scripts\run-uranius-rolling-tactical-sensitivity.mjs --out tactical-local.j
 ```
 
 This is two runs, not the original twelve. Realism review still must cover credible sprint ranking/time rules, meaningful sprint/leadout/chase support, team tactics, fatigue, and a variety of natural mountain time gaps before sporting GO. Official checklist remains 49/60.
+
+
+## 2026-11-24 — Rolling tactical A/B fixture validation repair
+
+Owner ran boundary test 3/3 PASS but the two-race tactical A/B executable failed **before simulation** when `createInitialState` rejected `offline-attack-1`: `maximumFollowers must be null or a non-negative integer`. This was a fixture contract oversight (omitted optional-looking field), **not proof of a tactical engine failure**. Added explicit `maximumFollowers:null` and `targetRiderId:null` to the synthetic attack order, plus source boundary assertion guarding the exact state validator's requirement. No engine rules changed. This correction has NOT yet been executed on the owner's Windows checkout:
+
+```bat
+git pull origin main
+node --test tests\uraniusRollingTacticalSensitivityBoundary.test.mjs
+node scripts\run-uranius-rolling-tactical-sensitivity.mjs --out tactical-local.json
+```
+
+The tactical responsiveness question remains pending until executable A/B results are captured; no sporting GO. Checklist 49/60.
