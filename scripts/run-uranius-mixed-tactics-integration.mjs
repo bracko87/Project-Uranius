@@ -32,6 +32,22 @@ try{
  console.log('Observed (not assumed): '+JSON.stringify(report.comparison))
  console.log('ESTABLISHED BREAKAWAY '+JSON.stringify(report.establishedPhysicalComparison))
  console.log('PHYSICAL CHASE EVIDENCE '+JSON.stringify(report.physicalChaseEvidence))
+ for(const [label,r] of [['CONTROL',report.establishedOff],['ALL-TACTICS',report.establishedOn]]){
+  console.log('PURSUER ENERGY ACCOUNTING '+label+' | '+JSON.stringify({
+   raceTickCount:r.raceTickCount,chargedTicks:r.pursuerChargedTicks,
+   movementEnergyCost:r.pursuerMovementEnergyCost,
+   initialEnergy:r.pursuerInitialEnergy,finalEnergy:r.pursuerEnergy,
+   residualCost:r.pursuerEnergyAccountingResidual,
+   lastChargedSecond:r.pursuerLastChargedSecond,
+   finishTimeSeconds:r.pursuerFinishTimeSeconds}))
+ }
+ console.log('ENERGY EXPOSURE DELTAS '+JSON.stringify({
+  finalEnergy:report.physicalChaseEvidence.pursuerFinalEnergyDifference,
+  finishTimeSeconds:report.physicalChaseEvidence.pursuerFinishTimeDifferenceSeconds,
+  chargedTicks:report.physicalChaseEvidence.pursuerChargedTickDifference,
+  movementCost:report.physicalChaseEvidence.pursuerMovementCostDifference,
+  residualCost:report.physicalChaseEvidence.pursuerResidualCostDifference}))
+
  for(const [label,scenario] of [['ESTABLISHED CONTROL',report.establishedOff],['ESTABLISHED ALL-TACTICS',report.establishedOn]]){
   console.log(label+' | '+JSON.stringify({
    allFinished:scenario.allFinished,orders:scenario.executedOrders,
