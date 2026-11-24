@@ -608,3 +608,24 @@ node scripts\\run-uranius-mixed-tactics-integration.mjs --out mixed-tactics-loca
 ```
 
 Next evaluate `PHYSICAL CHASE EVIDENCE`: paired tick speed/energy, actual gap progression and whether an additional feature conflict exists. Do not claim all-four-effect physics until a positive applied speed and energy result is observed and attributable. Sporting GO withheld, checklist 49/60.
+
+
+## 2026-11-24 — Owner confirms mixed established-escape chase physics; stale boundary assertion repaired
+
+Owner pulled through `eb78a79` and ran mixed integration. Runtime **PASS**: all four real scheduled tactical orders executed and all ten riders classified in both same-input A/B trials, including the established 90-second-escape test. The new established scenario recorded **8 physically eligible chase ticks** and **8 paired trace ticks** with `positiveAppliedSpeedDifference=true` and `positiveTickEnergyDifference=true`. On the first paired tick (race second 300) the control peloton moved at **42.325500000000005 km/h** while the opt-in chase moved at **42.64294125000001 km/h**, energy consumed in that tick **0.06899999999999999** vs **0.0695175** for the chasing rider. Both had a real breakaway gap of **0.972500000000001 km (82.695578 s)** before moving. The enhanced scenario had a second-place sprinter versus tenth-place control. Both completed with all real orders.
+
+The original no-established-breakaway scenario remains physically ineligible for chase, and correctly consumes the same energy in both paths; its attack launch gap stayed below 5s and was caught next tick. The established escape is explicit fixture setup, **not evidence that the attack system sustained a 90-second lead**.
+
+**Additional important qualification:** the established scenario's *final* chasing-rider energy was **95.23899999999982** in control versus **95.27901999999978** in full opt-in, a delta control-minus-on of **-0.04001999999995576** (i.e. the opt-in rider ends with 0.04002 *more* energy despite greater instantaneous chase cost). This is a multi-mechanic, full-stage comparison and may reflect different race duration/exposure; it **does not prove total chase effort costs more energy**. Energy budget attribution and realistic calibration remain open.
+
+Static boundary suite was **4/5 PASS** because test still expected literal `function run(enabled:boolean)`, changed in this patch to `function run(enabled:boolean,withEstablishedBreakaway=false)`. This is a stale string expectation, not an engine error. The test was updated. The executable launcher was additionally strengthened to **fail closed** unless one or more matched eligible ticks demonstrate positive actual peloton speed gain and per-tick rider energy increase, rather than merely printing booleans. A corresponding static guard was added. No core race physics were modified in this repair; no hosted/production configuration, paid staging or canonical golden path altered.
+
+**These precise fixes are committed but NOT yet independently rerun by owner:**
+
+```bat
+git pull origin main
+node --test tests\\uraniusMixedTacticsBoundary.test.mjs
+node scripts\\run-uranius-mixed-tactics-integration.mjs --out mixed-tactics-local.json
+```
+
+Next evidence gate: isolate the cause of whole-stage final-energy reversal with actual tick counts/energy histories, then run realistic multi-rider long-distance calibration. Official checklist remains **49/60**; sporting GO withheld.
