@@ -41,7 +41,6 @@ function simulate(ability:EscapeAbility,enabled:boolean){
  let state=start.state
  let firstCatchTick:number|null=null
  let physicalCatchEvidence:boolean|null=null
- let previousGapKm:number|null=null
  let minimumPositiveGapKm=Infinity
  let maximumGapKm=-Infinity
  const trace:Array<{second:number,breakawayGapKm:number|null,
@@ -76,10 +75,6 @@ function simulate(ability:EscapeAbility,enabled:boolean){
    activeBreakaway,reabsorbed:wasCaught,
    groupCount:Object.values(tick.state.groups).filter(g=>g.active).length,
    riderCount:Object.keys(tick.state.riders).length})
-  if(previousGapKm!==null&&physicalGap!==null&&physicalGap<previousGapKm-1e-9){
-   // This is a real distance change, not a fabricated gap adjustment.
-  }
-  previousGapKm=physicalGap
   state=tick.state
  }
  const finalPeloton=state.groups[start.pelotonId]
