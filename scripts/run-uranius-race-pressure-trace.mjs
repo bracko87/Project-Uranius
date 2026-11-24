@@ -39,9 +39,14 @@ try{
    'groupsBeforeAfterReconcile '+p.maxActiveGroupsBeforeReconcile+'/'+p.maxActiveGroupsAfterReconcile,
    'groups '+p.maxActiveGroups,
    'finishSpread '+p.finishSpreadSeconds+'s',
+   'finishers '+p.finishers+'/'+p.fieldSize,
+   'ranksUnique '+p.uniqueNonNullRanks,
+   'snapshotIntegrityFailures '+p.snapshotConservationFailures.length,
+   'multiGroupFrames '+p.snapshotsWithMoreThanOneGroup,
+   'peakSpatialGap '+p.peakGapBetweenActiveGroupsKm+'km',
    'signal '+p.signal].join(' | '))
  }
  if(args.length){const target=resolve(args[1]);writeFileSync(target,JSON.stringify(report,null,2)+'\n',{mode:0o600});console.log('Report saved: '+target)}
  else console.log('Use --out race-pressure-trace-local.json for full per-tick samples')
- if(report.results.some(p=>p.error))process.exitCode=2
+ if(report.results.some(p=>p.error || !p.finalRosterExact || p.finishers!==p.fieldSize || !p.uniqueNonNullRanks || p.snapshotConservationFailures.length>0))process.exitCode=2
 }finally{rmSync(dir,{recursive:true,force:true,maxRetries:8,retryDelay:250})}
