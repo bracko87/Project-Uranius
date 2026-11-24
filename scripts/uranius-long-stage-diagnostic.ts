@@ -63,6 +63,47 @@ function run(course:typeof courses[number],seed:string,experiment:Experiment){
  const classificationsValid=finishers.length===originalIds.size&&
   ranks.every(x=>Number.isInteger(x)&&x!==null&&x>=1&&x<=course.field)&&
   new Set(ranks).size===course.field
+ // Measure birth, survival, catches and genuine movement at tick resolution.
+ // Group count alone can include a newborn dropped wave at 0km separation.
+ let reabsorbedSameTick=0,createdTransitions=0,consolidatedTransitions=0
+ let survivingNewDropTransitions=0,laterReabsorbedGroups=0
+ let multiGroupTicks=0,positiveGapTicks=0,peakTickSpatialGapKm=0
+ let earliestMultiGroupSecond:number|null=null
+ let latestMultiGroupSecond:number|null=null
+ let earliestPositiveGapSecond:number|null=null
+ const reabsorptionSamples:Array<{second:number,groupId:string,ageSeconds:number,gapKm:number}>= []
+ for(const tick of result.ticks){
+  const before=tick.reconciledBreakaways.previousState
+  const after=tick.reconciledBreakaways.state
+  const reabsorbed=tick.reconciledBreakaways.reabsorbedBreakawayGroupIds
+  for(const transition of tick.transitions){
+   if(transition.transitionKind==='created')createdTransitions++
+   else consolidatedTransitions++
+   if(reabsorbed.includes(transition.targetGroupId))reabsorbedSameTick++
+   const active=after.groups[transition.targetGroupId]
+   if(active?.active&&active.riderIds.length>0)survivingNewDropTransitions++
+  }
+  for(const id of reabsorbed){
+   const group=before.groups[id]
+   const peloton=Object.values(before.groups).find(g=>g.active&&g.groupType==='peloton')
+   if(!group)continue
+   const age=tick.state.raceSecond-group.createdAtRaceSecond
+   if(age>0)laterReabsorbedGroups++
+   if(reabsorptionSamples.length<20)reabsorptionSamples.push({
+    second:tick.state.raceSecond,groupId:id,ageSeconds:age,
+    gapKm:peloton?round(group.distanceKm-peloton.distanceKm):0})
+  }
+  const groups=Object.values(tick.state.groups).filter(g=>g.active&&g.riderIds.length>0)
+  if(groups.length>1){
+   multiGroupTicks++
+   earliestMultiGroupSecond??=tick.state.raceSecond
+   latestMultiGroupSecond=tick.state.raceSecond
+   const distances=groups.map(g=>g.distanceKm)
+   const gap=Math.max(...distances)-Math.min(...distances)
+   peakTickSpatialGapKm=Math.max(peakTickSpatialGapKm,gap)
+   if(gap>1e-7){positiveGapTicks++;earliestPositiveGapSecond??=tick.state.raceSecond}
+  }
+ }
  let replayMembershipErrors=0,maxGroups=0,multiGroupFrames=0,peakGapKm=0
  for(const frame of result.replaySnapshots){
   const active=Object.values(frame.groups).filter(g=>g.active&&g.riderIds.length>0)
@@ -86,7 +127,12 @@ function run(course:typeof courses[number],seed:string,experiment:Experiment){
   maxGroups,multiGroupFrames,peakGapKm:round(peakGapKm),
   finishSpreadSeconds:spread===null?null:round(spread),
   winnerAverageKmh:winnerAverageKmh===null?null:round(winnerAverageKmh),
-  transitions:result.transitions.length,transitionKinds:ages.reduce((out,k)=>{
+  transitions:result.transitions.length,createdTransitions,consolidatedTransitions,
+  reabsorbedSameTick,survivingNewDropTransitions,laterReabsorbedGroups,
+  multiGroupTicks,positiveGapTicks,peakTickSpatialGapKm:round(peakTickSpatialGapKm),
+  earliestMultiGroupSecond,latestMultiGroupSecond,earliestPositiveGapSecond,
+  reabsorptionSamples,
+  transitionKinds:ages.reduce((out,k)=>{
    out[k]=(out[k]??0)+1;return out
   },{} as Record<string,number>),runtimeMs,tickCount:result.tickCount,
   finalEnergyRange:[round(Math.min(...final.map(r=>r.energy))),round(Math.max(...final.map(r=>r.energy)))],
