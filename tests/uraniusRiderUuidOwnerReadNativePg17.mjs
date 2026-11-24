@@ -484,10 +484,10 @@ try {
   const unknown015='00000000-0000-4000-8000-000000000003'
   assert.equal(readFor(unknown015,ownerSelect),'0')
   const ownerRiderIds=sub=>readFor(sub,
-    "coalesce(string_agg(rider_id::text,',' ORDER BY rider_id),'') FROM uranius_game.synthetic_rider_identity")
+    "coalesce(string_agg(rider_id::text,',' ORDER BY rider_id),'<no-owned-riders>') FROM uranius_game.synthetic_rider_identity")
   assert.equal(ownerRiderIds(a),'1,2,3,4,5,6,7,8,9,10')
   assert.equal(ownerRiderIds(b),'11,12,13,14,15,16,17,18,19,20')
-  assert.equal(ownerRiderIds(unknown015),'')
+  assert.equal(ownerRiderIds(unknown015),'<no-owned-riders>')
   pass('Real A and B JWT sessions see ONLY their ten UUID identity mappings; unknown user sees zero')
 
   const idsFor=sub=>readFor(sub,"count(DISTINCT rider_uuid) FROM uranius_game.synthetic_rider_identity")
