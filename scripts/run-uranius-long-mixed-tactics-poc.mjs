@@ -44,6 +44,13 @@ try{
    controlAfterExpiry:report.control.actualChaseBoostTicksAfterExpiry,
    experimentAfterExpiry:report.experiment.actualChaseBoostTicksAfterExpiry}))
 
+ console.log('STRONG SPRINTER FACTORIAL — SAME ATTACK AND CHASE')
+ for(const row of report.strongFinishFactorial)
+  console.log('FINISH ORDERS '+row.mode+' | rank '+row.rank+
+   ' | sprintScore '+row.score+' | bonus '+row.bonus+
+   ' | higherRivals '+row.higherScoringRivals+
+   ' | helperEnergy '+row.leadoutRiderEnergy+
+   ' | sprinterEnergy '+row.sprinterEnergy)
  console.log('SPRINT SKILL SENSITIVITY '+JSON.stringify(report.sprintSensitivity))
  for(const r of [report.strongerControl,report.strongerExperiment]){
   console.log('STRONGER SPRINTER '+(r.enabled?'ALL-TACTICS':'CONTROL')+' | '+JSON.stringify({
