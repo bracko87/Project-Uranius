@@ -927,3 +927,14 @@ node scripts\\run-uranius-course-field-realism.mjs --out course-field-local.json
 ```
 
 This is a geometry safeguard candidate, not proof of full realistic attack dynamics or a production release. Official 49/60, sporting NO GO; do not change canonical defaults.
+
+
+## 2026-11-24 — Owner validates isolated trailing-attack catch safety in ninth offline race
+
+Owner pulled through `7e24040`, ran `node --test tests\\uraniusCourseFieldRealismBoundary.test.mjs`: **8/8 PASS**. Ran `node scripts\\run-uranius-course-field-realism.mjs --out course-field-local.json`: **all 8** baseline 128-rider races and **one additional** protected heterogeneous 160km steep race completed with every technical check TRUE, including `trailingAttackProtectedComplete`, `trailingAttackNoTeleport` and `trailingAttackControlCaught`. All 128 riders classified in the protected run.
+
+**Matched physical launch tick at t=3420:** attack group started 0.180364333019km behind peloton. Attacker's movement speed 26.6388532441 km/h vs peloton 24.3398050790 km/h; remaining separation 0.161205598310km behind. The original rule *caught* this rider anyway and transferred him forward to the peloton. The new default-OFF `experimentalPreserveTrailingAttackGroups` rule records `caught=false`, `remainsActive=true`, preserving the actual trailing group.
+
+**Follow-up physics (protected):** at t=3450/3480/3510, isolated rider pace drops to 22.1420125139 km/h while peloton remains 24.3398050790 km/h. Trailing deficit increases 0.161206 → 0.179521 → 0.197835 → 0.216150km. No fabricated early breakaway win, no catch/teleport. Final stage finish spread was **712.759774444s**, versus **712.664875572s** historical behavior, **6 distinct finish times** in both. This is an important geometric correctness improvement, not proof that the overall attack-sustainability model is realistic.
+
+**Physical catch milestone: experimental PASS only; canonical/production release NOT approved.** The correction remains default-OFF by design. No further runs of this identical protected-vs-original steep case are needed absent code modifications. Next distinct sporting question: sustained attack dynamics beyond the launch impulse. Source inspection confirms `attackLaunchSpeed.ts` computes a launch speed bonus, while `terrainAwareMultiGroupMovement.ts` applies the experimental launch speed only on the tick whose order executed, then future ticks use the group's normal terrain/energy pace; this may explain attacks fading quickly, but do not force a long-lived speed bonus or claim a defect without evidence from varying timing, rider strength, and fatigue. Sporting GO still withheld, official **49/60**. No production/backend/hosted state modified.
