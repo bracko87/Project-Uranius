@@ -75,7 +75,7 @@ function postflight(){
   "IF (SELECT count(*) FROM uranius_private.migration_ledger)<>14",
   "OR (SELECT sha256 FROM uranius_private.migration_ledger WHERE version='018_synthetic_nine_skill_attributes.sql') IS DISTINCT FROM '"+candidateHash+"'",
   "OR (SELECT count(*) FROM pg_attribute WHERE attrelid='uranius_game.synthetic_rider_attributes'::regclass AND attnum>0 AND NOT attisdropped)<>19",
-  "OR (SELECT count(*) FROM pg_constraint WHERE conrelid='uranius_game.synthetic_rider_attributes'::regclass AND contype='c')<19",
+  "OR (SELECT count(*) FROM pg_constraint WHERE conrelid='uranius_game.synthetic_rider_attributes'::regclass AND contype='c')<>27",
   "OR NOT EXISTS (SELECT 1 FROM pg_class WHERE oid='uranius_game.synthetic_rider_attributes'::regclass AND relrowsecurity AND relforcerowsecurity)",
   "OR (SELECT count(*) FROM pg_policies WHERE schemaname='uranius_game' AND tablename='synthetic_rider_attributes')<>0",
   "OR has_any_column_privilege('uranius_smoke_reader','uranius_game.synthetic_rider_attributes','SELECT')",
