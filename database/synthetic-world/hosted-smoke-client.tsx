@@ -4,6 +4,7 @@ import { HashRouter, Navigate, Route, Routes, useNavigate } from 'react-router'
 import LoginPage from '../../src/pages/Login'
 import { getMyClubContext } from '../../src/lib/clubContext'
 import { supabase, request } from './login-db-transport'
+import { projectOriginalNineSkillsFromSyntheticRider } from '../reconstruction/squad/original-nine-skill-availability.mjs'
 
 type GameClock = {
   current_game_date: string
@@ -224,6 +225,16 @@ function SquadPreview() {
                   <dd className="text-lg font-semibold">{rider[skill]}</dd>
                 </div>)}
               </dl>
+              <section aria-label="Original nine-skill availability" data-original-nine-skills className="mt-4 border-t border-slate-700 pt-3">
+                <h3 className="text-sm font-semibold">Original nine-skill model — available source values</h3>
+                <p className="mt-1 text-xs text-slate-400">Climbing, Flat and Resistance are stored in the isolated catalog. Six other skills are unavailable, not zero. Synthetic Stamina is separate from original Endurance.</p>
+                <dl className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {projectOriginalNineSkillsFromSyntheticRider(rider,{ownerVerified:true}).skills.map(skill => <div key={skill.name}>
+                    <dt className="text-xs capitalize text-slate-400">{skill.name.replaceAll('_',' ')}</dt>
+                    <dd className="font-medium" data-original-skill={skill.name}>{skill.value === null ? 'Unavailable' : skill.value}</dd>
+                  </div>)}
+                </dl>
+              </section>
               <p className="mt-4 text-sm text-amber-200">Original rider identity, nationality, birth date, age, role, overall, fitness, morale, potential, health and contract details are not available in this synthetic database. No values have been inferred.</p>
               <p className="mt-2 text-xs text-slate-400">Read-only profile. No training, transfers, health actions or contract changes.</p>
             </section>
