@@ -43,3 +43,22 @@ The candidate checks restricted direct `uranius_migrator`/PostgreSQL 17/TLS/spec
 Added `tests/uraniusRider018SourceReview.test.mjs` for source-contract/SQL guard checks and `tests/uraniusRider018NativePg17.mjs` for isolated loopback PostgreSQL 17 negative tests. The latter creates a deliberately small **13-ledger disposable fixture**, not the full historical 001–015 replay. It substitutes **only** the explicit TLS clause in its temporary local test SQL and verifies original SQL refuses non-TLS. It tests provenance checks, value ranges, FK, no reader access, no policies, duplicate and wrong-target denials, and wipes scratch PGDATA.
 
 **Status: source files committed; owner has NOT yet executed tests; hosted migration NOT AUTHORIZED; no manifest or deploy installer.** Before any approval, full 001–015 replay and exact digest manifest remain necessary.
+
+## 2026-11-24 — Full historical disposable PG17 acceptance harness prepared
+
+Beyond the minimal standalone 018 fixture, `tests/uraniusRider018FullHistoryNativePg17.mjs` now independently **replays the entire previously native-tested 001–015 synthetic migration history** inside new scratch PGDATA. It extends (but does **not** modify) the existing 015 native test and appends an exact 13th 015 ledger record before testing the new 018 candidate.
+
+The new full-history checks include bidirectional 13-version/hash ledger equality from the 015 manifest, original unmodified SQL rejecting local non-TLS, wrong direct role, modified ledger digest, three exact same-name sourced values for 200 riders, six NULL unknown values, FORCE RLS/no policy/zero reader grants, denied reader writes, 0–100/provenance/FK constraint failures, rollback of a synthetic-only fixture value, and duplicate migration refusal with paused game and original synthetic data preserved. This is **not** a hosted rehearsal and not authorization to run the proposal on Supabase.
+
+A source-only reviewer `scripts/review-uranius-rider-018.mjs --review` computes the 018 SHA-256 without any database connection or install mode. New source tests are included in Squad GitHub Actions config; GitHub Actions execution is not yet confirmed.
+
+**The owner should now run these two test stages** in the existing Windows checkout; they are not yet verified passing:
+
+```bat
+git pull origin main
+node --test tests\uraniusRider018SourceReview.test.mjs
+node scripts\review-uranius-rider-018.mjs --review
+node tests\uraniusRider018FullHistoryNativePg17.mjs --disposable-native-pg17 --postgres-bin "C:\Users\Aleks\Desktop\Project-Uranius\.uranius-pin-review\postgresql-17.12-portable\bin"
+```
+
+If failures occur, fix only the new review/test components when possible. If SQL candidate bytes change, invalidate and recompute its digest; no source freeze or hosted apply is currently approved. **Completion of the local tests permits a separate approval-manifest design, not automatic installation.**
