@@ -29,7 +29,12 @@ try{
   console.log([p.course,p.seed,p.experiment,p.fieldSize+' riders',p.distanceKm+'km',
    'finishers '+p.finishers+'/'+p.fieldSize,'groups '+p.maxGroups,
    'gap '+p.finishSpreadSeconds+'s','peakKm '+p.peakGapKm,
-   'transitions '+p.transitions,'speed '+p.winnerAverageKmh+'km/h',
+   'transitions '+p.transitions,'born '+p.createdTransitions,
+   'sameTickCaught '+p.reabsorbedSameTick,'laterCaught '+p.laterReabsorbedGroups,
+   'survivedBirth '+p.survivingNewDropTransitions,
+   'multiTicks '+p.multiGroupTicks,'positiveGapTicks '+p.positiveGapTicks,
+   'peakTickGapKm '+p.peakTickSpatialGapKm,
+   'speed '+p.winnerAverageKmh+'km/h',
    'ms '+p.runtimeMs,'technical '+(p.technicalIssues.join(',')||'none'),
    'sporting '+(p.sportingWarnings.join(',')||'none')].join(' | '))
  }
