@@ -711,3 +711,23 @@ node scripts\\run-uranius-long-mixed-tactics-poc.mjs --out long-mixed-local.json
 ```
 
 Interpret the expected new diagnostics as **zero control boost ticks and zero boost ticks after order expiry**, with at least one experiment chase-boost tick inside the window. New outcome rankings and finish times may change legitimately because a long-lived experimental pace buff was removed. A **strictly successful runtime** is required before marking the defect repaired. Check sprint group context again; sporting approval remains withheld, official checklist **49/60**, no hosted production work.
+
+
+## 2026-11-24 — Owner verifies 120km chase expiry fix; sprint finishing-score audit added
+
+Owner pulled through `dfa0f8c` and ran both updated chase boundary suites **9/9 PASS**, original one/eight tick chase POC **PASS**, and 120km/128-rider four-tactics A/B **PASS** with all five integrity checks. This validates the earlier chase lifetime repair:
+- Real boost ticks in feature-OFF control: **0**. In opt-in race: **8**.
+- Chase order was scheduled to km5-8; boosted ticks after the scheduled window: **0** in both runs.
+- First boosted tick was at race second **420**, peloton physical distance **4.411699km** (global authoritative race kilometre was already within the 5-8km window). Last boosted tick second **630**, peloton physical distance **6.803713km**. The order's eligibility clock uses `state.currentKm`, not each group's distance, so this distinction is intentional for now and should be separately reviewed in sporting calibration.
+- Both races completed all **128/128** riders with classifications and all four orders executed. Control: **354 ticks**, sprinter **128th**, pursuing rider finish **10592.895612493s**, total movement cost **28.21344988**. Full experiment: **354 ticks**, sprinter **96th**, pursuer finish **10591.255575794s**, movement cost **28.217657425**. The experimental rider finished **1.640036699s earlier** but spent **0.004207545** more energy. No endless boost and no canonical/production changes.
+- The target sprinter has low base sprint **49** and acceleration **50**, and finished **96/128** in a same-group sprint. One fixed 8-point sprint + 4-point leadout boost raises effective sprint score to 61 at most; this is plausibly insufficient against many riders with higher sprint attributes, rather than evidence of an underpowered sprint tactic.
+
+**New scoring audit committed, not yet owner-run:** The same 120km combined POC now reads the genuine `finishDetection.candidates` from the sprinter's actual crossing tick; it reports original sprint skill, effective actual finish-candidate sprint score, assigned bonus, number of rivals with strictly higher/equal score in the *same finish batch*, and the sprinter's actual within-batch rank. This avoids inferring bonus application solely from the final position. The runner prints `SPRINT SCORE AUDIT`, and the static boundary test guards instrumentation. This is observation only; no fixed bonuses changed. Run:
+
+```bat
+git pull origin main
+node --test tests\\uraniusLongMixedTacticsBoundary.test.mjs
+node scripts\\run-uranius-long-mixed-tactics-poc.mjs --out long-mixed-local.json
+```
+
+After confirmation, develop a controlled high-skill sprinter sensitivity sweep before tuning fixed sprint/leadout bonuses. Keep global sporting GO withheld and official checklist **49/60**.
