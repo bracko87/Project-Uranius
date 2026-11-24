@@ -50,6 +50,7 @@ try{
    eligibleTicks:r.eligibleChaseTicks,actualBoostTicks:r.actualChaseBoostTicks,
    boostedAfterOrderWindow:r.actualChaseBoostTicksAfterExpiry,
    first:r.firstChaseBoost,last:r.lastChaseBoost}))
+  console.log('SPRINT SCORE AUDIT '+(r.enabled?'EXPERIMENT':'CONTROL')+' | '+JSON.stringify(r.sprintFinishAudit))
   console.log('SPRINT FINISH CONTEXT '+(r.enabled?'EXPERIMENT':'CONTROL')+' | '+JSON.stringify({
    rank:r.sprinterRank,finishGroupSize:r.sprinterFinishGroupSize,
    placeInsideGroup:r.sprinterWithinGroupPosition,
