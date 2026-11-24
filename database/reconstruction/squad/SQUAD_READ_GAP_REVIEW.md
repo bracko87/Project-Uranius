@@ -142,3 +142,20 @@ node scripts\review-uranius-squad.mjs --review
 ```
 
 **Release gate:** Even when the manifest review passes, this is **not** approved for hosted installation. A direct-migrator exact-approved digest installer, read-only hosted preflight, independent postflight and explicit owner approval of the frozen **manifest SHA-256** remain required. No hosted permissions or game-data changes were performed in this review phase.
+
+## Guarded 013 installation tooling staged — approval still withheld
+
+After the owner reported **2/2 manifest freeze checks PASS** and verified the printed manifest SHA-256 **`ab63e7949889a49bd33fb584885f4911df6b027eb20d3aed3be43e77f0ccaa7a`**, staged:
+- `scripts/apply-uranius-squad.mjs`: `--review` checks **exact frozen manifest and SQL candidate hashes** offline; `--apply-reviewed-squad <manifest digest>` is a deliberately separate, potentially hosted-mutating path. It requires the exact digest, isolated target guard, **direct `uranius_migrator`**, PostgreSQL TLS `verify-full`, CA file, PostgreSQL 17 candidate assertions, an **atomic single-transaction** insert of ledger version `013_squad_reader_grant.sql` with exact frozen candidate hash and an in-transaction postflight. Failures abort/roll back. The applicant must have provided separate explicit approval of the **exact** manifest digest before using that mode.
+- `scripts/run-approved-squad-windows.ps1`: no default approval digest. Requires exact approved SHA-256 parameter, verified frozen source, manual `APPLY URANIUS 013` confirmation and a **private masked migrator password prompt**; removes temporary environment credential variables.
+- `tests/uraniusSquadGuardedInstallerReview.test.mjs`: three new source-contract tests for exact hash, atomic direct TLS and owner confirmation. These tests are **not yet owner-run**.
+
+The only allowed immediate offline command, with **no hosted connection**, is:
+
+```bat
+git pull origin main
+node --test tests\uraniusSquadGuardedInstallerReview.test.mjs
+node scripts\apply-uranius-squad.mjs --review
+```
+
+**Do not run `--apply-reviewed-squad` or the Windows launcher without separate, explicit approval.** Migration 013 remains uninstalled. A successful installation will still need independent read-only hosted postflight and authenticated Squad preview wiring; it does not mean the original complete Squad page is rebuilt.
