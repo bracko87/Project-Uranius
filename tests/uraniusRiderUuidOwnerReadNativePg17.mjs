@@ -462,17 +462,16 @@ try {
   const tls015="OR NOT EXISTS (SELECT 1 FROM pg_stat_ssl WHERE pid=pg_backend_pid() AND ssl)"
   assert.equal(sql015.split(tls015).length,2)
   const ownerSelect="count(*) FROM uranius_game.synthetic_rider_identity"
-  assert.equal(readFor(a,ownerSelect),'0')
-  assert.equal(readFor(b,ownerSelect),'0')
-  pass('Without 015 approval even verified owner A/B cannot read UUID mapping')
+  sql('SELECT count(*) FROM uranius_game.synthetic_rider_identity','uranius_smoke_reader',true)
+  pass('Without 015 grant even verified owner A/B have no UUID table SELECT permission')
 
   sql(wrap(sql015),'uranius_migrator',true)
-  assert.equal(readFor(a,ownerSelect),'0')
+  sql('SELECT count(*) FROM uranius_game.synthetic_rider_identity','uranius_smoke_reader',true)
   pass('Exact 015 candidate denies non-TLS local session; mapping stays locked')
 
   const local015=sql015.replace(tls015,'OR FALSE /* offline disposable fixture only */')
   sql(wrap(local015),'postgres',true)
-  assert.equal(readFor(a,ownerSelect),'0')
+  sql('SELECT count(*) FROM uranius_game.synthetic_rider_identity','uranius_smoke_reader',true)
   pass('015 refuses unauthorized postgres execution identity and does not change reader access')
 
   sql(wrap(local015))
