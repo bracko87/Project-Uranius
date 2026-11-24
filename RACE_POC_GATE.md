@@ -295,3 +295,18 @@ node scripts\run-uranius-receding-catch-regression.mjs
 ```
 
 This new focused regression has **not yet been executed** on owner's checkout; do not claim PASS. Follow with review of the earlier energy/fatigue paradox and investigate rolling-stage nondifferentiation. The opt-in receding-catch rule is not activated by default. No original ProPeloton production/database changes. Sporting GO withheld and checklist remains 49/60.
+
+
+## 2026-11-24 — Owner confirms direct receding/closing catch regression PASS
+
+Owner pulled through commit `1946d31` and ran `node scripts\\run-uranius-receding-catch-regression.mjs`. Actual output: `PASS: default unchanged, slower trailing group preserved, faster closing group caught, collocated group caught, roster conserved`. This **closes the focused synthetic reconciliation behavior gate** for the opt-in experimental catch rule, but NOT the global cycling realism gate: real long-race catches, varied gaps and rider energy have not been validated. The opt-in remains disabled by default; canonical/default race rules unchanged. No hosted/prod activity. Project checklist remains 49/60.
+
+Started next isolated audit of strong-vs-caught attack **energy totals versus time-normalized usage**. In a race finished 150 seconds earlier, total spent energy can be lower even if instantaneous effort is higher; cannot call this a confirmed energy accounting bug without reviewing the rates. New offline-only `scripts/uranius-attack-energy-audit.ts`, runner `scripts/run-uranius-attack-energy-audit.mjs` and source boundary tests measure total energy used, cost per minute/km, elapsed time and preserved pre-command history using the existing unchanged attack replay. No simulator rules, original golden tests, production, or DB modified. New test execution is **pending**:
+
+```bat
+git pull origin main
+node --test tests\\uraniusAttackEnergyAuditBoundary.test.mjs
+node scripts\\run-uranius-attack-energy-audit.mjs --out race-attack-energy-local.json
+```
+
+After the audit, decide whether energy behavior is explained by shorter exposure, a missing attack effort surcharge, shelter effects, or another model issue. Continue normal rolling-stage calibration and seed sensitivity investigation without broadening the rules prematurely.
