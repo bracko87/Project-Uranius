@@ -479,7 +479,9 @@ export function applyMultiGroupFinish(
         finishPosition:
           rank,
         finishTimeSeconds,
-        energy: Math.max(0, rider.energy - (experimentalCostByRiderId.get(riderId) ?? 0)),
+        ...((experimentalCostByRiderId.get(riderId) ?? 0) > 0
+          ? {energy: Math.max(0, rider.energy - (experimentalCostByRiderId.get(riderId) ?? 0))}
+          : {}),
         distanceKm:
           state.stageDistanceKm,
         speedKmh: 0,
