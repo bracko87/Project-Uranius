@@ -889,3 +889,18 @@ node scripts\\run-uranius-course-field-realism.mjs --out course-field-local.json
 ```
 
 Next priority after receiving output: assess launch and drop lineage before any physics changes; then build sporting comparisons against grounded race-like conditions. No production or canonical default changes. Official checklist remains **49/60**, sporting GO withheld.
+
+
+## 2026-11-24 — Steep attack trace diagnostic syntax fixed after owner build failure
+
+Owner pulled through `54e620b` and ran `tests/uraniusCourseFieldRealismBoundary.test.mjs`: **6/6 PASS**. The full esbuild runner then failed **before simulation** at `scripts/uranius-course-field-realism.ts:126` with `Expected ";" but found ":"`. Root cause was a duplicated ternary fallback `}) : [] : []` in the newly authored `attackLaunchAudit` diagnostic. No race engine execution took place in this attempt; prior successful eight-race results from `b4e9b1f` remain the last runtime evidence.
+
+Changed the erroneous expression to the valid `}) : []` in the **diagnostic script only**, without any race-physics change. The boundary suite now also imports esbuild's `transformSync` and parses/transpiles the actual TypeScript diagnostic, so another syntax regression fails the short static suite before the long stage run. These changes were committed but the owner has not yet rerun them.
+
+Owner commands:
+```bat
+git pull origin main
+node --test tests\\uraniusCourseFieldRealismBoundary.test.mjs
+node scripts\\run-uranius-course-field-realism.mjs --out course-field-local.json
+```
+If successful, inspect `STEEP ATTACK LAUNCH` and `STEEP TERRAIN DROP FATE` and base any mechanic decision on actual negative gap provenance. Sporting gate remains **49/60 NO GO**; no hosted, canonical, or production change.
