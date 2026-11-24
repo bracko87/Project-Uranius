@@ -24,7 +24,7 @@
   "originalProPelotonProductionChanged": false,
   "safeLauncher": "scripts/run-approved-overview-windows.ps1",
   "safeLauncherCommit": "601ff9c9dba51eab1e6c1860d72437cbcfffc797",
-  "nextAction": "Plan and test a disposable native PG17 non-empty A/B ownership matrix; then run a local HTTPS browser acceptance for current empty-state UI, keeping hosted race data untouched.",
+  "nextAction": "Run updated combined disposable PG17 test to confirm nonempty A/B RLS parity, then perform browser UI smoke with trusted localhost TLS; no hosted DML.",
   "appliedDate": "2026-11-24",
   "invocation": "Owner Windows secure launcher using direct TLS uranius_migrator password; owner terminal confirmed atomic transaction postflight passed.",
   "postflight": {
@@ -110,6 +110,20 @@
       "syntheticOwners": 2,
       "riders": 200,
       "pausedClockRows": 1
+    },
+    "populatedOwnership": {
+      "status": "NATIVE_TEST_UPDATED_PENDING_OWNER_EXECUTION",
+      "script": "tests/uraniusOverviewCombinedInstallNativePg17.mjs",
+      "scope": "Disposable PostgreSQL 17 only",
+      "checks": [
+        "Exact combined 010 SQL applied after replayed 001–009",
+        "Two separate manager-owned preparations and entries",
+        "Both managers see only own upcoming race while current-day world race cards stay global",
+        "Unknown subject sees no private entries",
+        "Anonymous and reader writes denied",
+        "FORCE RLS and ten ledger entries preserved"
+      ],
+      "hostedRowsInserted": 0
     }
   }
 }
