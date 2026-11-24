@@ -40,3 +40,16 @@ test('tactical trace reads genuine launch speed, movement proposals and reconcil
  assert.match(runner,/ATTACK TICK/)
  assert.match(runner,/LAUNCH /)
 })
+
+test('physical launch option is opt-in and movement feeds shared movement/energy proposal',()=>{
+ const terrain=readFileSync(new URL('../src/race-engine/simulation/terrainAwareMultiGroupMovement.ts',import.meta.url),'utf8')
+ const integrated=readFileSync(new URL('../src/race-engine/simulation/runIntegratedTerrainSeparationStage.ts',import.meta.url),'utf8')
+ const calibrated=readFileSync(new URL('../src/race-engine/simulation/runCalibratedTerrainSeparationStage.ts',import.meta.url),'utf8')
+ assert.match(source,/experimentalPhysicalAttackLaunch:true/)
+ assert.match(calibrated,/options\.experimentalPhysicalAttackLaunch \?\? false/)
+ assert.match(integrated,/options\.experimentalPhysicalAttackLaunch/)
+ assert.match(integrated,/effect\.separation\.breakawayGroup\.speedKmh/)
+ assert.match(terrain,/options\.experimentalLaunchSpeedByGroupId\?\.\[group\.groupId\]/)
+ assert.match(terrain,/Math\.max\(pace\.appliedSpeedKmh, launchSpeedKmh\)/)
+ assert.match(integrated,/applyMultiGroupEnergy\(\{[\s\S]*?movement:\s*movement\.movement/)
+})
