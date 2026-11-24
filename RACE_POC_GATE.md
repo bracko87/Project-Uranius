@@ -977,3 +977,21 @@ node scripts\\run-uranius-attack-sustainability.mjs --out attack-sustainability-
 ```
 
 **Official checklist 49/60, sporting NO GO; production and canonical defaults untouched.**
+
+
+## 2026-11-24 — Owner confirms energy ledger exact; shelter savings missing because OFF
+
+Owner pulled through `5e90b42` and ran `tests/uraniusAttackSustainabilityBoundary.test.mjs`: **5/5 PASS**. Owner-executed six-race offline test returned **all 6 runtime technical checks TRUE**, including new `energyAccountingExact`: each `initialEnergy - sum(tick.appliedEnergy.applications[].energyCost) - finalEnergy` is within 1e-12 (numerical noise) across all runs. Thus **no missing/duplicated energy charge is evident** in these scenarios.
+
+Strong rider no-order: **353 charged 30-second ticks**, **22.7633372** energy consumed, **77.2366628** remaining. Strong rider early attack: **318 charged ticks** (35 fewer), **20.4991530** consumed, **79.5008470** remaining; stage ~1042s faster. Strong rider late: **338 charged ticks** (15 fewer), **21.8212093** consumed, **78.1787907** remaining; stage ~439s faster. Faster solo success **saves stage-duration charges**. Original-strength unsuccessful attacks both expend ~0.016–0.017 extra, same 354 ticks. All six `shelterSaved=0` and `shelterAppliedTicks=0`: initial `SimulationState.groupShelterEnergyEnabled` defaults OFF, so these races cannot yet evaluate peloton drafting relief.
+
+**Paired isolated experiment committed, not yet owner-executed:** Extend `uranius-attack-sustainability.ts` with a second six-race matching grid, toggling only `groupShelterEnergyEnabled:true` on the initial state passed into the accepted calibrated wrapper. Preserve all six OFF cases, strength/attacks/course/seed unchanged, plus new six ON cases. Fail closed if any of the six ON cases fails to complete/finish all 128/rank or energy ledger, or if the actual appliedEnergy applications show no shelter savings. Report per pair OFF/ON charge total, saved-by-shelter, charged ticks, final reserve/rank/time. This **does not change** engine code, canonical initial state, default flags or production; merely exercises the pre-existing experimental shelter energy state flag.
+
+Owner CMD:
+```bat
+git pull origin main
+node --test tests\\uraniusAttackSustainabilityBoundary.test.mjs
+node scripts\\run-uranius-attack-sustainability.mjs --out attack-sustainability-local.json
+```
+
+Interpretation: positive energy relief for group riders and none for isolated rider after launch is a required qualitative sanity check; even if successful, physical attack effort calibration and the unusually enormous long escape success gap remain independent sporting NO-GO issues. Official checklist **49/60**.
