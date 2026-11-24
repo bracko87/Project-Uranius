@@ -866,3 +866,26 @@ node scripts\\run-uranius-course-field-realism.mjs --out course-field-local.json
 ```
 
 Inspect specifically the **steep_160 heterogeneous** `cannotHold`, `pressureMaxSec`, `terrainDrops` and `uniqueFinishTimes` fields. If there is still no inability-to-hold, the next sporting diagnosis should inspect raw **minimum capability margins and group-demand/shelter values** on the steep segment rather than weakening -8 or synthesizing gaps. Sporting GO remains **NO GO**, official checklist **49/60**, production untouched.
+
+
+## 2026-11-24 — Owner verifies natural steep-climb group splitting; attack behavior remains suspect
+
+Owner pulled through `b4e9b1f`. Static test **5/5 PASS** and eight-scenario runtime gate **5/5 PASS**, 128/128 classified in every race. New **steep_160** profile (two sustained +12% climbing segments) produced crucial distinct behavior:
+
+**Heterogeneous 128-rider field:** 523 ticks; winner average **38.5084356548 km/h**; **240 cannot-hold evaluations involving 59 distinct riders**; reported maximum post-tick separation pressure **90s**; **5 terrain-dropped groups created**, none reabsorbed at birth or in later catch ticks; peak **6 concurrently active groups**; **6 distinct official finishing times** and total finish spread **712.664875572s** (~11m52.7s). Rider final energy range **46.2907–58.7261**.
+
+**Uniform 128-rider negative control** on identical +12% climbs: 500 ticks; average **38.4450 km/h**, **0 cannot-hold evaluations**, 0 pressure, 0 terrain drops, **1** finishing time for all 128 riders. The contrast validates real field-ability sensitivity at steep terrain and argues against faking gaps or lowering canonical hold thresholds.
+
+**Attack caveat:** In the heterogeneous steep scenario the sole live attack shows **zero positive-gap ticks**; reported maximum signed gap was **-0.16120559831km**. This does not mean the attack event failed; it may indicate the attack group was slower than the peloton at first movement/caught immediately or launched from another group. Other seven cases also caught their attempted attack. Do not infer a physics defect from sign alone: trace the source group and both applied speeds at the attack movement tick plus catch reconciliation before changing mechanics.
+
+**New observability-only probe committed, awaiting owner run:** The eight-race diagnostic now captures the first 4 physical movement ticks following the attack, including source gap, actual attack and peloton applied speeds, before-catch signed distance and reconciliation, and lists every created dropped group with birth second/km, rider count, physical gap, catch status, final group active flag, actual rider finishing times and post-tick pressure. Runner prints `STEEP ATTACK LAUNCH` and `STEEP TERRAIN DROP FATE` for the two steep scenarios; static boundary regression added. This probes whether the negative attack lead is a tactical weakness versus an actual order-targeting/launch issue, and why peak pressure reads 90s despite 5 drops (post-transition reset is one hypothesis, not confirmed).
+
+Owner Windows commands:
+
+```bat
+git pull origin main
+node --test tests\\uraniusCourseFieldRealismBoundary.test.mjs
+node scripts\\run-uranius-course-field-realism.mjs --out course-field-local.json
+```
+
+Next priority after receiving output: assess launch and drop lineage before any physics changes; then build sporting comparisons against grounded race-like conditions. No production or canonical default changes. Official checklist remains **49/60**, sporting GO withheld.
