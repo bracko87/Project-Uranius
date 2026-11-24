@@ -26,7 +26,7 @@ try{
   Object.values(report.checks).some(value=>value!==true))
   throw Error('Course-field technical gate failed: '+JSON.stringify(report.checks)+
    '\n'+JSON.stringify(report.scenarios.filter(s=>s.error)))
- console.log('URANIUS COURSE/FIELD REALISM — OFFLINE — SIX 128-RIDER RACES')
+ console.log('URANIUS COURSE/FIELD REALISM — OFFLINE — EIGHT 128-RIDER RACES')
  for(const r of report.scenarios)console.log([
   r.profile,r.distribution,r.distanceKm+'km',
   'finishers '+r.finishers+'/'+r.fieldSize,'ticks '+r.ticks,
