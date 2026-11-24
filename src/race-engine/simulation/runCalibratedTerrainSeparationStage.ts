@@ -33,6 +33,8 @@ export interface RunCalibratedTerrainSeparationStageOptions {
   readonly experimentalPreserveBirthTickDroppedGroups?: boolean
   /** OFFLINE POC ONLY, independent opt-in; default false. */
   readonly experimentalPreserveRecedingDroppedGroups?: boolean
+  /** OFFLINE POC ONLY, defaults off. */
+  readonly experimentalPhysicalAttackLaunch?: boolean
 }
 
 export interface RunCalibratedTerrainSeparationStageResult
@@ -139,6 +141,8 @@ export function runCalibratedTerrainSeparationStage(
           options.experimentalPreserveBirthTickDroppedGroups ?? false,
         experimentalPreserveRecedingDroppedGroups:
           options.experimentalPreserveRecedingDroppedGroups ?? false,
+        experimentalPhysicalAttackLaunch:
+          options.experimentalPhysicalAttackLaunch ?? false,
       },
     )
 
