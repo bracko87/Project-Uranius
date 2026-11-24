@@ -4,7 +4,10 @@ import assert from 'node:assert/strict'
 const src=readFileSync(new URL('../scripts/uranius-race-poc-mode-comparison.ts',import.meta.url),'utf8')
 const cli=readFileSync(new URL('../scripts/run-uranius-race-poc-mode-comparison.mjs',import.meta.url),'utf8')
 test('lane comparison uses two existing engine modes with precisely identical per-pair StageInput',()=>{
- assert.match(src,/const input=\{\.\.\.base,seed:base\.seed\+'-'\+seed\}/)
+ assert.match(src,/seed:base\.seed\+'-'\+seed/)
+ assert.match(src,/riders:base\.riders\.map/)
+ assert.match(src,/timeTrial:60\+\(index\*13\)%35/)
+ assert.match(src,/raceIq:62\+\(index\*17\)%31/)
  assert.match(src,/runDeterministicRoadRace\(input,\{simulationMode:lane\}\)/)
  assert.match(src,/examine\(terrain,size,seed,'existing_v1'\)/)
  assert.match(src,/examine\(terrain,size,seed,'terrain_separation_calibrated_v1'\)/)
