@@ -19,7 +19,8 @@ if(args.length!==1||args[0]!=='--review'){
   const sql=bytes.toString('utf8')
   const names=['sprint','climbing','time_trial','endurance','flat','recovery','resistance','race_iq','teamwork']
   const three=['climbing','flat','resistance']
-  if(candidateHash!=='622d7626f5f6d93117cbb755398971d23ca0a870e49bc8c98e2df768630b48cc' ||
+  if(manifestHash!=='9995c7a1558d222426e759b5af4911981d5d4b12688a4e2e3c1adee8d6975205' ||
+     candidateHash!=='622d7626f5f6d93117cbb755398971d23ca0a870e49bc8c98e2df768630b48cc' ||
      manifest.projectRef!=='sdtsivgtcaoaeoihcwzd' || manifest.postgresMajor!==17 ||
      manifest.status!=='REVIEW_ONLY_NOT_APPROVED' || manifest.hostedApplied!==false ||
      manifest.approvalRequired!==true || manifest.expectedLedgerEntries!==13 ||
