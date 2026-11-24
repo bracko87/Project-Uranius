@@ -24,4 +24,12 @@ try{
    'gapKm '+result.gapKm,'actorEnergy '+result.actorEnergy,
    'order '+result.orderStatus].join(' | '))
  console.log('Verified: '+Object.entries(report.comparison).map(([k,v])=>k+'='+v).join(' | '))
+ if(!report.repeatedComparison||Object.values(report.repeatedComparison).some(value=>value!==true))
+  throw Error('Multi-tick chase physical/energy/negative-control check failed: '+JSON.stringify(report.repeatedComparison))
+ for(const [label,run] of [['CONTROL 8-TICK',report.repeatedControl],['CHASE 8-TICK',report.repeatedChase]])
+  console.log([label,'finalGapKm '+run.finalGapKm,
+   'finalActorEnergy '+run.finalActorEnergy,
+   'ticks '+run.samples.length].join(' | '))
+ console.log('MULTI-TICK '+Object.entries(report.repeatedComparison).map(([k,v])=>k+'='+v).join(' | '))
+
 }finally{rmSync(dir,{recursive:true,force:true,maxRetries:8,retryDelay:250})}
