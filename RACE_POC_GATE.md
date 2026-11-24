@@ -750,3 +750,26 @@ node scripts\\run-uranius-long-mixed-tactics-poc.mjs --out long-mixed-local.json
 ```
 
 After observing results, judge whether the +12 sprint/lead-out bonus behaves proportionately with rider quality and whether deterministic rank ordering requires further modelling (e.g., position or fatigue); do not tune a fixed bonus without comparative evidence. No production work, canonical default changed or paid staging; official 49/60 and sporting GO withheld.
+
+
+## 2026-11-24 — Owner verifies weak/strong sprint-skill sensitivity; independent sprint/leadout factorial added
+
+Owner pulled through `5c3f6fc` and executed 120km 128-rider four-scenario A/B with **6/6 static tests PASS** and all nine executable integrity checks true. Unchanged synthetic rider with base sprint 49: **128th** without effects, **96th** with +12 (sprint +8, leadout +4). Only changing that rider's sprint to **94** produced **4th** without effects and **1st** with +12 (effective sprint score **106**). Both strong-rider variants have zero strictly higher-scoring same-finish-batch rivals; ranking 4th in the control is therefore attributable to tie ordering and/or acceleration/energy criteria among riders with the same sprint skill. All 128 riders classified, scheduled four-order lifecycles executed and early chase remained bounded (0 actual OFF-mode boost ticks, 8 ON-mode, 0 after order expiry). These data validate fixed bonus application to both rider skill levels; they do not by themselves establish external sporting realism. Do **not** change +8/+4 just to force a ranking.
+
+**Next controlled, OFFLINE score-isolation gate committed, not yet owner-run:** Extended the *same* 120km/128-rider long-mixed race with three additional **high-sprint (94)** simulations. All experimental attack/chase/finish flags are identical and ON; the only difference is whether the two finishing orders are present:
+- Neither finishing order: **0** expected sprint-score bonus.
+- Leadout only: **+4** expected.
+- Sprint only: **+8** expected.
+- Both finishing orders: **+12** expected (reuse existing verified `strongerExperiment`).
+
+The existing earlier weak-sprinter and strong-sprinter A/B runs are preserved. The new `strongFinishFactorial` report captures true finishing candidate score, final rank, same-group rivals with higher score, helper and sprinter energy, all classified riders and executed orders. It fails closed on 128-rider classification, preserved attack and chase, default-off chase lifetime, or unexpected actual 0/4/8/12 bonuses. This is a `StageInput` order-presence ablation, **not a tweak to any of the race engine's scoring formulas**. It will help establish independent and combined finishing effects under identical race physics; it deliberately does not assume each isolated boost must yield a win. This adds three full-stage offline runs; no paid resources, hosted traffic or production changes.
+
+Owner Windows verification:
+
+```bat
+git pull origin main
+node --test tests\\uraniusLongMixedTacticsBoundary.test.mjs
+node scripts\\run-uranius-long-mixed-tactics-poc.mjs --out long-mixed-local.json
+```
+
+Output includes `STRONG SPRINTER FACTORIAL` / `FINISH ORDERS`. Next evaluate sprint vs leadout rank and energy effects before deciding if formula needs further sporting calibration. Sporting GO withheld; official checklist **49/60**.
