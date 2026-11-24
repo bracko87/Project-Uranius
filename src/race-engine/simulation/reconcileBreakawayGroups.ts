@@ -307,6 +307,9 @@ export function reconcileBreakawayGroups(
      * Default empty retains every existing/golden reconciliation result.
      */
     readonly protectedNewDroppedGroupIds?: readonly string[]
+    /** POC ONLY: preserve a dropped group physically behind and slower than the peloton;
+     * rejoin remains eligible once the distance closes or the group catches up. */
+    readonly experimentalPreserveRecedingDroppedGroups?: boolean
   } = {},
 ): ReconcileBreakawayGroupsResult {
   validateSimulationState(
@@ -441,6 +444,18 @@ export function reconcileBreakawayGroups(
             group.groupType === 'dropped' &&
             options.protectedNewDroppedGroupIds?.includes(group.groupId) &&
             group.createdAtRaceSecond === state.raceSecond
+          ) {
+            return false
+          }
+          // A trailing dropped group which is still losing ground cannot
+          // physically rejoin the faster peloton ahead of it. This is an
+          // independent opt-in POC rule, never active in canonical simulation.
+          // No grace period or artificial distance is introduced.
+          if (
+            options.experimentalPreserveRecedingDroppedGroups === true &&
+            group.groupType === 'dropped' &&
+            group.distanceKm < peloton.distanceKm &&
+            group.speedKmh < peloton.speedKmh
           ) {
             return false
           }
