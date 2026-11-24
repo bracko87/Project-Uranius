@@ -38,3 +38,16 @@ test('mixed stage distinguishes issued chase from physical pre-movement gap elig
  assert.match(fixture,/chaseRiderEnergyUsedThisTick:/)
  assert.match(runner,/CHASE PHYSICS /)
 })
+
+test('second integrated scenario uses an existing physical breakaway, not a forced catch',()=>{
+ assert.match(fixture,/import \{createBreakawayGroup\}/)
+ assert.match(fixture,/function createStartingState\(withEstablishedBreakaway:boolean\)/)
+ assert.match(fixture,/sourceGroupId:pelotons\[0\]\.groupId/)
+ assert.match(fixture,/initialGapSeconds:90/)
+ assert.match(fixture,/const establishedOff=run\(false,true\)/)
+ assert.match(fixture,/const establishedOn=run\(true,true\)/)
+ assert.match(fixture,/positiveAppliedSpeedDifference:/)
+ assert.match(fixture,/positiveTickEnergyDifference:/)
+ assert.match(runner,/ESTABLISHED BREAKAWAY/)
+ assert.match(runner,/PHYSICAL CHASE EVIDENCE/)
+})
