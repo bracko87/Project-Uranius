@@ -64,6 +64,8 @@ export interface TerrainAwareMultiGroupMovementOptions {
    * Disabled by default. When disabled, movement remains exactly equivalent to
    * the existing Phase 7B.7 terrain-aware calculation.
    */
+  /** OFFLINE POC ONLY: attack speeds for orders executed in THIS movement tick. */
+  readonly experimentalLaunchSpeedByGroupId?: Readonly<Record<string, number>>
   readonly steepGradientSeverityEnabled?: boolean
   readonly steepGradientSeverityModel?:
     SteepGradientSeverityModel
@@ -235,14 +237,35 @@ export function calculateTerrainAwareMultiGroupMovement(
                 .steepGradientSeverityModel,
           })
 
+        // POC: one-tick physical launch impulse. This same applied speed feeds
+        // distance, replay gaps, finish detection, and energy consumption.
+        const launchSpeedKmh =
+          options.experimentalLaunchSpeedByGroupId?.[group.groupId]
+        if (
+          launchSpeedKmh !== undefined &&
+          (!Number.isFinite(launchSpeedKmh) ||
+            launchSpeedKmh < 0 ||
+            launchSpeedKmh > state.input.settings.maximumSpeedKmh)
+        ) {
+          throw new Error(
+            'calculateTerrainAwareMultiGroupMovement: experimental launch speed is invalid.',
+          )
+        }
+        const physicalAppliedSpeedKmh =
+          launchSpeedKmh === undefined
+            ? pace.appliedSpeedKmh
+            : Math.min(
+                state.input.settings.maximumSpeedKmh,
+                Math.max(pace.appliedSpeedKmh, launchSpeedKmh),
+              )
         const weatherAdjustedAppliedSpeedKmh =
           weatherEffects
             .speedMultiplier ===
             1
-            ? pace.appliedSpeedKmh
+            ? physicalAppliedSpeedKmh
             : Number(
                 (
-                  pace.appliedSpeedKmh *
+                  physicalAppliedSpeedKmh *
                   weatherEffects
                     .speedMultiplier
                 ).toFixed(6),
