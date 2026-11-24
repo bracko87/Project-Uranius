@@ -184,3 +184,15 @@ node --test tests\uraniusSquadRouteIsolation.test.mjs tests\uraniusSquadHostedFr
 ```
 
 After offline tests pass, a local HTTPS smoke with real two-manager login can be performed using the existing `scripts/setup-uranius-loopback-tls-windows.ps1` helper and `scripts/run-approved-overview-https-windows.ps1`. The user previously removed CurrentUser Root trust for the short-lived loopback certificate, so **do not assume browser trust is currently installed**; require explicit opt-in for a new/current cert, and remove the same trust after testing. Never paste database passwords or publishable keys into chat. It is important to do manual browser A/B acceptance before marking the frontend complete. No hosted DB schema changes are needed beyond already verified 013.
+
+## 2026-11-24 — Browser acceptance: limited authenticated Squad first paint PASS
+
+Owner supplied **two screenshots** of the live loopback HTTPS browser page `#/dashboard/squad` after the guarded installer and restricted-reader setup:
+- The first authenticated club shows **10 riders, Fixture Rider 1–10**, with Flat, Climbing, Stamina and Resistance columns.
+- The second authenticated club shows **10 riders, Fixture Rider 11–20**, with the same four columns.
+- Distinct, nonoverlapping rider identities confirm the expected A/B owner scope for this visible first-paint check.
+- Both screenshots retain the **read-only synthetic preview** disclosure and explicitly state missing original-game fields and disabled rider changes.
+
+This closes the **limited synthetic Squad first-paint acceptance** milestone: independently verified hosted migration 013, prior **8/8 frontend automated checks passed**, loopback HTTPS server started and both separate authenticated roster screenshots passed. No writes to original production, no gameplay actions, no claim of full original Squad parity.
+
+**Outstanding:** Original full Squad schema and attributes, the original page's interactions, transfers/training/medical flows and broader U5.02 / U5.03 world reconstruction remain unresolved. Do not mark global project completion on account of this focused slice. The short-lived loopback certificate was temporarily trusted for browser acceptance; the user must terminate the smoke server and remove its CurrentUser Root trust using `scripts/setup-uranius-loopback-tls-windows.ps1 -RemoveTrust`. Trust removal not yet confirmed.
