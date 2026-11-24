@@ -53,6 +53,7 @@ function summarize(withAttack:boolean){
  const result=runCalibratedTerrainSeparationStage(createInitialState(input),{
   experimentalPreserveBirthTickDroppedGroups:true,
   experimentalPreserveRecedingDroppedGroups:true,
+  experimentalPhysicalAttackLaunch:true,
  })
  // Observe exactly how a launched attack moves and whether reconciliation catches it.
  const attackTicks=result.ticks.filter(t=>t.appliedOrderEffects.attackEffects.length>0)
