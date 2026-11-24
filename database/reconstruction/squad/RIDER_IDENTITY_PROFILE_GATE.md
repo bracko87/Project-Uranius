@@ -159,3 +159,16 @@ powershell -NoProfile -File scripts\run-approved-rider-014-windows.ps1 -CaFile "
 ```
 
 Only if the guarded installer returns success may the assistant run **independent read-only hosted verification**: exact twelve ledger entries, 014 hash, table row count/unique UUIDs (readable through privileged Supabase metadata), FORCE RLS and no anonymous/auth/smoke reader mapping privileges, unchanged 200 synthetic riders and two owners, paused game clock. If execution fails, inspect hosted state before any retry. Do not declare installation complete based on owner approval alone.
+
+## 2026-11-24 — Migration 014 INSTALLED and independently VERIFIED
+
+Owner supplied direct TLS `uranius_migrator` guarded Windows installer output reporting a completed single-transaction Migration 014 after an explicit exact-hash approval. The launcher ran 3/3 static checks and the frozen 014 review, and all steps succeeded. No database password was shared with the assistant.
+
+Independent hosted **READ ONLY** postflight on isolated project `sdtsivgtcaoaeoihcwzd` verified:
+- **12/12 exact historical migration version/hash pairs**, including `014_synthetic_rider_uuid.sql` digest `f97126ed0a9259bfeac9ebf3c4158ece7a590b3ae77fd7d66f7efdc26894db6f`.
+- `uranius_game.synthetic_rider_identity` exists with **200 mapping rows, 200 distinct nonzero rider UUIDs and 200 distinct integer rider IDs**; 200 successful rider FK joins, zero unmapped riders or orphaned mappings, zero records with invalid synthetic provenance.
+- Database constraints: one PK, one UUID uniqueness constraint, one rider foreign key, one provenance check constraint.
+- **Both ordinary RLS and FORCE RLS enabled**, zero SELECT policies; `anon`, `authenticated` and `uranius_smoke_reader` cannot read UUID mappings; restricted reader cannot insert, update or delete them.
+- Previous reader restrictions preserved (`team_id` not selectable; anonymous catalog rider reads denied); 200 synthetic riders, 2 owner bindings and frozen Season 1 Day 1 clock preserved.
+
+Immutable status evidence was committed as `014_DEPLOYMENT_STATUS.json`. **Migration 014 is closed**, no further 014 installation attempts. This completes the *private synthetic UUID identity foundation only*; the original game's rider details and profile read API remain unreconstructed. No original player data was imported or modified and original production was not targeted. The next separately scoped task is designing owner-restricted read access to these UUIDs and later original-compatible profile fields, with no automatic permission expansion.
