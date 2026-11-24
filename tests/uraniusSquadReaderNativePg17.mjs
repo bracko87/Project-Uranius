@@ -356,8 +356,8 @@ try {
   assert.equal(results[0].riders.some(r=>results[1].riders.some(other=>other.syntheticRiderId===r.syntheticRiderId)),false)
   pass('Both managers see exactly ten own synthetic riders, with no cross-manager IDs')
 
-  const unknown='00000000-0000-4000-8000-000000000003'
-  sql(fixturePreview.replace(":'verified_subject'","'"+unknown+"'"),'uranius_smoke_reader',true)
+  const unknownSquad='00000000-0000-4000-8000-000000000003'
+  sql(fixturePreview.replace(":'verified_subject'","'"+unknownSquad+"'"),'uranius_smoke_reader',true)
   sql(fixturePreview.replace(":'verified_subject'","'00000000-0000-4000-8000-000000000000'"),'uranius_smoke_reader',true)
   pass('Unknown and unowned subjects are denied rather than receiving global roster')
 
