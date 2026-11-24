@@ -938,3 +938,24 @@ Owner pulled through `7e24040`, ran `node --test tests\\uraniusCourseFieldRealis
 **Follow-up physics (protected):** at t=3450/3480/3510, isolated rider pace drops to 22.1420125139 km/h while peloton remains 24.3398050790 km/h. Trailing deficit increases 0.161206 → 0.179521 → 0.197835 → 0.216150km. No fabricated early breakaway win, no catch/teleport. Final stage finish spread was **712.759774444s**, versus **712.664875572s** historical behavior, **6 distinct finish times** in both. This is an important geometric correctness improvement, not proof that the overall attack-sustainability model is realistic.
 
 **Physical catch milestone: experimental PASS only; canonical/production release NOT approved.** The correction remains default-OFF by design. No further runs of this identical protected-vs-original steep case are needed absent code modifications. Next distinct sporting question: sustained attack dynamics beyond the launch impulse. Source inspection confirms `attackLaunchSpeed.ts` computes a launch speed bonus, while `terrainAwareMultiGroupMovement.ts` applies the experimental launch speed only on the tick whose order executed, then future ticks use the group's normal terrain/energy pace; this may explain attacks fading quickly, but do not force a long-lived speed bonus or claim a defect without evidence from varying timing, rider strength, and fatigue. Sporting GO still withheld, official **49/60**. No production/backend/hosted state modified.
+
+
+## 2026-11-24 — Attack sustainability study implemented with no-order controls
+
+Following owner verification of the ninth protected trailing-attack race (**8/8 boundary tests; all simulation checks true**), started the next **different** sporting question: can a physical attack maintain a lead beyond its launch impulse, and how does timing and rider ability affect that?
+
+New isolated scripts `scripts/uranius-attack-sustainability.ts`, `scripts/run-uranius-attack-sustainability.mjs`, and boundary test `tests/uraniusAttackSustainabilityBoundary.test.mjs` are committed but **NOT YET RUN by owner**. Six 120km/128-rider rolling-route races share the same synthetic 16-team field, fixed seed, one nominated attacker, route, opt-in physical attack launch and opt-in no-teleport catch protection:
+- Original nominated rider with no order, original rider attacking **early (km 5–8)**, and original rider attacking **late (km 70–73)**.
+- Otherwise-identical nominated rider with only his flat, climbing, acceleration, stamina, resistance, and recovery attributes elevated to 95, again with no order, early attack and late attack. All 127 competitors' inputs remain unchanged. This is intentionally a high-ability sensitivity intervention rather than historical rider calibration.
+
+The study checks: all six complete and rank all 128 riders with finite official finishing times; exactly four physical `attackEffects` (and none in no-order controls); all scheduled attacks executed. It records per-run attack source group, real first- and second-tick velocities versus peloton, initial and peak positive signed spatial gaps, counts of positive-gap ticks, actual catch moment, group survival and nominated rider's rank/finish time/energy. Launcher prints explicit `AGAINST NO-ORDER` deltas by ability × timing. **No artificial lead gap or forced success.** The existing race engine's one-tick launch impulse and all scoring thresholds remain unchanged; defaults and production untouched.
+
+Owner Windows commands:
+
+```bat
+git pull origin main
+node --test tests\\uraniusAttackSustainabilityBoundary.test.mjs
+node scripts\\run-uranius-attack-sustainability.mjs --out attack-sustainability-local.json
+```
+
+Next decision is empirical: whether any profile exhibits sustained positive physical separation or favorable trade-off in energy/finish time, and if not whether to model strategic continued effort as a distinct **default-off** behavior or revise target/order eligibility. Sporting approval remains **NO GO**, official **49/60**.
