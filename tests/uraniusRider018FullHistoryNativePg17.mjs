@@ -541,7 +541,9 @@ try {
   // Historical ledger enforces 64-char digests; tamper with a syntactically valid
   // but incorrect SHA-256 so the 018 baseline guard, not the ledger CHECK, rejects it.
   sql("UPDATE uranius_private.migration_ledger SET sha256='"+'0'.repeat(64)+"' WHERE version='015_rider_uuid_owner_read.sql'")
+  assert.equal(sql(historical018),'false')
   sql(wrap(local018),'uranius_migrator',true)
+  assert.equal(sql("SELECT to_regclass('uranius_game.synthetic_rider_attributes') IS NULL"),'t')
   sql("UPDATE uranius_private.migration_ledger SET sha256='"+saved015+"' WHERE version='015_rider_uuid_owner_read.sql'")
   assert.equal(sql(historical018),'true')
   pass('018 detects altered installed 015 digest and leaves history unchanged')
