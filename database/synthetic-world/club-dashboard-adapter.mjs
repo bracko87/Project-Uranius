@@ -1,10 +1,11 @@
 import { randomBytes } from 'node:crypto'
 import { projectManagerClock } from './manager-clock-projection.mjs'
 import { projectOverviewScheduleResponse } from '../reconstruction/overview/overview-schedule-response.mjs'
+import { projectSyntheticSquadPreview } from '../reconstruction/squad/synthetic-squad-preview.mjs'
 
 const uuid = /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i
 
-export function createClubDashboardAdapter({ verifyLogin, readDashboard, readClock, readSchedule, origin, secureCookie = true }) {
+export function createClubDashboardAdapter({ verifyLogin, readDashboard, readClock, readSchedule, readSquad, origin, secureCookie = true }) {
   const sessions = new Map()
   const cookieName = secureCookie ? '__Host-uranius_club_session' : 'uranius_club_session'
   async function revoke(key) {
@@ -15,7 +16,7 @@ export function createClubDashboardAdapter({ verifyLogin, readDashboard, readClo
   const cookieFlags = '; HttpOnly; SameSite=Strict; Path=/' + (secureCookie ? '; Secure' : '')
   async function handle(req, res) {
     const path = req.url
-    if (!['/fixture/login', '/fixture/logout', '/fixture/dashboard', '/fixture/clock', '/fixture/overview-schedule'].includes(path)) return false
+    if (!['/fixture/login', '/fixture/logout', '/fixture/dashboard', '/fixture/clock', '/fixture/overview-schedule', '/fixture/squad'].includes(path)) return false
     const send = (status, value) => {
       res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' })
       res.end(JSON.stringify(value))
@@ -83,6 +84,15 @@ export function createClubDashboardAdapter({ verifyLogin, readDashboard, readClo
         if (typeof readSchedule !== 'function') return send(503, { error: 'Overview schedule not connected' })
         const data = await readSchedule(current.subject)
         return send(200, projectOverviewScheduleResponse(data, { ownerVerified: true }))
+      }
+      if (path === '/fixture/squad' && req.method === 'GET') {
+        const current = sessions.get(sessionKey)
+        if (!current) return send(401, { error: 'Sign in required' })
+        // Server-owned verified subject only; no browser-provided team or club ID.
+        // Return 503 rather than synthetic or global rider fixtures when disabled.
+        if (typeof readSquad !== 'function') return send(503, { error: 'Squad preview not connected' })
+        const result = await readSquad(current.subject)
+        return send(200, projectSyntheticSquadPreview(result, { ownerVerified: true }))
       }
       return send(405, { error: 'Method rejected' })
     } catch {
