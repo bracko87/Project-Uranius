@@ -35,6 +35,14 @@ try{
    'pursuerMovementCost '+r.pursuerMovementCost,
    'hash '+r.hash].join(' | '))
  console.log('CHECKS '+JSON.stringify(report.checks))
+ if(report.control.actualChaseBoostTicks!==0||
+  report.control.actualChaseBoostTicksAfterExpiry!==0||
+  report.experiment.actualChaseBoostTicksAfterExpiry!==0)
+  throw Error('Chase order lifetime violated: '+JSON.stringify({
+   controlBoostTicks:report.control.actualChaseBoostTicks,
+   controlAfterExpiry:report.control.actualChaseBoostTicksAfterExpiry,
+   experimentAfterExpiry:report.experiment.actualChaseBoostTicksAfterExpiry}))
+
  console.log('OBSERVED '+JSON.stringify(report.observations))
  for(const r of [report.control,report.experiment]){
   console.log('LONG CHASE DURATION '+(r.enabled?'EXPERIMENT':'CONTROL')+' | '+JSON.stringify({
