@@ -136,6 +136,8 @@ export interface IntegratedTerrainSeparationOptions {
   readonly experimentalPreserveBirthTickDroppedGroups?: boolean
   /** OFFLINE POC: a slower dropped group already behind the peloton cannot be caught from ahead. */
   readonly experimentalPreserveRecedingDroppedGroups?: boolean
+  /** OFFLINE POC ONLY: apply actual initial attack speed for one movement tick. */
+  readonly experimentalPhysicalAttackLaunch?: boolean
 
   /**
    * Disabled by default so all earlier Phase 7B.8 diagnostics retain their
@@ -1281,6 +1283,16 @@ export function simulateIntegratedTerrainSeparationTick(
           steepGradientMovementSeverityEnabled,
         steepGradientSeverityModel:
           steepGradientMovementSeverityModel,
+        ...(options.experimentalPhysicalAttackLaunch
+          ? {
+              experimentalLaunchSpeedByGroupId: Object.fromEntries(
+                appliedOrderEffects.attackEffects.map(effect => [
+                  effect.separation.breakawayGroupId,
+                  effect.separation.breakawayGroup.speedKmh,
+                ]),
+              ),
+            }
+          : {}),
       },
     )
 
