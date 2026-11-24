@@ -1,0 +1,84 @@
+{
+  "projectRef": "sdtsivgtcaoaeoihcwzd",
+  "postgresMajor": 17,
+  "status": "REVIEW_ONLY_NOT_APPROVED",
+  "hostedApplied": false,
+  "approvalRequired": true,
+  "expectedLedgerEntries": 11,
+  "candidate": {
+    "file": "014_synthetic_rider_uuid_REVIEW_ONLY.sql",
+    "ledgerVersion": "014_synthetic_rider_uuid.sql",
+    "sha256": "f97126ed0a9259bfeac9ebf3c4158ece7a590b3ae77fd7d66f7efdc26894db6f"
+  },
+  "requires": [
+    {
+      "file": "001_identity.sql",
+      "sha256": "87755f1d12a0b983d016e039d4ceb22aea1e5c165b65c2e6888049805fefbadd"
+    },
+    {
+      "file": "002_reference_schema.sql",
+      "sha256": "6cad841d012117a02daf7e89555cc870da5f9a5f90b4e4c8b7dfee52b84ed45f"
+    },
+    {
+      "file": "003_access.sql",
+      "sha256": "b42c96b647afd9b62573c75cd922b4f8de3eff9e39c5b1c8dd2ccd2f40afe8ee"
+    },
+    {
+      "file": "004_synthetic_reference.sql",
+      "sha256": "e788bf6cab85f12adce0a9227534cca57e318b15aaa69474ef2e5a950472b317"
+    },
+    {
+      "file": "005_club_identity.sql",
+      "sha256": "9550e9ef78288f9286387c43595e6649bd8bcea378d29b0db665d0b048a065fc"
+    },
+    {
+      "file": "006_synthetic_world.sql",
+      "sha256": "56f1a9f08ff1fba3f3ad9a91688c512316b74b2f37fb8806668147ae8813a9a3"
+    },
+    {
+      "file": "007_smoke_reader.sql",
+      "sha256": "dd0e9663adc2bf0717d4debc8b291ee04e859592369e381bbde7a42546a8f91b"
+    },
+    {
+      "file": "008_game_clock_v1.sql",
+      "sha256": "f3dadf7b7934e1c8677d24af2d0a57b2be19768f0bc2dc6b45729618c28e349b"
+    },
+    {
+      "file": "009_clock_smoke_reader.sql",
+      "sha256": "1be3ce5418ff8a03a787fae81fe2cbd543ad6002cc592222bc2b011245cc4c37"
+    },
+    {
+      "file": "010_overview_race_reader.sql",
+      "sha256": "56f52ac20c84aaf70ea63c68e0435da20084a3fe42e375a372c3d613cfa445af"
+    },
+    {
+      "file": "013_squad_reader_grant.sql",
+      "sha256": "8193d80743f6392709a3220441531636751a70fc487c111cc23d1865080be859"
+    }
+  ],
+  "scope": {
+    "createTable": "uranius_game.synthetic_rider_identity",
+    "rows": "200 synthetic mappings from existing rider IDs; random UUIDs, provenance and timestamps",
+    "rls": "FORCE RLS; no policies; no reader or public grants",
+    "preserve": [
+      "All 200 existing synthetic riders and IDs",
+      "All existing club memberships and readers",
+      "Game clock and first-paint Squad UI",
+      "11 original Uranius migration ledger records"
+    ],
+    "excluded": [
+      "Original ProPeloton production",
+      "Transfer of original rider records",
+      "public.club_roster compatibility",
+      "Any original rider identity assertions",
+      "Health, training, finance, contracts or gameplay changes",
+      "Any Data API exposure"
+    ]
+  },
+  "evidence": {
+    "ownerReportedStatic": "4/4 PASS 2026-11-24",
+    "ownerReportedDisposablePg17": "10/10 PASS 2026-11-24",
+    "disposableCleanup": true
+  },
+  "approvalGate": "NOT APPROVED. No installer or hosted SQL authorization. Exact 11-ledger source/digest reconciliation and separate explicit owner consent required."
+}
