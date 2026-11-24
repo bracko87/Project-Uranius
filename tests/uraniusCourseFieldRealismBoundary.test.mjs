@@ -73,3 +73,18 @@ test('course-field TypeScript diagnostic is syntactically transpileable',()=>{
  assert.ok(transformed.code.includes('attackLaunchAudit'))
  assert.ok(transformed.code.includes('terrainDropAudit'))
 })
+
+test('trailing breakaway physical catch is explicit opt-in with no teleport',()=>{
+ const integrated=read('src/race-engine/simulation/runIntegratedTerrainSeparationStage.ts')
+ const wrapper=read('src/race-engine/simulation/runCalibratedTerrainSeparationStage.ts')
+ const reconciliation=read('src/race-engine/simulation/reconcileBreakawayGroups.ts')
+ for(const part of [integrated,wrapper,reconciliation])
+  assert.match(part,/experimentalPreserveTrailingAttackGroups/)
+ assert.match(reconciliation,/group.distanceKm < peloton.distanceKm -/)
+ assert.match(source,/trailingAttackProtected=run\(/)
+ assert.match(source,/trailingAttackNoTeleport:/)
+ assert.match(source,/trailingAttackProtectedComplete:/)
+ assert.match(launcher,/TRAILING ATTACK PHYSICAL CATCH PROTECTED/)
+ const transformed=transformSync(source,{loader:'ts',format:'esm',target:'node20'})
+ assert.ok(transformed.code.includes('trailingAttackProtected'))
+})
