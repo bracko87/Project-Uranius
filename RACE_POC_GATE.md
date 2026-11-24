@@ -512,3 +512,18 @@ node scripts\run-uranius-chase-order-poc.mjs
 ```
 
 Next after multi-tick results: test calibrated chase persistence, recovery and negative cases with physically stronger breakaways, then combine tactics at realistic field sizes/distances. The official progress checklist remains **49/60**; no production changes.
+
+
+## 2026-11-24 — Eight-tick physical pursuit OWNER-VERIFIED
+
+Owner ran `git pull origin main` (up to date), `node --test tests\\uraniusChaseOrderBoundary.test.mjs` (**5/5 PASS**), and `node scripts\\run-uranius-chase-order-poc.mjs` (**complete executable PASS**). The prior 1-tick test still passed all 7 physical/energy/integrity checks.
+
+**Four-minute sustained chase comparison, identical initial 10-rider state with an actual 30s breakaway launch gap:**
+- Control, executed chase order but feature OFF: final breakaway gap **0.32066666666666643 km**; chasing rider energy **99.44799999999998**.
+- Executed chase order with opt-in feature ON: final gap **0.2994866666666667 km**; rider energy **99.44385999999997**.
+- Chase therefore closes **0.02118 km (21.18 m)** relative to identical control, with **0.00414** more actor energy spent over the eight 30-second ticks. A true active breakaway persists; this is not a forced catch.
+- **7/7 multi-tick checks true:** same tick count, physically positive gaps, all riders conserved, chase order remained executed, sustained gap reduction, sustained energy cost and no-order neutrality on every tick.
+
+**Decision:** Mark default-off physical chase feature as **functionally demonstrated in 8-tick POC**. This does **not** validate the 1.5% cap as realistic, a full chase lifecycle, consistent performance on gradients and long stages, or actual race-level sporting results. Keep canonical and hosted paths unchanged; sporting GO withheld and official checklist remains **49/60**.
+
+Next evidence gate: longer chase with a stronger escape to confirm a FAILED pursuit and energy depletion; a catchable scenario to verify actual group reabsorption; then mixed attack/chase/sprint integration at realistic stage distances/field sizes. Preserve identical-input negative controls, no artificial gap or catch, no production actions.
