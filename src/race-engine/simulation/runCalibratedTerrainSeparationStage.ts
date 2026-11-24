@@ -35,6 +35,8 @@ export interface RunCalibratedTerrainSeparationStageOptions {
   readonly experimentalPreserveRecedingDroppedGroups?: boolean
   /** OFFLINE POC ONLY, defaults off. */
   readonly experimentalPhysicalAttackLaunch?: boolean
+  /** OFFLINE POC ONLY, explicit and default-off finish scoring. */
+  readonly experimentalFinishTacticsEnabled?: boolean
 }
 
 export interface RunCalibratedTerrainSeparationStageResult
@@ -143,6 +145,8 @@ export function runCalibratedTerrainSeparationStage(
           options.experimentalPreserveRecedingDroppedGroups ?? false,
         experimentalPhysicalAttackLaunch:
           options.experimentalPhysicalAttackLaunch ?? false,
+        experimentalFinishTacticsEnabled:
+          options.experimentalFinishTacticsEnabled ?? false,
       },
     )
 
