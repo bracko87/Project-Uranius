@@ -123,3 +123,22 @@ node scripts\review-uranius-squad.mjs --review
 ```
 
 **Important:** Owner acceptance of the 28-check disposable ACL test is **not** approval to run the 013 candidate on hosted Uranius. Do not paste SQL into the dashboard. No new password, hosted API, or billing step is needed for the above offline commands.
+
+## 2026-11-24: Owner-confirmed 013 candidate rehearsal PASS; proposed package frozen for review
+
+The owner supplied terminal evidence for:
+- **13/13** standalone Node source/static security checks passed.
+- **31/31** disposable native PostgreSQL 17 checks passed, including corrected five-field grant, strict `team_id` denial, manager A/B ownership isolation, unknown-user denial, no-TLS denial, wrong-role rejection, duplicate candidate refusal, unchanged ledger and successful temp-directory cleanup.
+- The offline candidate reviewer reported SHA-256 **`8193d80743f6392709a3220441531636751a70fc487c111cc23d1865080be859`**, for exact `013_squad_reader_grant_REVIEW_ONLY.sql`.
+
+**New frozen review manifest:** `013_install_manifest_REVIEW_ONLY.json` pins the owner's candidate hash, 10 exact prior ledger versions/hashes, restricted scope and approval status `REVIEW_ONLY_NOT_APPROVED`. The offline-only reviewer `scripts/review-uranius-squad.mjs --review` now checks candidate bytes against the frozen manifest and prints both its candidate hash and the **manifest SHA-256**, which is the digest intended for separate owner approval. It has NO database connection or apply mode. New `tests/uraniusSquadManifestFreeze.test.mjs` contains two regression checks; those are not yet owner-executed.
+
+Review command:
+
+```bat
+git pull origin main
+node --test tests\uraniusSquadManifestFreeze.test.mjs
+node scripts\review-uranius-squad.mjs --review
+```
+
+**Release gate:** Even when the manifest review passes, this is **not** approved for hosted installation. A direct-migrator exact-approved digest installer, read-only hosted preflight, independent postflight and explicit owner approval of the frozen **manifest SHA-256** remain required. No hosted permissions or game-data changes were performed in this review phase.
