@@ -490,3 +490,25 @@ node scripts\run-uranius-chase-order-poc.mjs
 ```
 
 The one-tick physical speed, gap and energy comparisons remain unverified pending this rerun. Checklist 49/60; sporting GO withheld.
+
+
+## 2026-11-24 — Owner verifies one-tick chase; eight-tick extension added
+
+Owner pulled through `8487d75`. Static chase assertions **4/4 PASS** and real offline one-tick chase POC **PASS**:
+- Normal: peloton **42.36km/h**, breakaway **42.42km/h**, remaining gap **0.3171666666666667km**, chasing rider energy **99.931**; order executed
+- Chase enabled: peloton **42.6777km/h**, breakaway **42.42km/h**, gap **0.3145191666666667km**, chasing rider energy **99.9304825**; order executed
+- All seven checks true: order execution, speed increased, physical gap reduced by **0.0026475km**, more energy consumed, no-order neutrality, no forced catch and roster conservation
+
+Thus one-tick chase-order movement functionality is **verified experimentally**; the modest physical advantage does not imply that a 30-second gap should disappear in one tick. The existing `experimentalChaseOrdersEnabled` flag remains **default OFF**; do not approve sporting calibration or production release.
+
+Extended the same `scripts/uranius-chase-order-poc.ts` with a repeatable **eight consecutive 30-second ticks** from an identical initial breakaway state in three conditions: default-off chase command, experiment-on chase command, and flag-on without a chase command. It records every signed physical gap between active peloton and breakaway, exact movement proposal speeds, chasing rider energy, actual order status, active group count and rider count. The launcher now fails closed unless all eight ticks remain comparable, the chasing order remains executed, physical separation persists, chase reduces the final gap versus control, repeated chase incurs extra energy, the no-order run is identical at every tick and all riders are conserved. If the test reveals a legitimate catch, update the scenario/expectations based on physical evidence rather than artificially preventing reconciliation.
+
+These additional multi-tick assertions are **committed but have NOT been executed** on the owner's checkout:
+
+```bat
+git pull origin main
+node --test tests\uraniusChaseOrderBoundary.test.mjs
+node scripts\run-uranius-chase-order-poc.mjs
+```
+
+Next after multi-tick results: test calibrated chase persistence, recovery and negative cases with physically stronger breakaways, then combine tactics at realistic field sizes/distances. The official progress checklist remains **49/60**; no production changes.
