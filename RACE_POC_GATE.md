@@ -114,3 +114,28 @@ node scripts\run-uranius-race-pressure-trace.mjs --out race-pressure-trace-local
 ```
 
 Interpret the pressure trace before changing sporting rules. If `cannot_hold=0`, inspect demand / capability / terrain and fixture values. If `cannot_hold>0` but max consecutive duration under 120, determine whether resets are physically plausible or a model design issue. If eligibility reaches 120 without transitions, inspect the transition application path. If stress test separates riders but baseline doesn't, prioritize realistic heterogeneous course and rider calibration instead of blanket engine replacement. **Milestone 019 remains deprioritized; original ProPeloton production untouched.**
+
+## 2026-11-24 — Owner pressure probe results identify same-tick disappearance question
+
+Owner ran the 3/3 pressure-trace boundary tests (PASS) and the new offline calibrated runner. Reported:
+
+| Test fixture | cannot_hold evaluations | Unique affected riders | Max consecutive unable | Eligible window events | Actual transitions | Max replay groups | Finish spread |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| flat baseline / 24 | 0 | 0 | 0s | 0 | 0 | 1 | 0s |
+| mountain baseline / 96 | 0 | 0 | 0s | 0 | 0 | 1 | 0s |
+| extreme mountain stress / 96 | 2,589 | 24 | 120s | 633 | 29 | 1 | 0s |
+
+This **disproves** the theory that the calibrated engine cannot detect ANY rider who is physically unable to sustain the group. Under deliberately extreme fictional terrain/weakness, it computes hundreds of eligibility events and creates 29 dropped-group transitions. However, the replay still records only one active group and zero finish spread. A successful transition does not imply a surviving distinct group.
+
+Source inspection suggests a **same-tick reabsorption** mechanism: `calculateDroppedGroupTransitionProposal.ts` constructs a new dropped group at the source group's current `distanceKm`, while `runIntegratedTerrainSeparationStage.ts` calls `reconcileBreakawayGroups` in the same tick. `reconcileBreakawayGroups.ts` reabsorbs nearby dropped groups within a five-second peloton window and updates their riders' `currentGroupId`. This is a plausible cause, **not confirmed** until trace records pre/post reconciliation.
+
+Extended the existing OFFLINE `scripts/uranius-race-pressure-trace.ts` to inspect each tick's existing `reconciledBreakaways.previousState` and `.state`, record whether newly dropped group IDs remain active, count `reabsorbedBreakawayGroupIds`, count riders returned to peloton in same tick, and compare maximum group counts before/after reconciliation. The human-readable CLI and no-network static checks were updated. No race rules, source golden fixtures, existing SQL, live scheduler, original production or host were changed.
+
+**Next owner action (extended probe has NOT YET RUN):**
+```bat
+git pull origin main
+node --test tests\uraniusRacePressureTraceBoundary.test.mjs
+node scripts\run-uranius-race-pressure-trace.mjs --out race-pressure-trace-local.json
+```
+
+If `reabsorbedSameTick=29` and `survivingDrops=0`, there is a concrete reconciliation rule-ordering bug to fix **in the isolated engine only**, using a regression proving dropped riders have a physical separation opportunity and later rejoin only after a genuine catch. Keep old golden baselines pinned and require an explicit new version/mode for any changed sport rule; do not edit checks merely to force success. If counts differ, inspect recorded `firstTransitionSamples` and determine the genuine reason before changing implementation.
