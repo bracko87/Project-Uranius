@@ -101,3 +101,20 @@ An independent **read-only** preflight after approval confirmed isolated hosted 
 The guarded launcher requires the owner's locally held private `uranius_migrator` password and CA path, which the assistant does not possess. Installation therefore **has not been attempted**. The approved owner must run the already-frozen `scripts/run-approved-rider-018-windows.ps1` on the trusted Windows workstation and enter the password **locally** (never send it to chat). Once the command returns success, independently query the hosted ledger, 200 rows, 19 columns, 27 checks, 3 sourced/6 NULL skills, FORCE RLS, zero public/reader grants and unchanged 200 UUID mappings and paused game clock. A failure must NOT be automatically retried.
 
 **Status: OWNER APPROVED / GUARDED OWNER-LOCAL INSTALLATION PENDING.** Older notes describing 018 as unapproved are historical; this entry records superseding permission, but not installation completion.
+
+## 2026-11-24 — GUARDED ISOLATED 018 INSTALLED AND INDEPENDENTLY VERIFIED
+
+Owner executed the pinned `scripts/run-approved-rider-018-windows.ps1` from the trusted Windows checkout, typed `APPLY URANIUS 018` and supplied the dedicated migrator password locally (never shared in chat). The atomic restricted migrator reported success. No privilege escalation or admin SQL fallback was used.
+
+Independent **read-only** hosted verification on project `sdtsivgtcaoaeoihcwzd` confirmed:
+- Migration ledger now **14** entries and `018_synthetic_nine_skill_attributes.sql` SHA-256 is exactly `622d7626f5f6d93117cbb755398971d23ca0a870e49bc8c98e2df768630b48cc`; installed 015 SHA remains unchanged.
+- New `uranius_game.synthetic_rider_attributes` contains **200** entries, **19** columns and **27** CHECK constraints; FORCE RLS active, **zero RLS policies**.
+- **200/200** rows match source catalog values exactly for Climbing, Flat and Resistance, with three `isolated_catalog` provenance markers each.
+- **200/200** rows have the six unavailable original skills **and all six corresponding provenance values NULL**. No original data was invented.
+- No missing/orphan rider-attribute IDs. Existing catalog riders **200**, owner bindings **2**, existing synthetic UUID identities **200**, distinct UUIDs **200**.
+- No SELECT privilege on the new table for `anon`, `authenticated`, or `uranius_smoke_reader`; restricted reader also has no INSERT/UPDATE/DELETE. Existing rider `team_id` is inaccessible to the reader.
+- Original UUID identity FORCE RLS remains enabled with one owner-only SELECT policy; Season 1 Day 1 game clock remains paused.
+
+**018 STATUS: INSTALLED AND ACCEPTED on isolated hosted Uranius.** The original source/manifest files remain frozen as a historical release record; their prior review-only metadata reflects their **pre-installation state**, not the currently installed hosted state. Do not modify hashes or retroactively rewrite evidence. No more 018 installation attempts are necessary.
+
+**Scope limit:** The new attributes table deliberately has **NO reader grant/policy**, so 018 does *not* expose additional fields in the live Squad UI. The six unavailable skills remain unknown. Any 019 owner-scoped read integration or future filling of synthetic missing values requires a separate design, security test and approval. Original ProPeloton production was not targeted.
