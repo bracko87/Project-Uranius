@@ -15,7 +15,11 @@ test('HTTPS Squad is opt-in and scoped to verified server subject only',()=>{
  assert.match(adapter,/projectSyntheticSquadPreview\(result, \{ ownerVerified: true \}\)/)
  assert.match(adapter,/Squad preview not connected/)
  assert.match(launcher,/URANIUS_SQUAD_READ_APPROVED = '1'/)
- assert.match(launcher,/URANIUS_SQUAD_READ_APPROVED'\)/)
+ // Both flags must be cleared by the launcher, regardless of their order.
+ assert.match(launcher,/'URANIUS_SQUAD_READ_APPROVED'/)
+ assert.match(launcher,/'URANIUS_SQUAD_UUID_READ_APPROVED'/)
+ assert.match(launcher,/foreach \(\$name in @\(/)
+ assert.match(launcher,/Remove-Item "Env:\$name" -ErrorAction SilentlyContinue/)
 })
 test('Squad preview only reads real RLS-filtered synthetic fields and never changes hosted data',()=>{
  assert.match(sql,/BEGIN READ ONLY;/)
