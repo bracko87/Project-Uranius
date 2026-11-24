@@ -5,8 +5,8 @@
   "ownerApproval": "EXPLICIT_APPROVAL_RECEIVED",
   "approvedManifestSha256": "26cdce51966cf2264ff2ec49affe8c987f5cbcb447040807c61354382092a170",
   "candidateSha256": "56f52ac20c84aaf70ea63c68e0435da20084a3fe42e375a372c3d613cfa445af",
-  "status": "APPROVED_EXECUTION_BLOCKED_NO_DIRECT_MIGRATOR_SESSION",
-  "hostedApplied": false,
+  "status": "HOSTED_SANDBOX_APPLIED_VERIFIED",
+  "hostedApplied": true,
   "toolExecutionRole": "postgres",
   "requiredExecutionRole": "uranius_migrator",
   "migratorSessionEnforced": true,
@@ -20,10 +20,40 @@
     "pausedClockRows": 1,
     "ledgerHashesMatchReviewedManifest": true
   },
-  "reason": "The connected Supabase SQL executor authenticates as postgres; approved migration requires session_user=current_user=uranius_migrator. Existing postgres membership in migrator is ADMIN only (SET FALSE). Changing the candidate or bypassing role checks would not be the exact approved package.",
   "safePath": "Run already committed scripts/apply-uranius-overview.mjs with direct uranius_migrator credentials, verified TLS root CA, and approved manifest digest from a trusted local shell. Do not paste credentials into chat. Then re-run read-only hosted postflight.",
   "originalProPelotonProductionChanged": false,
   "safeLauncher": "scripts/run-approved-overview-windows.ps1",
   "safeLauncherCommit": "601ff9c9dba51eab1e6c1860d72437cbcfffc797",
-  "nextAction": "Use direct uranius_migrator login with trusted Supabase root CA and the exact approved manifest SHA; never paste database passwords in chat. Postflight read-only verification after successful guarded installation."
+  "nextAction": "Test authenticated HTTPS Overview schedule reads against empty live race tables with validated manager sessions and explicitly enabled restricted reader, then wire UI; avoid inserting new race fixtures without separate approval.",
+  "appliedDate": "2026-11-24",
+  "invocation": "Owner Windows secure launcher using direct TLS uranius_migrator password; owner terminal confirmed atomic transaction postflight passed.",
+  "postflight": {
+    "source": "independent read-only Supabase metadata and grants check",
+    "database": "postgres",
+    "pgMajor": 17,
+    "customLedgerCount": 10,
+    "ledgerVersion": "010_overview_race_reader.sql",
+    "ledgerShaMatchesCandidate": true,
+    "installedTables": [
+      "races",
+      "race_stages",
+      "race_team_entries",
+      "race_preparations"
+    ],
+    "rlsEnabled": 4,
+    "forceRlsEnabled": 4,
+    "readerSelectPolicies": 4,
+    "anonPrivateSelect": false,
+    "authenticatedPrivateSelect": false,
+    "restrictedReaderPrivateSelect": true,
+    "restrictedReaderPrivateUpdate": false,
+    "ownersPreserved": 2,
+    "ridersPreserved": 200,
+    "seasonOnePausedClockRows": 1
+  },
+  "unverified": [
+    "Live TLS authenticated HTTPS overview schedule reads for Manager A and B",
+    "Live race preparation ownership with non-empty tables (currently only schema installed)",
+    "Frontend Overview schedule visualization connected"
+  ]
 }
