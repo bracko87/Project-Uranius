@@ -16,6 +16,7 @@
  * unchanged. A multiplier of exactly 1 preserves the original speed value.
  */
 
+import {calculateExperimentalChaseMultiplier} from './experimentalChasePace'
 import type {
   GroupState,
 } from '../domain/GroupState'
@@ -66,6 +67,8 @@ export interface TerrainAwareMultiGroupMovementOptions {
    */
   /** OFFLINE POC ONLY: attack speeds for orders executed in THIS movement tick. */
   readonly experimentalLaunchSpeedByGroupId?: Readonly<Record<string, number>>
+  /** OFFLINE POC ONLY: executed chase can modestly raise actual peloton speed. */
+  readonly experimentalChaseOrdersEnabled?: boolean
   readonly steepGradientSeverityEnabled?: boolean
   readonly steepGradientSeverityModel?:
     SteepGradientSeverityModel
@@ -258,14 +261,24 @@ export function calculateTerrainAwareMultiGroupMovement(
                 state.input.settings.maximumSpeedKmh,
                 Math.max(pace.appliedSpeedKmh, launchSpeedKmh),
               )
+        const chaseAdjustedAppliedSpeedKmh =
+          options.experimentalChaseOrdersEnabled
+            ? Math.min(
+                state.input.settings.maximumSpeedKmh,
+                physicalAppliedSpeedKmh * calculateExperimentalChaseMultiplier(
+                  state,group,terrainSample.gradientPercent,
+                ),
+              )
+            : physicalAppliedSpeedKmh
+
         const weatherAdjustedAppliedSpeedKmh =
           weatherEffects
             .speedMultiplier ===
             1
-            ? physicalAppliedSpeedKmh
+            ? chaseAdjustedAppliedSpeedKmh
             : Number(
                 (
-                  physicalAppliedSpeedKmh *
+                  chaseAdjustedAppliedSpeedKmh *
                   weatherEffects
                     .speedMultiplier
                 ).toFixed(6),
