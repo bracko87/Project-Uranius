@@ -134,6 +134,8 @@ export interface IntegratedTerrainSeparationOptions {
   /** POC ONLY: allow newborn dropped groups one physical movement tick before
    * catch reconciliation; defaults false, preserving golden baseline. */
   readonly experimentalPreserveBirthTickDroppedGroups?: boolean
+  /** OFFLINE POC: a slower dropped group already behind the peloton cannot be caught from ahead. */
+  readonly experimentalPreserveRecedingDroppedGroups?: boolean
 
   /**
    * Disabled by default so all earlier Phase 7B.8 diagnostics retain their
@@ -1412,6 +1414,8 @@ export function simulateIntegratedTerrainSeparationTick(
       stateBeforeBreakawayReconciliation,
       options.experimentalPreserveBirthTickDroppedGroups
         ? {
+            experimentalPreserveRecedingDroppedGroups:
+              options.experimentalPreserveRecedingDroppedGroups === true,
             protectedNewDroppedGroupIds: transitionApplication.transitions
               .filter(transition => transition.transitionKind === 'created')
               .map(transition => transition.targetGroupId),
