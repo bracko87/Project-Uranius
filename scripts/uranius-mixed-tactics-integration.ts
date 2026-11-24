@@ -96,6 +96,20 @@ function run(enabled:boolean,withEstablishedBreakaway=false){
     chaseRiderEnergyUsedThisTick:chased?.energyCost??null,
    }
   })
+ const pursuerEnergyTrace=result.ticks.map(t=>{
+  const application=t.appliedEnergy.applications.find(a=>a.riderId===pursuer.riderId)
+  const rider=t.state.riders[pursuer.riderId]
+  return {second:t.state.raceSecond,energyCost:application?.energyCost??0,
+   charged:application!==undefined,stageStatus:rider.stageStatus,
+   remainingEnergy:rider.energy,
+   pelotonSpeedKmh:t.movement.movement.proposals.find(
+    p=>p.riderIds.includes(pursuer.riderId))?.appliedSpeedKmh??null}
+ })
+ const pursuerChargedTicks=pursuerEnergyTrace.filter(t=>t.charged).length
+ const pursuerMovementEnergyCost=pursuerEnergyTrace.reduce((sum,t)=>sum+t.energyCost,0)
+ const pursuerLastChargedSecond=[...pursuerEnergyTrace].reverse().find(t=>t.charged)?.second??null
+ const pursuerFinalRider=result.finalState.riders[pursuer.riderId]
+ const pursuerFinishTimeSeconds=pursuerFinalRider.finishTimeSeconds
  const sprinterResult=result.finalState.riders[sprinter.riderId]
  const leadoutResult=result.finalState.riders[leadout.riderId]
  const pursued=result.finalState.riders[pursuer.riderId]
@@ -118,6 +132,14 @@ function run(enabled:boolean,withEstablishedBreakaway=false){
   sprinterTime:sprinterResult.finishTimeSeconds,
   sprinterEnergy:sprinterResult.energy,
   leadoutEnergy:leadoutResult.energy,pursuerEnergy:pursued.energy,
+  raceTickCount:result.ticks.length,
+  pursuerChargedTicks,pursuerMovementEnergyCost,
+  pursuerLastChargedSecond,pursuerFinishTimeSeconds,
+  pursuerInitialEnergy:result.initialState.riders[pursuer.riderId].energy,
+  pursuerEnergyAccountingResidual:
+   result.initialState.riders[pursuer.riderId].energy-
+   pursuerFinalRider.energy-pursuerMovementEnergyCost,
+
   classificationHash:createHash('sha256').update(JSON.stringify(riders
    .map(r=>[r.riderId,r.finishPosition,r.finishTimeSeconds,r.energy])
    .sort((a,b)=>String(a[0]).localeCompare(String(b[0]))))).digest('hex').slice(0,20),
@@ -161,6 +183,14 @@ const physicalChaseEvidence={
  positiveTickEnergyDifference:matchingEligibleTicks.some(
   pair=>pair.on.chaseRiderEnergyUsedThisTick>(pair.off?.chaseRiderEnergyUsedThisTick??Infinity)),
  pursuerFinalEnergyDifference:establishedOff.pursuerEnergy-establishedOn.pursuerEnergy,
+ pursuerFinishTimeDifferenceSeconds:establishedOff.pursuerFinishTimeSeconds===null||
+  establishedOn.pursuerFinishTimeSeconds===null?null:
+  establishedOff.pursuerFinishTimeSeconds-establishedOn.pursuerFinishTimeSeconds,
+ pursuerChargedTickDifference:establishedOff.pursuerChargedTicks-establishedOn.pursuerChargedTicks,
+ pursuerMovementCostDifference:establishedOff.pursuerMovementEnergyCost-establishedOn.pursuerMovementEnergyCost,
+ pursuerResidualCostDifference:establishedOff.pursuerEnergyAccountingResidual-
+  establishedOn.pursuerEnergyAccountingResidual,
+
 }
 
 process.stdout.write(JSON.stringify({reportVersion:'uranius-mixed-tactics-v1',
