@@ -849,3 +849,20 @@ node scripts\\run-uranius-course-field-realism.mjs --out course-field-local.json
 ```
 
 If inability-to-hold pressure stays zero on the mountain route, the next separate hypothesis should test *real* sustained 8%+ gradients with explicit severity flag and held-out rider field, before changing any default split thresholds. If positive pressure accumulates but drops are eliminated, investigate the exact eligibility and reconciliation stage. No default/core/production change; official project checklist remains **49/60**, sporting GO withheld.
+
+
+## 2026-11-24 — Owner verifies zero group pressure across six races; real steep-climb control added
+
+Owner ran six 128-rider races through `8956120`; **4/4 static checks PASS**, all five runtime technical checks true. In all six scenarios, `cannotHoldEvaluationCount=0`, `cannotHoldDistinctRiders=0`, `maxSeparationPressureSeconds=0`, `terrainDropsCreated=0`, and exactly one unique official finish time. The original profiles had max uphill gradients **0%** (flat), **2%** (rolling), **4.6%** (nominal mountain). Genuine live attack occurred once per run but only survived for two positive-gap movement ticks, max approximately 33–36m, before being physically caught. Thus no evidence yet of genuine terrain-driven dropped groups or sporting separation. Do not manipulate final times or fake initial gaps.
+
+Root cause is now narrowed but not proved: `evaluatePressure` calculates group demand from mean rider terrain capability, applies shelter, then `calculateRiderGroupHold` marks a rider `cannot_hold` only when capability margin falls **strictly below -8 points** (requires 120 consecutive seconds of inability to hold for transition). Calibrated runner already activates the existing `progressive_resilience` steep severity in both pressure and movement, but the observed profiles never passed the **+8% steep severity onset**. An entirely unchanged group on +4.6% terrain does not demonstrate the steep severity algorithm's effectiveness.
+
+**New diagnostic committed, not yet owner-executed:** Existing `uranius-course-field-realism.ts` adds a fourth **`steep_160`** fictional 160km route with two 10km segments climbing **1200 metres each = +12% gradient**, including descending/valley segments to avoid an endlessly ascending profile. Both the heterogenous and uniform 128-rider fields are run, bringing the matrix to **8 scenarios**. Same true attack order at km35–42, identical deterministic rider setup, default calibrated steep severity (already on), existing default-off physical-attack launch POC opt-in. The newly added scenario tests the actual severity onset *without changing any race engine constants, thresholds, catch rules, finish ranking or production data*. Runner technical gate is now `eightScenarios`; new static test protects route length, climb elevations and all eight scenarios. Run:
+
+```bat
+git pull origin main
+node --test tests\\uraniusCourseFieldRealismBoundary.test.mjs
+node scripts\\run-uranius-course-field-realism.mjs --out course-field-local.json
+```
+
+Inspect specifically the **steep_160 heterogeneous** `cannotHold`, `pressureMaxSec`, `terrainDrops` and `uniqueFinishTimes` fields. If there is still no inability-to-hold, the next sporting diagnosis should inspect raw **minimum capability margins and group-demand/shelter values** on the steep segment rather than weakening -8 or synthesizing gaps. Sporting GO remains **NO GO**, official checklist **49/60**, production untouched.
