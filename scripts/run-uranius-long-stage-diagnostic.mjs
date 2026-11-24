@@ -21,7 +21,7 @@ try{
  if(run.error)throw run.error
  if(run.status!==0)throw Error('Offline long-stage run failed: '+(run.stderr||run.stdout||'unknown').slice(0,1600))
  const report=JSON.parse(run.stdout)
- if(report.reportVersion!=='uranius-long-stage-diagnostic-v1'||report.results.length!==8)
+ if(report.reportVersion!=='uranius-long-stage-diagnostic-v1'||report.results.length!==12)
   throw Error('Unexpected long-stage report shape')
  console.log('URANIUS LONG-STAGE DIAGNOSTIC — offline synthetic only (NOT sporting approval)')
  for(const p of report.results){
