@@ -55,5 +55,11 @@
     "Live TLS authenticated HTTPS overview schedule reads for Manager A and B",
     "Live race preparation ownership with non-empty tables (currently only schema installed)",
     "Frontend Overview schedule visualization connected"
-  ]
+  ],
+  "securityAdvisors": {
+    "checkedAt": "2026-11-24T08:38:08Z",
+    "newMigration010Findings": 0,
+    "existingInfo": "3 private uranius_private tables have RLS enabled and intentionally no client policies",
+    "existingWarning": "Supabase Auth leaked-password protection disabled; no change authorized"
+  }
 }
