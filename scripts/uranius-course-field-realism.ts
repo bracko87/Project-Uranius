@@ -97,6 +97,28 @@ function run(course:typeof profiles[number],distribution:Distribution){
  const catchTick=attackTrace.find(t=>t.caught)
  const positiveGapTicks=attackTrace.filter(t=>(t.gapKm??0)>0.000001).length
  const peakGapKm=attackTrace.length?Math.max(...attackTrace.map(t=>t.gapKm??0)):0
+ const terrainGradients=course.elevations.slice(1).map((height,index)=>
+  (height-course.elevations[index])/10000*100)
+ const pressureSamples=result.ticks.flatMap(t=>t.pressureEvaluations)
+ const cannotHoldEvaluations=pressureSamples.filter(p=>p.hold.status==='cannot_hold')
+ const maxSeparationPressureSeconds=Math.max(0,...result.ticks.flatMap(
+  t=>Object.values(t.pressureDurationByRiderId)))
+ const pressureCannotHoldDistinctRiders=new Set(
+  cannotHoldEvaluations.map(p=>p.riderId)).size
+ const terrainDropsCreated=result.ticks.reduce((sum,t)=>sum+
+  t.transitions.filter(tr=>tr.transitionKind==='created').length,0)
+ const terrainDropsCaughtSameTick=result.ticks.reduce((sum,t)=>sum+
+  t.transitions.filter(tr=>tr.transitionKind==='created'&&
+   t.reconciledBreakaways.reabsorbedBreakawayGroupIds.includes(tr.targetGroupId)).length,0)
+ const terrainDropsLaterCaught=result.ticks.reduce((sum,t)=>sum+
+  t.reconciledBreakaways.reabsorbedBreakawayGroupIds.filter(id=>{
+   const group=t.reconciledBreakaways.previousState.groups[id]
+   return group?.groupType==='dropped'&&
+    group.createdAtRaceSecond<t.state.raceSecond
+  }).length,0)
+ const riderEnergyRange=[Math.min(...final.map(r=>r.energy)),
+  Math.max(...final.map(r=>r.energy))]
+ const finishingTimeUniqueCount=new Set(times).size
  const winner=final.find(r=>r.finishPosition===1)
  const winnerInput=winner?ridersById.get(winner.riderId):undefined
  const firstTime=times.length?Math.min(...times):null
@@ -110,7 +132,15 @@ function run(course:typeof profiles[number],distribution:Distribution){
   distanceKm:course.distance,completed:result.completed,finishers,
   rosterPreserved,rankValid,allTimesFinite:times.length===field,
   replayRosterValid:!replayRosterInvalid,
-  ticks:result.ticks.length,attackEvents:attacks.length,
+  ticks:result.ticks.length,
+  profileMaxUphillGradientPercent:Math.max(...terrainGradients),
+  profileMaxDownhillGradientPercent:Math.min(...terrainGradients),
+  cannotHoldEvaluationCount:cannotHoldEvaluations.length,
+  cannotHoldDistinctRiders:pressureCannotHoldDistinctRiders,
+  maxSeparationPressureSeconds,
+  terrainDropsCreated,terrainDropsCaughtSameTick,terrainDropsLaterCaught,
+  finishingTimeUniqueCount,riderEnergyRange,
+  attackEvents:attacks.length,
   orderExecuted:result.finalState.orders['profile-attack']?.status==='executed',
   attackSecond:attack?.second??null,
   attackFirstMovementSpeedKmh:attack?.firstAppliedSpeedKmh??null,
