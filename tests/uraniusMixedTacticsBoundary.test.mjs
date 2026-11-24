@@ -29,3 +29,12 @@ test('classification and order checks fail closed without inventing a race winne
  assert.match(runner,/Object.values\(report.checks\).some\(x=>x!==true\)/)
  assert.doesNotMatch(fixture+runner,/@supabase|createClient\(|fetch\(|https?:\/\/|service_role/i)
 })
+
+test('mixed stage distinguishes issued chase from physical pre-movement gap eligibility',()=>{
+ assert.match(fixture,/const chaseTimeline=result.ticks.filter/)
+ assert.match(fixture,/preBreakaway.distanceKm-prePeloton.distanceKm/)
+ assert.match(fixture,/pursuitEligibleBeforeMovement:preGapSeconds!==null&&preGapSeconds>=5/)
+ assert.match(fixture,/chaseHadPhysicalEligibility:/)
+ assert.match(fixture,/chaseRiderEnergyUsedThisTick:/)
+ assert.match(runner,/CHASE PHYSICS /)
+})
