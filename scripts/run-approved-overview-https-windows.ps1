@@ -28,6 +28,9 @@ try {
   Write-Host 'Local HTTPS Overview + Squad smoke: isolated Uranius project sdtsivgtcaoaeoihcwzd only.'
   Write-Host 'No schema writes, external listener, original production access or client Data API grants.'
   Write-Host 'The Node process will prompt privately for the uranius_smoke_reader password and Uranius publishable API key.'
+  Write-Host 'Checking local TLS, SQL assets, CSS and frontend bundle BEFORE credential prompts.'
+  & node $runner --offline-preflight
+  if ($LASTEXITCODE -ne 0) { throw 'Local HTTPS startup preflight failed. No passwords requested; investigate the printed stage.' }
   & node $runner --reviewed-hosted-smoke
   if ($LASTEXITCODE -ne 0) { throw 'HTTPS read-only smoke stopped. Inspect fixed diagnostic messages; no automatic retry.' }
 } finally {
