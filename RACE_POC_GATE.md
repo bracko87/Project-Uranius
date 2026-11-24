@@ -995,3 +995,18 @@ node scripts\\run-uranius-attack-sustainability.mjs --out attack-sustainability-
 ```
 
 Interpretation: positive energy relief for group riders and none for isolated rider after launch is a required qualitative sanity check; even if successful, physical attack effort calibration and the unusually enormous long escape success gap remain independent sporting NO-GO issues. Official checklist **49/60**.
+
+
+## 2026-11-24 — Owner verifies paired drafting ON/OFF energy (12 runs); metric corrected
+
+Owner pulled latest staging through `2e05bfd`, ran boundary suite **6/6 PASS** and twelve offline 120km/128-rider race comparisons, all runtime technical checks true: `sixComplete`, `classificationIntegrity`, `fourPhysicalAttacks`, `noFabricatedBaseline`, `allScheduledOrdersExecuted`, `energyAccountingExact`, `shelterComparisonComplete`, `shelterComparisonLedger`, `shelterReallyApplied`, `unchangedNoShelter`. All six baseline OFF race outcomes matched old deterministic hashes. Shelter ON did **not change ranks or finishing times** in these controlled scenarios, but it changed actual energy charges, with no unexplained accounting discrepancy.
+
+Energy LEFT, for strong nominated rider:
+- No order: OFF **77.2366628**, ON **79.403513**; shelter saved **2.16681** energy points across the whole race.
+- Early attack: OFF **79.500847**, ON **79.594357**; shelter saved **0.09351** energy points, as rider attacks at ~km5 and rides alone most of the race.
+- Late attack: OFF **78.1787907**, ON **79.4658519**; shelter saved **1.287038** points because rider stays in peloton until ~km70.
+Original-strength no order/early/late: ON shelter saved respectively **2.742159**, **2.726427**, **2.726411** energy points, consistent with attacks that were caught almost immediately. Positive savings do not themselves demonstrate physically calibrated aerodynamic benefit. A radically strengthened solo attacker still wins by >17 minutes in early case and >7 minutes in late case; test deliberately sets six rider attributes to 95 while leaving opponents heterogenous 48–95.
+
+**Minor diagnostic interpretation defect fixed, not yet owner-retested:** the printed `shelteredTicks` had been counting all ticks where `shelterMultiplier` was non-null, including **solo groups with zero actual energy saved**. The underlying energy ledger and `shelterSaved` totals were correct. The report now separates `shelterEvaluatedTicks` (multiplier was calculated) from `shelterAppliedTicks` (strictly positive `shelterEnergySaved`). Added a static TypeScript compilation test for both metrics. No race engine, actual energy, ranks, speed, or default options changed.
+
+**Next distinct sporting priority:** investigate the strong rider's unreasonably large solo winning margin using a *gradient of plausible rider strength*, rather than repeating the known successful extreme 95-attribute run. Evaluate deterministic finish/attack and energy vs close-by strengths (e.g. multiple ability values), keep paired no-order baselines, and do not claim sporting GO without real-race-like calibration. Official checklist **49/60**, sporting NO GO. No hosted/production data touched.
