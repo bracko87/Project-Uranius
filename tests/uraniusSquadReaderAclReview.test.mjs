@@ -17,16 +17,17 @@ test('approved original 010 fingerprint and full ten-ledger preflight guarded',(
  assert.match(body,/010_overview_race_reader\.sql/)
  assert.match(body,/56f52ac20c84aaf70ea63c68e0435da20084a3fe42e375a372c3d613cfa445af/)
 })
-test('only six missing existing rider columns are granted to dedicated reader',()=>{
- assert.match(body,/GRANT SELECT \(team_id,label,flat,climbing,stamina,resistance\)\s+ON uranius_catalog\.riders TO uranius_smoke_reader;/)
+test('only five non-ownership rider columns are granted to dedicated reader',()=>{
+ assert.match(body,/GRANT SELECT \(label,flat,climbing,stamina,resistance\)\s+ON uranius_catalog\.riders TO uranius_smoke_reader;/)
  assert.equal((body.match(/\bGRANT\b/g)||[]).length,1)
  assert.doesNotMatch(body,/GRANT SELECT ON uranius_catalog\.riders/i)
  assert.doesNotMatch(body,/\bGRANT\b[^;]*\b(?:anon|authenticated|PUBLIC)\b/i)
 })
 test('postflight denies mutation, full-table read, anonymous read and private schema',()=>{
  assert.match(body,/has_table_privilege\('uranius_smoke_reader','uranius_catalog\.riders','UPDATE'\)/)
- for(const verb of ['INSERT','DELETE','SELECT'])
+ for(const verb of ['INSERT','DELETE'])
   assert.match(body,new RegExp("has_table_privilege\\('uranius_smoke_reader','uranius_catalog\\.riders','"+verb+"'\\)"))
+ assert.match(body,/has_column_privilege\('uranius_smoke_reader','uranius_catalog\.riders','team_id','SELECT'\)/)
  assert.match(body,/has_table_privilege\('anon','uranius_catalog\.riders','SELECT'\)/)
  assert.match(body,/has_schema_privilege\('uranius_smoke_reader','uranius_private','USAGE'\)/)
 })
