@@ -35,7 +35,8 @@ try{
    'pursuerMovementCost '+r.pursuerMovementCost,
    'hash '+r.hash].join(' | '))
  console.log('CHECKS '+JSON.stringify(report.checks))
- if(report.control.actualChaseBoostTicks!==0||
+ if(report.experiment.actualChaseBoostTicks<1||
+  report.control.actualChaseBoostTicks!==0||
   report.control.actualChaseBoostTicksAfterExpiry!==0||
   report.experiment.actualChaseBoostTicksAfterExpiry!==0)
   throw Error('Chase order lifetime violated: '+JSON.stringify({
