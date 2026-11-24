@@ -67,3 +67,17 @@ test('controlled high sprint skill scenario changes only one rider sprint attrib
  assert.match(runner,/SPRINT SKILL SENSITIVITY/)
  assert.match(runner,/STRONGER SPRINTER/)
 })
+
+test('same long race isolates 0, 4, 8, 12 point finishing tactics with no engine rule changes',()=>{
+ assert.match(fixture,/type FinishOrders='both'\|'sprint_only'\|'leadout_only'\|'neither'/)
+ assert.match(fixture,/const strongNeither=run\(true,true,'neither'\)/)
+ assert.match(fixture,/const strongSprintOnly=run\(true,true,'sprint_only'\)/)
+ assert.match(fixture,/const strongLeadoutOnly=run\(true,true,'leadout_only'\)/)
+ assert.match(fixture,/strongFactorialCompleted:/)
+ assert.match(fixture,/strongFactorialChaseBounded:/)
+ assert.match(fixture,/strongFactorialScoreExpected:/)
+ assert.match(fixture,/strongLeadoutOnly.sprintFinishAudit.awardedSprintScoreBonus===4/)
+ assert.match(fixture,/strongSprintOnly.sprintFinishAudit.awardedSprintScoreBonus===8/)
+ assert.match(runner,/STRONG SPRINTER FACTORIAL/)
+ assert.match(runner,/FINISH ORDERS /)
+})
