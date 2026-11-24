@@ -1,4 +1,4 @@
-# Owner-approved 015 on isolated Uranius ONLY. Never targets original ProPeloton.
+# Approval-gated 015 on isolated Uranius ONLY; NOT approved or executed by default.
 # Requires explicit digest, local confirmation and private direct migrator password.
 param(
  [Parameter(Mandatory=$true)][string]$CaFile,
