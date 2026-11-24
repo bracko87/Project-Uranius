@@ -76,3 +76,20 @@ node --test tests\uraniusSquadPreviewReview.test.mjs tests\uraniusSquadReaderAcl
 ```
 
 **Do not execute the SQL file against hosted Uranius** even though it rolls back: the planned direct role preconditions and exact ten-entry history still need a native PostgreSQL 17 dry run with populated A/B RLS. Any forward-only grant migration requires a separate reviewed installation manifest/hash and the owner's explicit approval. No new credentials or Supabase writes are needed for the next offline check.
+
+## Native PostgreSQL 17 Squad rehearsal (new; owner execution pending)
+
+The owner confirmed **9/9** source and SQL security-static checks passing on Windows, 2026-11-24.
+
+New test: `tests/uraniusSquadReaderNativePg17.mjs`, based on the already-owner-tested combined 001–010 disposable PostgreSQL 17 fixture. It creates and removes its own loopback PostgreSQL data directory, replays the actual source migrations and checks their exact digests, and then exercises the Squad candidate. It first verifies the original rollback-only ACL source persists **no privileges**, then checks that labels are still denied; applies the same ACL **only inside disposable PGDATA**; checks reader column access but no full-table, write or anon access; confirms the original TLS-only read query **denies non-TLS connections**; uses a narrowly in-memory TLS-bypass **only for local mock session authorization testing**; and verifies ten distinct rider records for each of A and B, no cross-owner IDs and denied unknown subjects. The full original 010 ledger and 200 riders are checked after all tests.
+
+This runner intentionally cannot reach remote services: no hosted DSNs, no app secrets, no Supabase clients, and all subprocesses connect to `127.0.0.1` on the disposable PostgreSQL port. It replays the existing 21-check source fixture and adds seven Squad assertions, so expect **28 checks** if everything passes. It is **not yet native-executed**.
+
+From the already-used Windows checkout:
+
+```bat
+git pull origin main
+node tests\uraniusSquadReaderNativePg17.mjs --disposable-native-pg17 --postgres-bin "C:\Users\Aleks\Desktop\Project-Uranius\.uranius-pin-review\postgresql-17.12-portable\bin"
+```
+
+If this test fails, stop and inspect the exact failed assertion and cleanup report. Do not apply either 013 SQL review file to hosted Uranius. Native test success is the **only** next prerequisite for designing a separate forward-only, owner-approved exact-hash hosted migration.
