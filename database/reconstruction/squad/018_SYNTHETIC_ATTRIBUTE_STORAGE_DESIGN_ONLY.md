@@ -83,3 +83,11 @@ node scripts\review-uranius-rider-018.mjs --review
 node scripts\apply-uranius-rider-018.mjs --review
 ```
 A separately owner-approved hash pair, final independent read-only hosted baseline and successful installer verification are prerequisites to any actual 018 release. Original ProPeloton production must never be targeted.
+
+## 2026-11-24 — Release freeze 12/12 PASS and independent hosted READ ONLY preflight PASS
+
+Owner confirms **12/12 source/frozen manifest/installer/Windows launcher gate tests PASS**, plus both `review-uranius-rider-018.mjs --review` and `apply-uranius-rider-018.mjs --review` PASS with exact candidate and manifest hashes. The full historical native rehearsal remains **57/57 PASS**. Original SQL fingerprint `622d7626f5f6d93117cbb755398971d23ca0a870e49bc8c98e2df768630b48cc`; manifest fingerprint `9995c7a1558d222426e759b5af4911981d5d4b12688a4e2e3c1adee8d6975205`. Test execution does **not** authorize hosted deployment.
+
+Independent read-only Supabase preflight of isolated project `sdtsivgtcaoaeoihcwzd` confirms: **13** ledger rows, installed 015 SHA `71ade068c5cf5bbdc0e356663a0525f1e74b43e63a9c19f267748f7b46b6161e`, **200** catalog riders and **200 distinct** synthetic rider UUID mappings, **2** owner bindings, identity mapping with FORCE RLS and exactly 1 owner-only SELECT policy; `anon` and `authenticated` cannot select the mapping, the restricted reader cannot select `team_id`, the game is paused at Season 1 Day 1, and `uranius_game.synthetic_rider_attributes` **does not exist**. No hosted SQL writes.
+
+**Status: source freeze and release preflight ACCEPTED; 018 HOSTED INSTALLATION IS NOT OWNER-APPROVED AND WAS NOT ATTEMPTED.** The already prepared Windows launcher must remain dormant until the owner separately approves exact frozen SQL and manifest hashes. No further test reruns are needed before an owner approval decision.
