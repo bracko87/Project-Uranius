@@ -35,6 +35,16 @@ function diagnose(scenario:typeof names[number]){
  let eligibleWindowEvents=0
  let ridersEverCannotHold=new Set<string>()
  let belowDropMarginEvaluations=0
+ let sameTickTransitionReabsorptions=0
+ let transitionGroupsSurvivingReconcile=0
+ let transitionRidersBackInPelotonSameTick=0
+ let totalTransitionRiders=0
+ let maxActiveGroupsBeforeReconcile=0
+ let maxActiveGroupsAfterReconcile=0
+ const transitionSamples:Array<{second:number,source:string,target:string,moved:number,
+  targetActiveBeforeReconcile:boolean,targetActiveAfterReconcile:boolean,
+  movedBackToPeloton:number,wasReabsorbed:boolean,preGroups:number,postGroups:number}>=[]
+ const countActive=(state:typeof result.finalState)=>Object.values(state.groups).filter(g=>g.active&&g.riderIds.length>0).length
  const samples:Array<{tick:number,second:number,notHolding:number,eligible:number,minCapabilityMargin:number,maxDemand:number}>=[]
  for(let i=0;i<result.ticks.length;i++){
   const tick=result.ticks[i]
@@ -56,6 +66,31 @@ function diagnose(scenario:typeof names[number]){
    maxCannotHoldStreakSeconds=Math.max(maxCannotHoldStreakSeconds,streak)
    if(e.eligibility.eligibleWindowsSeconds.includes(120)){eligibleCount++;eligibleWindowEvents++}
   }
+  const preState=tick.reconciledBreakaways.previousState
+  const postState=tick.reconciledBreakaways.state
+  const preGroups=countActive(preState)
+  const postGroups=countActive(postState)
+  maxActiveGroupsBeforeReconcile=Math.max(maxActiveGroupsBeforeReconcile,preGroups)
+  maxActiveGroupsAfterReconcile=Math.max(maxActiveGroupsAfterReconcile,postGroups)
+  for(const transition of tick.transitions){
+   const preGroup=preState.groups[transition.targetGroupId]
+   const postGroup=postState.groups[transition.targetGroupId]
+   const preActive=!!preGroup?.active&&preGroup.riderIds.length>0
+   const postActive=!!postGroup?.active&&postGroup.riderIds.length>0
+   const reabsorbed=tick.reconciledBreakaways.reabsorbedBreakawayGroupIds.includes(transition.targetGroupId)
+   const pelotonId=tick.reconciledBreakaways.pelotonGroupId
+   const backToPeloton=transition.movedRiderIds.filter(id=>postState.riders[id]?.currentGroupId===pelotonId).length
+   totalTransitionRiders+=transition.movedRiderIds.length
+   transitionRidersBackInPelotonSameTick+=backToPeloton
+   if(reabsorbed)sameTickTransitionReabsorptions++
+   if(postActive)transitionGroupsSurvivingReconcile++
+   if(transitionSamples.length<35)transitionSamples.push({
+    second:tick.state.raceSecond,source:transition.sourceGroupId,target:transition.targetGroupId,
+    moved:transition.movedRiderIds.length,targetActiveBeforeReconcile:preActive,
+    targetActiveAfterReconcile:postActive,movedBackToPeloton:backToPeloton,
+    wasReabsorbed:reabsorbed,preGroups,postGroups,
+   })
+  }
   if(i%10===0||eligibleCount>0||tick.transitions.length){
    samples.push({tick:i,second:tick.state.raceSecond,notHolding:cannotHoldCount,eligible:eligibleCount,
     minCapabilityMargin:Number.isFinite(tickMinMargin)?Number(tickMinMargin.toFixed(3)):0,
@@ -71,11 +106,19 @@ function diagnose(scenario:typeof names[number]){
   belowDropMarginEvaluations,ridersEverCannotHold:ridersEverCannotHold.size,
   maxCannotHoldStreakSeconds,eligibleWindowEvents,
   transitions:result.transitions.length,
+  sameTickTransitionReabsorptions,transitionGroupsSurvivingReconcile,
+  transitionRidersBackInPelotonSameTick,totalTransitionRiders,
+  maxActiveGroupsBeforeReconcile,maxActiveGroupsAfterReconcile,
+  firstTransitionSamples:transitionSamples,
   transitionTypes:result.transitions.reduce((a,t)=>({...a,[t.transitionKind]:(a[t.transitionKind]??0)+1}),{} as Record<string,number>),
   maxActiveGroups:maxGroups,
   finishSpreadSeconds:finishTimes.length?Math.max(...finishTimes)-Math.min(...finishTimes):null,
   sampleCount:samples.length,traceSamples:samples.slice(0,40),
-  signal:maxCannotHoldStreakSeconds<120?'NO_SUSTAINED_CANNOT_HOLD':
+  signal:result.transitions.length>0&&sameTickTransitionReabsorptions===result.transitions.length
+    ?'ALL_DROPS_REABSORBED_SAME_TICK':
+    result.transitions.length>0&&transitionGroupsSurvivingReconcile===0
+    ?'DROPS_DISAPPEAR_BEFORE_REPLAY':
+    maxCannotHoldStreakSeconds<120?'NO_SUSTAINED_CANNOT_HOLD':
     eligibleWindowEvents===0?'NO_ELIGIBLE_TRANSITIONS':
     result.transitions.length===0?'ELIGIBLE_BUT_NO_TRANSITION':
     'DROPPED_TRANSITION_OCCURRED',
