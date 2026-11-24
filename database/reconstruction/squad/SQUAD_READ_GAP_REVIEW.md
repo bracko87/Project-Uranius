@@ -37,3 +37,18 @@ A later reviewed, hash-pinned **isolated-only** schema/ACL migration could grant
 ## Current action
 
 Prepared a review-only SQL query and a strict synthetic preview projector/tests. **No runner activation**, no new database role grants, no public endpoint, no hosted records or migrations changed. Recheck the SQL against exact existing role ACLs and original source before preparing a formal permission manifest.
+
+## Delivered source-only artifacts
+
+- `database/reconstruction/squad/013_synthetic_squad_preview_REVIEW_ONLY.sql` — candidate fixed, owner-scoped **read-only** SQL under restricted TLS reader; it cannot run successfully on hosted Uranius with current column privileges and is **not approved** for live execution.
+- `database/reconstruction/squad/synthetic-squad-preview.mjs` — strict projection for synthetic integer rider IDs and actual stored attributes only; explicitly rejects fabricated original-game fields.
+- `tests/uraniusSquadPreviewReview.test.mjs` — five standalone source-contract tests for owner binding, original-field non-invention, malformed/duplicate row denial, restricted reader SQL and source gap.
+
+These tests have **not** been run on the owner's Node environment. Execute:
+
+```bat
+git pull origin main
+node --test tests\uraniusSquadPreviewReview.test.mjs
+```
+
+This is a **review milestone**, not a real Squad frontend feature. The existing login and Overview smoke interface stay unchanged. The current owner-scoped restricted role has `rider_id` SELECT but is missing `team_id, label, flat, climbing, stamina, resistance`; implementing any hosted Squad preview requires a separately approved exact-grant migration and disposable PostgreSQL 17 A/B coverage.
