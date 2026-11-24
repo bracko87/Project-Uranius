@@ -56,7 +56,7 @@ test('actual finish-candidate scores explain sprint result within the finishing 
 })
 
 test('controlled high sprint skill scenario changes only one rider sprint attribute',()=>{
- assert.match(fixture,/function makeInput\(strongSprinter:boolean\):StageInput/)
+ assert.match(fixture,/function makeInput\(strongSprinter:boolean,finishOrders:FinishOrders='both'\):StageInput/)
  assert.match(fixture,/r.riderId===sprinter.riderId/)
  assert.match(fixture,/attributes:\{\.\.\.r.attributes,sprint:94\}/)
  assert.match(fixture,/const strongerControl=run\(false,true\)/)
