@@ -141,3 +141,21 @@ Independent hosted Uranius project `sdtsivgtcaoaeoihcwzd` was inspected using `B
 - Anonymous rider read denied; restricted reader `team_id` read denied.
 
 **Final status: ready for separate explicit OWNER APPROVAL of exact manifest SHA-256 `620d5eacbd836e13a72fdaac9159162061fab8b490a30528b177d25d7952db62` and exact candidate SHA-256 `f97126ed0a9259bfeac9ebf3c4158ece7a590b3ae77fd7d66f7efdc26894db6f`, for *isolated Uranius only*. Neither hash nor manifest has been changed. Not installed. The on-disk guarded installer `scripts/apply-uranius-rider-identity.mjs` is prepared, but the approved-hosted apply path has not been end-to-end executed; therefore direct TLS credentials and final independent postflight must still be verified if approved. Do not claim original rider identities have been reconstructed: only generated synthetic UUID mapping is in scope.
+
+## 2026-11-24 — Explicit owner authorization of 014; secure local execution handoff
+
+Owner explicitly approved **only** isolated project `sdtsivgtcaoaeoihcwzd`, exact candidate SHA-256 `f97126ed0a9259bfeac9ebf3c4158ece7a590b3ae77fd7d66f7efdc26894db6f`, and manifest SHA-256 `620d5eacbd836e13a72fdaac9159162061fab8b490a30528b177d25d7952db62`. Original ProPeloton production expressly excluded. Owner approval covers the previously frozen SQL, not unreviewed changes.
+
+**Execution state: NOT YET EXECUTED.** The connected Supabase administrative SQL tool does not provide a direct `uranius_migrator` login/TLS session, which is mandatory in the approved SQL. Do not bypass the `session_user=current_user='uranius_migrator'` guard by using an administrative connection or relaxing the frozen candidate.
+
+Added `scripts/run-approved-rider-014-windows.ps1`, adapted from the previously used strict Squad 013 Windows launcher. It validates PostgreSQL 17 and the CA path, runs frozen 014 installer `--review` *before* credential requests, requires local confirmation text `APPLY URANIUS 014`, prompts for private `uranius_migrator` password as a hidden SecureString and invokes `--apply-approved-014` with the previously approved manifest hash. The installer enforces direct pinned TLS, exact migration hashes, full historical bidirectional ledger comparison, single transaction and postflight. Environment credentials are cleared afterward and no automatic retry is allowed. Three static launcher tests were added; owner execution is **not yet confirmed**.
+
+Owner command (run inside local `.uranius-upload-review` checkout; password entered locally, NEVER in chat):
+
+```bat
+git pull origin main
+node --test tests\uraniusRider014ApprovedWindowsLauncher.test.mjs
+powershell -NoProfile -File scripts\run-approved-rider-014-windows.ps1 -CaFile "%USERPROFILE%\Downloads\prod-ca-2021.crt" -PostgresBin "C:\Users\Aleks\Desktop\Project-Uranius\.uranius-pin-review\postgresql-17.12-portable\bin" -ApprovedManifestSha256 "620d5eacbd836e13a72fdaac9159162061fab8b490a30528b177d25d7952db62"
+```
+
+Only if the guarded installer returns success may the assistant run **independent read-only hosted verification**: exact twelve ledger entries, 014 hash, table row count/unique UUIDs (readable through privileged Supabase metadata), FORCE RLS and no anonymous/auth/smoke reader mapping privileges, unchanged 200 synthetic riders and two owners, paused game clock. If execution fails, inspect hosted state before any retry. Do not declare installation complete based on owner approval alone.
