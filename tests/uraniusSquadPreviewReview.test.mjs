@@ -49,7 +49,9 @@ test('preview SQL is RLS-scoped to verified subject and cannot mutate hosted sta
  assert.match(sql,/pg_stat_ssl/)
  assert.match(sql,/jsonb_build_object\('sub',:'verified_subject'\)/)
  assert.match(sql,/uranius_game\.get_my_club_id\(\)/)
- assert.match(sql,/JOIN owned_team own ON own\.team_id=r\.team_id/)
+ assert.match(sql,/FROM uranius_catalog\.riders r/)
+ assert.doesNotMatch(sql,/\bJOIN owned_team\b/)
+ assert.match(sql,/'clubId',uranius_game\.get_my_club_id\(\)::text/)
  assert.match(sql,/FROM uranius_catalog\.riders r/)
  // Security prohibitions apply to executable SQL, not explanatory "--" comments.
  const executableSql=sql.replace(/^\s*--[^\r\n]*/gm,'')
