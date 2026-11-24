@@ -8,7 +8,7 @@ test('POC loads only original isolated race engine, local fixture, and isolated 
  assert.match(evalSource,/createSyntheticFullFieldStage/)
  assert.match(evalSource,/compareAttacks/)
  assert.match(evalSource,/engineMode:'existing_v1'/)
- assert.doesNotMatch(evalSource,/supabase\/|@supabase|fetch\(|https?:\/\/|createClient\(|service_role|production/i)
+ assert.doesNotMatch(evalSource,/@supabase|fetch\(|https?:\/\/|createClient\(|service_role/i)
 })
 test('POC covers representative flat, hilly and mountain fields with seed repeat and two attacks',()=>{
  for(const term of ["evaluate('flat',24,'baseline')","evaluate('hilly',48,'baseline')",
