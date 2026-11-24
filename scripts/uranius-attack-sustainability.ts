@@ -119,7 +119,8 @@ function evaluate(strength:Strength,timing:Timing,shelterEnergy=false){
    actualEnergyCost-selected.energy,
   energyCostPerKm:actualEnergyCost/input.distanceKm,
   unshelteredCost,shelterSaved,
-  shelterAppliedTicks:riderEnergyTicks.filter(t=>t.shelterMultiplier!==null).length,
+  shelterEvaluatedTicks:riderEnergyTicks.filter(t=>t.shelterMultiplier!==null).length,
+  shelterAppliedTicks:riderEnergyTicks.filter(t=>t.shelterEnergySaved>0).length,
   meanAppliedSpeedKmh:riderEnergyTicks.length?
    sum(riderEnergyTicks.map(t=>t.speedKmh))/riderEnergyTicks.length:null,
   firstThreeTicks:riderEnergyTicks.slice(0,3),
