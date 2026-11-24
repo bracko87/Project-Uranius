@@ -806,3 +806,22 @@ Combined with the immediately preceding owner-executed six-race 120km/128-rider 
 - No further rerun of this fixed factorial is necessary absent code changes or new requirements.
 
 **Do not interpret this local integration closure as sporting GO.** Official project checklist stays **49/60**. Next substantive sporting gate should test alternative course profiles and field skill distributions plus actual escape/catch behavior, not repeatedly probe this same 120km 128-rider fixture. No production, hosted DB or canonical default changed.
+
+
+## 2026-11-24 — Sprint and lead-out integration closed; course × rider-field realism gate implemented
+
+Owner verified the previous sprint/lead-out factorial by pulling `655270a` and running `tests/uraniusLongMixedTacticsBoundary.test.mjs`: **7/7 static tests PASS**, following the previously verified 12/12 runtime integrity checks. That particular fixed-bonus integration milestone is complete; no additional reruns needed.
+
+**Next genuinely distinct POC committed, not yet executed by owner:** `scripts/uranius-course-field-realism.ts` and its self-contained esbuild launcher `scripts/run-uranius-course-field-realism.mjs` run a deterministic six-race matrix: **three fictional route profiles** (120km completely flat, 120km rolling, 160km mountainous) × **two 128-rider/16-team ability distributions** (varied heterogeneous skill vs uniform all-74-skill negative control). All races share a fixed synthetic seed, the same 128 rider/team IDs and the same km35–42 **real live attack order**. Physical attack launch and the dropped-group preservation experiments are explicit POC opt-ins. **No initial breakaway/gap is manufactured.** This contrast is intentionally about *natural* actual attack evolution, not the earlier 90-second established-escape scenario.
+
+Reports per scenario: exact 128-rider roster; finish-position uniqueness, finite times, replay membership; real `ATTACK_STARTED` effect and actual first movement speed; positive-gap tick count, peak physical gap in kilometres, recorded actual reabsorption/catch second, peak concurrently active group count, finish-time spread, winner average speed, winner flat/climbing/sprint attributes, and classification hash. Survival and capture are **observations**, not forced PASS criteria. The launcher fails closed only on broken simulation/roster/classification or absent genuine attack effects, while sporting realism remains subject to critical human review. Added static boundary tests for scope, physical attack provenance, isolated execution, and technical failure modes.
+
+Run on Windows:
+
+```bat
+git pull origin main
+node --test tests\\uraniusCourseFieldRealismBoundary.test.mjs
+node scripts\\run-uranius-course-field-realism.mjs --out course-field-local.json
+```
+
+The output will provide direct new evidence on whether more demanding terrain and skill diversity produce sensible catch/gap behavior, instead of repeatedly exercising the same sprint bonus. **No production, Supabase, paid staging, canonical fixture or default engine change.** Official checklist **49/60**, sporting GO still withheld.
