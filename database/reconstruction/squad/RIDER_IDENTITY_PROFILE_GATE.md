@@ -97,3 +97,19 @@ node scripts\review-uranius-rider-identity.mjs --review
 ```
 
 The new tests have not yet been run by the owner. No production or isolated hosted SQL was modified.
+
+## 2026-11-24 — Owner verified 014 frozen review and guarded installer prepared
+
+Owner confirmed **8/8 static review checks PASS** and the standalone offline review printed exact candidate digest `f97126ed0a9259bfeac9ebf3c4158ece7a590b3ae77fd7d66f7efdc26894db6f` and manifest SHA-256 `620d5eacbd836e13a72fdaac9159162061fab8b490a30528b177d25d7952db62`, with eleven historical prerequisites.
+
+Added `scripts/apply-uranius-rider-identity.mjs`. Review mode never connects to a database. Its separately gated apply mode (NOT AUTHORIZED) requires the exact frozen manifest digest, same exact source hash, prior frozen 013 hash history, strict target guard for `db.sdtsivgtcaoaeoihcwzd.supabase.co:5432` and direct `uranius_migrator`, verified full TLS CA, one `psql --single-transaction` batch, **bidirectional equality of all eleven original migration version/hash pairs**, unchanged 014 SQL, atomic twelfth ledger record and postflight verifying private FORCE RLS, no public/reader mapping reads or writes, preserved 200 rider records, two owner bindings and frozen game clock. Errors are classified without leaking database password. Added `tests/uraniusRiderUuidGuardedInstaller.test.mjs` (four static security tests; unexecuted). None of this changes the original tested 014 candidate or the frozen manifest hashes.
+
+**Do not run any apply mode** until separate explicit owner consent for the two exact digests, a successful disposable end-to-end installer rehearsal against the full historical fixture (including installed 013), and independent hosted read-only preflight. Full original gameplay Squad reconstruction remains incomplete.
+
+Safe local checks:
+
+```bat
+git pull origin main
+node --test tests\uraniusRiderUuidMappingReview.test.mjs tests\uraniusRiderUuidManifestFreeze.test.mjs tests\uraniusRiderUuidGuardedInstaller.test.mjs
+node scripts\apply-uranius-rider-identity.mjs --review
+```
