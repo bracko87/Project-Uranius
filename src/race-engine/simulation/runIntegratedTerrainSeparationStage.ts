@@ -136,6 +136,8 @@ export interface IntegratedTerrainSeparationOptions {
   readonly experimentalPreserveBirthTickDroppedGroups?: boolean
   /** OFFLINE POC: a slower dropped group already behind the peloton cannot be caught from ahead. */
   readonly experimentalPreserveRecedingDroppedGroups?: boolean
+  /** OFFLINE OPT-IN: no physical peloton teleport from a trailing attack. */
+  readonly experimentalPreserveTrailingAttackGroups?: boolean
   /** OFFLINE POC ONLY: apply actual initial attack speed for one movement tick. */
   readonly experimentalPhysicalAttackLaunch?: boolean
   /** OFFLINE POC ONLY: executed final sprint and lead-out affect finish rank/energy. */
@@ -1434,6 +1436,8 @@ export function simulateIntegratedTerrainSeparationTick(
         ? {
             experimentalPreserveRecedingDroppedGroups:
               options.experimentalPreserveRecedingDroppedGroups === true,
+            experimentalPreserveTrailingAttackGroups:
+              options.experimentalPreserveTrailingAttackGroups === true,
             protectedNewDroppedGroupIds: transitionApplication.transitions
               .filter(transition => transition.transitionKind === 'created')
               .map(transition => transition.targetGroupId),
