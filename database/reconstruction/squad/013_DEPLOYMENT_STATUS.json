@@ -1,0 +1,43 @@
+{
+  "projectRef": "sdtsivgtcaoaeoihcwzd",
+  "migration": "013_squad_reader_grant.sql",
+  "candidateSha256": "8193d80743f6392709a3220441531636751a70fc487c111cc23d1865080be859",
+  "approvedManifestSha256": "ab63e7949889a49bd33fb584885f4911df6b027eb20d3aed3be43e77f0ccaa7a",
+  "status": "HOSTED_ISOLATED_APPLIED_VERIFIED",
+  "date": "2026-11-24",
+  "execution": "Owner Windows direct TLS uranius_migrator guarded atomic installer, confirmed successful in user-provided terminal output",
+  "postflight": {
+    "source": "Independent read-only Supabase SQL against isolated project",
+    "ledgerEntries": 11,
+    "migration013LedgerShaMatchesCandidate": true,
+    "prior010ShaMatches": true,
+    "postgresMajor": 17,
+    "syntheticRiders": 200,
+    "teamOwners": 2,
+    "pausedSeasonOneRows": 1,
+    "ridersRlsEnabled": true,
+    "ridersForceRlsEnabled": false,
+    "readerSelectableColumns": [
+      "rider_id",
+      "label",
+      "flat",
+      "climbing",
+      "stamina",
+      "resistance"
+    ],
+    "readerTeamIdSelectable": false,
+    "readerInsert": false,
+    "readerUpdate": false,
+    "readerDelete": false,
+    "anonymousAnyRiderSelect": false,
+    "authenticatedTableSelectExisting": true,
+    "riderOwnerPolicy": "riders_read preserved for authenticated and uranius_smoke_reader",
+    "readerPrivateAdminSchemaUsage": false,
+    "readerDatabaseCreate": false
+  },
+  "notes": [
+    "Rider policy RLS is enabled, not FORCE. Previous baseline also used normal RLS. The restricted reader has no BYPASSRLS; do not claim FORCE RLS for riders.",
+    "No hosted roster API endpoint or Squad UI integration verified yet.",
+    "Original production never used as installer target."
+  ]
+}
