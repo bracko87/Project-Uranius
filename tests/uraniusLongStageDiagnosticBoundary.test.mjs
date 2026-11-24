@@ -29,3 +29,14 @@ test('launcher is local only and fail-closes on corrupt results',()=>{
  assert.match(launcher,/report\.results\.some\(p=>p\.error\|\|p\.technicalIssues\.length\)/)
  assert.doesNotMatch(source+launcher,/@supabase|createClient\(|fetch\(|https?:\/\/|service_role|URANIUS_DATABASE/i)
 })
+
+test('per-tick evidence distinguishes birth groups, physical movement and later catches',()=>{
+ for(const name of ['tick.reconciledBreakaways.previousState',
+  'tick.reconciledBreakaways.state','reabsorbedSameTick',
+  'survivingNewDropTransitions','laterReabsorbedGroups',
+  'multiGroupTicks','positiveGapTicks','peakTickSpatialGapKm',
+  'earliestMultiGroupSecond','latestMultiGroupSecond','reabsorptionSamples'])
+  assert.ok(source.includes(name),name)
+ assert.match(launcher,/positiveGapTicks/)
+ assert.match(launcher,/laterCaught/)
+})
