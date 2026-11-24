@@ -29,6 +29,13 @@ try{
    'riderEnergy '+v.selectedFinalEnergy].join(' | '))
  }
  console.log('Changed outcome '+report.comparison.changedFinalState+' | accepted tactical event '+report.comparison.attackWasExecuted)
+ for(const item of report.attacked.subsequentAttackTrace||[])
+  console.log(['ATTACK TICK '+item.raceSecond,'breakaway '+item.breakawaySpeedKmh,
+   'peloton '+item.pelotonSpeedKmh,'gapKm '+item.signedGapKm,
+   'caught '+item.caught,'active '+item.activeAfterCatch].join(' | '))
+ const first=report.attacked.attackTrace?.[0]
+ if(first)console.log('LAUNCH '+JSON.stringify(first))
+
  if(args.length){const path=resolve(args[1]);writeFileSync(path,JSON.stringify(report,null,2)+'\n',{mode:0o600});console.log('Saved: '+path)}
  if(!report.comparison.attackWasExecuted)process.exitCode=2
 }finally{rmSync(dir,{recursive:true,force:true,maxRetries:8,retryDelay:250})}
