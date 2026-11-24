@@ -33,6 +33,10 @@ try{
    'longestPressure '+p.maxCannotHoldStreakSeconds+'s',
    'eligibleEvents '+p.eligibleWindowEvents,
    'transitions '+p.transitions,
+   'reabsorbedSameTick '+p.sameTickTransitionReabsorptions,
+   'survivingDrops '+p.transitionGroupsSurvivingReconcile,
+   'ridersBackInPeloton '+p.transitionRidersBackInPelotonSameTick+'/'+p.totalTransitionRiders,
+   'groupsBeforeAfterReconcile '+p.maxActiveGroupsBeforeReconcile+'/'+p.maxActiveGroupsAfterReconcile,
    'groups '+p.maxActiveGroups,
    'finishSpread '+p.finishSpreadSeconds+'s',
    'signal '+p.signal].join(' | '))
