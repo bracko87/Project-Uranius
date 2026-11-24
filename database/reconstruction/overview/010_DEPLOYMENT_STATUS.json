@@ -24,7 +24,7 @@
   "originalProPelotonProductionChanged": false,
   "safeLauncher": "scripts/run-approved-overview-windows.ps1",
   "safeLauncherCommit": "601ff9c9dba51eab1e6c1860d72437cbcfffc797",
-  "nextAction": "Run offline live-read boundary tests; use Windows direct TLS reader A/B smoke with existing dedicated reader password, publishable key and manager passwords; then test full local HTTPS browser UI separately.",
+  "nextAction": "Plan and test a disposable native PG17 non-empty A/B ownership matrix; then run a local HTTPS browser acceptance for current empty-state UI, keeping hosted race data untouched.",
   "appliedDate": "2026-11-24",
   "invocation": "Owner Windows secure launcher using direct TLS uranius_migrator password; owner terminal confirmed atomic transaction postflight passed.",
   "postflight": {
@@ -52,9 +52,9 @@
     "seasonOnePausedClockRows": 1
   },
   "unverified": [
-    "Live TLS authenticated HTTPS overview schedule reads for Manager A and B",
-    "Live race preparation ownership with non-empty tables (currently only schema installed)",
-    "Frontend Overview schedule visualization connected"
+    "Live non-empty race preparation ownership isolation (four new race tables currently empty)",
+    "Full local HTTPS browser UI end-to-end verification",
+    "Original full Overview application parity"
   ],
   "securityAdvisors": {
     "checkedAt": "2026-11-24T08:38:08Z",
@@ -84,18 +84,32 @@
       "databaseCreate": false,
       "privateAdminSchemaUsage": false
     },
-    "realReaderTlsExecution": "NOT_YET_RUN",
-    "authenticatedManagerA": "NOT_YET_RUN",
-    "authenticatedManagerB": "NOT_YET_RUN",
+    "realReaderTlsExecution": "OWNER_REPORTED_PASS_BOTH",
+    "authenticatedManagerA": "PASS_HOSTED_RESTRICTED_READ_EMPTY",
+    "authenticatedManagerB": "PASS_HOSTED_RESTRICTED_READ_EMPTY",
     "frontend": "LOCAL_HTTPS_SMOKE_UI_WIRED_SOURCE_ONLY_NOT_YET_TESTED",
     "launcher": "scripts/run-approved-overview-https-windows.ps1",
     "offlineFrontendTests": "OWNER_REPORTED_PASS_10_OF_10_ON_2026-11-24",
     "realManagerVerifier": {
-      "status": "PREPARED_NOT_EXECUTED",
-      "cli": "scripts/verify-uranius-overview-live.mjs",
+      "status": "OWNER_REPORTED_PASS_BOTH_MANAGERS",
+      "date": "2026-11-24",
+      "securityTests": "4/4 passed",
+      "managerA": "PASS real Supabase Auth and restricted PostgreSQL owner-scoped Overview JSON; upcoming=0 today=0",
+      "managerB": "PASS real Supabase Auth and restricted PostgreSQL owner-scoped Overview JSON; upcoming=0 today=0",
       "windowsLauncher": "scripts/run-overview-live-read-windows.ps1",
-      "privacy": "Private prompts only; no browser self-signed TLS certificate required; locked to dedicated reader role",
-      "expectedResult": "Both managers independently authenticated and receive read-only validated Overview JSON; empty results until race catalog populated"
+      "sqlReadOnly": true,
+      "limitation": "All race and entry tables empty; positive nonempty A/B isolation remains unproved."
+    },
+    "independentAfterTest": {
+      "ledgerCount": 10,
+      "hashMatches": true,
+      "raceRows": 0,
+      "stageRows": 0,
+      "entryRows": 0,
+      "preparationRows": 0,
+      "syntheticOwners": 2,
+      "riders": 200,
+      "pausedClockRows": 1
     }
   }
 }
