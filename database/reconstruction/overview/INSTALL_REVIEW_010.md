@@ -142,3 +142,23 @@ powershell -NoProfile -File scripts\run-overview-live-read-windows.ps1 -CaFile "
 Use the dedicated existing **smoke reader** password, NOT `postgres` or `uranius_migrator`. The publishable API key is the **public**, project-scoped key from Uranius Dashboard Settings → API Keys, entered into the hidden prompt, not posted to chat. Use the existing two manager Auth passwords next. Both should return `upcoming=0 today=0` while the race tables remain empty. Only if both are confirmed may the *backend verified Auth + restricted reader* gate be marked passed; this is not full populated A/B race isolation, nor a live browser UI PASS. If missing reader credentials, stop and review access rather than guessing, resetting credentials or weakening role guards.
 
 The original ProPeloton Manager project remains outside every command and SQL endpoint.
+
+## 2026-11-24: nonempty isolated A/B rehearsal added to the combined 010 test
+
+After owner **4/4 PASS** live-read security tests and **both real hosted managers PASS** with the valid empty Overview JSON, the final remaining *populated* ownership check was consolidated into the actual **combined 010** disposable PostgreSQL 17 runner. This matters because earlier successful nonempty A/B tests used separate 010/012 review candidates rather than replaying the exact combined hosted migration file.
+
+The updated `tests/uraniusOverviewCombinedInstallNativePg17.mjs` starts fresh, replays all 001–009 migrations and their management guards, applies the SHA-pinned combined 010 candidate with only the documented **in-memory localhost TLS preflight substitution**, and then seeds exclusively in its disposable local database:
+- a race and accepted team entry/preparation for synthetic Manager A
+- a different race and accepted team entry/preparation for Manager B
+- a world-only race, all with stage dates matching the paused first game day
+
+The test explicitly restores FORCE RLS after local admin seeding. It then runs source-informed Overview schedule reads as the **restricted database reader** for A and B: one private upcoming preparation race for the matching club, while all three current-day world race cards are visible to both. It also checks unknown identity denial, anonymous/private read denial, reader write denial and the ten-row migration ledger. **No hosted race fixtures are inserted or modified.**
+
+This new expanded native test has **not yet been executed** on the owner's Windows PostgreSQL installation. Run:
+
+```bat
+git pull origin main
+node tests\uraniusOverviewCombinedInstallNativePg17.mjs --disposable-native-pg17 --postgres-bin "C:\Users\Aleks\Desktop\Project-Uranius\.uranius-pin-review\postgresql-17.12-portable\bin"
+```
+
+After it passes, the only remaining limited Overview smoke gate is the *visual browser check* of the authenticated local HTTPS dashboard (requires existing loopback trusted TLS certificate/key, not the Supabase database CA). Do not equate this limited smoke dashboard with complete original Overview page/function parity.
