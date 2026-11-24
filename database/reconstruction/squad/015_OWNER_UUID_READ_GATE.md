@@ -79,3 +79,19 @@ Owner-provided terminal output confirms **16/16 static source, manifest, install
 A fresh independent hosted **read-only** query of isolated Uranius `sdtsivgtcaoaeoihcwzd` verified: 12 custom migration ledger entries, **exact bidirectional equality of all twelve historical version/digest pairs**, 200 riders, 200 unique UUID mappings, two owners, FORCE RLS enabled, zero UUID-mapping policies, no reader/anon/authenticated mapping SELECT grant, and one paused Season 1 game state. No SQL writes were performed.
 
 **Status: SOURCE/RELEASE REVIEW PASSED, HOSTED 015 NOT INSTALLED, SEPARATE EXACT-HASH OWNER APPROVAL REQUIRED.** The native candidate had been rehearsed against the full synthetic history. The production-style 015 installer wrapper has static checks but has *not* been end-to-end rehearsed with direct TLS credentials on a disposable server. Approval, if granted, must remain scoped only to the two frozen hashes, the isolated project, and its guarded direct-TLS migrator workflow. After installation independently verify the 13th ledger entry and security behavior. Do not infer original game rider profile completion.
+
+## 2026-11-24 — Explicit owner-approved 015 exact-hash local execution handoff
+
+The owner explicitly approved **only isolated Uranius project `sdtsivgtcaoaeoihcwzd`**, using the guarded direct TLS `uranius_migrator` and exact frozen **SQL candidate SHA-256 `71ade068c5cf5bbdc0e356663a0525f1e74b43e63a9c19f267748f7b46b6161e`** and **manifest SHA-256 `f9d835dd58c242d83b7366976810be1eb0525d9e2c401e361ef7b6d66e76ec81`**. Original ProPeloton production expressly excluded. Authorization is recorded here without modifying the frozen manifest or SQL bytes.
+
+Independent hosted **READ ONLY** preflight after approval: 12 ledger entries match all twelve expected version/digest pairs; 200 riders, 2 owners, 200 unique UUID mappings, FORCE RLS enabled, zero current UUID read policies, zero SELECT privilege for smoke reader/anon/authenticated, game clock paused Season 1 Day 1. **015 has NOT been applied yet**.
+
+The connected Supabase administrative connection cannot satisfy the separately approved `session_user=current_user='uranius_migrator'` direct TLS restriction. Do not change execution role, relax guards or run the SQL through admin tools. Owner must run the already committed `scripts/run-approved-rider-015-windows.ps1` locally and enter the dedicated migrator password privately. No password should be put in the chat. The launcher first performs the offline frozen review and requires `APPLY URANIUS 015` typed confirmation.
+
+Command from existing `.uranius-upload-review` checkout:
+```bat
+git pull origin main
+powershell -NoProfile -File scripts\run-approved-rider-015-windows.ps1 -CaFile "%USERPROFILE%\Downloads\prod-ca-2021.crt" -PostgresBin "C:\Users\Aleks\Desktop\Project-Uranius\.uranius-pin-review\postgresql-17.12-portable\bin" -ApprovedManifestSha256 "f9d835dd58c242d83b7366976810be1eb0525d9e2c401e361ef7b6d66e76ec81"
+```
+
+After owner reports successful installer output, independently query isolated hosted Uranius in a read-only transaction for exact 13-entry ledger and 015 hash, unchanged 200 UUID mappings and FORCE RLS, exactly one restricted owner policy, SELECT on `rider_id` and `rider_uuid` only for `uranius_smoke_reader`, zero public/authenticated mapping read, no writes/provenance/created_at/team_id access and frozen game clock. Then mark 015 installed. Never assume approval means installation.
