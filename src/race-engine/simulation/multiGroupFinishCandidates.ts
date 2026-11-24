@@ -11,6 +11,7 @@
  * create events, create final results, or complete the race.
  */
 
+import {calculateExperimentalFinishTactics} from './experimentalFinishTactics'
 import type {
   GroupState,
 } from '../domain/GroupState'
@@ -41,6 +42,8 @@ export interface DetectMultiGroupFinishCandidatesOptions {
    */
   readonly subTickInterpolationEnabled?:
     boolean
+  /** Offline experimental sprint/leadout ranking only. */
+  readonly experimentalFinishTacticsEnabled?: boolean
 }
 
 export interface MultiGroupFinishCandidate {
@@ -60,6 +63,7 @@ export interface MultiGroupFinishCandidate {
   readonly raceSecond: number
 
   readonly sprintScore: number
+  readonly experimentalFinishEnergyCost?: number
   readonly accelerationScore: number
   readonly energy: number
 
@@ -673,7 +677,14 @@ export function detectMultiGroupFinishCandidates(
           state.raceSecond,
         sprintScore:
           rider.attributes
-            .sprint,
+            .sprint +
+          (options.experimentalFinishTacticsEnabled
+            ? calculateExperimentalFinishTactics(state,group,riderId).sprintBonus
+            : 0),
+        ...(options.experimentalFinishTacticsEnabled
+          ? {experimentalFinishEnergyCost:
+              calculateExperimentalFinishTactics(state,group,riderId).energyCost}
+          : {}),
         accelerationScore:
           rider.attributes
             .acceleration,
