@@ -58,5 +58,7 @@ test('015 source scope is only one policy and two column grants',()=>{
  assert.match(sql,/GRANT SELECT \(rider_id,rider_uuid\)/)
  assert.doesNotMatch(sql,/\bCREATE VIEW\b|\bSECURITY DEFINER\b/i)
  assert.doesNotMatch(sql,/\bGRANT SELECT ON\b|\bGRANT ALL\b/i)
- assert.doesNotMatch(sql,/\bALTER TABLE\b|\bUPDATE\b|\bDELETE FROM\b/i)
+ // Match executable write statements, not quoted privilege names such as 'UPDATE'.
+ assert.doesNotMatch(sql,/^\s*(?:ALTER\s+TABLE\b|UPDATE\s+|DELETE\s+FROM\b)/im)
+ assert.match(sql,/has_table_privilege\('uranius_smoke_reader','uranius_game\.synthetic_rider_identity','UPDATE'\)/)
 })
