@@ -160,3 +160,27 @@ node scripts\run-uranius-race-pressure-trace.mjs --out race-pressure-trace-local
 ```
 
 **Interpretation:** The experiment should eliminate immediate first-tick absorption, but may still show legitimate catches after a movement tick or zero net finishing spread. Only observed tick/position/finish evidence can establish whether this opt-in is useful. If it fails, do not change engine thresholds or existing golden tests to fabricate a pass. Only consider a sporting fix after rider energy and peloton-group catch physical consistency is independently checked. Original ProPeloton production remains excluded.
+
+## 2026-11-24 — Birth-tick fix observed effective on same-seed extreme mountain (OWNER-RUN)
+
+Owner ran `git pull`, the five static probe tests and the four-case offline pressure trace after the opt-in patch. Four static tests PASSED and one failed from **an outdated source-string assertion only**: the test expected `runCalibratedTerrainSeparationStage(createInitialState(input))` without the new options object, while the correct code calls `runCalibratedTerrainSeparationStage(createInitialState(input), { experimentalPreserveBirthTickDroppedGroups: ... })`. Fixed the static assertion in commit `6b96914b` to validate the two-argument opt-in call; rerun of the static suite remains pending.
+
+**Crucial measured same-seed 96-rider stress comparison** (30km, intentionally weak 24 riders / steep artificial mountains; not a realistic cycling benchmark):
+
+| Metric | Legacy calibrated (flag off) | Experimental protection (flag on) |
+|---|---:|---:|
+| `cannot_hold` evaluations | 2589 | 96 |
+| Unique affected riders | 24 | 24 |
+| Longest sustained unable | 120s | 120s |
+| Eligible pressure events | 633 | 24 |
+| Drop transitions | 29 | 1 |
+| Same-tick reabsorptions | 29 | **0** |
+| Groups surviving reconcile | 0 | **1** |
+| Riders moved straight back to peloton | 633/633 | **0/24** |
+| Max active pre/post reconcile groups | 2/1 | **2/2** |
+| Max replay groups | 1 | **2** |
+| Finish spread | 0s | **1104.612875195s (18m24.613s)** |
+
+This confirms the newborn-drop same-tick reabsorption defect is prevented in the opt-in synthetic run, and physical group separation persists through replay and finish in this extreme case. **It does not establish realistic magnitudes or solve the normal flat/mountain baselines**: those remain `cannot_hold=0`, single-group, zero spread under their relatively similar attributes. The opt-in experimental behavior remains disabled by default; golden existing_v1/calibrated_v1 results were not changed or revalidated in this owner execution. Do not imply a completed sporting GO or deploy to hosted workers/production.
+
+Next: rerun the now-repaired offline static test. Then independently verify default-off/frozen baselines, physical catch/rejoin, full rider conservation and finished classifications for the experimental scenario, and design realistic heterogeneous stages with multiple seeds and a modest gradient/skill distribution. Investigate attacker energy accounting separately before allowing engine activation. Project checklist 49/60 unchanged.
