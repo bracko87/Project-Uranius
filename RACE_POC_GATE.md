@@ -432,3 +432,18 @@ node scripts\run-uranius-finish-tactics-poc.mjs
 ```
 
 Next after verified functional test: calibrate fatigue/effort cost, ensure strategy cannot be exploited by multiple orders, and implement chase with physical distance/energy and real pursuit/catch tests. Sporting GO remains withheld; official checklist 49/60.
+
+
+## 2026-11-24 — Sprint/lead-out fixture canonical-JSON failure isolated and repaired
+
+Owner pulled through `03fad0b`; sprint/leadout boundary assertions **3/3 PASS**, but the executable 10-rider comparison failed in `canonicalSerialization.ts` with `Undefined object properties are not allowed in canonical JSON`. Source review confirms `createInitialState.ts` materializes each incoming order's `metadata` as an own property (`metadata: order.metadata`). Both new StageInput orders originally omitted `metadata`, leaving that property `undefined` in the canonical state. This is a **synthetic test fixture construction issue**, not yet an evaluated sprint outcome and not a reason to loosen strict serialization.
+
+Set `metadata:{}` explicitly on both sprint and leadout orders, preserving the existing state and serializer contracts. Added a static regression asserting both order metadata objects are present and pointing to the canonical initial-state mapping. No race-rule, production or historical fixture changes. **This fix has not yet been rerun** by owner:
+
+```bat
+git pull origin main
+node --test tests\uraniusFinishTacticsBoundary.test.mjs
+node scripts\run-uranius-finish-tactics-poc.mjs
+```
+
+Once the POC successfully executes, verify that rank improves without artificial group-time separation, energy is charged to both the sprinter and the leadout rider, and all ten finish exactly once. If not, diagnose the next precise problem rather than forcing success. Sporting GO withheld, checklist 49/60.
