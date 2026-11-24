@@ -79,3 +79,21 @@ node scripts\run-uranius-race-poc-mode-comparison.mjs --out race-lane-comparison
 ```
 
 A calibrated mode with multiple groups is only *promising*, not sporting validated; confirm actual finish distributions and climbing realism. If both modes remain bunched, investigate terrain-hold pressure and fixture heterogeneity rather than inventing a success. The long-stage/150-rider stress scenario is still outstanding. **Do not proceed to Migration 019 on the basis of the initial POC.**
+
+## 2026-11-24 — Calibrated POC input-contract blocker identified and fixed
+
+Owner's first side-by-side run passed **3/3 static boundary tests**, but **all five comparison pairs failed before calibrated simulation**, reporting:
+`calculateRiderTerrainCapability: full-field-rider-001.attributes.timeTrial must be between 0 and 100`.
+
+Source inspection verified that `createSyntheticFullFieldStage` inherits the old ten-rider fixture, which deliberately omits the optional `timeTrial` and `raceIq` fields; `riderTerrainCapability.ts` requires BOTH as finite 0–100 values in the calibrated lane. This is **a POC fixture / mode-contract mismatch, not evidence that calibrated separation mechanics succeeded or failed**. No changes have been made to the underlying race rules, source fixtures, baseline golden hashes, or hosted database.
+
+**Fix:** `scripts/uranius-race-poc-mode-comparison.ts` now constructs one explicit pair-local `StageInput` that adds bounded **fictional synthetic** `timeTrial: 60+(index*13)%35` and `raceIq: 62+(index*17)%31` to every rider. The same input is passed to the two modes. These values do not pretend to be the original player's missing skills and are not persisted. Updated boundary test asserts the two fields and shared-input structure.
+
+Rerun only:
+```bat
+git pull origin main
+node --test tests\uraniusRacePocModeComparisonBoundary.test.mjs
+node scripts\run-uranius-race-poc-mode-comparison.mjs --out race-lane-comparison-local.json
+```
+
+**Status:** patch committed; corrected comparison has **not yet been executed**. Any new failure must be diagnosed before interpreting sporting outcomes. Keep technical and sporting verdicts separate.
