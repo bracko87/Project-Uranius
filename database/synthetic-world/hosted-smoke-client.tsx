@@ -49,6 +49,81 @@ function ClockStatus() {
   </section>
 }
 
+type ScheduleRow = {
+  id: string
+  title: string
+  subtitle: string
+  countryCode: string | null
+  dateLabel?: string
+  timeLabel?: string
+  href?: string
+}
+type OverviewSchedule = {
+  upcomingSchedule: ScheduleRow[]
+  todayRaces: ScheduleRow[]
+}
+
+function isSchedule(value: unknown): value is OverviewSchedule {
+  if (!value || typeof value !== 'object') return false
+  const data = value as Partial<OverviewSchedule>
+  return Array.isArray(data.upcomingSchedule) && Array.isArray(data.todayRaces) &&
+    [...data.upcomingSchedule, ...data.todayRaces].every(row =>
+      row && typeof row.id === 'string' && typeof row.title === 'string' &&
+      typeof row.subtitle === 'string' &&
+      (row.countryCode === null || typeof row.countryCode === 'string'))
+}
+
+function ScheduleStatus() {
+  const [schedule, setSchedule] = useState<OverviewSchedule | null>(null)
+  const [status, setStatus] = useState<'loading' | 'ready' | 'unavailable'>('loading')
+  useEffect(() => {
+    let active = true
+    void request('overview-schedule').then(value => {
+      if (!active) return
+      if (isSchedule(value)) {
+        setSchedule(value)
+        setStatus('ready')
+      } else {
+        setSchedule(null)
+        setStatus('unavailable')
+      }
+    }).catch(() => {
+      if (active) {
+        setSchedule(null)
+        setStatus('unavailable')
+      }
+    })
+    return () => { active = false }
+  }, [])
+  const sections: { key: keyof OverviewSchedule; heading: string; empty: string }[] = [
+    { key: 'upcomingSchedule', heading: 'Upcoming Schedule', empty: 'No upcoming race preparations are recorded for this club.' },
+    { key: 'todayRaces', heading: "Today's Races", empty: 'No races are scheduled in the current game day.' },
+  ]
+  return <section className="mt-6 rounded-lg border border-slate-700 p-4" aria-live="polite">
+    <h2 className="text-lg font-semibold">Race schedule</h2>
+    {status === 'loading' && <p className="text-slate-300">Checking the authenticated race schedule…</p>}
+    {status === 'unavailable' && <p className="text-amber-200">
+      The authenticated race schedule is not connected. This is not a confirmed empty calendar.
+    </p>}
+    {status === 'ready' && schedule && <div className="mt-3 grid gap-6 md:grid-cols-2">
+      {sections.map(section => <section key={section.key}>
+        <h3 className="font-medium">{section.heading}</h3>
+        {schedule[section.key].length === 0
+          ? <p className="mt-2 text-slate-300">{section.empty}</p>
+          : <ul className="mt-2 space-y-2">{schedule[section.key].map(row => <li
+            key={row.id} className="rounded border border-slate-700 p-3">
+            <p className="font-medium">{row.title}</p>
+            <p className="text-sm text-slate-300">{row.subtitle}</p>
+            <p className="text-xs text-slate-400">
+              {[section.key === 'upcomingSchedule' ? row.dateLabel : row.timeLabel, row.countryCode]
+                .filter(Boolean).join(' · ')}
+            </p>
+          </li>)}</ul>}
+      </section>)}
+    </div>}
+  </section>
+}
+
 function ClubDashboard() {
   const navigate = useNavigate()
   const [data, setData] = useState<{ name: string; riders: number; credits: number; calendar: number }>()
@@ -70,7 +145,8 @@ function ClubDashboard() {
         <dt>Opening balance</dt><dd>{data.credits.toLocaleString()} credits</dd>
         <dt>Calendar</dt><dd>{data.calendar} shared entries</dd>
       </dl>}
-      {data && <ClockStatus />} 
+      {data && <ClockStatus />}
+      {data && <ScheduleStatus />}
       <button onClick={async () => {
         try { await supabase.auth.signOut() }
         catch { window.alert('The local session is closed. Uranius Auth sign-out could not be confirmed.') }
