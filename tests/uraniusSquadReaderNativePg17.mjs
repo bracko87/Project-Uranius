@@ -310,9 +310,9 @@ try {
   assert.match(acl013,/ROLLBACK;\s*$/)
   assert.match(preview013,/ROLLBACK;\s*$/)
   const grantCheck = "SELECT has_column_privilege('uranius_smoke_reader','uranius_catalog.riders','label','SELECT')::text;"
-  assert.equal(sql(grantCheck),'f')
+  assert.equal(sql(grantCheck),'false')
   sql(acl013)
-  assert.equal(sql(grantCheck),'f')
+  assert.equal(sql(grantCheck),'false')
   pass('Exact narrow reader grant rehearsal rolls back without persisting permissions')
 
   // A direct change cannot be attempted as an ordinary reader; both SQL sources
@@ -324,8 +324,8 @@ try {
   // Commit an unmodified grant rehearsal only in this disposable PGDATA.
   // This is NEVER a hosted migration, installer or owner approval.
   sql(acl013.replace(/ROLLBACK;\s*$/,'COMMIT;'))
-  assert.equal(sql(grantCheck),'t')
-  assert.equal(sql("SELECT has_table_privilege('uranius_smoke_reader','uranius_catalog.riders','SELECT')"),'f')
+  assert.equal(sql(grantCheck),'true')
+  assert.equal(sql("SELECT has_column_privilege('uranius_smoke_reader','uranius_catalog.riders','team_id','SELECT')"),'f')
   assert.equal(sql("SELECT has_table_privilege('uranius_smoke_reader','uranius_catalog.riders','UPDATE')"),'f')
   pass('Disposable-only grant exposes requested columns but not entire table or writes')
 
