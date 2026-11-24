@@ -95,3 +95,18 @@ powershell -NoProfile -File scripts\run-approved-rider-015-windows.ps1 -CaFile "
 ```
 
 After owner reports successful installer output, independently query isolated hosted Uranius in a read-only transaction for exact 13-entry ledger and 015 hash, unchanged 200 UUID mappings and FORCE RLS, exactly one restricted owner policy, SELECT on `rider_id` and `rider_uuid` only for `uranius_smoke_reader`, zero public/authenticated mapping read, no writes/provenance/created_at/team_id access and frozen game clock. Then mark 015 installed. Never assume approval means installation.
+
+## 2026-11-24 — Migration 015 INSTALLED, independent hosted postflight PASS
+
+Owner supplied success output from `scripts/run-approved-rider-015-windows.ps1` after exact-hash offline review, typed `APPLY URANIUS 015` and private dedicated direct-TLS `uranius_migrator` password prompt.
+
+Independent read-only Supabase SQL postflight on **isolated project `sdtsivgtcaoaeoihcwzd`** confirmed:
+- **All 13 migration ledger version/digest pairs match exact frozen expected values**, including 015 digest `71ade068c5cf5bbdc0e356663a0525f1e74b43e63a9c19f267748f7b46b6161e`.
+- Exactly **200 unique synthetic UUID mappings**, zero unmapped riders, 200 original synthetic rider rows, 2 synthetic owners, game clock still paused on Season 1 Day 1.
+- `uranius_game.synthetic_rider_identity` retains **FORCE RLS**, with exactly one `synthetic_rider_uuid_owner_read` policy for `uranius_smoke_reader`; that policy performs an `EXISTS` check against the existing owner-filtered `uranius_catalog.riders`.
+- Restricted reader can SELECT **only** `rider_id` and `rider_uuid`; access to `identity_provenance`, `created_at`, `team_id` and INSERT/UPDATE/DELETE remains denied.
+- No SELECT grants for `anon` or ordinary `authenticated` roles.
+
+The previously owner-passed **48/48 disposable native tests** independently established manager A/B and unknown-subject row filtering. Hosted check validates the policy and grants but did not impersonate a live manager login. Complete deployment record: `015_DEPLOYMENT_STATUS.json`. **Migration 015 is closed; do not repeat its installation.**
+
+Next separate feature: join the new UUIDs to the authenticated, backend-owned, read-only Squad response and client contract. That requires its own tested changes, not an automatic extension of this migration. The original ProPeloton production database was never an installation target.
