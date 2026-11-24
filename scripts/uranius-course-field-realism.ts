@@ -63,13 +63,14 @@ function inputFor(course:typeof profiles[number],distribution:Distribution):Stag
    maximumFollowers:null,targetRiderId:null,metadata:{uraniusLiveCommand:true}}],
  }
 }
-function run(course:typeof profiles[number],distribution:Distribution){
+function run(course:typeof profiles[number],distribution:Distribution,protectTrailingAttack=false){
  const input=inputFor(course,distribution)
  const start=createInitialState(input)
  const result=runCalibratedTerrainSeparationStage(start,{
   experimentalPhysicalAttackLaunch:true,
   experimentalPreserveBirthTickDroppedGroups:true,
   experimentalPreserveRecedingDroppedGroups:true,
+  experimentalPreserveTrailingAttackGroups:protectTrailingAttack,
  })
  const final=Object.values(result.finalState.riders)
  const ridersById=new Map(input.riders.map(r=>[r.riderId,r]))
@@ -175,7 +176,7 @@ function run(course:typeof profiles[number],distribution:Distribution){
   const ids=active.flatMap(g=>g.riderIds)
   return new Set(ids).size!==ids.length||ids.some(id=>!rosterIds.has(id))
  })
- return {profile:course.profile,distribution,fieldSize:field,
+ return {profile:course.profile,distribution,protectTrailingAttack,fieldSize:field,
   distanceKm:course.distance,completed:result.completed,finishers,
   rosterPreserved,rankValid,allTimesFinite:times.length===field,
   replayRosterValid:!replayRosterInvalid,
@@ -214,6 +215,13 @@ const scenarios=profiles.flatMap(profile=>distributions.map(distribution=>{
  catch(error){return {profile:profile.profile,distribution,error:error instanceof Error?
   error.message:String(error)}}
 }))
+// One additional identical hard-climb case exercises only the optional
+// physical catch rule; the original eight-scenario results remain comparable.
+const trailingAttackProtected=run(profiles.find(p=>p.profile==='steep_160')!,
+ 'heterogeneous',true)
+const protectedFirstLaunch=trailingAttackProtected.attackLaunchAudit[0]
+const baselineSteep=scenarios.find(s=>s.profile==='steep_160'&&
+ s.distribution==='heterogeneous')
 const checks={
  eightScenarios:scenarios.length===8,
  allCompleted:scenarios.every(r=>'completed' in r&&r.completed),
@@ -222,8 +230,19 @@ const checks={
   r.allTimesFinite&&r.replayRosterValid),
  allAttacksReal:scenarios.every(r=>'attackEvents' in r&&r.attackEvents===1&&r.orderExecuted&&
   r.attackFirstMovementSpeedKmh!==null),
+ trailingAttackProtectedComplete:trailingAttackProtected.completed&&
+  trailingAttackProtected.finishers===field&&trailingAttackProtected.rosterPreserved&&
+  trailingAttackProtected.rankValid&&trailingAttackProtected.allTimesFinite&&
+  trailingAttackProtected.replayRosterValid,
+ trailingAttackNoTeleport:!!protectedFirstLaunch&&
+  protectedFirstLaunch.gapBeforeCatchKm!==null&&
+  protectedFirstLaunch.gapBeforeCatchKm< -0.1&&
+  protectedFirstLaunch.caught===false&&protectedFirstLaunch.remainsActive===true,
+ trailingAttackControlCaught:!!baselineSteep&&
+  'attackCaught' in baselineSteep&&baselineSteep.attackCaught===true,
+
 }
 process.stdout.write(JSON.stringify({reportVersion:'uranius-course-field-realism-v1',
  scope:'OFFLINE 4 fictional course profiles x 2 synthetic distributions x 128 riders; no synthetic initial gap',
- scenarios,checks,
+ scenarios,trailingAttackProtected,checks,
  note:'Attack catch and survival are observations, not forced pass criteria. Uniform field is a negative-control distribution, not realistic athlete data. Sporting calibration still NO GO.'},null,2)+'\n')
