@@ -54,15 +54,22 @@ const input:StageInput={...syntheticTenRiderStage,
    eligibleFromKm:118,eligibleUntilKm:120,targetRiderId:null,
    maximumFollowers:null,metadata:{}},
  ]}
-function initial(){
- const stage=createInitialState(input)
+function makeInput(strongSprinter:boolean):StageInput{
+ if(!strongSprinter)return input
+ // Only sprint skill changes. Keep seed, teammates, physical abilities,
+ // race setup and all four orders identical for the controlled comparison.
+ return {...input,riders:input.riders.map(r=>r.riderId===sprinter.riderId
+  ?{...r,attributes:{...r.attributes,sprint:94}}:r)}
+}
+function initial(strongSprinter=false){
+ const stage=createInitialState(makeInput(strongSprinter))
  const peloton=Object.values(stage.groups).filter(g=>g.active&&g.groupType==='peloton')
  if(peloton.length!==1)throw Error('Exactly one peloton required')
  return createBreakawayGroup({state:stage,sourceGroupId:peloton[0].groupId,
   riderIds:[establishedEscape.riderId],speedKmh:38,initialGapSeconds:90}).state
 }
-function run(enabled:boolean){
- const stage=runCalibratedTerrainSeparationStage(initial(),{
+function run(enabled:boolean,strongSprinter=false){
+ const stage=runCalibratedTerrainSeparationStage(initial(strongSprinter),{
   experimentalPhysicalAttackLaunch:enabled,
   experimentalChaseOrdersEnabled:enabled,
   experimentalFinishTacticsEnabled:enabled,
@@ -111,7 +118,7 @@ function run(enabled:boolean){
   .filter(r=>r.currentGroupId===finishGroupId)
  const sprinterWithinGroupPosition=1+sprinterFinishGroup.filter(r=>
   r.finishPosition!==null&&spr.finishPosition!==null&&r.finishPosition<spr.finishPosition).length
- const sprinterStrength={sprint:sprinter.attributes.sprint,
+ const sprinterStrength={sprint:spr.attributes.sprint,
   acceleration:sprinter.attributes.acceleration,energy:spr.energy}
  const finishTick=stage.ticks.find(t=>t.finishDetection.candidates.some(
   c=>c.riderId===sprinter.riderId))
@@ -123,10 +130,10 @@ function run(enabled:boolean){
   c.riderId!==sprinter.riderId&&sprinterCandidate!==undefined&&
   c.sprintScore>sprinterCandidate.sprintScore).length
  const sprintFinishAudit={
-  originalSprintAttribute:sprinter.attributes.sprint,
+  originalSprintAttribute:spr.attributes.sprint,
   effectiveSprintScore:sprinterCandidate?.sprintScore??null,
   awardedSprintScoreBonus:sprinterCandidate===undefined?null:
-   sprinterCandidate.sprintScore-sprinter.attributes.sprint,
+   sprinterCandidate.sprintScore-spr.attributes.sprint,
   sameFinishGroupCandidateCount:sameFinishGroupCandidates.length,
   sameFinishGroupRivalsWithHigherSprintScore,
   sameFinishGroupRivalsAtEqualSprintScore:sameFinishGroupCandidates.filter(c=>
@@ -140,7 +147,7 @@ function run(enabled:boolean){
   (t.appliedEnergy.applications.find(a=>a.riderId===pursuer.riderId)?.energyCost??0),0)
  const attackCount=stage.events.filter(e=>e.eventType==='ATTACK_STARTED').length
  return {
-  enabled,completed:stage.completed,ticks:stage.ticks.length,
+  enabled,strongSprinter,completed:stage.completed,ticks:stage.ticks.length,
   finishers:final.filter(r=>r.finished&&r.finishTimeSeconds!==null).length,
   positionsUnique:new Set(ranks).size===field&&ranks.every(r=>r!==null),
   allTimesFinite:timestamps.every(t=>typeof t==='number'&&Number.isFinite(t)),
@@ -168,6 +175,8 @@ function run(enabled:boolean){
 }
 const control=run(false)
 const experiment=run(true)
+const strongerControl=run(false,true)
+const strongerExperiment=run(true,true)
 const expected=['long-attack','long-chase','long-leadout','long-sprint']
 const checks={
  bothFinished:control.completed&&experiment.completed&&
@@ -178,10 +187,32 @@ const checks={
   control.ordersExecuted.includes(id)&&experiment.ordersExecuted.includes(id)),
  physicalAttackEvents:control.attackCount>=1&&experiment.attackCount>=1,
  realChaseOpportunity:experiment.eligibleChaseTicks>=1,
+ strongerComparisonsValid:strongerControl.completed&&strongerExperiment.completed&&
+  strongerControl.finishers===field&&strongerExperiment.finishers===field&&
+  strongerControl.positionsUnique&&strongerExperiment.positionsUnique&&
+  strongerControl.allTimesFinite&&strongerExperiment.allTimesFinite,
+ strongerOrdersExecuted:expected.every(id=>strongerControl.ordersExecuted.includes(id)&&
+  strongerExperiment.ordersExecuted.includes(id)),
+ sprintSkillsControlled:control.sprintFinishAudit.originalSprintAttribute===49&&
+  experiment.sprintFinishAudit.originalSprintAttribute===49&&
+  strongerControl.sprintFinishAudit.originalSprintAttribute===94&&
+  strongerExperiment.sprintFinishAudit.originalSprintAttribute===94,
+ strongerChaseLifetimeValid:strongerControl.actualChaseBoostTicks===0&&
+  strongerExperiment.actualChaseBoostTicksAfterExpiry===0,
+
 }
 process.stdout.write(JSON.stringify({reportVersion:'uranius-long-mixed-tactics-v1',
  scope:'OFFLINE fictional 120km 128 riders, same initial established escape and four tactical orders',
- control,experiment,checks,observations:{
+ control,experiment,strongerControl,strongerExperiment,checks,
+ sprintSensitivity:{
+  weakControlRank:control.sprinterRank,weakTacticsRank:experiment.sprinterRank,
+  strongControlRank:strongerControl.sprinterRank,strongTacticsRank:strongerExperiment.sprinterRank,
+  weakTacticalBonus:experiment.sprintFinishAudit.awardedSprintScoreBonus,
+  strongTacticalBonus:strongerExperiment.sprintFinishAudit.awardedSprintScoreBonus,
+  strongRivalsHigherWithoutTactics:strongerControl.sprintFinishAudit.sameFinishGroupRivalsWithHigherSprintScore,
+  strongRivalsHigherWithTactics:strongerExperiment.sprintFinishAudit.sameFinishGroupRivalsWithHigherSprintScore,
+  strongRankImprovement:(strongerControl.sprinterRank??0)-(strongerExperiment.sprinterRank??0),
+ },observations:{
  classificationChanged:control.hash!==experiment.hash,
  sprinterRankDifference:(control.sprinterRank??0)-(experiment.sprinterRank??0),
  pursuerFinalEnergyDifference:control.pursuerEnergy-experiment.pursuerEnergy,
