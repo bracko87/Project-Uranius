@@ -241,12 +241,67 @@ try {
   assert.equal(membership(), beforeMembers)
   pass('Duplicate combined migration fails closed with no extra ledger or privilege leakage')
 
+  // Populated race fixtures are strictly disposable. No hosted DML.
+  const schedule011 = readFileSync(join(root, 'database/reconstruction/overview/011_overview_schedule_REVIEW_ONLY.sql'),'utf8')
+  const raceA = '11111111-1111-4111-8111-111111111111'
+  const raceB = '22222222-2222-4222-8222-222222222222'
+  const raceWorld = '33333333-3333-4333-8333-333333333333'
+  // FORCE RLS deliberately blocks a migrator's fixture INSERTs. Disable FORCE
+  // only during disposable seeding, then immediately restore the strict model.
+  const toggles = ['races', 'race_stages', 'race_team_entries', 'race_preparations']
+  for (const table of toggles) {
+    sql('ALTER TABLE uranius_game.' + table + ' NO FORCE ROW LEVEL SECURITY')
+  }
+  sql("INSERT INTO uranius_game.races(id,name,start_date,end_date) VALUES " +
+      "('" + raceA + "','Manager A race','2000-01-01','2000-01-01')," +
+      "('" + raceB + "','Manager B race','2000-01-01','2000-01-01')," +
+      "('" + raceWorld + "','World race','2000-01-01','2000-01-01')")
+  sql("INSERT INTO uranius_game.race_stages(race_id,stage_number,stage_date,start_city,finish_city,distance_km,terrain_type) VALUES " +
+      "('" + raceA + "',1,'2000-01-01','Start','Finish',100,'flat')," +
+      "('" + raceB + "',1,'2000-01-01','Start','Finish',100,'flat')," +
+      "('" + raceWorld + "',1,'2000-01-01','Start','Finish',100,'flat')")
+  const clubs = sql("SELECT string_agg(club_id::text,',' ORDER BY team_id) FROM uranius_game.club_profiles WHERE team_id IN (SELECT team_id FROM uranius_catalog.team_owners)").split(',')
+  assert.equal(clubs.length, 2)
+  for (const [i, race] of [raceA,raceB].entries()) {
+    const club = clubs[i]
+    sql("INSERT INTO uranius_game.race_team_entries(race_id,club_id,participating_club_id,status) VALUES ('" +
+        race + "','" + club + "','" + club + "','accepted')")
+    sql("INSERT INTO uranius_game.race_preparations(race_id,club_id,participating_club_id,status,startlist_status) VALUES ('" +
+        race + "','" + club + "','" + club + "','submitted','submitted')")
+  }
+  for (const table of toggles) {
+    sql('ALTER TABLE uranius_game.' + table + ' FORCE ROW LEVEL SECURITY')
+  }
+  pass('Two synthetic owner clubs and world race inserted with FORCE RLS restored')
+
+  const scheduleFor = subject => JSON.parse(sql("BEGIN READ ONLY;\n" +
+    "SELECT set_config('request.jwt.claims','" + JSON.stringify({sub:subject}) + "',true);\n" +
+    schedule011 + "\nROLLBACK;", 'uranius_smoke_reader'))
+  for (const [subject, own, other] of [[a,raceA,raceB],[b,raceB,raceA]]) {
+    const response = scheduleFor(subject)
+    assert.equal(response.upcomingSchedule.length, 1)
+    assert.equal(response.upcomingSchedule[0].id, own)
+    assert.equal(response.todayRaces.length, 3)
+    assert.ok(response.todayRaces.some(row => row.id.startsWith(other + ':')))
+    assert.equal(readFor(subject, "count(*) FROM uranius_game.race_preparations"), '1')
+    assert.equal(readFor(subject, "count(*) FROM uranius_game.race_team_entries"), '1')
+  }
+  pass('Real 001–009 JWT owner mapping filters preparations and entries; world cards remain global')
+
   const unknown = '00000000-0000-4000-8000-000000000003'
-  assert.equal(readFor(unknown, 'count(*) FROM uranius_game.race_preparations'), '0')
-  assert.equal(readFor(a, 'count(*) FROM uranius_game.race_preparations'), '0')
-  sql('UPDATE uranius_game.races SET name=\'unauthorized\'', 'uranius_smoke_reader', true)
+  assert.equal(readFor(unknown, "count(*) FROM uranius_game.race_preparations"), '0')
+  assert.equal(readFor(unknown, "count(*) FROM uranius_game.race_team_entries"), '0')
+  assert.equal(readFor(unknown, "uranius_game.get_my_club_id() IS NULL"), 't')
+  pass('Unknown authenticated subject has zero private race rows and no club mapping')
+
   sql('BEGIN; SET LOCAL ROLE anon; SELECT id FROM uranius_game.race_preparations; ROLLBACK;', 'uranius_fixture_admin', true)
-  pass('Combined package still denies unknown, anonymous and reader mutations')
+  sql('UPDATE uranius_game.races SET name = \'tampered\'', 'uranius_smoke_reader', true)
+  assert.equal(sql("SELECT (SELECT count(*) FROM uranius_private.migration_ledger)::text || ':' || (SELECT count(*) FROM uranius_catalog.riders)::text"), '10:200')
+  assert.equal(sql("SELECT count(*) FROM pg_class WHERE oid='uranius_game.races'::regclass AND relforcerowsecurity"), '1')
+  pass('Native anonymous and reader write denial; ten migrated ledger entries intact')
+
+  assert.equal(counts010(), '10:4:4')
+  pass('Populated A/B isolation preserves exact combined installed 010 permissions and ledger')
 
   console.log('PASS ' + tests + ' combined migration disposable native PostgreSQL 17 checks; hosted state unchanged')
 } finally {
