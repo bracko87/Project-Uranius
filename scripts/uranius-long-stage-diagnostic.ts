@@ -8,7 +8,7 @@ import {syntheticTenRiderStage} from '../src/race-engine/tests/fixtures/syntheti
 import type {StageInput} from '../src/race-engine/domain/StageInput'
 
 type Course='rolling_120'|'mountain_160'
-type Experiment='default_off'|'birth_tick_protected'
+type Experiment='default_off'|'birth_tick_protected'|'receding_drop_protected'
 const courses=[
  {name:'rolling_120' as Course,distance:120,elevations:[100,130,160,120,320,370,280,340,500,400,260,170,140],field:128},
  {name:'mountain_160' as Course,distance:160,elevations:[120,150,180,420,880,1210,920,500,650,1050,1450,1100,640,900,540,280,160],field:160},
@@ -50,7 +50,8 @@ function run(course:typeof courses[number],seed:string,experiment:Experiment){
  const input=makeInput(course,seed)
  const started=performance.now()
  const result=runCalibratedTerrainSeparationStage(createInitialState(input),{
-  experimentalPreserveBirthTickDroppedGroups:experiment==='birth_tick_protected',
+  experimentalPreserveBirthTickDroppedGroups:experiment!=='default_off',
+  experimentalPreserveRecedingDroppedGroups:experiment==='receding_drop_protected',
  })
  const runtimeMs=round(performance.now()-started)
  const originalIds=new Set(input.riders.map(r=>r.riderId))
@@ -173,7 +174,7 @@ function run(course:typeof courses[number],seed:string,experiment:Experiment){
  }
 }
 const results=[]
-for(const course of courses)for(const seed of seeds)for(const experiment of ['default_off','birth_tick_protected'] as const){
+for(const course of courses)for(const seed of seeds)for(const experiment of ['default_off','birth_tick_protected','receding_drop_protected'] as const){
  try{results.push(run(course,seed,experiment))}
  catch(e){results.push({course:course.name,seed,experiment,error:e instanceof Error?e.message:String(e)})}
 }
