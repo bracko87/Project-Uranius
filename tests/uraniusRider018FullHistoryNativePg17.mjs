@@ -538,7 +538,9 @@ try {
   pass('018 wrong direct execution role refused')
 
   const saved015=frozen015.candidate.sha256
-  sql("UPDATE uranius_private.migration_ledger SET sha256='tampered' WHERE version='015_rider_uuid_owner_read.sql'")
+  // Historical ledger enforces 64-char digests; tamper with a syntactically valid
+  // but incorrect SHA-256 so the 018 baseline guard, not the ledger CHECK, rejects it.
+  sql("UPDATE uranius_private.migration_ledger SET sha256='"+'0'.repeat(64)+"' WHERE version='015_rider_uuid_owner_read.sql'")
   sql(wrap(local018),'uranius_migrator',true)
   sql("UPDATE uranius_private.migration_ledger SET sha256='"+saved015+"' WHERE version='015_rider_uuid_owner_read.sql'")
   assert.equal(sql(historical018),'true')
