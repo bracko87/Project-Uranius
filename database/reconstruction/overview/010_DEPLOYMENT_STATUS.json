@@ -24,7 +24,7 @@
   "originalProPelotonProductionChanged": false,
   "safeLauncher": "scripts/run-approved-overview-windows.ps1",
   "safeLauncherCommit": "601ff9c9dba51eab1e6c1860d72437cbcfffc797",
-  "nextAction": "Test authenticated HTTPS Overview schedule reads against empty live race tables with validated manager sessions and explicitly enabled restricted reader, then wire UI; avoid inserting new race fixtures without separate approval.",
+  "nextAction": "Run offline tests then start local HTTPS smoke with existing loopback cert/key and dedicated restricted reader password; sign in Manager A and B in browser; verify both empty schedule arrays reflect empty race tables and anonymous/other-origin/logout denial. No additional schema or fixture writes required.",
   "appliedDate": "2026-11-24",
   "invocation": "Owner Windows secure launcher using direct TLS uranius_migrator password; owner terminal confirmed atomic transaction postflight passed.",
   "postflight": {
@@ -61,5 +61,33 @@
     "newMigration010Findings": 0,
     "existingInfo": "3 private uranius_private tables have RLS enabled and intentionally no client policies",
     "existingWarning": "Supabase Auth leaked-password protection disabled; no change authorized"
+  },
+  "hostedScheduleReadiness": {
+    "verifiedAt": "2026-11-24",
+    "queryExecution": "PASS_READ_ONLY_POSTGRES_SYNTAX_AND_SHAPE",
+    "result": {
+      "upcomingSchedule": [],
+      "todayRaces": []
+    },
+    "dataRows": {
+      "races": 0,
+      "race_stages": 0,
+      "race_team_entries": 0,
+      "race_preparations": 0
+    },
+    "restrictedReaderPermissionCheck": {
+      "roleValid": true,
+      "raceSchemaUsage": true,
+      "clockColumns": true,
+      "ownerResolverExecutable": true,
+      "uidResolverExecutable": true,
+      "databaseCreate": false,
+      "privateAdminSchemaUsage": false
+    },
+    "realReaderTlsExecution": "NOT_YET_RUN",
+    "authenticatedManagerA": "NOT_YET_RUN",
+    "authenticatedManagerB": "NOT_YET_RUN",
+    "frontend": "LOCAL_HTTPS_SMOKE_UI_WIRED_SOURCE_ONLY_NOT_YET_TESTED",
+    "launcher": "scripts/run-approved-overview-https-windows.ps1"
   }
 }
