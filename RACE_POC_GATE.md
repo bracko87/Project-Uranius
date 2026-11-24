@@ -667,3 +667,24 @@ node scripts\\run-uranius-long-mixed-tactics-poc.mjs --out long-mixed-local.json
 ```
 
 This is still a **fictional deterministic sporting stress test**, not a real-world cycling performance benchmark. After results, evaluate finish spread, tactical selection, overpowered sprint scoring, and mountain/flat cross-profile sensitivity before considering sporting GO. Official 49/60; no production changes.
+
+
+## 2026-11-24 — Owner-verifies 120km/128-rider combined tactics; long-stage chase and sprint diagnostic added
+
+Owner pulled through `8642bfb`; `node --test tests\\uraniusLongMixedTacticsBoundary.test.mjs` **3/3 PASS**. The 120km/128-rider (16 teams) combined four-order comparison **runtime PASS**, with all five integrity checks true: 128/128 classified, unique positions, valid times, one real attack event in both, all four orders executed and real physical chase opportunity.
+
+Observed control: **354 ticks**, peak **2 groups**, 340 ticks with a potentially chase-eligible gap, sprinter **128th**, pursuer finish **10592.895612493s**, movement-energy cost **28.213449879999988**, final energy **71.78655011999945**. All-tactics: **352 ticks**, peak **3 groups**, 207 ticks with qualifying physical separation, sprinter **96th**, pursuer finish **10548.411358741s**, movement-energy cost **28.134330571206696**, final energy **71.86566942879284**. The pursuing rider finished **44.484253752s** earlier and used 0.0791193087933 less *total* movement energy from shorter race exposure. Different final classification hashes confirm genuine output change.
+
+**Sporting issues remain:** finishing 96th despite sprint+leadout needs group-relative analysis; 207 qualifying chase ticks does not itself mean the bonus was active for all 207 ticks, and an early executed chase command might affect the peloton far beyond its km5-8 scheduling window because `executed` status persists. A breakaway that has a 90s initial lead was explicitly pre-established for this experiment, NOT created from the live attack order. No sporting GO, no production modifications; official checklist 49/60.
+
+**Committed observational-only refinement, NOT yet owner-run:** The same 120km script now uses the **real existing pure `calculateExperimentalChaseMultiplier` helper** on actual pre-movement state to distinguish physically eligible gaps from strictly positive chase-speed multiplier. It reports number of boost ticks, number *after* the chase order's declared eligibleUntilKm, and the first/last active speed-multiplier tick, plus sprinter's finishing-group size and relative group finishing position and sprint/acceleration attributes. CLI prints `LONG CHASE DURATION` and `SPRINT FINISH CONTEXT`. Static boundary test covers those fields. Does not change the physical movement, race state, order lifecycle, any golden baseline or release settings.
+
+Run:
+
+```bat
+git pull origin main
+node --test tests\\uraniusLongMixedTacticsBoundary.test.mjs
+node scripts\\run-uranius-long-mixed-tactics-poc.mjs --out long-mixed-local.json
+```
+
+Decide whether tactical chase effects should expire when the scheduled eligibility window ends based on the measured active ticks. No mechanics adjustment or extra physical-energy charge without sporting calibration evidence.
