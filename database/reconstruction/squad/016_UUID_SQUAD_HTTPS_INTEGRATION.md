@@ -33,3 +33,13 @@ Independent **read-only** Supabase SQL against isolated project `sdtsivgtcaoaeoi
 GitHub Actions API reported **zero workflow runs** at the time of inspection, so the new automated CI workflow cannot yet be claimed passing or even triggered. The owner has independently confirmed local test success.
 
 **Remaining acceptance**: run the existing already-approved `scripts/run-approved-overview-https-windows.ps1` on owner's Windows machine using the previously configured local HTTPS TLS cert/key, Uranius CA, portable PostgreSQL 17 binaries, restricted `uranius_smoke_reader` password and Supabase publishable key entered locally. Authenticate both fixture-manager A and B in separate sessions; each Squad read-only profile should show its own *synthetic* UUID, not a foreign rider; verify no cross-club data, no original rider identity claim, and no mutating UI controls. Neither the assistant nor public clients should receive these passwords/keys. Only after this test can the complete live HTTPS integration be marked verified.
+
+## 2026-11-24 — Full legacy regression PASS (live HTTPS still pending)
+
+The owner reran all requested legacy Squad tests on Windows after correcting a source-level launcher cleanup assertion. Result: **17 tests, 17 PASS, 0 FAIL**, including frontend esbuild build, legacy Squad RLS boundaries, auth/session A/B route isolation, fail-closed malformed packet handling, TLS offline startup rules and legacy Squad read-only UI. The newer UUID integration suite had separately passed **8/8** tests. Total reported distinct test cases: **25/25 across the two suites**, with no hosted permission or data writes required.
+
+Next acceptance is the existing local HTTPS launcher, using the known existing loopback TLS files and PostgreSQL client, not any new migration:
+```bat
+powershell -NoProfile -File scripts\run-approved-overview-https-windows.ps1 -TlsCert "C:\Users\Aleks\AppData\Local\Uranius\loopback-tls\loopback-cert.pem" -TlsKey "C:\Users\Aleks\AppData\Local\Uranius\loopback-tls\loopback-key.pem" -CaFile "%USERPROFILE%\Downloads\prod-ca-2021.crt" -PostgresBin "C:\Users\Aleks\Desktop\Project-Uranius\.uranius-pin-review\postgresql-17.12-portable\bin"
+```
+It checks assets and TLS setup before prompting privately for the restricted reader password and Supabase publishable key. Verify manager A and manager B in separate signed-in sessions show distinct, own-club `Uranius synthetic UUID` fields on the Squad profile, not a fallback integer-only profile. No passwords or full UUIDs need be sent in chat. Stop the local server with Ctrl+C when done. Current status **code and unit regression accepted; live HTTPS A/B acceptance NOT YET VERIFIED**.
