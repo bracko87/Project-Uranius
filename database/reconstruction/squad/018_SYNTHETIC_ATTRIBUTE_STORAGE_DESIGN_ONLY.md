@@ -1,0 +1,33 @@
+# 018 — Proposed synthetic rider-attribute storage (DESIGN ONLY)
+
+Date: 2026-11-24
+Status: **NO SQL MIGRATION GENERATED; NOT APPROVED; NO DATABASE CHANGE.**
+
+## Purpose and source limits
+
+The original UI's `RiderDetails` nine attributes are `sprint, climbing, time_trial, endurance, flat, recovery, resistance, race_iq, teamwork`. Only `flat, climbing, resistance` have same-name, currently observed values in the isolated `uranius_catalog.riders`; synthetic `stamina` is not original `endurance`. Migration 014 installed unique generated synthetic rider UUIDs (200/200), and 015 exposes those UUIDs only to the existing ownership-restricted reader. The original model requires role, age and other state beyond 018.
+
+The proposal intentionally stores **null** for an unknown skill, rather than a random, inferred or zero value. The data contract must distinguish `unknown` from `known zero`, and `copied_from_isolated_catalog` from `separately_authorized_synthetic_fixture`. No original game player data is being copied.
+
+## Draft relational model (for future review, not executable)
+
+- New private `uranius_game.synthetic_rider_attributes` relation, one row per `uranius_game.synthetic_rider_identity.rider_id` (integer primary key/foreign key; no new UUID generation).
+- Nine **nullable** smallint columns, each with a CHECK allowing NULL or 0–100. For launch, only `climbing`, `flat`, `resistance` would be populated using the already isolated synthetic source. All six others remain NULL.
+- Per-attribute **provenance must be explicit**, not a single all-fields source string. The recommended design is a separate key/value `uranius_game.synthetic_rider_attribute_provenance` keyed by `(rider_id, attribute_code)` with fixed allowed attribute codes, fixed provenance enum (`isolated_catalog`, `approved_synthetic_fixture`), and timestamp. A trigger or transactional validation must prohibit a non-NULL skill without provenance, a provenance record for a NULL skill, and an `isolated_catalog` provenance on any skill other than the three verifiable same-name fields.
+- Retain private schema protections: `REVOKE ALL ... FROM PUBLIC, anon, authenticated, uranius_smoke_reader`, enable **FORCE RLS** before any read exposure, and add only a separately reviewed SELECT policy for the restricted reader relying on the existing `riders_read` policy (as in 015), with SELECT on explicitly approved columns. Avoid `SECURITY DEFINER`, public schemas, or broader grants.
+- Historical ledger target would be 14 entries after a **separately approved 018 installation**. A future guarded installer must verify all 13 exact prior ledger hashes, isolated project `sdtsivgtcaoaeoihcwzd`, direct `uranius_migrator`, PostgreSQL 17 and verified CA/TLS, then use atomic SQL with rollback on errors. This document is **not** owner approval for that installer.
+- An eventual server-owned read-only route should join owner-filtered `uranius_catalog.riders` to mapping and attribute values through the existing verified Auth subject, validate strict field shape and provenance, and never trust browser-supplied rider/club IDs.
+
+## Acceptance gate before any hosted install
+
+1. Confirm that all 200 existing synthetic riders are still present and 015 RLS is intact by read-only hosted query.
+2. Choose whether to extend the profile only with three observed fields (avoids a schema migration now) or introduce nullable nine-attribute storage as a true future game system. Do **not** fill unknown skills by default.
+3. Implement independent source-contract tests, checksum-freeze the proposed SQL and manifest, and rehearse against **full historical migrations 001–015** in disposable PostgreSQL 17 with real restricted reader.
+4. Negative tests must prove A cannot read B, unknown users read zero, anon and authenticated read nothing, and no reader INSERT/UPDATE/DELETE or provenance modification is allowed. Prove an attempted forged provenance or NULL→numeric update is denied.
+5. Obtain separately explicit owner approval for the exact proposal SHA-256/manifest SHA-256, then install only on isolated project through a guarded local direct TLS migrator. Verify read-only hosted postflight before declaring installed.
+
+## Explicitly out of scope
+
+No generated original player names, nationalities, dates of birth, age, role, morale, potential, fatigue, contract details, skill backfill, transfers, training, or public website. No changes to original ProPeloton production.
+
+**Current delivery:** The 017 read-only nine-slot interface is already complete at code/test level (owner reported 28/28 combined tests PASS). This 018 document is a practical storage contract for a future separate implementation, not a repetition of 014–017 or evidence that the six unknown skills now exist.
