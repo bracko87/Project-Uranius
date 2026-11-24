@@ -8,6 +8,7 @@ const terrain=read('src/race-engine/simulation/terrainAwareMultiGroupMovement.ts
 const integrated=read('src/race-engine/simulation/runIntegratedTerrainSeparationStage.ts')
 const calibrated=read('src/race-engine/simulation/runCalibratedTerrainSeparationStage.ts')
 const probe=read('scripts/uranius-chase-order-poc.ts')
+const runner=read('scripts/run-uranius-chase-order-poc.mjs')
 test('chase only eligible with real leading breakaway, valid rider and executed order',()=>{
  assert.match(helper,/groupType!=='peloton'/)
  assert.match(helper,/other.groupType==='breakaway'&&other.distanceKm>group.distanceKm/)
@@ -38,4 +39,15 @@ test('offline chase fixture resolves actual engine-created peloton ID',()=>{
  assert.match(probe,/sourceGroupId:pelotons\[0\]\.groupId/)
  assert.doesNotMatch(probe,/sourceGroupId:'peloton'/)
  assert.match(probe,/createPhysicalBreakaway\(\{\.\.\.input,orders:\[\]\}\)/)
+})
+
+test('eight-tick chase traces real positions and consumes energy without forced catch',()=>{
+ assert.match(probe,/function runRepeated\(enabled:boolean, startingState=baseline, steps=8\)/)
+ assert.match(probe,/currentBreakaway.distanceKm-currentPeloton.distanceKm/)
+ assert.match(probe,/tick.state.riders\[actor.riderId\].energy/)
+ assert.match(probe,/sustainedGapReduction:/)
+ assert.match(probe,/sustainedEnergyCost:/)
+ assert.match(probe,/noOrderNeutralEveryTick:/)
+ assert.match(probe,/allRidersConserved:/)
+ assert.match(runner,/Multi-tick chase physical\/energy\/negative-control check failed/)
 })
