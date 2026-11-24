@@ -54,22 +54,28 @@ const input:StageInput={...syntheticTenRiderStage,
    eligibleFromKm:118,eligibleUntilKm:120,targetRiderId:null,
    maximumFollowers:null,metadata:{}},
  ]}
-function makeInput(strongSprinter:boolean):StageInput{
- if(!strongSprinter)return input
- // Only sprint skill changes. Keep seed, teammates, physical abilities,
- // race setup and all four orders identical for the controlled comparison.
- return {...input,riders:input.riders.map(r=>r.riderId===sprinter.riderId
-  ?{...r,attributes:{...r.attributes,sprint:94}}:r)}
+type FinishOrders='both'|'sprint_only'|'leadout_only'|'neither'
+function makeInput(strongSprinter:boolean,finishOrders:FinishOrders='both'):StageInput{
+ // All A/B comparisons preserve the stage, seed, other 127 riders and
+ // the independent early attack and chase. Only the nominated sprint score
+ // and/or final-tactical order presence can change.
+ return {...input,
+  riders:strongSprinter?input.riders.map(r=>r.riderId===sprinter.riderId
+   ?{...r,attributes:{...r.attributes,sprint:94}}:r):input.riders,
+  orders:input.orders.filter(order=>
+   (order.type!=='sprint'||finishOrders==='both'||finishOrders==='sprint_only')&&
+   (order.type!=='leadout'||finishOrders==='both'||finishOrders==='leadout_only')),
+ }
 }
-function initial(strongSprinter=false){
- const stage=createInitialState(makeInput(strongSprinter))
+function initial(strongSprinter=false,finishOrders:FinishOrders='both'){
+ const stage=createInitialState(makeInput(strongSprinter,finishOrders))
  const peloton=Object.values(stage.groups).filter(g=>g.active&&g.groupType==='peloton')
  if(peloton.length!==1)throw Error('Exactly one peloton required')
  return createBreakawayGroup({state:stage,sourceGroupId:peloton[0].groupId,
   riderIds:[establishedEscape.riderId],speedKmh:38,initialGapSeconds:90}).state
 }
-function run(enabled:boolean,strongSprinter=false){
- const stage=runCalibratedTerrainSeparationStage(initial(strongSprinter),{
+function run(enabled:boolean,strongSprinter=false,finishOrders:FinishOrders='both'){
+ const stage=runCalibratedTerrainSeparationStage(initial(strongSprinter,finishOrders),{
   experimentalPhysicalAttackLaunch:enabled,
   experimentalChaseOrdersEnabled:enabled,
   experimentalFinishTacticsEnabled:enabled,
@@ -147,7 +153,7 @@ function run(enabled:boolean,strongSprinter=false){
   (t.appliedEnergy.applications.find(a=>a.riderId===pursuer.riderId)?.energyCost??0),0)
  const attackCount=stage.events.filter(e=>e.eventType==='ATTACK_STARTED').length
  return {
-  enabled,strongSprinter,completed:stage.completed,ticks:stage.ticks.length,
+  enabled,strongSprinter,finishOrders,completed:stage.completed,ticks:stage.ticks.length,
   finishers:final.filter(r=>r.finished&&r.finishTimeSeconds!==null).length,
   positionsUnique:new Set(ranks).size===field&&ranks.every(r=>r!==null),
   allTimesFinite:timestamps.every(t=>typeof t==='number'&&Number.isFinite(t)),
@@ -177,6 +183,11 @@ const control=run(false)
 const experiment=run(true)
 const strongerControl=run(false,true)
 const strongerExperiment=run(true,true)
+// Hold attack/chase/finish flags constant ON. Independently remove either
+// final tactic to quantify their additive contributions to sprint scoring.
+const strongNeither=run(true,true,'neither')
+const strongSprintOnly=run(true,true,'sprint_only')
+const strongLeadoutOnly=run(true,true,'leadout_only')
 const expected=['long-attack','long-chase','long-leadout','long-sprint']
 const checks={
  bothFinished:control.completed&&experiment.completed&&
@@ -199,11 +210,32 @@ const checks={
   strongerExperiment.sprintFinishAudit.originalSprintAttribute===94,
  strongerChaseLifetimeValid:strongerControl.actualChaseBoostTicks===0&&
   strongerExperiment.actualChaseBoostTicksAfterExpiry===0,
+ strongFactorialCompleted:[strongNeither,strongSprintOnly,strongLeadoutOnly].every(r=>
+  r.completed&&r.finishers===field&&r.positionsUnique&&r.allTimesFinite),
+ strongFactorialBaseOrders:[strongNeither,strongSprintOnly,strongLeadoutOnly].every(r=>
+  r.ordersExecuted.includes('long-attack')&&r.ordersExecuted.includes('long-chase')),
+ strongFactorialChaseBounded:[strongNeither,strongSprintOnly,strongLeadoutOnly].every(r=>
+  r.actualChaseBoostTicks>0&&r.actualChaseBoostTicksAfterExpiry===0),
+ strongFactorialScoreExpected:
+  strongNeither.sprintFinishAudit.awardedSprintScoreBonus===0&&
+  strongSprintOnly.sprintFinishAudit.awardedSprintScoreBonus===8&&
+  strongLeadoutOnly.sprintFinishAudit.awardedSprintScoreBonus===4&&
+  strongerExperiment.sprintFinishAudit.awardedSprintScoreBonus===12,
+
 
 }
 process.stdout.write(JSON.stringify({reportVersion:'uranius-long-mixed-tactics-v1',
  scope:'OFFLINE fictional 120km 128 riders, same initial established escape and four tactical orders',
- control,experiment,strongerControl,strongerExperiment,checks,
+ control,experiment,strongerControl,strongerExperiment,
+ strongFinishFactorial:[strongNeither,strongLeadoutOnly,strongSprintOnly,strongerExperiment].map(r=>({
+  mode:r.finishOrders,rank:r.sprinterRank,finishSeconds:r.sprinterTime,
+  score:r.sprintFinishAudit.effectiveSprintScore,
+  bonus:r.sprintFinishAudit.awardedSprintScoreBonus,
+  leadoutRiderEnergy:r.leadoutEnergy,sprinterEnergy:r.sprinterEnergy,
+  sameFinishGroupRank:r.sprintFinishAudit.sameFinishGroupRank,
+  higherScoringRivals:r.sprintFinishAudit.sameFinishGroupRivalsWithHigherSprintScore,
+  totalFinishers:r.finishers,orders:r.ordersExecuted,
+ })),checks,
  sprintSensitivity:{
   weakControlRank:control.sprinterRank,weakTacticsRank:experiment.sprinterRank,
   strongControlRank:strongerControl.sprinterRank,strongTacticsRank:strongerExperiment.sprinterRank,
