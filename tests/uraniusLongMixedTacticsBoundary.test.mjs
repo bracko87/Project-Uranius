@@ -45,3 +45,12 @@ test('long-race diagnostics distinguish valid gaps from actual sustained chase b
  assert.match(runner,/LONG CHASE DURATION/)
  assert.match(runner,/SPRINT FINISH CONTEXT/)
 })
+
+test('actual finish-candidate scores explain sprint result within the finishing group',()=>{
+ assert.match(fixture,/finishDetection.candidates/)
+ assert.match(fixture,/sprintFinishAudit/)
+ assert.match(fixture,/sameFinishGroupRivalsWithHigherSprintScore/)
+ assert.match(fixture,/awardedSprintScoreBonus:/)
+ assert.match(fixture,/sameFinishGroupRank:/)
+ assert.match(runner,/SPRINT SCORE AUDIT/)
+})
