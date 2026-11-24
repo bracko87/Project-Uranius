@@ -904,3 +904,26 @@ node --test tests\\uraniusCourseFieldRealismBoundary.test.mjs
 node scripts\\run-uranius-course-field-realism.mjs --out course-field-local.json
 ```
 If successful, inspect `STEEP ATTACK LAUNCH` and `STEEP TERRAIN DROP FATE` and base any mechanic decision on actual negative gap provenance. Sporting gate remains **49/60 NO GO**; no hosted, canonical, or production change.
+
+
+## 2026-11-24 — Owner confirms trailing attack is physically behind; default-off catch safeguard prototyped
+
+Owner pulled through `a8229c0`, ran short boundary suite **7/7 PASS** and full eight 128-rider race simulations: all technical checks true. Steep +12% heterogeneous route created 5 legitimate terrain-dropped groups and 6 unique finish times; 59 distinct riders under pressure; maximum spread **712.664875572s**.
+
+**Observed attack root cause (user-executed real tick trace):** at simulation second 3420, the attacking rider's new group had already been born at second 3390 at a position **-0.180364333km relative to the leading peloton**, because the attack originated behind it in an already trailing/drop group. The attacker physically moved **26.63885 km/h** while peloton moved **24.33981 km/h**, shortening gap to **-0.161205598km** over a 30s movement tick. Nevertheless, old `reconcileBreakawayGroups` marks any non-dropped group at or behind peloton as caught, moves all of its rider IDs into peloton and updates their `distanceKm` to peloton's position, even when it remains >160m behind. This is **real backwards-location teleportation**, not a failed attack acceleration; physical validity requires not reabsorbing a distant trailing attack.
+
+**Proposed OFFLINE opt-in fix committed but NOT YET RUNTIME VERIFIED:**
+- `reconcileBreakawayGroups` adds optional `experimentalPreserveTrailingAttackGroups`. If a `breakaway` is behind the active peloton by more than the latter's 5-second physical catch-distance, keep it as a separate active group. Once it physically closes that radius, normal catch/reconciliation is allowed. Existing historical behavior remains unchanged when flag off.
+- `runIntegratedTerrainSeparationStage` and `runCalibratedTerrainSeparationStage` propagate this flag, defaulting false. Standard production/canonical paths are unchanged.
+- `uranius-course-field-realism.ts` preserves all eight existing scenarios and executes **one additional**, otherwise identical 160km heterogeneous steep stage with this safety option ON. It requires complete classification of 128 riders; compares original catch versus the protected group's first physically negative gap and active survival; does not force a breakaway victory.
+- Runner prints `TRAILING ATTACK PHYSICAL CATCH CONTROL` and `TRAILING ATTACK PHYSICAL CATCH PROTECTED`. Static boundary test asserts option wiring, protection predicate, report and TypeScript syntax. Build and test have **not** been executed after these commits.
+
+Owner commands:
+
+```bat
+git pull origin main
+node --test tests\\uraniusCourseFieldRealismBoundary.test.mjs
+node scripts\\run-uranius-course-field-realism.mjs --out course-field-local.json
+```
+
+This is a geometry safeguard candidate, not proof of full realistic attack dynamics or a production release. Official 49/60, sporting NO GO; do not change canonical defaults.
