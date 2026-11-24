@@ -28,3 +28,16 @@ test('trace launcher is offline, cleans temporary bundle and never touches hoste
  assert.match(runner,/reportVersion!=='uranius-pressure-trace-v1'/)
  assert.doesNotMatch(trace+runner,/@supabase|createClient\(|fetch\(|https?:\/\/|service_role|URANIUS_DATABASE/i)
 })
+
+test('traces 29-style dropped transitions through the same-tick reconciliation boundary before any replay',()=>{
+ assert.match(trace,/tick\.reconciledBreakaways\.previousState/)
+ assert.match(trace,/tick\.reconciledBreakaways\.state/)
+ assert.match(trace,/reabsorbedBreakawayGroupIds\.includes\(transition\.targetGroupId\)/)
+ assert.match(trace,/transition\.movedRiderIds\.filter/)
+ assert.match(trace,/sameTickTransitionReabsorptions/)
+ assert.match(trace,/transitionGroupsSurvivingReconcile/)
+ assert.match(trace,/ALL_DROPS_REABSORBED_SAME_TICK/)
+ assert.match(trace,/DROPS_DISAPPEAR_BEFORE_REPLAY/)
+ assert.match(runner,/reabsorbedSameTick/)
+ assert.match(runner,/survivingDrops/)
+})
