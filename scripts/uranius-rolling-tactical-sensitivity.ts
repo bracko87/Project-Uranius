@@ -37,6 +37,7 @@ function makeInput(withAttack:boolean):StageInput{
   orders:withAttack?[{orderId:'offline-attack-1',teamId:selected.teamId,
    riderId:selected.riderId,type:'attack',status:'scheduled',
    eligibleFromKm:35,eligibleUntilKm:42,priority:1,
+   maximumFollowers:null,targetRiderId:null,
    // Avoid a synthetic launch gap to observe actual attack movement.
    metadata:{uraniusLiveCommand:true}}]:[]}
 }
