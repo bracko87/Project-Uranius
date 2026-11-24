@@ -43,3 +43,11 @@ Next acceptance is the existing local HTTPS launcher, using the known existing l
 powershell -NoProfile -File scripts\run-approved-overview-https-windows.ps1 -TlsCert "C:\Users\Aleks\AppData\Local\Uranius\loopback-tls\loopback-cert.pem" -TlsKey "C:\Users\Aleks\AppData\Local\Uranius\loopback-tls\loopback-key.pem" -CaFile "%USERPROFILE%\Downloads\prod-ca-2021.crt" -PostgresBin "C:\Users\Aleks\Desktop\Project-Uranius\.uranius-pin-review\postgresql-17.12-portable\bin"
 ```
 It checks assets and TLS setup before prompting privately for the restricted reader password and Supabase publishable key. Verify manager A and manager B in separate signed-in sessions show distinct, own-club `Uranius synthetic UUID` fields on the Squad profile, not a fallback integer-only profile. No passwords or full UUIDs need be sent in chat. Stop the local server with Ctrl+C when done. Current status **code and unit regression accepted; live HTTPS A/B acceptance NOT YET VERIFIED**.
+
+## 2026-11-24 — LIVE LOCAL HTTPS A/B SQUAD UUID ACCEPTANCE PASSED
+
+Owner provided browser screenshots from the live locally launched TLS Uranius application after the verified startup preflight. Manager A displays **Fixture Rider 1–10** and Manager B displays **Fixture Rider 11–20**. Expanded read-only profiles visibly display distinct **Uranius synthetic UUIDs** (A Rider 1 and B Rider 12), four verified synthetic skill values, and honest warnings that original-game profile fields are missing. No editing controls or foreign-club riders appear in either screenshot.
+
+Alongside independent hosted migration 015 RLS/ACL verification and previously owner-passed **8/8 UUID integration** and **17/17 legacy Squad** tests, these screenshots **complete the local HTTPS end-to-end read-only UUID Squad integration milestone**. Screenshots alone do not prove every denial property; cross-manager isolation and rejected unauthorized requests are supported by separate automated tests.
+
+**Status: 016 LOCAL HTTPS UUID SQUAD INTEGRATION CLOSED / ACCEPTED.** Original-game rider identity, nine skills, age, roles, fatigue, morale, contracts and related gameplay remain separate, unreconstructed milestones. No original ProPeloton production writes or public deployment.
