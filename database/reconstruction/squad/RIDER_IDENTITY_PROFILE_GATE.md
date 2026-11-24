@@ -79,3 +79,21 @@ node tests\uraniusRiderUuidMappingNativePg17.mjs --disposable-native-pg17 --post
 ```
 
 **Release gate remains CLOSED.** Do not execute 014 SQL against isolated hosted Uranius or original production. Only after source and native checks pass should a separately frozen candidate/manifest and an exact owner-approved guarded installer be considered. Existing completed 013/Squad browser preview, 11 migrations and gameplay are unchanged.
+
+## 2026-11-24 — Owner verified 014 preliminary tests; exact manifest freeze
+
+Owner-provided Windows terminal output confirms **4/4 source checks and 10/10 disposable PostgreSQL 17 tests PASS**, with disposable PGDATA removed. The offline source digest is `f97126ed0a9259bfeac9ebf3c4158ece7a590b3ae77fd7d66f7efdc26894db6f`. These tests prove the proposal under a small synthetic disposable fixture; they do not prove a hosted installation or full replay of existing 001–013 migrations.
+
+Prepared `014_install_manifest_REVIEW_ONLY.json` with the *unchanged* tested SQL digest, project ID, expected 11 ledger entries and **all eleven exact version/hash prerequisites** from the previously frozen 013 history (001–010 plus installed 013), and recorded the explicit approval-required status. Strengthened `scripts/review-uranius-rider-identity.mjs --review` to reject source SHA mismatch, reordered/missing/altered historical ledger prerequisites, or unexpected scope. Added four new `tests/uraniusRiderUuidManifestFreeze.test.mjs` checks.
+
+**This is only source review, no authorized installer.** Neither frozen manifest nor offline hash reviewer is permission to install. The future installer must compare all 11 historical ledger version+hash pairs *against hosted state inside the transaction*, as the candidate 014 preflight itself currently checks only the total count and the 010/013 digests. It must also verify private table ownership, no public role privileges, FORCE RLS, exactly 200 persisted UUID mappings before row reads become denied by FORCE RLS, and ledger 12th row insertion atomically. This is a **separate implementation and owner approval gate**.
+
+Next safe offline commands:
+
+```bat
+git pull origin main
+node --test tests\uraniusRiderUuidMappingReview.test.mjs tests\uraniusRiderUuidManifestFreeze.test.mjs
+node scripts\review-uranius-rider-identity.mjs --review
+```
+
+The new tests have not yet been run by the owner. No production or isolated hosted SQL was modified.
