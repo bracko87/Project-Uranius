@@ -32,7 +32,11 @@ async function withServer(readSquad,run){
       ...(options.body?{'Content-Type':'application/json'}:{})},
    ...(options.body?{body:JSON.stringify(options.body)}:{})
   })
-  return {status:response.status,body:await response.json(),cookie:response.headers.get('set-cookie')}
+  const rawBody = await response.text()
+  // The adapter deliberately returns a plain empty 404 for unrecognized URLs.
+  // Do not mistake this route denial for malformed JSON from a valid API route.
+  const body = rawBody ? JSON.parse(rawBody) : null
+  return {status:response.status,body,cookie:response.headers.get('set-cookie')}
  }
  const login=async name=>{
   const response=await call('/fixture/login',{method:'POST',body:{email:name,password:'offline'}})
@@ -60,7 +64,9 @@ test('Squad route resolves manager A/B solely from session; wrong-origin and sco
   assert.deepEqual(aa.body.riders.map(x=>x.syntheticRiderId),[1])
   assert.deepEqual(bb.body.riders.map(x=>x.syntheticRiderId),[11])
   assert.deepEqual(seen,[A,B])
-  assert.equal((await call('/fixture/squad?clubId='+clubs[A],{cookie:b})).status,404)
+  const injected=await call('/fixture/squad?clubId='+clubs[A],{cookie:b})
+  assert.equal(injected.status,404)
+  assert.equal(injected.body,null)
   assert.equal((await call('/fixture/squad',{cookie:b,requestOrigin:'http://127.0.0.1:1'})).status,403)
   assert.deepEqual(seen,[A,B])
   assert.equal((await call('/fixture/logout',{cookie:b,method:'POST'})).status,200)
