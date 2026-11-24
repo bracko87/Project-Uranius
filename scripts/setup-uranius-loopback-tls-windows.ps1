@@ -55,8 +55,10 @@ if (!(Test-Path -LiteralPath $cert -PathType Leaf) -or !(Test-Path -LiteralPath 
   if (Test-Path -LiteralPath $key -PathType Leaf) { throw 'Key exists but certificate is missing. Refusing to overwrite partial credentials.' }
   $openssl=Get-OpenSsl
   New-Item -ItemType Directory -Path $base -Force | Out-Null
-  # 2-day expiry; the private key never leaves this machine.
-  & $openssl req -x509 -newkey rsa:3072 -sha256 -nodes -days 2 -subj $subject -keyout $key -out $cert -addext 'subjectAltName=IP:127.0.0.1' -addext 'basicConstraints=critical,CA:FALSE' -addext 'extendedKeyUsage=serverAuth' 2>$null
+  # 2-day expiry. First generate the private key without printing openssl progress.
+  & $openssl genrsa -out $key 3072
+  if ($LASTEXITCODE -ne 0) { throw 'Local private key generation failed.' }
+  & $openssl req -new -x509 -sha256 -days 2 -subj $subject -key $key -out $cert -addext 'subjectAltName=IP:127.0.0.1' -addext 'basicConstraints=critical,CA:FALSE' -addext 'extendedKeyUsage=serverAuth'
   if ($LASTEXITCODE -ne 0) { throw 'Local certificate generation failed.' }
   # NTFS: remove inherited access to the private key and grant the current Windows user access.
   $current=[System.Security.Principal.WindowsIdentity]::GetCurrent().User.Value
