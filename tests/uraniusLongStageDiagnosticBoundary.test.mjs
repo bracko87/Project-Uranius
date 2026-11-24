@@ -12,7 +12,7 @@ test('long stage scenarios use 120km / 128 riders and 160km / 160 riders',()=>{
 })
 test('default-off and explicit opt-in use the same StageInput for each pair',()=>{
  assert.match(source,/experiment==='birth_tick_protected'/)
- assert.match(source,/for\(const experiment of \['default_off','birth_tick_protected'\]/)
+ assert.match(source,/for\(const experiment of \['default_off','birth_tick_protected','receding_drop_protected'\]/)
  assert.match(source,/makeInput\(course,seed\)/)
  assert.doesNotMatch(source,/Math\.random\(/)
 })
@@ -25,7 +25,7 @@ test('observes complete results, replay roster and sporting gaps without changin
 test('launcher is local only and fail-closes on corrupt results',()=>{
  assert.match(launcher,/mkdtempSync/)
  assert.match(launcher,/rmSync\(dir,\{recursive:true,force:true/)
- assert.match(launcher,/report\.results\.length!==8/)
+ assert.match(launcher,/report\.results\.length!==12/)
  assert.match(launcher,/report\.results\.some\(p=>p\.error\|\|p\.technicalIssues\.length\)/)
  assert.doesNotMatch(source+launcher,/@supabase|createClient\(|fetch\(|https?:\/\/|service_role|URANIUS_DATABASE/i)
 })
@@ -47,4 +47,10 @@ test('records first post-birth movement before the catch decision',()=>{
   assert.ok(source.includes(name),name)
  assert.match(launcher,/preCatchPositiveGapTicks/)
  assert.match(launcher,/relativeSpeedTicks/)
+})
+
+test('new receding-drop comparison is explicitly opted in, leaving existing modes untouched',()=>{
+ assert.match(source,/experimentalPreserveRecedingDroppedGroups:experiment==='receding_drop_protected'/)
+ assert.match(source,/experimentalPreserveBirthTickDroppedGroups:experiment!=='default_off'/)
+ assert.match(launcher,/report\.results\.length!==12/)
 })
