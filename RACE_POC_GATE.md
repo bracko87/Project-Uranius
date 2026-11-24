@@ -959,3 +959,21 @@ node scripts\\run-uranius-attack-sustainability.mjs --out attack-sustainability-
 ```
 
 Next decision is empirical: whether any profile exhibits sustained positive physical separation or favorable trade-off in energy/finish time, and if not whether to model strategic continued effort as a distinct **default-off** behavior or revise target/order eligibility. Sporting approval remains **NO GO**, official **49/60**.
+
+
+## 2026-11-24 — Owner verifies attack sustainability; anomalous apparent energy savings require accounting audit
+
+Owner ran `tests/uraniusAttackSustainabilityBoundary.test.mjs`: **4/4 PASS**; six 120km/128-rider races all completed with 5/5 runtime checks. Nominated weak rider had no useful sustained escape (2 positive-gap ticks, caught) when attacking at km5 or km70, and remained rank 128. Nominated physically strong rider with flat/climbing/acceleration/stamina/resistance/recovery=95 escaped successfully in both cases: early attack at 480s achieved **303 positive-gap ticks**, 12.10648km peak lead, rank 1, official finish 9533.28023s versus no-order 10575.29438s (~1042.01415s gain); late attack at 6270s achieved 130 positive-gap ticks, 5.06281km peak lead, rank 1, finish 10136.02865s (~439.26573s gain). Early solo pace remains 45.4339km/h across multiple ticks; late solo pace settles around 43.8520km/h, above peloton ~38.8731km/h. Thus multi-tick group capability, not only first-tick impulse, can sustain a genuinely strong rider's gap. These are **synthetic extreme-ability examples, not calibrated realistic race odds**.
+
+**Sporting warning:** Successful stronger attacker finishes with *more remaining energy* than own stronger-rider no-order baseline: +2.26418 early and +0.94213 late. This is not enough by itself to prove a conservation/accounting defect: the successful attacker races for many fewer ticks, hence fewer time-based energy charges, and the engine's current energy cost is calculated from applied speed, base speed, gradient, duration, stamina/resistance/recovery, with group shelter **only if** `groupShelterEnergyEnabled===true`. It may reflect cost-model calibration rather than bad bookkeeping.
+
+Added an **observational real-cost ledger, not yet owner-run**, in the existing six-race offline study. Per scenario it now sums actual `tick.appliedEnergy.applications` for the nominated rider: number of energy-charged movement ticks/seconds, total actual charged energy, no-shelter cost, shelter saved and ticks where shelter applied, mean rider speed, first/last three charged ticks, launch and first follow-up charged tick, energy cost per course km, and independently checks `initialEnergy - sum(real charge) - finalEnergy` within 0.0001. Runner prints `ENERGY ACCOUNTING` and controlled against-baseline differences in active ticks, recorded energy cost/km and shelter savings. No change to `energyCost.ts`, movement, engine defaults or tactics. If the charge-ledger check fails, diagnose it before changing the core model. If it passes, focus on whether time-based effort and missing drafting relief generate plausible tradeoffs, and compare realistic-strength riders rather than boosting only one athlete to six 95s.
+
+Owner:
+```bat
+git pull origin main
+node --test tests\\uraniusAttackSustainabilityBoundary.test.mjs
+node scripts\\run-uranius-attack-sustainability.mjs --out attack-sustainability-local.json
+```
+
+**Official checklist 49/60, sporting NO GO; production and canonical defaults untouched.**
