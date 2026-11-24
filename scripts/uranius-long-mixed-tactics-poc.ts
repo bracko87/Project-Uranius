@@ -5,6 +5,8 @@ import {createHash} from 'node:crypto'
 import {syntheticTenRiderStage} from '../src/race-engine/tests/fixtures/syntheticTenRiderStage'
 import {createInitialState} from '../src/race-engine/simulation/createInitialState'
 import {createBreakawayGroup} from '../src/race-engine/simulation/createBreakawayGroup'
+import {calculateExperimentalChaseMultiplier} from '../src/race-engine/simulation/experimentalChasePace'
+import {getStageTerrainSample} from '../src/race-engine/simulation/stageProfile'
 import {runCalibratedTerrainSeparationStage} from '../src/race-engine/simulation/runCalibratedTerrainSeparationStage'
 import type {StageInput} from '../src/race-engine/domain/StageInput'
 
@@ -84,6 +86,33 @@ function run(enabled:boolean){
    (t.appliedOrderEffects.state.groups[b.groupId]?.distanceKm??0)-group.distanceKm))
   return gap>0&&gap/Math.max(group.speedKmh,0.000001)*3600>=5
  })
+ const actualChaseTicks=stage.ticks.flatMap(t=>{
+  const before=t.appliedOrderEffects.state
+  return t.movement.movement.proposals.filter(proposal=>proposal.groupType==='peloton')
+   .map(proposal=>{
+    const group=before.groups[proposal.groupId]
+    if(!group)return null
+    const terrain=getStageTerrainSample(before.input,group.distanceKm)
+    const multiplier=calculateExperimentalChaseMultiplier(
+     before,group,terrain.gradientPercent)
+    if(multiplier<=1)return null
+    const order=before.orders['long-chase']
+    const riderEnergyCost=t.appliedEnergy.applications.find(
+     a=>a.riderId===pursuer.riderId)?.energyCost??null
+    return {second:t.state.raceSecond,km:group.distanceKm,
+     multiplier,orderStatus:order?.status??null,
+     orderExpiryKm:order?.eligibleUntilKm??null,
+     beyondScheduledOrderWindow:group.distanceKm>(order?.eligibleUntilKm??Infinity),
+     actualPelotonSpeedKmh:proposal.appliedSpeedKmh,riderEnergyCost}
+   }).filter((value):value is NonNullable<typeof value>=>value!==null)
+ })
+ const finishGroupId=stage.finalState.riders[sprinter.riderId].currentGroupId
+ const sprinterFinishGroup=Object.values(stage.finalState.riders)
+  .filter(r=>r.currentGroupId===finishGroupId)
+ const sprinterWithinGroupPosition=1+sprinterFinishGroup.filter(r=>
+  r.finishPosition!==null&&spr.finishPosition!==null&&r.finishPosition<spr.finishPosition).length
+ const sprinterStrength={sprint:sprinter.attributes.sprint,
+  acceleration:sprinter.attributes.acceleration,energy:spr.energy}
  const movementCosts=stage.ticks.reduce((sum,t)=>sum+
   (t.appliedEnergy.applications.find(a=>a.riderId===pursuer.riderId)?.energyCost??0),0)
  const attackCount=stage.events.filter(e=>e.eventType==='ATTACK_STARTED').length
@@ -94,6 +123,14 @@ function run(enabled:boolean){
   allTimesFinite:timestamps.every(t=>typeof t==='number'&&Number.isFinite(t)),
   ordersExecuted:orders.filter(o=>o.status==='executed').map(o=>o.orderId).sort(),
   attackCount,eligibleChaseTicks:eligibleChase.length,
+  actualChaseBoostTicks:actualChaseTicks.length,
+  actualChaseBoostTicksAfterExpiry:actualChaseTicks.filter(
+   t=>t.beyondScheduledOrderWindow).length,
+  firstChaseBoost:actualChaseTicks[0]??null,
+  lastChaseBoost:actualChaseTicks.at(-1)??null,
+  sprinterStrength,sprinterFinishGroupSize:sprinterFinishGroup.length,
+  sprinterWithinGroupPosition,
+
   sprinterRank:spr.finishPosition,sprinterTime:spr.finishTimeSeconds,
   sprinterEnergy:spr.energy,leadoutEnergy:lead.energy,
   pursuerEnergy:p.energy,pursuerFinishSeconds:p.finishTimeSeconds,
