@@ -79,7 +79,9 @@ test('018 offline reviewer has no install path or database transport',()=>{
 
 test('018 review manifest freezes candidate and exact prior 001–015 history without approval',()=>{
  const path=new URL('../database/reconstruction/squad/',import.meta.url)
- const manifest=JSON.parse(readFileSync(new URL('018_install_manifest_REVIEW_ONLY.json',path),'utf8'))
+ const manifestBytes=readFileSync(new URL('018_install_manifest_REVIEW_ONLY.json',path))
+ assert.equal(createHash('sha256').update(manifestBytes).digest('hex'),'9995c7a1558d222426e759b5af4911981d5d4b12688a4e2e3c1adee8d6975205')
+ const manifest=JSON.parse(manifestBytes.toString('utf8'))
  const prior=JSON.parse(readFileSync(new URL('015_install_manifest_REVIEW_ONLY.json',path),'utf8'))
  const expected=[...prior.requires,{file:prior.candidate.ledgerVersion,sha256:prior.candidate.sha256}]
  assert.equal(manifest.projectRef,'sdtsivgtcaoaeoihcwzd')
