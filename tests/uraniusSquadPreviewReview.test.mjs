@@ -52,7 +52,6 @@ test('preview SQL is RLS-scoped to verified subject and cannot mutate hosted sta
  assert.match(sql,/FROM uranius_catalog\.riders r/)
  assert.doesNotMatch(sql,/\bJOIN owned_team\b/)
  assert.match(sql,/'clubId',uranius_game\.get_my_club_id\(\)::text/)
- assert.match(sql,/FROM uranius_catalog\.riders r/)
  // Security prohibitions apply to executable SQL, not explanatory "--" comments.
  const executableSql=sql.replace(/^\s*--[^\r\n]*/gm,'')
  const forbidden=/\b(?:SECURITY\s+DEFINER|GRANT\s+SELECT|ALTER\s+POLICY|INSERT\s+INTO|CREATE\s+TABLE)\b/i
@@ -63,5 +62,6 @@ test('preview SQL is RLS-scoped to verified subject and cannot mutate hosted sta
 test('source audit distinguishes original UUID club_roster from the integer-only synthetic catalog',()=>{
  for(const term of ['club_roster','rider_id integer','synthetic Squad preview','reader-column'])
   if(term!=='reader-column')assert.ok(doc.includes(term))
- assert.match(doc,/team_id.*required for the reviewed owner-scoped join/)
+ assert.match(doc,/Do not grant `team_id`/)
+ assert.match(doc,/`riders_read` owner RLS policy/)
 })
