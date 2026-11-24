@@ -587,3 +587,24 @@ node scripts\\run-uranius-mixed-tactics-integration.mjs --out mixed-tactics-loca
 ```
 
 If pre-movement gap is <5s, the zero chase-energy difference is expected behavior for the current model, not a failure. Next integrated experiment should make a *real physically established* leading breakaway and separately test that chase raises applied movement and changes rider energy while sprint and lead-out orders also execute; no fabricated catch or sprint win. Sporting GO withheld, official checklist remains 49/60.
+
+
+## 2026-11-24 — Owner diagnoses zero mixed-race chase energy; established-breakaway integration probe added
+
+Owner pulled through `3df39b7` and verified the mixed tactics static assertions **4/4 PASS** and mixed 24km runtime **PASS** with all four executed orders, ten classified riders, real attack launch and actual catch. The new `CHASE PHYSICS` output resolves the apparent chase discrepancy:
+
+- Default-off attack: first tick of attack order at race second 390 started at **0 seconds** lead and applied escape **42.42km/h** vs peloton **42.36km/h**. Next pre-movement lead **0.0005km = 0.04249 seconds**; then it was caught.
+- Opt-in physical attack: first launch movement **46.366km/h** vs peloton **42.36km/h**, creating **0.0333833km = 2.83711 seconds** by the next pre-movement tick. The breakaway was caught after that tick because the existing peloton reabsorption window is **<5 seconds**.
+- As the experiment requires a **pre-movement gap >=5s** for chase to activate, neither version ever qualified. The chase order *executed*, but per-tick pursuing rider energy cost was **0.069** in both versions and final rider energy was identical. **This is an explicit gap in combined-race chase activation coverage, not a validated chase benefit.**
+
+**Additional diagnostic scenario COMMITTED, not yet runtime-verified:** Extended `scripts/uranius-mixed-tactics-integration.ts` to run a second 24km combined A/B with **one pre-existing physically separated breakaway (90-second initial lead)** using the same validated `createBreakawayGroup` fixture as earlier chase lifecycle tests. This is a purposeful mid-race setup; it is **not** attributed to the simultaneously executing attack order. The actual four scheduled orders (another attack, chase, sprint and teammate lead-out) remain in the input; all experimental options remain default OFF outside this explicit runner. The runner reports true pre-movement chase eligibility, peloton applied speed comparison between matched physical ticks, chasing rider energy cost difference, final energy delta and final classifications. It requires race completion, all finishers, four real executed orders and at least one pre-movement eligible chase tick; it *does not* require a fabricated catch or a specific winner. The earlier zero-gap control remains completely unchanged.
+
+Review on owner Windows checkout:
+
+```bat
+git pull origin main
+node --test tests\\uraniusMixedTacticsBoundary.test.mjs
+node scripts\\run-uranius-mixed-tactics-integration.mjs --out mixed-tactics-local.json
+```
+
+Next evaluate `PHYSICAL CHASE EVIDENCE`: paired tick speed/energy, actual gap progression and whether an additional feature conflict exists. Do not claim all-four-effect physics until a positive applied speed and energy result is observed and attributable. Sporting GO withheld, checklist 49/60.
