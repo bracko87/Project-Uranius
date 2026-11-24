@@ -40,3 +40,11 @@ Then restart the already-approved **local-only** HTTPS runner and open the Squad
 4. **Beyond:** design separate authorized age/nationality/role/health/contract systems with trustworthy source records, transactional validation and gameplay tests. These are not completed by the nine-skill view.
 
 Original ProPeloton production is excluded from every hosted write. Never claim the full rider profile is complete while six of nine skills and other data are unavailable.
+
+## 2026-11-24 — Owner Windows regression acceptance: 28/28 PASS
+
+The owner ran the full combined original-nine-skill bridge and Squad HTTPS source/route/bundle suite after pulling commit `20681bc`. All **28/28 tests PASS, zero failures**. This includes the four newly written nine-skill source taxonomy/strict projector/frontend-display tests, client esbuild bundle, TLS and read-only query boundaries, original Squad and UUID Squad A/B session isolation, invalid-field rejection and legacy fallback.
+
+This confirms source-code and local runtime regression acceptance for the nine-skill **availability display**, not a live browser retest of the new panel or availability of the six missing values. The current live hosted database has not been modified by 017. The previously live-tested UUID Squad integration 016 remains closed.
+
+**Status: 017 code/tests accepted, browser screenshot of updated nine-skill panel optional; six missing skills still genuinely unavailable.** Next 018 may prepare an OFFLINE REVIEW-ONLY synthetic profile storage design, but any hosted migration remains unapproved until independent native tests, exact source hash and separate owner consent.
