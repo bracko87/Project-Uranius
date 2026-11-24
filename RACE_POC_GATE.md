@@ -546,3 +546,25 @@ node scripts\run-uranius-chase-lifecycle.mjs --out chase-lifecycle-local.json
 ```
 
 Review actual reported `caughtAtTick`, physical gap and energy; if it reveals a genuine physical-order/reabsorption bug, repair the cause, not the expected result. Continue to mixed stage tactics only when these scenarios are validated. Keep official checklist **49/60**, sporting gate IMPROVE, all flags default off.
+
+
+## 2026-11-24 — Owner verifies weak catch and strong survival in 18-minute chase lifecycle
+
+The owner ran `node --test tests\\uraniusChaseLifecycleBoundary.test.mjs` (**3/3 PASS**) and `node scripts\\run-uranius-chase-lifecycle.mjs --out chase-lifecycle-local.json` (**runtime PASS**, all five integrity checks). Four 36-tick, 18-minute simulations:
+- Weaker breakaway, 30s launch gap, no chase: **caught at tick 5**; with chase: **also caught at tick 5**. Signed gap just before final active snapshot was 0.08266666666666667km without chase and 0.07207666666666657km with chase. Both have confirmed physical reabsorption; chase rider's extra energy cost **0.0025875**.
+- Stronger breakaway, 90s launch gap, no chase: **survives**, 2.4115999999999964km ahead; with chase: **survives**, 2.3162899999999915km ahead. Pursuit narrows the lead by **0.09531km (95.31m)** but does not invent a catch. Chase rider pays **0.01863** extra energy units.
+- All riders conserved, real chase order executed, no fabricated catch, scenario tick horizons match, and gaps recorded. This closes **isolated chase lifecycle functional verification**, NOT sporting calibration or release approval.
+
+### Next committed offline combined-tactics integration probe (NOT RUN)
+
+Added `scripts/uranius-mixed-tactics-integration.ts`, an **OFFLINE, fictional flat 24km, 10-rider StageInput** with all four real supported scheduled orders: attack (km4–6), chase (km4–6), lead-out for teammate (km22–24), sprint (km22–24). The attack uses `metadata:{uraniusLiveCommand:true}` so no artificial head start is supplied. One same-input/seed control with all experimental flags OFF is compared with one experiment enabling physical launch, chase pace and finish tactics together. Real engine runner handles every movement, order and finish. Records actual order statuses, event counts, first attack launch and applied speed, physical group count, catch, eligible chase ticks, finishing rank/times/energy and classification digest. Launcher validates conservation, unique finishing positions, finite finish times, all four executed orders and actual launch movement. It reports *rather than assumes* successful catch, sprint victory or positive chase duration, so adverse sporting outcomes can be investigated honestly. All code default-off; historical and production paths unchanged. Static checks `tests/uraniusMixedTacticsBoundary.test.mjs`.
+
+This new combined probe and checks are **committed but not yet executed on the owner's checkout**:
+
+```bat
+git pull origin main
+node --test tests\\uraniusMixedTacticsBoundary.test.mjs
+node scripts\\run-uranius-mixed-tactics-integration.mjs --out mixed-tactics-local.json
+```
+
+Do not mark full tactical integration verified before owner runs it. Next after confirmed integrated A/B: check that chase was actually eligible while a breakaway was ahead (otherwise this fixture proves only order lifecycle), compare energy charges, golden baseline safety, longer flat/rolling/mountain stages. Official 49/60, sporting GO withheld, production unchanged.
