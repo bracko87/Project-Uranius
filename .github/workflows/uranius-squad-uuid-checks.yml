@@ -9,6 +9,7 @@ on:
       - 'scripts/run-uranius-hosted-smoke.mjs'
       - 'scripts/run-approved-overview-https-windows.ps1'
       - 'tests/uraniusSquad*.test.mjs'
+      - 'tests/uraniusRider018SourceReview.test.mjs'
       - '.github/workflows/uranius-squad-uuid-checks.yml'
   workflow_dispatch:
 
@@ -30,6 +31,7 @@ jobs:
         run: |
           node --test \
             tests/uraniusOriginalNineSkillAvailability.test.mjs \
+            tests/uraniusRider018SourceReview.test.mjs \
             tests/uraniusSquadUuidRouteIsolation.test.mjs \
             tests/uraniusSquadUuidIntegrationBoundary.test.mjs \
             tests/uraniusSquadRouteIsolation.test.mjs \
