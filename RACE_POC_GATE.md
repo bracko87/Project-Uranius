@@ -387,3 +387,20 @@ node scripts\run-uranius-rolling-tactical-sensitivity.mjs --out tactical-local.j
 ```
 
 Inspect the new `LAUNCH` and `ATTACK TICK` rows. If launch speed is discarded by movement, design a realistic, opt-in physical launch impulse with corresponding energy accounting; if first physical gap exists but is small and caught, do not force attacker success. No production, hosted game or database changes. Checklist remains **49/60**; sporting GO not granted.
+
+
+## 2026-11-24 — Real launch bonus is lost at first physical movement; opt-in proposal experiment
+
+Owner reran the 120km rolling tactical A/B. Static tests **5/5 PASS**, both scenarios completed 128/128, single active group and zero time spread at replay resolution. One real attack order executed. Direct first-tick evidence: assigned attack launch **42.27325680742317 km/h**, applied attack physical movement **35.48669339613971 km/h**, peloton **38.29595718623174 km/h**. Attacker was **0.023410531584104888 km behind** after 30 seconds and correctly absorbed in that same tick. Thus the launch bonus is discarded by the recalculated terrain movement proposal, before the receding group rule is relevant. Selected rider gains just 0.016459452 seconds with unchanged final energy/rank. Ignore later stale inactive breakaway distances after the first caught tick; these are not active groups.
+
+Committed a new **independent default-off** `experimentalPhysicalAttackLaunch` through the calibrated/integrated runner. Only if enabled, the integrated tick passes speeds from `appliedOrderEffects.attackEffects` created **in the current tick** into `calculateTerrainAwareMultiGroupMovement`. That calculator uses the greater of the original terrain-group pace and launch speed (within maximum configured speed), then applies existing weather multiplier. The result is a single physical `movement.movement` proposal, shared unchanged by `applyMultiGroupMovement`, `applyMultiGroupEnergy`, gap calculation and finish handling. Launch is NOT carried to later ticks, and no spatial gap is fabricated. The original options-off path is unchanged.
+
+The offline same-seed tactical A/B scenario now opts in to the launch impulse (along with prior experimental dropped-group options). Added source assertions for option routing and common energy/movement proposal. **Not yet run on owner's Windows checkout**. Next:
+
+```bat
+git pull origin main
+node --test tests\uraniusRollingTacticalSensitivityBoundary.test.mjs
+node scripts\run-uranius-rolling-tactical-sensitivity.mjs --out tactical-local.json
+```
+
+Expected: LAUNCH row first movement speed should now reflect the initially assigned attack speed, but the breakaway may still be legitimately caught later. Confirm a physical positive gap on first tick, an accurate energy delta and stable roster. Check that legacy and golden behavior remain identical with the flag disabled. No sporting approval, production or original live game change; official checklist remains **49/60**.
