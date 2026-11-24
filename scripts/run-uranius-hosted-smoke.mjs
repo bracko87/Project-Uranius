@@ -76,8 +76,21 @@ async function main() {
   if (process.argv[2] === '--offline-preflight') return
   startupStage = 'private-credential-input'
   const dbPassword = await privatePrompt('Uranius smoke-reader password')
+  if (!dbPassword) {
+    startupStage = 'missing-reader-password'
+    throw new Error('The smoke-reader password was empty.')
+  }
+  startupStage = 'publishable-key-input'
   const publishable = (await privatePrompt('Uranius publishable API key')).trim()
-  if (!dbPassword || !/^sb_publishable_[A-Za-z0-9_-]+$/.test(publishable)) throw new Error('Expected the reader password and publishable key.')
+  if (!publishable) {
+    startupStage = 'missing-publishable-key'
+    throw new Error('The publishable key was empty.')
+  }
+  if (!/^sb_publishable_[A-Za-z0-9_-]+$/.test(publishable)) {
+    startupStage = 'invalid-publishable-key-format'
+    throw new Error('Supabase publishable key format rejected. No secret contents logged.')
+  }
+  startupStage = 'restricted-reader-target-validation'
   const host = 'db.' + ref + '.supabase.co'
   const dsn = 'postgresql://uranius_smoke_reader:' + encodeURIComponent(dbPassword) + '@' + host + ':5432/postgres?sslmode=verify-full'
   assertSandboxTarget('read', {
