@@ -310,3 +310,20 @@ node scripts\\run-uranius-attack-energy-audit.mjs --out race-attack-energy-local
 ```
 
 After the audit, decide whether energy behavior is explained by shorter exposure, a missing attack effort surcharge, shelter effects, or another model issue. Continue normal rolling-stage calibration and seed sensitivity investigation without broadening the rules prematurely.
+
+
+## 2026-11-24 — Energy-rate contradiction resolved; saved seed audit added
+
+Owner ran `tests/uraniusAttackEnergyAuditBoundary.test.mjs`: **3/3 PASS**, then ran the offline attack audit. Strong attack gained 150s, expended **0.370788 less total stage energy**, but expended **0.000994 more energy per minute**. The comparison pre-command race history was identical. Caught attack yielded 0s gain and zero change in both total/rate energy consumption, with history preserved. Therefore the earlier claim that the faster attack necessarily has defective energy accounting was **not justified**: shorter exposure explains lower total usage despite a higher per-minute rate. This is a scoped accounting explanation, **not a validation of realistic attack surcharge, fatigue, shelter, pacing, or energy economy**. No race rules or baselines changed.
+
+To avoid repeated 12-run simulations, added a read-only local saved-report audit `scripts/inspect-uranius-seed-sensitivity.mjs`, plus `tests/uraniusSeedSensitivityBoundary.test.mjs`. It loads `race-long-stage-local.json` from the owner's workstation and compares paired alpha/beta input digests, exact final classification digests and visible aggregate metrics for each of six course/mode combinations; does not simulate, modify rules, or access any hosted state. Different input digests are expected because the seed text is embedded in StageInput. Identical classification digests can indicate no outcome sensitivity on these fixtures but **do not prove a universally broken RNG**. Integrated calibrated source visibly includes `state.seed` in final deterministic hash, which alone is not proof it affects movement.
+
+New offline check **not yet executed on owner's Windows checkout**:
+
+```bat
+git pull origin main
+node --test tests\uraniusSeedSensitivityBoundary.test.mjs
+node scripts\inspect-uranius-seed-sensitivity.mjs race-long-stage-local.json
+```
+
+Reconciliation-specific synthetic regression remains PASS, but sporting realism remains IMPROVE (rolling stages bunch, mountain gap potentially excessive). Canonical engine mode and production unchanged; checklist still **49/60**.
