@@ -32,3 +32,10 @@ test('isolated chase A/B uses real breakaway and same fixture and checks energy 
  assert.match(probe,/noOrderNeutral:/)
  assert.doesNotMatch(helper+probe,/@supabase|createClient\(|fetch\(|https?:\/\/|service_role/i)
 })
+
+test('offline chase fixture resolves actual engine-created peloton ID',()=>{
+ assert.match(probe,/Object.values\(initial.groups\).filter\(g=>g.active&&g.groupType==='peloton'\)/)
+ assert.match(probe,/sourceGroupId:pelotons\[0\]\.groupId/)
+ assert.doesNotMatch(probe,/sourceGroupId:'peloton'/)
+ assert.match(probe,/createPhysicalBreakaway\(\{\.\.\.input,orders:\[\]\}\)/)
+})
