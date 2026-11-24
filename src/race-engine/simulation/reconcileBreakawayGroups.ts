@@ -299,6 +299,15 @@ function createMergeClusters(
 export function reconcileBreakawayGroups(
   state:
     SimulationState,
+  options: {
+    /**
+     * EXPERIMENTAL: skip only the birth-tick peloton catch test for
+     * newly created dropped groups. This grants no artificial gap or speed.
+     * Caller must pass only dropped group IDs created in this same tick.
+     * Default empty retains every existing/golden reconciliation result.
+     */
+    readonly protectedNewDroppedGroupIds?: readonly string[]
+  } = {},
 ): ReconcileBreakawayGroupsResult {
   validateSimulationState(
     state,
@@ -423,6 +432,18 @@ export function reconcileBreakawayGroups(
            * greater than the catch window.
            */
           if (group.groupType === 'chase' && group.riderIds.some(id => state.livePursuits?.[id])) return false
+
+          // A drop is born at its source's current position. Without an
+          // explicit birth-tick exemption it is swallowed by the <5s rule
+          // before the newly dropped riders can ever execute a movement tick.
+          // This opt-in does NOT protect older drops or force any time gap.
+          if (
+            group.groupType === 'dropped' &&
+            options.protectedNewDroppedGroupIds?.includes(group.groupId) &&
+            group.createdAtRaceSecond === state.raceSecond
+          ) {
+            return false
+          }
           const physicallyCaught =
             group.groupType !==
               'dropped' &&
