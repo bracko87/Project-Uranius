@@ -60,6 +60,29 @@ function run(enabled:boolean){
    t.appliedOrderEffects.state.groups[breakaway.groupId]?.distanceKm>
     t.appliedOrderEffects.state.groups[peloton.groupId]?.distanceKm
  })
+ const chaseTimeline=result.ticks.filter(t=>
+  t.appliedOrders.state.orders['mixed-chase']?.status==='executed'&&
+  t.movement.movement.proposals.some(p=>p.groupType==='breakaway')&&
+  t.movement.movement.proposals.some(p=>p.groupType==='peloton'))
+  .slice(0,8).map(t=>{
+   const peloton=t.movement.movement.proposals.find(p=>p.groupType==='peloton')!
+   const breakaway=t.movement.movement.proposals.find(p=>p.groupType==='breakaway')!
+   const prePeloton=t.appliedOrderEffects.state.groups[peloton.groupId]
+   const preBreakaway=t.appliedOrderEffects.state.groups[breakaway.groupId]
+   const preGapKm=prePeloton&&preBreakaway?
+    preBreakaway.distanceKm-prePeloton.distanceKm:null
+   const preGapSeconds=preGapKm===null?null:
+    preGapKm/Math.max(prePeloton.speedKmh,0.000001)*3600
+   const chased=t.appliedEnergy.applications.find(a=>a.riderId===pursuer.riderId)
+   return {
+    raceSecond:t.state.raceSecond,preGapKm,preGapSeconds,
+    pelotonSpeedKmh:peloton.appliedSpeedKmh,
+    escapeSpeedKmh:breakaway.appliedSpeedKmh,
+    pursuitEligibleBeforeMovement:preGapSeconds!==null&&preGapSeconds>=5,
+    breakawayActiveAfterTick:!!t.state.groups[breakaway.groupId]?.active,
+    chaseRiderEnergyUsedThisTick:chased?.energyCost??null,
+   }
+  })
  const sprinterResult=result.finalState.riders[sprinter.riderId]
  const leadoutResult=result.finalState.riders[leadout.riderId]
  const pursued=result.finalState.riders[pursuer.riderId]
@@ -75,6 +98,7 @@ function run(enabled:boolean){
   firstAttackMovementSpeedKmh:attackMove?.appliedSpeedKmh??null,
   caughtAttack:!!firstCatch,
   chaseEligibleMovementTicks:chaseTicks.length,
+  chaseTimeline,
   maxActiveGroups:Math.max(...result.ticks.map(t=>
    Object.values(t.state.groups).filter(g=>g.active).length)),
   sprinterRank:sprinterResult.finishPosition,
@@ -110,5 +134,6 @@ process.stdout.write(JSON.stringify({reportVersion:'uranius-mixed-tactics-v1',
  leadoutEnergyDifference:off.leadoutEnergy-on.leadoutEnergy,
  chaseEnergyDifference:off.pursuerEnergy-on.pursuerEnergy,
  chaseHadEligibleMovement:on.chaseEligibleMovementTicks>0,
+ chaseHadPhysicalEligibility:on.chaseTimeline.some(t=>t.pursuitEligibleBeforeMovement),
  catchObserved:on.caughtAttack,
  }},null,2)+'\n')
