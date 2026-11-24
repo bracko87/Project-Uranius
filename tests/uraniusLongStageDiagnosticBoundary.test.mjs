@@ -40,3 +40,11 @@ test('per-tick evidence distinguishes birth groups, physical movement and later 
  assert.match(launcher,/positiveGapTicks/)
  assert.match(launcher,/laterCaught/)
 })
+
+test('records first post-birth movement before the catch decision',()=>{
+ for(const name of ['pendingBirths','firstMovementSamples','preCatchGroupSpeedKmh',
+  'preCatchPelotonSpeedKmh','preCatchGapKm','positivePreCatchGapTicks','nonzeroRelativeSpeedTicks'])
+  assert.ok(source.includes(name),name)
+ assert.match(launcher,/preCatchPositiveGapTicks/)
+ assert.match(launcher,/relativeSpeedTicks/)
+})
