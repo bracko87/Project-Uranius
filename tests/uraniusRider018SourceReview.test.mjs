@@ -76,3 +76,23 @@ test('018 offline reviewer has no install path or database transport',()=>{
  assert.doesNotMatch(reviewer,/\b(?:spawnSync|execFileSync|createConnection|fetch\()\b/)
  assert.doesNotMatch(reviewer,/--apply|--install|execute_sql/)
 })
+
+test('018 review manifest freezes candidate and exact prior 001–015 history without approval',()=>{
+ const path=new URL('../database/reconstruction/squad/',import.meta.url)
+ const manifest=JSON.parse(readFileSync(new URL('018_install_manifest_REVIEW_ONLY.json',path),'utf8'))
+ const prior=JSON.parse(readFileSync(new URL('015_install_manifest_REVIEW_ONLY.json',path),'utf8'))
+ const expected=[...prior.requires,{file:prior.candidate.ledgerVersion,sha256:prior.candidate.sha256}]
+ assert.equal(manifest.projectRef,'sdtsivgtcaoaeoihcwzd')
+ assert.equal(manifest.postgresMajor,17)
+ assert.equal(manifest.status,'REVIEW_ONLY_NOT_APPROVED')
+ assert.equal(manifest.hostedApplied,false)
+ assert.equal(manifest.approvalRequired,true)
+ assert.equal(manifest.expectedLedgerEntries,13)
+ assert.equal(manifest.candidate.file,'018_synthetic_nine_skill_attributes_REVIEW_ONLY.sql')
+ assert.equal(manifest.candidate.ledgerVersion,'018_synthetic_nine_skill_attributes.sql')
+ assert.equal(manifest.candidate.sha256,'622d7626f5f6d93117cbb755398971d23ca0a870e49bc8c98e2df768630b48cc')
+ assert.equal(createHash('sha256').update(sql).digest('hex'),manifest.candidate.sha256)
+ assert.deepEqual(manifest.requires,expected)
+ assert.equal(manifest.requires.length,13)
+ assert.equal(manifest.requires.at(-1).file,'015_rider_uuid_owner_read.sql')
+})
