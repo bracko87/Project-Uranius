@@ -24,7 +24,7 @@
   "originalProPelotonProductionChanged": false,
   "safeLauncher": "scripts/run-approved-overview-windows.ps1",
   "safeLauncherCommit": "601ff9c9dba51eab1e6c1860d72437cbcfffc797",
-  "nextAction": "Run offline tests then start local HTTPS smoke with existing loopback cert/key and dedicated restricted reader password; sign in Manager A and B in browser; verify both empty schedule arrays reflect empty race tables and anonymous/other-origin/logout denial. No additional schema or fixture writes required.",
+  "nextAction": "Run offline live-read boundary tests; use Windows direct TLS reader A/B smoke with existing dedicated reader password, publishable key and manager passwords; then test full local HTTPS browser UI separately.",
   "appliedDate": "2026-11-24",
   "invocation": "Owner Windows secure launcher using direct TLS uranius_migrator password; owner terminal confirmed atomic transaction postflight passed.",
   "postflight": {
@@ -88,6 +88,14 @@
     "authenticatedManagerA": "NOT_YET_RUN",
     "authenticatedManagerB": "NOT_YET_RUN",
     "frontend": "LOCAL_HTTPS_SMOKE_UI_WIRED_SOURCE_ONLY_NOT_YET_TESTED",
-    "launcher": "scripts/run-approved-overview-https-windows.ps1"
+    "launcher": "scripts/run-approved-overview-https-windows.ps1",
+    "offlineFrontendTests": "OWNER_REPORTED_PASS_10_OF_10_ON_2026-11-24",
+    "realManagerVerifier": {
+      "status": "PREPARED_NOT_EXECUTED",
+      "cli": "scripts/verify-uranius-overview-live.mjs",
+      "windowsLauncher": "scripts/run-overview-live-read-windows.ps1",
+      "privacy": "Private prompts only; no browser self-signed TLS certificate required; locked to dedicated reader role",
+      "expectedResult": "Both managers independently authenticated and receive read-only validated Overview JSON; empty results until race catalog populated"
+    }
   }
 }
