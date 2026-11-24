@@ -456,3 +456,22 @@ Owner pulled through `0f3ce50`, ran `tests/uraniusFinishTacticsBoundary.test.mjs
 **Decision:** Mark sprint/lead-out experimental **functional proof PASSED**, not calibrated or production-ready. Going from 10th to 1st using experimental +8 sprint and +4 leadout candidate score is a potentially excessive effect. The POC currently applies the finish-order cost on crossing and has no sustained leadout/effort model, tactical location simulation, multiple-order exploitation analysis or real-race benchmark. Keep option default OFF and canonical mode unchanged.
 
 Next source review confirms `flatStageChaseEffort.ts` and `groupCooperationPace.ts` already implement bounded pure helpers for organized chase group speed; avoid inventing duplicate helper formulas. However `runIntegratedTerrainSeparationStage.ts` currently has no direct chase order movement routing, and `applyExecutedTeamOrderEffects.ts` still ignores non-attack tactical effects. Chase development must first distinguish a team ordering riders to pursue a physically leading breakaway from a chase-group effect, establish valid membership and distance, then connect an opt-in movement/energy proposal and validate physical gap closing and catches. Do not artificially create chase groups or force catch results. Sporting GO withheld; official checklist still **49/60**.
+
+
+## 2026-11-24 — Physical chase-order prototype added (not yet runtime-verified)
+
+Following owner-verification that the opt-in sprint+leadout POC passed (10/10 valid classifications, sprinter 10th→1st with identical group time and extra energy cost for sprinter/helper), added the first **default-OFF** real chase-order movement effect, reusing the existing `calculateGroupCooperationPace` rather than inventing another chase mechanic. The option `experimentalChaseOrdersEnabled` is exposed on the calibrated and integrated POC runners and passed only when explicitly true to terrain-aware group movement.
+
+The pure helper `experimentalChasePace.ts` only boosts an **active peloton** when a **physically ahead active breakaway** exists, its lead exceeds 5s using the actual distance/speed, and a correctly affiliated rider in the peloton has an **executed chase order** and >5 energy remaining. Cooperation score is based on existing group size, actual average teamwork, terrain gradient, capped to a maximum of 1.5% before a participation factor (one order earns half, two orders reach the maximum). The increased speed is passed into the **same physical movement proposal** used for actual distance and rider energy. This affects whole-group effort, not individual rider tactical positioning or a guaranteed catch. The current slice does not create chase groups or support sustained realistic drafting, so it is a limited hypothesis.
+
+A fast **one-tick same-seed 10-rider POC** was added: `scripts/uranius-chase-order-poc.ts`, `scripts/run-uranius-chase-order-poc.mjs`, `tests/uraniusChaseOrderBoundary.test.mjs`. It gives one fictional rider a scheduled chase order and another rider a **real** 30s initial physical lead using the existing breakaway creation API, then compares a control vs experimental tick with identical initial state. It checks actual order execution, peloton speed improvement, gap reduction vs control, greater rider energy cost, same roster, valid uncaught breakaway, and **negative control** with the flag on but without a chase order. The launcher fails if comparisons fail. All changes are OFFLINE and no release/production options were enabled.
+
+**Important:** The new code and static tests have **NOT yet been executed on the owner's Windows checkout**. Run:
+
+```bat
+git pull origin main
+node --test tests\uraniusChaseOrderBoundary.test.mjs
+node scripts\run-uranius-chase-order-poc.mjs
+```
+
+If it errors, repair the precise test or model cause without forcing an outcome. If it passes, compare physical gap closing and energy before proceeding to many-tick chase-versus-survival tests. A verified one-tick catch **is not required**; artificially swallowing a breakaway is unacceptable. Sporting realism release gate remains IMPROVE, official checklist 49/60; legacy/golden path unchanged until independent verification.
