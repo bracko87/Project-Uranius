@@ -30,9 +30,9 @@ The current synthetic catalog has **200 riders**; the two Auth-owned synthetic t
 
 ## Proposed limited reader contract (not approved for hosted execution)
 
-A **separate verified server session** can bind the Auth subject, resolve its owned `club_id` and its mapped `team_id` via `club_profiles`, and read **only** a RLS-filtered list of `(rider_id, label, flat, climbing, stamina, resistance)`. This is **synthetic Squad preview only**, not the original `club_roster` API. Never guess the missing original fields. Future strict client output must name its own shape (`syntheticSquadPreview`) and label unknown fields as unavailable.
+A **separate verified server session** can bind the Auth subject, resolve its owned `club_id` via `get_my_club_id()`, and read **only** a RLS-filtered list of `(rider_id, label, flat, climbing, stamina, resistance)`. This is **synthetic Squad preview only**, not the original `club_roster` API. Never guess the missing original fields. Future strict client output must name its own shape (`syntheticSquadPreview`) and label unknown fields as unavailable.
 
-A later reviewed, hash-pinned **isolated-only** schema/ACL migration could grant the seven required rider columns (`rider_id`, `team_id`, `label`, `flat`, `climbing`, `stamina`, `resistance`) with column-level grants; `team_id` is required for the reviewed owner-scoped join, and must not be returned to the browser. The database enforces ownership through the already-existing riders RLS policy. Deny anon, ordinary public clients and writes; no broad table SELECT and no `SECURITY DEFINER` function. Test with disposable PostgreSQL 17 and verified A/B + unknown Auth subject, negative writes and wrong-role guards, then seek separate **explicit owner approval** for exact digest before any hosted change.
+A later reviewed, hash-pinned **isolated-only** schema/ACL migration could grant only five newly required columns (`label`, `flat`, `climbing`, `stamina`, `resistance`) while retaining the existing `rider_id` column grant. **Do not grant `team_id`.** The read SQL has no owner JOIN: the existing owner-bound `riders_read` RLS policy is responsible for filtering the actual rows. The database enforces ownership through the already-existing riders RLS policy. Deny anon, ordinary public clients and writes; no broad table SELECT and no `SECURITY DEFINER` function. Test with disposable PostgreSQL 17 and verified A/B + unknown Auth subject, negative writes and wrong-role guards, then seek separate **explicit owner approval** for exact digest before any hosted change.
 
 ## Current action
 
@@ -51,7 +51,7 @@ git pull origin main
 node --test tests\uraniusSquadPreviewReview.test.mjs
 ```
 
-This is a **review milestone**, not a real Squad frontend feature. The existing login and Overview smoke interface stay unchanged. The current owner-scoped restricted role has `rider_id` SELECT but is missing `team_id, label, flat, climbing, stamina, resistance`; implementing any hosted Squad preview requires a separately approved exact-grant migration and disposable PostgreSQL 17 A/B coverage.
+This is a **review milestone**, not a real Squad frontend feature. The existing login and Overview smoke interface stay unchanged. The current owner-scoped restricted role has `rider_id` SELECT but is missing `label, flat, climbing, stamina, resistance`; `team_id` must remain unavailable; implementing any hosted Squad preview requires a separately approved exact-grant migration and disposable PostgreSQL 17 A/B coverage.
 
 ## Read-only aggregate validation for preview field bounds
 
@@ -66,7 +66,7 @@ All observed values fit the projector's strict 0–100 skill range and 150-chara
 
 The owner reran `node --test tests\\uraniusSquadPreviewReview.test.mjs`: **5/5 PASS, zero failures** after correcting test-only JavaScript regular-expression escaping. This proves the projector contract and SQL static review gates, **not PostgreSQL execution**.
 
-Prepared `013_squad_reader_acl_DISPOSABLE_REVIEW_ONLY.sql`: **rollback-only, NOT APPROVED for hosted execution**. It guards direct `uranius_migrator` session, PostgreSQL 17, 10-entry ledger with the approved 010 candidate digest, RLS on synthetic riders, restricted reader role attributes, absent current reader permissions on `team_id` and `label`, and absence of broad reader write/privileged access. It temporarily grants **exactly six missing rider columns** (`team_id,label,flat,climbing,stamina,resistance`) to the existing restricted reader, retaining pre-existing `rider_id` grant, asserts seven columns are available and full-table reads, anon reads and writes stay denied, then **ROLLBACKs**. It has no new table, function, API access, policy, role, row or ledger writes that survive the transaction. No project-identity bypass and no authorization for live use is implied.
+Prepared `013_squad_reader_acl_DISPOSABLE_REVIEW_ONLY.sql`: **rollback-only, NOT APPROVED for hosted execution**. It guards direct `uranius_migrator` session, PostgreSQL 17, 10-entry ledger with the approved 010 candidate digest, RLS on synthetic riders, restricted reader role attributes, absent current reader permissions on `team_id` and `label`, and absence of broad reader write/privileged access. It temporarily grants **exactly five missing rider columns** (`label,flat,climbing,stamina,resistance`) to the existing restricted reader, retaining pre-existing `rider_id` grant, asserts those six preview columns are available and `team_id` remains unreadable, while anon reads and writes stay denied, then **ROLLBACKs**. It has no new table, function, API access, policy, role, row or ledger writes that survive the transaction. No project-identity bypass and no authorization for live use is implied.
 
 Added `tests/uraniusSquadReaderAclReview.test.mjs` (four source-only checks). These newly committed tests have **not yet been executed** by the owner or against disposable PG17. Next:
 
@@ -93,3 +93,9 @@ node tests\uraniusSquadReaderNativePg17.mjs --disposable-native-pg17 --postgres-
 ```
 
 If this test fails, stop and inspect the exact failed assertion and cleanup report. Do not apply either 013 SQL review file to hosted Uranius. Native test success is the **only** next prerequisite for designing a separate forward-only, owner-approved exact-hash hosted migration.
+
+## Native test failure and security correction — 2026-11-24
+
+The owner's first disposable PostgreSQL 17 run completed all **21** canonical Overview checks and successfully removed the PGDATA. The next Squad check stopped at a **test-only boolean rendering mismatch**: `has_column_privilege(...)::text` returned `false`, not `f`.
+
+Review then found a **more important permission flaw in the initial proposed review-only ACL**: since the synthetic rider table has exactly seven columns, granting six on top of existing `rider_id` would effectively expose every column. PostgreSQL `has_table_privilege(...,'SELECT')` also returns true with any selectable column, so it is not a valid guard for complete-row access. **No hosted grant was made.** The revised proposal grants only five new rider attributes and **never `team_id`**; the query relies on the actual PostgreSQL `riders_read` owner RLS filter instead of a reader-level `team_id` JOIN. The native test now checks `team_id` denial directly and uses correct PostgreSQL boolean text. This corrected design must pass all native PG17 checks before any hosted grant review. Do not run the old ACL source.
