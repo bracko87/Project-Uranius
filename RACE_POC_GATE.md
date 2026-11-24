@@ -773,3 +773,22 @@ node scripts\\run-uranius-long-mixed-tactics-poc.mjs --out long-mixed-local.json
 ```
 
 Output includes `STRONG SPRINTER FACTORIAL` / `FINISH ORDERS`. Next evaluate sprint vs leadout rank and energy effects before deciding if formula needs further sporting calibration. Sporting GO withheld; official checklist **49/60**.
+
+
+## 2026-11-24 — Owner verifies independent +4 leadout and +8 sprint contributions; stale signature assertion repaired
+
+Owner pulled through `9539e5d` and executed the 120km/128-rider factorial experiment. All **12 executable integrity checks passed**; all six simulated race variants classified their full 128-rider fields, the early attack/chase remained intact, the bounded chase did not boost after its intended window, and the four finishing-order conditions produced their expected real finish-candidate scores. Strong rider with sprint 94:
+- Neither: effective sprint 94, ranked 4th, helper final energy 74.62621092087976, sprinter 71.17820473939855.
+- Leadout only: effective 98 (+4), **ranked 1st**, helper energy 73.87621092087976 (**0.75 charged**), sprinter energy unchanged.
+- Sprint only: effective 102 (+8), ranked 1st, helper energy unchanged, sprinter energy 70.17820473939855 (**1.00 charged**).
+- Both: effective 106 (+12), ranked 1st, helper and sprinter both charged respective energy costs. Bonuses additive in *score*, **not additive in rank** once the rider is already first. Not a sporting defect established by this evidence.
+
+Static boundary suite was **6/7 PASS** because an obsolete regex still demanded `function makeInput(strongSprinter:boolean):StageInput`, while the correct implemented function is `function makeInput(strongSprinter:boolean,finishOrders:FinishOrders='both'):StageInput`. This is a stale test expectation, unrelated to runtime mechanics. Updated the assertion to the actual signature, with no runtime/physics modification. The updated static suite has **not yet been owner-run**.
+
+Verify:
+```bat
+git pull origin main
+node --test tests\\uraniusLongMixedTacticsBoundary.test.mjs
+```
+
+The expensive six-race executable factorial was already owner-verified on this code except for its static assertion, and need not be repeated merely to validate a text-matching test change. Next sporting evidence should address varied field skill distribution and finish-position tie-breaks instead of changing bonuses from a single winning configuration. Official 49/60; no production/hosted game/DB changes; sporting GO withheld.
