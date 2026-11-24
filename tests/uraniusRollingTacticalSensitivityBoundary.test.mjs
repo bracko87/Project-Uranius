@@ -31,3 +31,12 @@ test('synthetic attack order matches nullable follower contract of state validat
  assert.match(validator,/order\.maximumFollowers !== null/)
  assert.match(source,/maximumFollowers:null/)
 })
+
+test('tactical trace reads genuine launch speed, movement proposals and reconciliation',()=>{
+ for(const token of ['attackTrace','subsequentAttackTrace',
+  'launchSpeedKmh','appliedFirstMovementSpeedKmh','pelotonFirstMovementSpeedKmh',
+  'gapBeforeReconcileKm','reabsorbedBreakawayGroupIds','ticksFirstAttack'])
+  assert.ok(source.includes(token),token)
+ assert.match(runner,/ATTACK TICK/)
+ assert.match(runner,/LAUNCH /)
+})
