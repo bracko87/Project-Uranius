@@ -31,6 +31,8 @@ export interface RunCalibratedTerrainSeparationStageOptions {
   readonly maximumTickCount?: number
   /** OFFLINE POC ONLY. Defaults to false; never change canonical results. */
   readonly experimentalPreserveBirthTickDroppedGroups?: boolean
+  /** OFFLINE POC ONLY, independent opt-in; default false. */
+  readonly experimentalPreserveRecedingDroppedGroups?: boolean
 }
 
 export interface RunCalibratedTerrainSeparationStageResult
@@ -135,6 +137,8 @@ export function runCalibratedTerrainSeparationStage(
         maximumTickCount,
         experimentalPreserveBirthTickDroppedGroups:
           options.experimentalPreserveBirthTickDroppedGroups ?? false,
+        experimentalPreserveRecedingDroppedGroups:
+          options.experimentalPreserveRecedingDroppedGroups ?? false,
       },
     )
 
