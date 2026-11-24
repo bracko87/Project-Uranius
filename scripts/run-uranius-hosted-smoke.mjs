@@ -14,37 +14,23 @@ const ref = 'sdtsivgtcaoaeoihcwzd'
 const root = new URL('../', import.meta.url)
 const world = new URL('database/synthetic-world/', root)
 
+let startupStage = 'startup-argument-check'
 async function main() {
-  if (process.argv.length !== 3 || process.argv[2] !== '--reviewed-hosted-smoke' || process.env.NODE_TLS_REJECT_UNAUTHORIZED === '0') {
+  if (process.argv.length !== 3 || !['--reviewed-hosted-smoke','--offline-preflight'].includes(process.argv[2]) || process.env.NODE_TLS_REJECT_UNAUTHORIZED === '0') {
     throw new Error('Explicit hosted smoke mode and TLS verification are required.')
   }
   const env = process.env
   if (![env.URANIUS_SMOKE_TLS_CERT, env.URANIUS_SMOKE_TLS_KEY, env.URANIUS_DATABASE_CA_FILE, env.URANIUS_PSQL_PATH].every(Boolean)) {
     throw new Error('Configure the loopback certificate/key, Uranius database CA and trusted psql path.')
   }
+  startupStage = 'local-tls-certificate-validation'
   const cert = await readFile(env.URANIUS_SMOKE_TLS_CERT)
   const key = await readFile(env.URANIUS_SMOKE_TLS_KEY)
   const identity = new X509Certificate(cert)
   if (!identity.checkIP('127.0.0.1') || Date.parse(identity.validFrom) > Date.now() || Date.parse(identity.validTo) <= Date.now()) {
     throw new Error('A current TLS certificate for loopback 127.0.0.1 is required.')
   }
-  const dbPassword = await privatePrompt('Uranius smoke-reader password')
-  const publishable = (await privatePrompt('Uranius publishable API key')).trim()
-  if (!dbPassword || !/^sb_publishable_[A-Za-z0-9_-]+$/.test(publishable)) throw new Error('Expected the reader password and publishable key.')
-  const host = 'db.' + ref + '.supabase.co'
-  const dsn = 'postgresql://uranius_smoke_reader:' + encodeURIComponent(dbPassword) + '@' + host + ':5432/postgres?sslmode=verify-full'
-  assertSandboxTarget('read', {
-    URANIUS_SUPABASE_PROJECT_REF: ref, URANIUS_SUPABASE_URL: 'https://' + ref + '.supabase.co', URANIUS_DATABASE_URL: dsn,
-  })
-  const platform = new Set(['PATH', 'SYSTEMROOT', 'WINDIR', 'TEMP', 'TMP'])
-  const childEnv = Object.fromEntries(Object.entries(env).filter(([name]) => platform.has(name.toUpperCase())))
-  Object.assign(childEnv, {
-    PGHOST: host, PGPORT: '5432', PGDATABASE: 'postgres', PGUSER: 'uranius_smoke_reader',
-    PGPASSWORD: dbPassword, PGSSLMODE: 'verify-full', PGGSSENCMODE: 'disable',
-    PGSSLROOTCERT: env.URANIUS_DATABASE_CA_FILE, PGCONNECT_TIMEOUT: '5',
-    PGOPTIONS: '-c statement_timeout=5000 -c lock_timeout=2000',
-  })
-
+  startupStage = 'read-only-sql-assets'
   const readSql = await readFile(new URL('hosted-club-dashboard-read.sql', world), 'utf8')
   // Opt-in stays disabled until a separately reviewed, RLS-limited clock reader
   // grant is installed. The existing 008 clock intentionally denies this role.
@@ -70,9 +56,12 @@ async function main() {
   const squadSql = env.URANIUS_SQUAD_READ_APPROVED === '1'
     ? await readFile(new URL('hosted-squad-preview-read_REVIEW_ONLY.sql', world), 'utf8')
     : null
+  startupStage = 'local-css-processing'
   const cssPath = fileURLToPath(new URL('src/shadcn.css', root))
   const css = (await postcss([tailwindcss(fileURLToPath(new URL('tailwind.config.js', root)))]).process(await readFile(cssPath, 'utf8'), { from: cssPath })).css
+  startupStage = 'local-background-asset'
   const background = await readFile(new URL('public/assets/uranius-placeholders/background.png', root))
+  startupStage = 'local-react-bundle'
   const bundle = await build({
     absWorkingDir: fileURLToPath(root),
     entryPoints: [fileURLToPath(new URL('hosted-smoke-client.tsx', world))],
@@ -83,6 +72,27 @@ async function main() {
       }))
     } }],
   })
+  console.log('PASS local HTTPS Squad startup preflight: TLS certificate, SQL assets, CSS, background and React bundle.')
+  if (process.argv[2] === '--offline-preflight') return
+  startupStage = 'private-credential-input'
+  const dbPassword = await privatePrompt('Uranius smoke-reader password')
+  const publishable = (await privatePrompt('Uranius publishable API key')).trim()
+  if (!dbPassword || !/^sb_publishable_[A-Za-z0-9_-]+$/.test(publishable)) throw new Error('Expected the reader password and publishable key.')
+  const host = 'db.' + ref + '.supabase.co'
+  const dsn = 'postgresql://uranius_smoke_reader:' + encodeURIComponent(dbPassword) + '@' + host + ':5432/postgres?sslmode=verify-full'
+  assertSandboxTarget('read', {
+    URANIUS_SUPABASE_PROJECT_REF: ref, URANIUS_SUPABASE_URL: 'https://' + ref + '.supabase.co', URANIUS_DATABASE_URL: dsn,
+  })
+  const platform = new Set(['PATH', 'SYSTEMROOT', 'WINDIR', 'TEMP', 'TMP'])
+  const childEnv = Object.fromEntries(Object.entries(env).filter(([name]) => platform.has(name.toUpperCase())))
+  Object.assign(childEnv, {
+    PGHOST: host, PGPORT: '5432', PGDATABASE: 'postgres', PGUSER: 'uranius_smoke_reader',
+    PGPASSWORD: dbPassword, PGSSLMODE: 'verify-full', PGGSSENCMODE: 'disable',
+    PGSSLROOTCERT: env.URANIUS_DATABASE_CA_FILE, PGCONNECT_TIMEOUT: '5',
+    PGOPTIONS: '-c statement_timeout=5000 -c lock_timeout=2000',
+  })
+
+  startupStage = 'local-https-listener'
   const route = createClubDashboardAdapter({
     origin: () => 'https://127.0.0.1:' + server.address().port,
     async verifyLogin(email, password) {
@@ -184,4 +194,4 @@ async function main() {
   })
 }
 
-try { await main() } catch { console.error('Uranius hosted smoke did not start. Check local TLS, terminal and reader settings.'); process.exitCode = 1 }
+try { await main() } catch { console.error('Uranius hosted smoke startup failed at stage: ' + startupStage + '. No credential or secret details are printed.'); process.exitCode = 1 }
