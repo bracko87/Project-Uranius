@@ -31,3 +31,17 @@ test('multi-scenario runner fails closed on missing riders and invalid classific
  assert.match(launcher,/timeout:900000/)
  assert.doesNotMatch(source+launcher,/@supabase|createClient\(|fetch\(|https?:\/\/|service_role/i)
 })
+
+test('realism evidence distinguishes gradient, pressure, drops and official finish time',()=>{
+ assert.match(source,/terrainGradients=course.elevations.slice\(1\)/)
+ assert.match(source,/t.pressureEvaluations/)
+ assert.match(source,/p.hold.status==='cannot_hold'/)
+ assert.match(source,/maxSeparationPressureSeconds/)
+ assert.match(source,/terrainDropsCreated/)
+ assert.match(source,/terrainDropsCaughtSameTick/)
+ assert.match(source,/terrainDropsLaterCaught/)
+ assert.match(source,/finishingTimeUniqueCount/)
+ assert.match(launcher,/uniqueFinishTimes /)
+ assert.match(launcher,/pressureMaxSec /)
+ assert.match(launcher,/terrainDrops /)
+})
