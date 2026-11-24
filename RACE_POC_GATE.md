@@ -629,3 +629,20 @@ node scripts\\run-uranius-mixed-tactics-integration.mjs --out mixed-tactics-loca
 ```
 
 Next evidence gate: isolate the cause of whole-stage final-energy reversal with actual tick counts/energy histories, then run realistic multi-rider long-distance calibration. Official checklist remains **49/60**; sporting GO withheld.
+
+
+## 2026-11-24 — Combined tactical owner rerun PASS; full-stage chase energy attribution instrumented
+
+Owner pulled through `a274c57` and reran the revised combined-race integration. Static assertions **5/5 PASS** and executable correctness gate PASS. All four orders executed and the ten riders received valid classifications in both baseline and established-breakaway scenarios. The established-breakaway chase achieved **8 paired eligible ticks**, actual per-tick pace improvement (**42.3255 km/h** control vs **42.64294125 km/h** experiment at race second 300) and higher actual tick energy (**0.069** vs **0.0695175**). Sprint rank improved from 10th to 2nd for the established-breakaway variant. The original zero-starting-gap attack variant still correctly fails the physical chase eligibility requirement and is reabsorbed.
+
+**Important remaining accounting question:** In that same established-breakaway whole-race A/B the chasing rider ends at **95.23899999999982** energy (control) vs **95.27901999999978** (all-tactics). The experimental rider ends **0.04002** higher despite paying **0.0005175** more energy on eligible movement ticks. These are compatible observations only if movement exposure, stage duration, rider state or other costs differ; the precise cause has not yet been verified. Do not conclude an energy-model bug or realistic physiological calibration from a single final-state scalar.
+
+Added purely observational instrumentation to `scripts/uranius-mixed-tactics-integration.ts` and its CLI, without changing race physics or StageInput: per-rider charged movement tick count, sum of actual `applyMultiGroupEnergy` tick energy costs, last charged second, authoritative finish timestamp, initial/final energy and the residual of (initial-final-summed movement cost). Also logs control-minus-experiment deltas of tick counts, movement costs, finish time and residual costs. New static boundary regression protects the accounting fields. The CLI prints `PURSUER ENERGY ACCOUNTING` and `ENERGY EXPOSURE DELTAS`. This is an explanatory probe, **not yet owner-executed**.
+
+```bat
+git pull origin main
+node --test tests\\uraniusMixedTacticsBoundary.test.mjs
+node scripts\\run-uranius-mixed-tactics-integration.mjs --out mixed-tactics-local.json
+```
+
+Review the new accounting rows to distinguish differing finish duration from cost mismatch. A nonzero residual should be investigated against state semantics rather than rounded away. All options remain default-off, no production/game/database changes, checklist **49/60**, sporting GO withheld.
