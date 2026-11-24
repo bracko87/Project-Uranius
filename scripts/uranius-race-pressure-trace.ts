@@ -5,14 +5,14 @@ import {createInitialState} from '../src/race-engine/simulation/createInitialSta
 import {runCalibratedTerrainSeparationStage} from '../src/race-engine/simulation/runCalibratedTerrainSeparationStage'
 import type {StageInput} from '../src/race-engine/domain/StageInput'
 
-const names=['flat_baseline_24','mountain_baseline_96','mountain_stress_96'] as const
+const names=['flat_baseline_24','mountain_baseline_96','mountain_stress_96','mountain_stress_birth_tick_protected_96'] as const
 function inputFor(scenario:typeof names[number]):StageInput{
  const terrain=scenario==='flat_baseline_24'?'flat':'mountain'
  const size=scenario==='flat_baseline_24'?24:96
  const base=createSyntheticFullFieldStage(terrain,size)
  // The legacy fixture leaves timeTrial/raceIq optional. Calibrated lane needs both.
  const riders=base.riders.map((r,index)=>{
-  const stress=scenario==='mountain_stress_96'&&index%4===0
+  const stress=scenario.startsWith('mountain_stress_')&&index%4===0
   return {...r,attributes:{...r.attributes,
     timeTrial:60+(index*13)%35,
     raceIq:62+(index*17)%31,
@@ -20,14 +20,17 @@ function inputFor(scenario:typeof names[number]):StageInput{
     ...(stress?{flat:38,climbing:25,stamina:40,resistance:35,recovery:40}:{}),
   }}
  })
- const points=scenario==='mountain_stress_96'
+ const points=scenario.startsWith('mountain_stress_')
   ? [100,1000,300,1300].map((elevationMetres,index)=>({kilometre:index*10,elevationMetres}))
   :base.profilePoints
- return {...base,seed:base.seed+'-pressure-probe-'+scenario,riders,profilePoints:points}
+ return {...base,seed:base.seed+'-pressure-probe-'+(scenario.startsWith('mountain_stress_')?'mountain_stress_96':scenario),riders,profilePoints:points}
 }
 function diagnose(scenario:typeof names[number]){
  const input=inputFor(scenario)
- const result=runCalibratedTerrainSeparationStage(createInitialState(input))
+ const experimentalBirthTickProtectionEnabled=scenario==='mountain_stress_birth_tick_protected_96'
+ const result=runCalibratedTerrainSeparationStage(createInitialState(input),{
+  experimentalPreserveBirthTickDroppedGroups:experimentalBirthTickProtectionEnabled,
+ })
  const holds={comfortable:0,under_pressure:0,cannot_hold:0}
  const riderStreaks=new Map<string,number>()
  let minMargin=Infinity,maxDemand=-Infinity,maxSteepGradient=-Infinity
@@ -99,7 +102,7 @@ function diagnose(scenario:typeof names[number]){
  }
  const maxGroups=Math.max(0,...result.replaySnapshots.map(s=>Object.values(s.groups).filter(g=>g.active&&g.riderIds.length>0).length))
  const finishTimes=Object.values(result.finalState.riders).map(r=>r.finishTimeSeconds).filter((v):v is number=>v!==null)
- return {scenario,fieldSize:input.riders.length,terrainSegments:input.profilePoints,completed:result.completed,
+ return {scenario,experimentalBirthTickProtectionEnabled,fieldSize:input.riders.length,terrainSegments:input.profilePoints,completed:result.completed,
   tickCount:result.tickCount,holdEvaluations:holds,minCapabilityMargin:Number.isFinite(minMargin)?Number(minMargin.toFixed(3)):null,
   maxGroupDemand:Number.isFinite(maxDemand)?Number(maxDemand.toFixed(3)):null,
   maxObservedGradientPercent:Number.isFinite(maxSteepGradient)?Number(maxSteepGradient.toFixed(3)):null,
@@ -127,6 +130,6 @@ function diagnose(scenario:typeof names[number]){
 const results=names.map(name=>{
  try{return diagnose(name)}catch(err){return {scenario:name,error:err instanceof Error?err.message:String(err)}}
 })
-process.stdout.write(JSON.stringify({reportVersion:'uranius-pressure-trace-v1',isolated:true,
+process.stdout.write(JSON.stringify({reportVersion:'uranius-pressure-trace-v2',isolated:true,
  note:'Directly read existing calibrated per-tick pressure evaluations. Stress riders/course are fictional and intentionally extreme. Observations do not validate sporting realism.',
  results},null,2)+'\n')
