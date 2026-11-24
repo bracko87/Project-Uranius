@@ -25,7 +25,7 @@ export function calculateExperimentalChaseMultiplier(
   order.executionRaceSecond!==undefined&&order.executionRaceSecond<=state.raceSecond&&
   group.riderIds.includes(order.riderId)&&
   state.riders[order.riderId]?.teamId===order.teamId&&
-  state.riders[order.riderId]?.energy>5)
+  (state.riders[order.riderId]?.energy ?? 0)>5)
  if(chaseRiders.length===0)return 1
  const avgTeamwork=riders.reduce((sum,r)=>sum+r.attributes.teamwork,0)/riders.length
  const cooperation=calculateGroupCooperationPace({
