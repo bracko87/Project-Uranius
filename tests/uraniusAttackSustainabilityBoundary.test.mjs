@@ -37,3 +37,16 @@ test('typescript experimental runner parses before a costly race run',()=>{
  assert.ok(result.code.includes('attackTicks'))
  assert.ok(result.code.includes('sixComplete'))
 })
+
+test('energy audit accounts for actual charged ticks, speed, shelter, and total reserve',()=>{
+ for(const marker of ['riderEnergyTicks','actualEnergyCost','chargedTicks',
+  'chargedSeconds','energyCostPerKm','energyBalanceError','shelterSaved',
+  'firstThreeTicks','finalThreeTicks','attackFollowupTick'])
+  assert.match(fixture,new RegExp(marker))
+ assert.match(fixture,/Math.abs\(s.effortAudit.energyBalanceError\)<0.0001/)
+ assert.match(runner,/ENERGY ACCOUNTING/)
+ assert.match(runner,/activeTickDifference:/)
+ assert.match(runner,/perKmEnergyCostDifference:/)
+ const result=transformSync(fixture,{loader:'ts',format:'esm',target:'node20'})
+ assert.ok(result.code.includes('effortAudit'))
+})
