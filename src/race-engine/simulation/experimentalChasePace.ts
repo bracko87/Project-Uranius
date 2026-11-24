@@ -23,6 +23,9 @@ export function calculateExperimentalChaseMultiplier(
  const chaseRiders=Object.values(state.orders).filter(order=>
   order.type==='chase'&&order.status==='executed'&&
   order.executionRaceSecond!==undefined&&order.executionRaceSecond<=state.raceSecond&&
+  // A scheduled chase is a bounded effort, not a permanent stage-wide buff.
+  // The race's authoritative km marker is the same clock used for eligibility.
+  state.currentKm>=order.eligibleFromKm&&state.currentKm<order.eligibleUntilKm&&
   group.riderIds.includes(order.riderId)&&
   state.riders[order.riderId]?.teamId===order.teamId&&
   (state.riders[order.riderId]?.energy ?? 0)>5)
