@@ -31,3 +31,14 @@ test('both experimental variants retain finish and order invariants with no forc
  assert.match(runner,/Object.values\(report.checks\).some\(value=>value!==true\)/)
  assert.doesNotMatch(fixture+runner,/@supabase|createClient\(|fetch\(|https?:\/\/|service_role/i)
 })
+
+test('long-race diagnostics distinguish valid gaps from actual sustained chase boost and sprint group context',()=>{
+ assert.match(fixture,/calculateExperimentalChaseMultiplier/)
+ assert.match(fixture,/actualChaseBoostTicks:/)
+ assert.match(fixture,/actualChaseBoostTicksAfterExpiry:/)
+ assert.match(fixture,/beyondScheduledOrderWindow:/)
+ assert.match(fixture,/sprinterWithinGroupPosition/)
+ assert.match(fixture,/sprinterFinishGroupSize/)
+ assert.match(runner,/LONG CHASE DURATION/)
+ assert.match(runner,/SPRINT FINISH CONTEXT/)
+})
