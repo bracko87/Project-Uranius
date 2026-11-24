@@ -53,3 +53,14 @@ test('second integrated scenario uses an existing physical breakaway, not a forc
  assert.match(runner,/positiveAppliedSpeedDifference!==true/)
  assert.match(runner,/positiveTickEnergyDifference!==true/)
 })
+
+test('whole-race pursuer energy is attributed to actual movement charges and finish exposure',()=>{
+ assert.match(fixture,/const pursuerEnergyTrace=result.ticks.map/)
+ assert.match(fixture,/t.appliedEnergy.applications.find/)
+ assert.match(fixture,/pursuerChargedTicks/)
+ assert.match(fixture,/pursuerMovementEnergyCost/)
+ assert.match(fixture,/pursuerEnergyAccountingResidual/)
+ assert.match(fixture,/pursuerFinishTimeDifferenceSeconds:/)
+ assert.match(runner,/PURSUER ENERGY ACCOUNTING/)
+ assert.match(runner,/ENERGY EXPOSURE DELTAS/)
+})
