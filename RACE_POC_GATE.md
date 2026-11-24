@@ -825,3 +825,27 @@ node scripts\\run-uranius-course-field-realism.mjs --out course-field-local.json
 ```
 
 The output will provide direct new evidence on whether more demanding terrain and skill diversity produce sensible catch/gap behavior, instead of repeatedly exercising the same sprint bonus. **No production, Supabase, paid staging, canonical fixture or default engine change.** Official checklist **49/60**, sporting GO still withheld.
+
+
+## 2026-11-24 — Owner runs six terrain×ability simulations; major sporting realism warning
+
+Owner pulled through `df12326`. The new six-race offline matrix completed **3/3 static boundary tests and 5/5 technical integrity checks**. Each 120km flat/rolling and 160km mountain scenario finished 128/128 riders, exactly one genuinely issued attack, no synthetic initial attack gap, no missing riders or invalid rankings.
+
+**Sporting evidence is worrying, not a pass:**
+- In **all six scenarios**, official finishing-time spread was **0 seconds**, despite heterogeneous climbing/flat/rider sprint attributes.
+- All six live attacks generated only **two physical positive-gap ticks** and were caught; their peak gaps were only around **0.0333–0.0364km** (33–36m).
+- Winner averages: flat varied **41.1532km/h**, rolling varied **40.7802km/h**, mountain varied **39.7989km/h**. Uniform groups were slightly faster (~41.76, 41.39, 40.38km/h).
+- Attacks and group membership are demonstrably functional at short time scales. These results do **not** prove real cycling race outcomes or stage-dependent selection. The mountain profile has ten-kilometre elevation intervals and is quite gentle in effective grade despite its nominal name; gradient must be quantified before claiming elite mountain-grade selection.
+- Zero finishing spread may be a fully intact peloton and insufficient pressure to split, rather than a bug in finish-time interpolation. We must trace the engine's **`pressureEvaluations`**, rolling inability-to-hold durations and actual dropped-wave transitions before modifying catch rules or fabricating outcome gaps.
+
+**Observational diagnosis committed (not yet owner-executed):** The existing six-race POC now reports actual maximum segment uphill/downhill percent grade from route points; number of rider×tick evaluations with `hold.status==='cannot_hold'`, unique riders experiencing it, maximum accumulated separation-pressure seconds; number of actual terrain-drop group creations and newborn same-tick or later catches; count of unique official finishing times and final rider energy range. These values come from the real calibrated integrated tick traces and do not alter rider scoring, group movement, course, default options or any race results. Static boundary regression guards the added instrumentation.
+
+Owner validation (diagnostic run is needed; unlike last factorial, this collects new substantive evidence):
+
+```bat
+git pull origin main
+node --test tests\\uraniusCourseFieldRealismBoundary.test.mjs
+node scripts\\run-uranius-course-field-realism.mjs --out course-field-local.json
+```
+
+If inability-to-hold pressure stays zero on the mountain route, the next separate hypothesis should test *real* sustained 8%+ gradients with explicit severity flag and held-out rider field, before changing any default split thresholds. If positive pressure accumulates but drops are eliminated, investigate the exact eligibility and reconciliation stage. No default/core/production change; official project checklist remains **49/60**, sporting GO withheld.
