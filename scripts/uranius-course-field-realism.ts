@@ -123,7 +123,7 @@ function run(course:typeof profiles[number],distribution:Distribution){
    caught:tick.reconciledBreakaways.reabsorbedBreakawayGroupIds.includes(
     attack.breakawayGroupId),
    remainsActive:!!tick.state.groups[attack.breakawayGroupId]?.active}
- }):[]:[]
+ }):[]
  const terrainDropAudit=result.ticks.flatMap(tick=>tick.transitions.filter(
   transition=>transition.transitionKind==='created').map(transition=>{
   const dropped=tick.reconciledBreakaways.previousState.groups[transition.targetGroupId]
