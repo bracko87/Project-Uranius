@@ -67,3 +67,12 @@ test('018 SHA-256 available for future review but does not imply approval',()=>{
  assert.match(digest,/^[a-f0-9]{64}$/)
  assert.ok(sql.length>5000)
 })
+
+test('018 offline reviewer has no install path or database transport',()=>{
+ const reviewer=readFileSync(new URL('../scripts/review-uranius-rider-018.mjs',import.meta.url),'utf8')
+ assert.match(reviewer,/--review/)
+ assert.match(reviewer,/createHash\('sha256'\)/)
+ assert.match(reviewer,/NOT APPROVED, NOT INSTALLED/)
+ assert.doesNotMatch(reviewer,/\b(?:spawnSync|execFileSync|createConnection|fetch\()\b/)
+ assert.doesNotMatch(reviewer,/--apply|--install|execute_sql/)
+})
