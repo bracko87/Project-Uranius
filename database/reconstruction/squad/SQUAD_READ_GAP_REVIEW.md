@@ -52,3 +52,12 @@ node --test tests\uraniusSquadPreviewReview.test.mjs
 ```
 
 This is a **review milestone**, not a real Squad frontend feature. The existing login and Overview smoke interface stay unchanged. The current owner-scoped restricted role has `rider_id` SELECT but is missing `team_id, label, flat, climbing, stamina, resistance`; implementing any hosted Squad preview requires a separately approved exact-grant migration and disposable PostgreSQL 17 A/B coverage.
+
+## Read-only aggregate validation for preview field bounds
+
+A hosted `BEGIN READ ONLY` aggregate check (no rider identities or rows exported) confirmed:
+- 200 catalog riders, no duplicate `rider_id`, longest synthetic label 17 characters.
+- `flat` and `climbing`: min 50 / max 95.
+- `stamina` and `resistance`: min 55 / max 95.
+
+All observed values fit the projector's strict 0–100 skill range and 150-character label maximum. These aggregates validate the **current synthetic catalog only**, not the legacy original Squad attribute scale or broader gameplay rules.
