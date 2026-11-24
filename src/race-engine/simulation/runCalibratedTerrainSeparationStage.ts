@@ -29,6 +29,8 @@ import {
 
 export interface RunCalibratedTerrainSeparationStageOptions {
   readonly maximumTickCount?: number
+  /** OFFLINE POC ONLY. Defaults to false; never change canonical results. */
+  readonly experimentalPreserveBirthTickDroppedGroups?: boolean
 }
 
 export interface RunCalibratedTerrainSeparationStageResult
@@ -131,6 +133,8 @@ export function runCalibratedTerrainSeparationStage(
           true,
 
         maximumTickCount,
+        experimentalPreserveBirthTickDroppedGroups:
+          options.experimentalPreserveBirthTickDroppedGroups ?? false,
       },
     )
 
