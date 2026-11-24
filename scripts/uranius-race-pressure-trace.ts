@@ -101,7 +101,36 @@ function diagnose(scenario:typeof names[number]){
   }
  }
  const maxGroups=Math.max(0,...result.replaySnapshots.map(s=>Object.values(s.groups).filter(g=>g.active&&g.riderIds.length>0).length))
- const finishTimes=Object.values(result.finalState.riders).map(r=>r.finishTimeSeconds).filter((v):v is number=>v!==null)
+ const finalRiders=Object.values(result.finalState.riders)
+ const expectedRiderIds=new Set(input.riders.map(r=>r.riderId))
+ const finalRiderIds=new Set(finalRiders.map(r=>r.riderId))
+ const finalRosterExact=finalRiderIds.size===expectedRiderIds.size &&
+  finalRiders.length===expectedRiderIds.size &&
+  [...expectedRiderIds].every(id=>finalRiderIds.has(id))
+ const finishers=finalRiders.filter(r=>r.finished&&r.finishTimeSeconds!==null)
+ const finalRankValues=finishers.map(r=>r.finishPosition)
+ const uniqueNonNullRanks=finalRankValues.length===finishers.length &&
+  finalRankValues.every(rank=>rank!==null) &&
+  new Set(finalRankValues).size===finalRankValues.length
+ const snapshotConservationFailures:number[]=[]
+ let snapshotsWithMoreThanOneGroup=0
+ let peakGapBetweenActiveGroupsKm=0
+ for(const snapshot of result.replaySnapshots){
+  const activeGroups=Object.values(snapshot.groups).filter(g=>g.active&&g.riderIds.length>0)
+  if(activeGroups.length>=2){
+   snapshotsWithMoreThanOneGroup++
+   const distances=activeGroups.map(g=>g.distanceKm)
+   peakGapBetweenActiveGroupsKm=Math.max(peakGapBetweenActiveGroupsKm,Math.max(...distances)-Math.min(...distances))
+  }
+  const activeRiderIds=activeGroups.flatMap(g=>g.riderIds)
+  const uniqueActive=new Set(activeRiderIds)
+  // Finished participants may move out of active groups; duplicates and
+  // foreign riders are always invalid even after riders finish.
+  if(uniqueActive.size!==activeRiderIds.length ||
+     activeRiderIds.some(id=>!expectedRiderIds.has(id)))
+   snapshotConservationFailures.push(snapshot.raceSecond)
+ }
+ const finishTimes=finishers.map(r=>r.finishTimeSeconds as number)
  return {scenario,experimentalBirthTickProtectionEnabled,fieldSize:input.riders.length,terrainSegments:input.profilePoints,completed:result.completed,
   tickCount:result.tickCount,holdEvaluations:holds,minCapabilityMargin:Number.isFinite(minMargin)?Number(minMargin.toFixed(3)):null,
   maxGroupDemand:Number.isFinite(maxDemand)?Number(maxDemand.toFixed(3)):null,
@@ -115,6 +144,9 @@ function diagnose(scenario:typeof names[number]){
   firstTransitionSamples:transitionSamples,
   transitionTypes:result.transitions.reduce((a,t)=>({...a,[t.transitionKind]:(a[t.transitionKind]??0)+1}),{} as Record<string,number>),
   maxActiveGroups:maxGroups,
+  finalRosterExact,finishers:finishers.length,uniqueNonNullRanks,
+  snapshotConservationFailures,snapshotsWithMoreThanOneGroup,
+  peakGapBetweenActiveGroupsKm:Number(peakGapBetweenActiveGroupsKm.toFixed(6)),
   finishSpreadSeconds:finishTimes.length?Math.max(...finishTimes)-Math.min(...finishTimes):null,
   sampleCount:samples.length,traceSamples:samples.slice(0,40),
   signal:result.transitions.length>0&&sameTickTransitionReabsorptions===result.transitions.length
