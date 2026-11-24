@@ -27,3 +27,10 @@ test('A/B exercises real executed final 3km sprint and leadout at identical seed
  assert.match(fixture,/experimentalFinishTacticsEnabled:enabled/)
  assert.match(fixture,/selectedOfficialTimeUnchanged/)
 })
+
+test('both synthetic orders include serializable metadata required by canonical hashing',()=>{
+ const matches=fixture.match(/metadata:\{\}/g)??[]
+ assert.equal(matches.length,2,'both sprint and lead-out orders require metadata:{}')
+ const initialization=readFileSync(new URL('../src/race-engine/simulation/createInitialState.ts',import.meta.url),'utf8')
+ assert.match(initialization,/metadata:\s*order\.metadata/)
+})
