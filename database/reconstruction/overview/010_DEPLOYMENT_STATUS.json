@@ -24,7 +24,7 @@
   "originalProPelotonProductionChanged": false,
   "safeLauncher": "scripts/run-approved-overview-windows.ps1",
   "safeLauncherCommit": "601ff9c9dba51eab1e6c1860d72437cbcfffc797",
-  "nextAction": "Have owner sign out Manager A and sign in Manager B on local HTTPS smoke; verify Team 2 and both race schedule empty states, then stop local server and remove loopback cert from current-user trust store.",
+  "nextAction": "Close localhost smoke server with Ctrl+C, remove exact short-lived loopback cert from CurrentUser trust with -RemoveTrust; proceed to distinct next Uranius reconstruction work item only after scope selection.",
   "appliedDate": "2026-11-24",
   "invocation": "Owner Windows secure launcher using direct TLS uranius_migrator password; owner terminal confirmed atomic transaction postflight passed.",
   "postflight": {
@@ -52,8 +52,8 @@
     "seasonOnePausedClockRows": 1
   },
   "unverified": [
-    "Full local HTTPS browser UI end-to-end visual verification",
-    "Original full Overview application parity"
+    "Original full Overview application parity",
+    "Manual browser negative tests for cookie replay / cross-origin (automated endpoint tests previously passed)"
   ],
   "securityAdvisors": {
     "checkedAt": "2026-11-24T08:38:08Z",
@@ -127,12 +127,15 @@
       "hostedRowsInserted": 0
     },
     "browserAcceptance": {
-      "status": "MANAGER_A_VISUAL_PASS_MANAGER_B_PENDING",
+      "status": "MANAGER_A_AND_B_VISUAL_PASS",
       "date": "2026-11-24",
-      "managerA": "User screenshot shows https://127.0.0.1 loopback Overview; Fixture Team 1, 10 riders, 10000 credits, 3 shared calendar entries, game date 2000-01-01, season 1 paused, upcoming and today sections correctly empty",
-      "managerB": "PENDING_BROWSER_SCREENSHOT_OR_OWNER_CONFIRMATION",
-      "securityNegativePaths": "NOT_YET_BROWSER_VERIFIED",
-      "scope": "Limited HTTPS smoke dashboard, not full original Overview"
+      "managerA": "User screenshot: local HTTPS Fixture Team 1; 10 riders, 10000 credits, 3 shared entries, season 1 and 2000-01-01 paused, valid empty upcoming and today schedules",
+      "managerB": "User screenshot: local HTTPS Fixture Team 2; 10 riders, 10000 credits, 3 shared entries, season 1 and 2000-01-01 paused, valid empty upcoming and today schedules",
+      "scope": "Limited localhost HTTPS dashboard; complete original Overview reconstruction not claimed",
+      "unverifiedNegativeBrowserPaths": [
+        "replay invalidated logout cookie in browser",
+        "cross-origin rejection browser request"
+      ]
     }
   }
 }
