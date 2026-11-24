@@ -33,6 +33,15 @@ try{
   'winnerKmH '+r.winnerAverageKmh,'spreadSeconds '+r.finishSpreadSeconds,
   'attackEvents '+r.attackEvents,'attackGapTicks '+r.attackPositiveGapTicks,
   'attackPeakGapKm '+r.attackPeakGapKm,'caught '+r.attackCaught,
+  'terrainUphillMax '+r.profileMaxUphillGradientPercent+'%',
+  'cannotHold '+r.cannotHoldEvaluationCount+
+  ' ('+r.cannotHoldDistinctRiders+' riders)',
+  'pressureMaxSec '+r.maxSeparationPressureSeconds,
+  'terrainDrops '+r.terrainDropsCreated+
+  ' sameTickCaught '+r.terrainDropsCaughtSameTick+
+  ' laterCaught '+r.terrainDropsLaterCaught,
+  'uniqueFinishTimes '+r.finishingTimeUniqueCount,
+  'energyRange '+JSON.stringify(r.riderEnergyRange),
   'catchSecond '+r.attackCatchSecond,
   'peakGroups '+r.activeGroupPeak,
   'winnerAttributes '+JSON.stringify(r.winnerAttributes),
