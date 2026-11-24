@@ -53,3 +53,16 @@ test('steep climbing route actually challenges the >8 percent severity boundary'
  assert.match(source,/eightScenarios:scenarios.length===8/)
  assert.match(launcher,/EIGHT 128-RIDER RACES/)
 })
+
+test('steep stage traces actual attack velocity and dropped group finish fate',()=>{
+ assert.match(source,/attackLaunchAudit=/)
+ assert.match(source,/sourceGapKm:/)
+ assert.match(source,/attackAppliedSpeedKmh:/)
+ assert.match(source,/pelotonAppliedSpeedKmh:/)
+ assert.match(source,/gapBeforeCatchKm:/)
+ assert.match(source,/terrainDropAudit=/)
+ assert.match(source,/finalRiderFinishSeconds:/)
+ assert.match(source,/pressureAtPostTick:/)
+ assert.match(launcher,/STEEP ATTACK LAUNCH/)
+ assert.match(launcher,/STEEP TERRAIN DROP FATE/)
+})
