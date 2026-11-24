@@ -23,3 +23,13 @@ test('Windows HTTPS launcher stops at offline preflight before password prompts'
  assert.ok(pre>0 && live>pre)
  assert.match(launcher,/No passwords requested/)
 })
+
+test('credential input distinguishes empty password, empty key, invalid key shape and restricted target without exposing either secret',()=>{
+ assert.match(src,/startupStage = 'missing-reader-password'/)
+ assert.match(src,/startupStage = 'publishable-key-input'/)
+ assert.match(src,/startupStage = 'missing-publishable-key'/)
+ assert.match(src,/startupStage = 'invalid-publishable-key-format'/)
+ assert.match(src,/startupStage = 'restricted-reader-target-validation'/)
+ assert.match(src,/assertSandboxTarget\('read'/)
+ assert.doesNotMatch(src,/console\.log\(dbPassword\)|console\.log\(publishable\)/)
+})
