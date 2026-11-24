@@ -688,3 +688,26 @@ node scripts\\run-uranius-long-mixed-tactics-poc.mjs --out long-mixed-local.json
 ```
 
 Decide whether tactical chase effects should expire when the scheduled eligibility window ends based on the measured active ticks. No mechanics adjustment or extra physical-energy charge without sporting calibration evidence.
+
+
+## 2026-11-24 — Chase-order duration defect discovered in 120km/128-rider owner test; experimental lifetime bounded
+
+Owner reran the 120km 128-rider four-order POC through `41018fd`. Static boundary tests **4/4 PASS** and all five runtime integrity checks true. The new duration diagnostic exposed a real **persistent experimental chase effect beyond the scheduled km window**:
+- Executed chase order has `eligibleFromKm:5, eligibleUntilKm:8`.
+- The diagnostic calculated bonus eligibility over **340 ticks in OFF mode** (329 beyond the order window), and **207 ticks in ON mode** (196 beyond the window). Last potentially boosted breakaway chase position reached **119.6219km OFF** / **74.2306km ON**.
+- **Correction to interpretation:** The OFF-mode diagnostic directly called the pure multiplier helper despite the engine's experiment flag being OFF; thus 340 was only a *hypothetical bonus* and no actual boost happened in that control race. The ON-mode calculation exposed actual long-lived behavior. Official classifications still valid: 128/128 finishers; sprinter 128th OFF, 96th ON; all four orders executed. Sprint rider's attribute values (sprint 49, acceleration 50) and reported relative group place 96/128 show that a 32-place improvement from an unusually weak sprinter should not itself be taken as sprint-balance failure. Any deeper sporting conclusion still needs controlled skill/context analysis.
+- The proximate code cause: `calculateExperimentalChaseMultiplier` only checked `order.status==='executed'` and execution time, not the order distance window. As an executed order remains executed, the physical boost could persist after kilometre 8.
+
+**Experimental-only code repair committed, NOT yet runtime-verified:** In `src/race-engine/simulation/experimentalChasePace.ts`, require the authoritative `state.currentKm` to lie in `[order.eligibleFromKm, order.eligibleUntilKm)` for that executed chase order to confer pace. This uses the same authoritative stage-km marker as the order's eligibility clock, without deleting the executed order or changing its event lifecycle. All flags remain default OFF; no canonical engine or production path changed.
+
+The long-stage diagnostic now counts *applied* boost ticks only when `enabled=true`. The executable gate refuses an OFF-mode boost, zero actual experiment boost ticks, or any experiment boost after the order's km8 end. Both chase boundary and long-stage static assertions were updated. The earlier isolated chase POCs schedule through km10 and are expected to remain valid, but must be rerun to confirm.
+
+**Required owner validation:**
+```bat
+git pull origin main
+node --test tests\\uraniusChaseOrderBoundary.test.mjs tests\\uraniusLongMixedTacticsBoundary.test.mjs
+node scripts\\run-uranius-chase-order-poc.mjs
+node scripts\\run-uranius-long-mixed-tactics-poc.mjs --out long-mixed-local.json
+```
+
+Interpret the expected new diagnostics as **zero control boost ticks and zero boost ticks after order expiry**, with at least one experiment chase-boost tick inside the window. New outcome rankings and finish times may change legitimately because a long-lived experimental pace buff was removed. A **strictly successful runtime** is required before marking the defect repaired. Check sprint group context again; sporting approval remains withheld, official checklist **49/60**, no hosted production work.
