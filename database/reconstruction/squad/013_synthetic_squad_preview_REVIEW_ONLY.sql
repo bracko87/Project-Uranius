@@ -27,21 +27,16 @@ BEGIN
 END
 $squad_owner_guard$;
 
-WITH owned_team AS (
- SELECT cp.team_id,cp.club_id
- FROM uranius_game.club_profiles cp
- WHERE cp.club_id=uranius_game.get_my_club_id()
-),
-owned_riders AS (
+WITH owned_riders AS (
  SELECT r.rider_id,r.label,r.flat,r.climbing,r.stamina,r.resistance
  FROM uranius_catalog.riders r
- JOIN owned_team own ON own.team_id=r.team_id
+ -- Existing FORCE-checked owner RLS must filter team_id invisibly to reader.
  ORDER BY r.rider_id
  LIMIT 100
 )
 SELECT jsonb_build_object(
  'kind','syntheticSquadPreview',
- 'clubId',(SELECT club_id::text FROM owned_team),
+ 'clubId',uranius_game.get_my_club_id()::text,
  'riders',coalesce((SELECT jsonb_agg(jsonb_build_object(
    'syntheticRiderId',rider_id,
    'label',label,
