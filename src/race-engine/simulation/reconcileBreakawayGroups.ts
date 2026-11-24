@@ -310,6 +310,9 @@ export function reconcileBreakawayGroups(
     /** POC ONLY: preserve a dropped group physically behind and slower than the peloton;
      * rejoin remains eligible once the distance closes or the group catches up. */
     readonly experimentalPreserveRecedingDroppedGroups?: boolean
+    /** OFFLINE OPT-IN: a trailing attack group cannot teleport to a peloton
+     * farther than the physical 5-second catch radius ahead of it. */
+    readonly experimentalPreserveTrailingAttackGroups?: boolean
   } = {},
 ): ReconcileBreakawayGroupsResult {
   validateSimulationState(
@@ -456,6 +459,18 @@ export function reconcileBreakawayGroups(
             group.groupType === 'dropped' &&
             group.distanceKm < peloton.distanceKm &&
             group.speedKmh < peloton.speedKmh
+          ) {
+            return false
+          }
+          // A rider attacking from a genuinely dropped group can still be
+          // behind the leading peloton. Movement must close that deficit;
+          // an order alone cannot teleport the rider into the faster group.
+          // Keep the historical rule when this offline experiment is OFF.
+          if (
+            options.experimentalPreserveTrailingAttackGroups === true &&
+            group.groupType === 'breakaway' &&
+            group.distanceKm < peloton.distanceKm -
+              peloton.speedKmh * (PELOTON_REABSORPTION_WINDOW_SECONDS / 3600)
           ) {
             return false
           }
