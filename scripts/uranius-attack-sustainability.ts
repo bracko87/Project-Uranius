@@ -86,6 +86,47 @@ function evaluate(strength:Strength,timing:Timing){
  const catchTick=trace.find(t=>t.caught)
  const first=trace[0]
  const last=trace.at(-1)
+ // Audit actual accounting rather than inferring effort from final energy.
+ // Only count ticks where this rider is still racing; a winner legitimately
+ // stops expending stage energy earlier than the no-attack peloton.
+ const riderEnergyTicks=result.ticks.flatMap(tick=>{
+  const applied=tick.appliedEnergy.applications.find(
+   item=>item.riderId===input.riders[0].riderId)
+  return applied?[{
+   second:tick.state.raceSecond,groupId:applied.groupId,
+   speedKmh:applied.appliedSpeedKmh,
+   gradientPercent:applied.gradientPercent,
+   energyCost:applied.energyCost,
+   energyCostBeforeShelter:applied.energyCostBeforeShelter??null,
+   shelterEnergySaved:applied.shelterEnergySaved??0,
+   shelterMultiplier:applied.shelterMultiplier??null,
+  }]:[]
+ })
+ const sum=(values:readonly number[])=>values.reduce((total,value)=>total+value,0)
+ const actualEnergyCost=sum(riderEnergyTicks.map(t=>t.energyCost))
+ const unshelteredCost=sum(riderEnergyTicks.map(t=>t.energyCostBeforeShelter??t.energyCost))
+ const shelterSaved=sum(riderEnergyTicks.map(t=>t.shelterEnergySaved))
+ const effortAudit={
+  chargedTicks:riderEnergyTicks.length,
+  chargedSeconds:riderEnergyTicks.length*input.settings.tickSeconds,
+  finalRecordedRaceSeconds:selected.finishTimeSeconds,
+  actualEnergyCost,
+  initialEnergy:result.initialState.riders[input.riders[0].riderId].energy,
+  energyBalanceError:
+   result.initialState.riders[input.riders[0].riderId].energy-
+   actualEnergyCost-selected.energy,
+  energyCostPerKm:actualEnergyCost/input.distanceKm,
+  unshelteredCost,shelterSaved,
+  shelterAppliedTicks:riderEnergyTicks.filter(t=>t.shelterMultiplier!==null).length,
+  meanAppliedSpeedKmh:riderEnergyTicks.length?
+   sum(riderEnergyTicks.map(t=>t.speedKmh))/riderEnergyTicks.length:null,
+  firstThreeTicks:riderEnergyTicks.slice(0,3),
+  finalThreeTicks:riderEnergyTicks.slice(-3),
+  attackLaunchTick:launch?
+   riderEnergyTicks.find(t=>t.second===launch.second)??null:null,
+  attackFollowupTick:launch?
+   riderEnergyTicks.find(t=>t.second===launch.second+input.settings.tickSeconds)??null:null,
+ }
  return {strength,timing,completed:result.completed,
   all128Finish:final.filter(r=>r.finished&&Number.isFinite(r.finishTimeSeconds)).length===field,
   positionsUnique:ranks.every(r=>Number.isInteger(r)&&r!==null&&r>=1&&r<=field)&&new Set(ranks).size===field,
@@ -108,6 +149,7 @@ function evaluate(strength:Strength,timing:Timing){
   selectedRank:selected.finishPosition,
   selectedFinishSeconds:selected.finishTimeSeconds,
   selectedFinalEnergy:selected.energy,
+  effortAudit,
   selectedAttributes:input.riders[0].attributes,
   stageFinishSpreadSeconds:Math.max(...times as number[])-Math.min(...times as number[]),
   digest:createHash('sha256').update(JSON.stringify(
@@ -129,6 +171,10 @@ const checks={
  noFabricatedBaseline:scenarios.filter(s=>s.timing==='baseline').every(s=>
   'attackEffects' in s&&s.attackEffects===0),
  allScheduledOrdersExecuted:scenarios.every(s=>'executed' in s&&s.executed),
+ energyAccountingExact:scenarios.every(s=>'effortAudit' in s&&
+  Math.abs(s.effortAudit.energyBalanceError)<0.0001&&
+  s.effortAudit.chargedTicks>0&&s.effortAudit.actualEnergyCost>=0),
+
 }
 process.stdout.write(JSON.stringify({reportVersion:'uranius-attack-sustainability-v1',
  scope:'OFFLINE deterministic 120km 128 rider no-attack vs early vs late for original and strengthened single rider',
