@@ -13,10 +13,16 @@ const order={orderId:'pursuit-1',teamId:actor.teamId,riderId:actor.riderId,
 const input:StageInput={...syntheticTenRiderStage,seed:'chase-one-tick-same-seed',
  orders:[order],riders:syntheticTenRiderStage.riders.map(r=>({
  ...r,attributes:{...r.attributes,timeTrial:72,raceIq:70}}))}
-const baseline=createBreakawayGroup({
- state:createInitialState(input),sourceGroupId:'peloton',
- riderIds:[escape.riderId],speedKmh:38,initialGapSeconds:30,
-}).state
+function createPhysicalBreakaway(stageInput:StageInput){
+ const initial=createInitialState(stageInput)
+ const pelotons=Object.values(initial.groups).filter(g=>g.active&&g.groupType==='peloton')
+ if(pelotons.length!==1)throw Error('Expected exactly one initial active peloton')
+ return createBreakawayGroup({
+  state:initial,sourceGroupId:pelotons[0].groupId,
+  riderIds:[escape.riderId],speedKmh:38,initialGapSeconds:30,
+ }).state
+}
+const baseline=createPhysicalBreakaway(input)
 function run(enabled:boolean,state=baseline){
  const tick=simulateIntegratedTerrainSeparationTick(state,{
   experimentalChaseOrdersEnabled:enabled,
@@ -34,11 +40,7 @@ function run(enabled:boolean,state=baseline){
 }
 const control=run(false)
 const experiment=run(true)
-const noOrderState=createInitialState({...input,orders:[]})
-const noOrderBreakaway=createBreakawayGroup({
- state:noOrderState,sourceGroupId:'peloton',riderIds:[escape.riderId],
- speedKmh:38,initialGapSeconds:30,
-}).state
+const noOrderBreakaway=createPhysicalBreakaway({...input,orders:[]})
 const noOrder=simulateIntegratedTerrainSeparationTick(noOrderBreakaway,{
  experimentalChaseOrdersEnabled:true,
 })
