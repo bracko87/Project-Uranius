@@ -447,3 +447,12 @@ node scripts\run-uranius-finish-tactics-poc.mjs
 ```
 
 Once the POC successfully executes, verify that rank improves without artificial group-time separation, energy is charged to both the sprinter and the leadout rider, and all ten finish exactly once. If not, diagnose the next precise problem rather than forcing success. Sporting GO withheld, checklist 49/60.
+
+
+## 2026-11-24 — Owner confirms experimental sprint and lead-out runtime PASS
+
+Owner pulled through `0f3ce50`, ran `tests/uraniusFinishTacticsBoundary.test.mjs`: **4/4 PASS**, then the 10km/10-rider real executable comparison. Both same-seed, same-orders races finished and classified all ten riders. Both `leadout-a` and `sprint-a` transitioned to `executed`. With the experiment disabled, selected rider was **10th** with 902.491357259s group time and energy 97.39386999999995, teammate support energy 97.39386999999995. With `experimentalFinishTacticsEnabled`, selected rider was **1st** with exactly the **same group finishing time**, energy 96.39386999999995 (1 extra unit consumed) and helper energy 96.64386999999995 (0.75 extra consumed). Report confirms valid classification, both actual executed orders, improved rank and no fabricated time gap.
+
+**Decision:** Mark sprint/lead-out experimental **functional proof PASSED**, not calibrated or production-ready. Going from 10th to 1st using experimental +8 sprint and +4 leadout candidate score is a potentially excessive effect. The POC currently applies the finish-order cost on crossing and has no sustained leadout/effort model, tactical location simulation, multiple-order exploitation analysis or real-race benchmark. Keep option default OFF and canonical mode unchanged.
+
+Next source review confirms `flatStageChaseEffort.ts` and `groupCooperationPace.ts` already implement bounded pure helpers for organized chase group speed; avoid inventing duplicate helper formulas. However `runIntegratedTerrainSeparationStage.ts` currently has no direct chase order movement routing, and `applyExecutedTeamOrderEffects.ts` still ignores non-attack tactical effects. Chase development must first distinguish a team ordering riders to pursue a physically leading breakaway from a chase-group effect, establish valid membership and distance, then connect an opt-in movement/energy proposal and validate physical gap closing and catches. Do not artificially create chase groups or force catch results. Sporting GO withheld; official checklist still **49/60**.
