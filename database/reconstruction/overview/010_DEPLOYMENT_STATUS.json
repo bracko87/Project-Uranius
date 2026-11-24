@@ -22,5 +22,8 @@
   },
   "reason": "The connected Supabase SQL executor authenticates as postgres; approved migration requires session_user=current_user=uranius_migrator. Existing postgres membership in migrator is ADMIN only (SET FALSE). Changing the candidate or bypassing role checks would not be the exact approved package.",
   "safePath": "Run already committed scripts/apply-uranius-overview.mjs with direct uranius_migrator credentials, verified TLS root CA, and approved manifest digest from a trusted local shell. Do not paste credentials into chat. Then re-run read-only hosted postflight.",
-  "originalProPelotonProductionChanged": false
+  "originalProPelotonProductionChanged": false,
+  "safeLauncher": "scripts/run-approved-overview-windows.ps1",
+  "safeLauncherCommit": "601ff9c9dba51eab1e6c1860d72437cbcfffc797",
+  "nextAction": "Use direct uranius_migrator login with trusted Supabase root CA and the exact approved manifest SHA; never paste database passwords in chat. Postflight read-only verification after successful guarded installation."
 }
