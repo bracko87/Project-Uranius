@@ -11,7 +11,7 @@ test('long stage scenarios use 120km / 128 riders and 160km / 160 riders',()=>{
  assert.match(source,/profilePoints:course\.elevations\.map/)
 })
 test('default-off and explicit opt-in use the same StageInput for each pair',()=>{
- assert.match(source,/experiment==='birth_tick_protected'/)
+ assert.match(source,/experimentalPreserveBirthTickDroppedGroups:experiment!=='default_off'/)
  assert.match(source,/for\(const experiment of \['default_off','birth_tick_protected','receding_drop_protected'\]/)
  assert.match(source,/makeInput\(course,seed\)/)
  assert.doesNotMatch(source,/Math\.random\(/)
@@ -53,4 +53,15 @@ test('new receding-drop comparison is explicitly opted in, leaving existing mode
  assert.match(source,/experimentalPreserveRecedingDroppedGroups:experiment==='receding_drop_protected'/)
  assert.match(source,/experimentalPreserveBirthTickDroppedGroups:experiment!=='default_off'/)
  assert.match(launcher,/report\.results\.length!==12/)
+})
+
+test('physical receding safeguard is confined to explicit experimental options',()=>{
+ const reconcile=readFileSync(new URL('../src/race-engine/simulation/reconcileBreakawayGroups.ts',import.meta.url),'utf8')
+ const integrated=readFileSync(new URL('../src/race-engine/simulation/runIntegratedTerrainSeparationStage.ts',import.meta.url),'utf8')
+ const calibrated=readFileSync(new URL('../src/race-engine/simulation/runCalibratedTerrainSeparationStage.ts',import.meta.url),'utf8')
+ assert.match(reconcile,/options\.experimentalPreserveRecedingDroppedGroups === true/)
+ assert.match(reconcile,/group\.distanceKm < peloton\.distanceKm/)
+ assert.match(reconcile,/group\.speedKmh < peloton\.speedKmh/)
+ assert.match(integrated,/experimentalPreserveRecedingDroppedGroups/)
+ assert.match(calibrated,/options\.experimentalPreserveRecedingDroppedGroups \?\? false/)
 })
