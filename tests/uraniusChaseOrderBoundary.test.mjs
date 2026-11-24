@@ -15,6 +15,7 @@ test('chase only eligible with real leading breakaway, valid rider and executed 
  assert.match(helper,/gapSeconds<5/)
  assert.match(helper,/order.type==='chase'&&order.status==='executed'/)
  assert.match(helper,/state.riders\[order.riderId\]\?\.teamId===order.teamId/)
+ assert.match(helper,/state.currentKm>=order.eligibleFromKm&&state.currentKm<order.eligibleUntilKm/)
 })
 test('reuse cooperation model with bounded pace; default-off integrated flag',()=>{
  assert.match(helper,/calculateGroupCooperationPace/)
