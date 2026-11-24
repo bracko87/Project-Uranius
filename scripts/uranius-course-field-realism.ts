@@ -7,7 +7,7 @@ import {createInitialState} from '../src/race-engine/simulation/createInitialSta
 import {runCalibratedTerrainSeparationStage} from '../src/race-engine/simulation/runCalibratedTerrainSeparationStage'
 import type {StageInput} from '../src/race-engine/domain/StageInput'
 
-type Profile='flat_120'|'rolling_120'|'mountain_160'
+type Profile='flat_120'|'rolling_120'|'mountain_160'|'steep_160'
 type Distribution='heterogeneous'|'uniform'
 const profiles:{profile:Profile;distance:number;elevations:number[]}[]=[
  {profile:'flat_120',distance:120,elevations:Array(13).fill(120)},
@@ -15,6 +15,10 @@ const profiles:{profile:Profile;distance:number;elevations:number[]}[]=[
   elevations:[100,130,160,120,320,370,280,340,500,400,260,170,140]},
  {profile:'mountain_160',distance:160,
   elevations:[120,150,180,420,880,1210,920,500,650,1050,1450,1100,640,900,540,280,160]},
+ // Two genuinely sustained 12% 10km climbs, separated by valley sections.
+ // A challenging fictional diagnostic route, not a historically verified stage.
+ {profile:'steep_160',distance:160,
+  elevations:[100,100,100,100,1300,1700,1300,300,200,200,200,1400,1800,1200,300,150,150]},
 ]
 const distributions:Distribution[]=['heterogeneous','uniform']
 const field=128
@@ -167,7 +171,7 @@ const scenarios=profiles.flatMap(profile=>distributions.map(distribution=>{
   error.message:String(error)}}
 }))
 const checks={
- sixScenarios:scenarios.length===6,
+ eightScenarios:scenarios.length===8,
  allCompleted:scenarios.every(r=>'completed' in r&&r.completed),
  rostersExact:scenarios.every(r=>'rosterPreserved' in r&&r.rosterPreserved),
  classificationsValid:scenarios.every(r=>'rankValid' in r&&r.rankValid&&
@@ -176,6 +180,6 @@ const checks={
   r.attackFirstMovementSpeedKmh!==null),
 }
 process.stdout.write(JSON.stringify({reportVersion:'uranius-course-field-realism-v1',
- scope:'OFFLINE 3 fictional course profiles x 2 synthetic distributions x 128 riders; no synthetic initial gap',
+ scope:'OFFLINE 4 fictional course profiles x 2 synthetic distributions x 128 riders; no synthetic initial gap',
  scenarios,checks,
  note:'Attack catch and survival are observations, not forced pass criteria. Uniform field is a negative-control distribution, not realistic athlete data. Sporting calibration still NO GO.'},null,2)+'\n')
