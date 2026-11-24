@@ -42,6 +42,8 @@ try{
    'selectedRank '+r.selectedRank,'selectedFinishSec '+r.selectedFinishSeconds,
    'selectedEnergy '+r.selectedFinalEnergy,
    'hash '+r.digest].join(' | '))
+  console.log('ENERGY ACCOUNTING '+r.strength+' '+r.timing+' | '+
+   JSON.stringify(r.effortAudit))
   if(r.attackEffects)console.log('ATTACK TRACE '+r.strength+' '+r.timing+
    ' | '+JSON.stringify(r.firstFiveTrace))
  }
@@ -54,6 +56,14 @@ try{
     finishTimeAdvantageSeconds:baseline.selectedFinishSeconds-comparison.selectedFinishSeconds,
     extraEnergySpent:baseline.selectedFinalEnergy-comparison.selectedFinalEnergy,
     rankImprovement:baseline.selectedRank-comparison.selectedRank,
+    activeTickDifference:baseline.effortAudit.chargedTicks-
+      comparison.effortAudit.chargedTicks,
+    measuredEnergyCostDifference:baseline.effortAudit.actualEnergyCost-
+      comparison.effortAudit.actualEnergyCost,
+    perKmEnergyCostDifference:comparison.effortAudit.energyCostPerKm-
+      baseline.effortAudit.energyCostPerKm,
+    shelterSavingDifference:comparison.effortAudit.shelterSaved-
+      baseline.effortAudit.shelterSaved,
    }))
   }
  }
