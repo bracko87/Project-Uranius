@@ -646,3 +646,24 @@ node scripts\\run-uranius-mixed-tactics-integration.mjs --out mixed-tactics-loca
 ```
 
 Review the new accounting rows to distinguish differing finish duration from cost mismatch. A nonzero residual should be investigated against state semantics rather than rounded away. All options remain default-off, no production/game/database changes, checklist **49/60**, sporting GO withheld.
+
+
+## 2026-11-24 — Owner resolves integrated chase energy reversal; 120km/128-rider gate added
+
+Owner pulled through `73d3ad0`, ran `node --test tests\\uraniusMixedTacticsBoundary.test.mjs` (**6/6 PASS**) and `node scripts\\run-uranius-mixed-tactics-integration.mjs --out mixed-tactics-local.json` (**executable PASS**). In the established-breakaway four-order comparison:
+- Control pursuing rider finish time **2040.831207483s**, **69** charged movement ticks, summed movement energy cost **4.7609999999999975**, final energy **95.23899999999982**.
+- Full experiment finish time **2028.23131909s**, **68** charged ticks, summed movement energy cost **4.720979999999995**, final energy **95.27901999999978**.
+- The experiment finished **12.599888393s earlier**, saving **one complete charged tick**. Its total movement energy cost was **0.04002000000000283 less**, despite higher energy charge on actual qualifying chase ticks.
+- Energy conservation residuals are within floating-point noise (~`1.83e-13` and `2.30e-13`, difference `-4.7e-14`), proving the apparent final-energy reversal is due to discrete movement exposure and not missing/duplicated per-tick charges in this fixture. This clears the **technical accounting blocker**; realistic calibration remains open.
+
+**Next substantial offline sporting gate (committed, not yet owner-run):** Added `scripts/uranius-long-mixed-tactics-poc.ts`, a fictional **120km rolling stage with 128 riders on 16 teams**, 30s ticks, diversified deterministic abilities, **all four genuinely scheduled orders** (early chase, km35-42 attack, final 2km lead-out + sprint). An explicit pre-established 90s breakaway ensures meaningful chase opportunities; this is a separate rider and is **not claimed to arise naturally from the attack order**. The same input and seed are simulated with all three experimental toggles disabled vs explicitly enabled, leaving POC dropped-reconciliation conditions equal. Report verifies completion, 128 unique classifications, finite official times, four orders executed, true attack event, and at least one actual chase-eligible gap. It also records movement charges/finish time of the chasing rider, sprint outcome, max physical groups, and canonical comparison hashes. The launcher fails on integrity violations; it does not force tactical victory, a gap, or an energy delta. Added static checks and a self-contained esbuild/Node launcher. No hosted game, DB, production or baseline defaults changed.
+
+**This 120km probe has NOT been run by owner.** Run on Windows:
+
+```bat
+git pull origin main
+node --test tests\\uraniusLongMixedTacticsBoundary.test.mjs
+node scripts\\run-uranius-long-mixed-tactics-poc.mjs --out long-mixed-local.json
+```
+
+This is still a **fictional deterministic sporting stress test**, not a real-world cycling performance benchmark. After results, evaluate finish spread, tactical selection, overpowered sprint scoring, and mountain/flat cross-profile sensitivity before considering sporting GO. Official 49/60; no production changes.
