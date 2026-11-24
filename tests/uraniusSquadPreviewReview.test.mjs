@@ -63,5 +63,5 @@ test('source audit distinguishes original UUID club_roster from the integer-only
  for(const term of ['club_roster','rider_id integer','synthetic Squad preview','reader-column'])
   if(term!=='reader-column')assert.ok(doc.includes(term))
  assert.match(doc,/Do not grant `team_id`/)
- assert.match(doc,/`riders_read` owner RLS policy/)
+ assert.match(doc,/`riders_read` RLS policy/)
 })
