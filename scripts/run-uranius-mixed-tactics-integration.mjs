@@ -30,6 +30,22 @@ try{
   'pursuerEnergy '+r.pursuerEnergy,'caught '+r.caughtAttack].join(' | '))
  console.log('Checks: '+JSON.stringify(report.checks))
  console.log('Observed (not assumed): '+JSON.stringify(report.comparison))
+ console.log('ESTABLISHED BREAKAWAY '+JSON.stringify(report.establishedPhysicalComparison))
+ console.log('PHYSICAL CHASE EVIDENCE '+JSON.stringify(report.physicalChaseEvidence))
+ for(const [label,scenario] of [['ESTABLISHED CONTROL',report.establishedOff],['ESTABLISHED ALL-TACTICS',report.establishedOn]]){
+  console.log(label+' | '+JSON.stringify({
+   allFinished:scenario.allFinished,orders:scenario.executedOrders,
+   chaseTraceCount:scenario.chaseTimeline.length,
+   pursuerFinalEnergy:scenario.pursuerEnergy,sprintRank:scenario.sprinterRank,
+  }))
+  for(const tick of scenario.chaseTimeline.slice(0,4))
+   console.log('ESTABLISHED CHASE PHYSICS '+label+' | '+JSON.stringify(tick))
+ }
+ if(!report.establishedPhysicalComparison||
+  ['bothCompleted','bothClassified','allFourOrdersExecuted','eligibleChaseExists']
+   .some(key=>report.establishedPhysicalComparison[key]!==true))
+  throw Error('Established-breakaway integration gate failed: '+JSON.stringify(report.establishedPhysicalComparison))
+
  for(const [label,scenario] of [['CONTROL',report.off],['ALL-TACTICS',report.on]]){
   for(const step of scenario.chaseTimeline||[])
    console.log('CHASE PHYSICS '+label+' | '+JSON.stringify(step))
