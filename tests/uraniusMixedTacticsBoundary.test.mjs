@@ -50,4 +50,6 @@ test('second integrated scenario uses an existing physical breakaway, not a forc
  assert.match(fixture,/positiveTickEnergyDifference:/)
  assert.match(runner,/ESTABLISHED BREAKAWAY/)
  assert.match(runner,/PHYSICAL CHASE EVIDENCE/)
+ assert.match(runner,/positiveAppliedSpeedDifference!==true/)
+ assert.match(runner,/positiveTickEnergyDifference!==true/)
 })
