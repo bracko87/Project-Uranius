@@ -731,3 +731,22 @@ node scripts\\run-uranius-long-mixed-tactics-poc.mjs --out long-mixed-local.json
 ```
 
 After confirmation, develop a controlled high-skill sprinter sensitivity sweep before tuning fixed sprint/leadout bonuses. Keep global sporting GO withheld and official checklist **49/60**.
+
+
+## 2026-11-24 — Owner confirms sprint score accounting; controlled strong-sprinter sensitivity committed
+
+Owner pulled through `0b35da5` and ran the 120km/128-rider four-tactic POC. Static boundary tests **5/5 PASS**; all 128 riders finished in each control/experiment and all four orders executed. The actual authoritative crossing-tick `finishDetection.candidates` establish:
+- Original rider sprint **49**, acceleration **50**. Normal finish candidate sprint **49**, with **125 higher-scoring rivals and 2 ties**, rank **128**. With opt-in sprint+lead-out, effective sprint score **61**, exactly the expected **+12**. He then had **92 higher-scoring rivals and 3 ties**, rank **96**. This is fully explained by the deterministic finish order, **not** evidence that the +12 sprint bonus failed or should automatically be increased.
+- Chase lifetime remains correctly bounded: 0 actual boosted ticks in control, 8 within the scheduling window in experiment, and 0 after expiry. Complete stage outputs unchanged compared with prior verified run.
+
+**New opt-in calibration evidence, committed but not yet runtime-tested:** The existing 120km synthetic same-seed A/B now also runs an otherwise-identical second pair in which the selected rider's **sprint skill alone is raised from 49 to 94**, preserving acceleration, stamina, energy setup, teammates, seed, route, all four order schedules, physical escape setup and all 127 other riders. The same engine is run with tactics OFF and ON. The report records actual crossing-tick sprint scores, same-batch higher-score rivals, within-batch and official positions, all rider classifications, signed movement effort, and the same chase-expiry protections. Strong-sprinter outcomes are reported rather than a 1st-place win being forced. The main executable report adds `SPRINT SKILL SENSITIVITY` and `STRONGER SPRINTER` lines and fails if the new pair loses all-rider classification or violates its fixed 94-vs-49 skill assumptions. This is a four-scenario **offline** experiment, not a scoring or sporting-rule change.
+
+Owner Windows verification:
+
+```bat
+git pull origin main
+node --test tests\\uraniusLongMixedTacticsBoundary.test.mjs
+node scripts\\run-uranius-long-mixed-tactics-poc.mjs --out long-mixed-local.json
+```
+
+After observing results, judge whether the +12 sprint/lead-out bonus behaves proportionately with rider quality and whether deterministic rank ordering requires further modelling (e.g., position or fatigue); do not tune a fixed bonus without comparative evidence. No production work, canonical default changed or paid staging; official 49/60 and sporting GO withheld.
