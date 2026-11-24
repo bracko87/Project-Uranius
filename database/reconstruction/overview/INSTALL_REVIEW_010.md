@@ -72,3 +72,25 @@ Separately, owner confirmed **4/4 package-review tests pass** and ran `node scri
 Fresh **read-only hosted** Uranius metadata inspection after the final local test: PostgreSQL 17; ledger **9**; four race tables **absent**; season-one clock paused; owner mappings **2**; riders **200**. Hosted migration remains **NOT APPLIED**. No original ProPeloton production modifications.
 
 **The outstanding gate is now explicit owner permission for the reviewed isolated Uranius schema/permissions change**, tied to the manifest SHA and project ref. Do not run the apply mode based on a generic “proceed” or any pre-existing authorization. After exact approval, perform an immediate ledger recheck, run the pinned atomic installer, verify its postflight and hosted RLS, then enable and validate read-only schedule for both managers.
+
+## 2026-11-24: exact owner approval received; direct-role execution required
+
+The owner explicitly approved **the above exact manifest digest** for **isolated** Supabase project `sdtsivgtcaoaeoihcwzd` and forbade any changes to original ProPeloton production. The full combined local PostgreSQL 17 migration rehearsal completed 17/17 PASS previously.
+
+A fresh project-scoped, **read-only** hosted preflight found:
+- current connected SQL role and session role: `postgres`
+- the 010 candidate's required direct login/session role: `uranius_migrator`
+- `postgres` has only an independently granted ADMIN membership in `uranius_migrator` with `SET FALSE`; it cannot switch
+- actual PG major version: 17; migration ledger: exact nine expected historical checksums; race-table count: zero; manager count: 2; rider count: 200; paused season-one clock: 1
+
+**BLOCKER:** the connected Supabase SQL execution integration authenticates as `postgres`, whereas the exact approved migration explicitly requires `current_user = session_user = uranius_migrator`. An ad-hoc wrapper that relaxes that condition would change the approved package and is not permitted. **Do not report installed.** The owner has approved the change, but no hosted migration command ran.
+
+Added the optional `scripts/run-approved-overview-windows.ps1` launcher. It invokes the existing, digest-pinned `scripts/apply-uranius-overview.mjs` unchanged, using a direct `uranius_migrator` connection, verifying PostgreSQL client path and CA file, and prompting for the database password as a hidden secure string. It does **not** store or print the password and removes its child environment variables after execution.
+
+From the Windows checkout, if the owner has the dedicated `uranius_migrator` password and trusted Supabase CA, run **once** in PowerShell:
+
+```powershell
+.\scripts\run-approved-overview-windows.ps1 -CaFile "C:\path\to\supabase-root-ca.pem" -PostgresBin "C:\Users\Aleks\Desktop\Project-Uranius\.uranius-pin-review\postgresql-17.12-portable\bin"
+```
+
+Do not fabricate a CA path, reuse original production credentials or paste secrets into chat. If the dedicated migrator password is missing, stop rather than changing it without separate authorization. The script is not yet owner-executed. After reported success, inspect live 10-entry ledger, 4 FORCE RLS tables, scoped grants/policies and unchanged original fixture data read-only before enabling any schedule endpoint.
