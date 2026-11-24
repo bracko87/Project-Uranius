@@ -11,7 +11,22 @@ const signature=(x:unknown)=>createHash('sha256').update(JSON.stringify(x)).dige
 const round=(v:number)=>Number(v.toFixed(3))
 function examine(terrain:'flat'|'hilly'|'mountain',size:24|48|96,seed:string,lane:Lane){
  const base=createSyntheticFullFieldStage(terrain,size)
- const input={...base,seed:base.seed+'-'+seed}
+ // The legacy full-field fixture omits optional timeTrial/raceIq, but the
+ // calibrated terrain-capability calculator requires both (0–100). Supply
+ // explicitly fictional diagnostic attributes, not real rider values. Keep
+ // the immutable StageInput IDENTICAL for both lanes in every compared pair.
+ const input={
+  ...base,
+  seed:base.seed+'-'+seed,
+  riders:base.riders.map((rider,index)=>({
+   ...rider,
+   attributes:{
+    ...rider.attributes,
+    timeTrial:60+(index*13)%35,
+    raceIq:62+(index*17)%31,
+   },
+  })),
+ }
  const started=performance.now()
  const output=runDeterministicRoadRace(input,{simulationMode:lane})
  const runtimeMilliseconds=round(performance.now()-started)
