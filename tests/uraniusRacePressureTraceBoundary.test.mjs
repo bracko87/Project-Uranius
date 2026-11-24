@@ -15,7 +15,7 @@ test('pressure trace inspects original calibrated runner per-tick fields without
  assert.match(trace,/DROPPED_TRANSITION_OCCURRED/)
 })
 test('probe uses two original fictional baselines and one deliberately extreme separate fixture',()=>{
- for(const name of ['flat_baseline_24','mountain_baseline_96','mountain_stress_96'])
+ for(const name of ['flat_baseline_24','mountain_baseline_96','mountain_stress_96','mountain_stress_birth_tick_protected_96'])
   assert.match(trace,new RegExp(name))
  assert.match(trace,/timeTrial:60\+\(index\*13\)%35/)
  assert.match(trace,/raceIq:62\+\(index\*17\)%31/)
@@ -25,7 +25,7 @@ test('probe uses two original fictional baselines and one deliberately extreme s
 test('trace launcher is offline, cleans temporary bundle and never touches hosted sources',()=>{
  assert.match(runner,/mkdtempSync/)
  assert.match(runner,/rmSync\(dir,\{recursive:true,force:true/)
- assert.match(runner,/reportVersion!=='uranius-pressure-trace-v1'/)
+ assert.match(runner,/reportVersion!=='uranius-pressure-trace-v2'/)
  assert.doesNotMatch(trace+runner,/@supabase|createClient\(|fetch\(|https?:\/\/|service_role|URANIUS_DATABASE/i)
 })
 
@@ -40,4 +40,12 @@ test('traces 29-style dropped transitions through the same-tick reconciliation b
  assert.match(trace,/DROPS_DISAPPEAR_BEFORE_REPLAY/)
  assert.match(runner,/reabsorbedSameTick/)
  assert.match(runner,/survivingDrops/)
+})
+
+test('experimental drop repair runs only on explicit same-seed stress probe and defaults off',()=>{
+ assert.match(trace,/experimentalBirthTickProtectionEnabled=scenario==='mountain_stress_birth_tick_protected_96'/)
+ assert.match(trace,/experimentalPreserveBirthTickDroppedGroups:experimentalBirthTickProtectionEnabled/)
+ assert.match(trace,/scenario\.startsWith\('mountain_stress_'\)\?'mountain_stress_96':scenario/)
+ assert.match(trace,/scenario\.startsWith\('mountain_stress_'\)&&index%4===0/)
+ assert.match(runner,/report\.results\.length!==4/)
 })
