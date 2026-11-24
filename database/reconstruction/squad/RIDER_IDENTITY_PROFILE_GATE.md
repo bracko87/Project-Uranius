@@ -45,3 +45,37 @@ node --test tests\uraniusSyntheticRiderProfile.test.mjs tests\uraniusRiderProfil
 ```
 
 These tests do not contact Supabase or change database permissions. **No new browser trust installation is necessary for this source review.**
+
+## 2026-11-24 — Phase A design candidate: isolated synthetic UUID mapping (014)
+
+Read-only hosted PostgreSQL 17 metadata audit verified:
+- `uranius_catalog.riders` has an integer `rider_id` primary key and an integer `team_id` foreign key; **200 rows**.
+- `pg_catalog.gen_random_uuid()` is available.
+- The isolated migration ledger has **11 rows**, including verified `013_squad_reader_grant.sql` SHA-256 `8193d80743f6392709a3220441531636751a70fc487c111cc23d1865080be859`.
+- No existing rider identity mapping table was found in `uranius_game`.
+
+Prepared **`014_synthetic_rider_uuid_REVIEW_ONLY.sql`**, which is an **unapproved design candidate, not an installed migration**. Its proposed schema is a separate `uranius_game.synthetic_rider_identity` table:
+- `rider_id integer PRIMARY KEY REFERENCES uranius_catalog.riders(rider_id) ON DELETE RESTRICT`, retaining canonical synthetic identity.
+- `rider_uuid uuid NOT NULL UNIQUE DEFAULT pg_catalog.gen_random_uuid()`, unrelated to, and not represented as, a real original-game player ID.
+- Locked `identity_provenance='uranius_generated_synthetic'`, `created_at`.
+- Exactly **200** mapping rows generated from the existing riders, with count, uniqueness, nonzero UUID and referential integrity checks **before enabling FORCE RLS**. This check order matters because FORCE RLS then prevents even the migrator/table owner from reading rows without a policy.
+- **FORCE ROW LEVEL SECURITY**, **no SELECT policies**, and explicitly revoked `PUBLIC`, `anon`, `authenticated`, and `uranius_smoke_reader` privileges. No Data API access, profile endpoints, changes to existing riders, or gaming actions are proposed.
+- Direct restricted migrator, isolated-project, PostgreSQL 17, exact 013 ledger digest, 11-ledger, row counts and TLS guards. This candidate is deliberately not atomic/approved by itself; a future reviewed installer would be required to wrap it in a single verified transaction, exact-hash owner approval and rollback-on-failure.
+
+This model is the *foundation for future original-compatible identity handling*, **not a replacement for `public.riders` or `public.club_roster`**. It does not backfill original names, dates of birth, countries, roles, skills, finance or health. No player data was read from or copied out of production.
+
+New unexecuted tests and review:
+- `tests/uraniusRiderUuidMappingReview.test.mjs` (four static guard checks).
+- `tests/uraniusRiderUuidMappingNativePg17.mjs` (nine self-contained disposable PostgreSQL 17 checks; synthetic setup only, TLS bypass in temporary fixture solely to prove remaining guards). PostgreSQL binds `127.0.0.1` and scratch PGDATA must be cleaned up.
+- `scripts/review-uranius-rider-identity.mjs --review` prints a SHA-256 without contacting the database or having an apply mode.
+
+**Owner check to run, all offline:**
+
+```bat
+git pull origin main
+node --test tests\uraniusRiderUuidMappingReview.test.mjs
+node scripts\review-uranius-rider-identity.mjs --review
+node tests\uraniusRiderUuidMappingNativePg17.mjs --disposable-native-pg17 --postgres-bin "C:\Users\Aleks\Desktop\Project-Uranius\.uranius-pin-review\postgresql-17.12-portable\bin"
+```
+
+**Release gate remains CLOSED.** Do not execute 014 SQL against isolated hosted Uranius or original production. Only after source and native checks pass should a separately frozen candidate/manifest and an exact owner-approved guarded installer be considered. Existing completed 013/Squad browser preview, 11 migrations and gameplay are unchanged.
