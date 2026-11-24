@@ -1,6 +1,7 @@
 // One-time direct, read-only hosted Uranius Overview A/B verification.
-// No local HTTPS certificate or frontend server needed. No database writes.
-// Credentials are prompted privately; manager identifiers never leave the server process.
+// No local HTTPS certificate or frontend server needed. No SQL data/schema writes.
+// Supabase Auth naturally creates/revokes short-lived login sessions. Credentials
+// are prompted privately; UUIDs are sent only into the fixed server-side SQL bind.
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { openVerifiedManager, privatePrompt } from './verify-uranius-auth.mjs'
