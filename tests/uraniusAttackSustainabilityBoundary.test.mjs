@@ -50,3 +50,16 @@ test('energy audit accounts for actual charged ticks, speed, shelter, and total 
  const result=transformSync(fixture,{loader:'ts',format:'esm',target:'node20'})
  assert.ok(result.code.includes('effortAudit'))
 })
+
+test('paired drafting ON/OFF keeps original controls and checks real shelter savings',()=>{
+ assert.match(fixture,/groupShelterEnergyEnabled:shelterEnergy/)
+ assert.match(fixture,/shelterScenarios=/)
+ for(const key of ['shelterComparisonComplete','shelterComparisonLedger',
+  'shelterReallyApplied','unchangedNoShelter'])
+  assert.match(fixture,new RegExp(key+':'))
+ assert.match(fixture,/shelterEnergy:shelterEnergy|strength,timing,shelterEnergy,completed/)
+ assert.match(runner,/DRAFTING COMPARISON/)
+ assert.match(runner,/DRAFTING ENERGY ON\/OFF/)
+ const transformed=transformSync(fixture,{loader:'ts',format:'esm',target:'node20'})
+ assert.ok(transformed.code.includes('shelterScenarios'))
+})
