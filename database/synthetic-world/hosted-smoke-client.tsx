@@ -126,6 +126,7 @@ function ScheduleStatus() {
 
 type SyntheticSquadRider = {
   syntheticRiderId: number
+  syntheticRiderUuid?: string
   label: string
   flat: number
   climbing: number
@@ -133,7 +134,7 @@ type SyntheticSquadRider = {
   resistance: number
 }
 type SyntheticSquadPacket = {
-  kind: 'syntheticSquadPreview'
+  kind: 'syntheticSquadPreview' | 'syntheticSquadUuidPreview'
   clubId: string
   riders: SyntheticSquadRider[]
   missingOriginalFields: string[]
@@ -147,17 +148,26 @@ function isSyntheticSquad(value: unknown, expectedClubId: string): value is Synt
   const packet = value as Partial<SyntheticSquadPacket>
   const fields = ['syntheticRiderId','label','flat','climbing','stamina','resistance']
   const ids = new Set<number>()
-  return packet.kind === 'syntheticSquadPreview' && packet.clubId === expectedClubId &&
+  const uuids = new Set<string>()
+  const uuid = /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i
+  const withUuid = packet.kind === 'syntheticSquadUuidPreview'
+  return (packet.kind === 'syntheticSquadPreview' || withUuid) && packet.clubId === expectedClubId &&
     Array.isArray(packet.missingOriginalFields) &&
     packet.missingOriginalFields.join('|') === expectedSquadMissing.join('|') &&
     Array.isArray(packet.riders) && packet.riders.length <= 100 &&
     packet.riders.every(row => {
       if (!row || !Number.isSafeInteger(row.syntheticRiderId) || row.syntheticRiderId < 1 ||
           ids.has(row.syntheticRiderId) || typeof row.label !== 'string' || !row.label.trim() ||
-          Object.keys(row).some(field => !fields.includes(field)) ||
+          Object.keys(row).some(field => ![...fields,...(withUuid ? ['syntheticRiderUuid'] : [])].includes(field)) ||
+          (withUuid && (typeof row.syntheticRiderUuid !== 'string' ||
+            !uuid.test(row.syntheticRiderUuid) ||
+            row.syntheticRiderUuid.toLowerCase() === '00000000-0000-0000-0000-000000000000' ||
+            uuids.has(row.syntheticRiderUuid.toLowerCase()))) ||
+          (!withUuid && row.syntheticRiderUuid !== undefined) ||
           !(['flat','climbing','stamina','resistance'] as const).every(skill =>
             Number.isInteger(row[skill]) && row[skill] >= 0 && row[skill] <= 100)) return false
       ids.add(row.syntheticRiderId)
+      if (withUuid && row.syntheticRiderUuid) uuids.add(row.syntheticRiderUuid.toLowerCase())
       return true
     })
 }
@@ -168,7 +178,7 @@ function SquadPreview() {
   const [state,setState] = useState<'loading'|'ready'|'unavailable'>('loading')
   useEffect(() => {
     let active = true
-    void Promise.all([getMyClubContext(),request('squad')]).then(([club,packet]) => {
+    void Promise.all([getMyClubContext(),request('squad-uuid').then(packet => packet ?? request('squad'))]).then(([club,packet]) => {
       if (!active) return
       const expected = club.mainClub?.id
       if (typeof expected === 'string' && isSyntheticSquad(packet,expected)) {
@@ -204,7 +214,8 @@ function SquadPreview() {
             return <section aria-label="Synthetic rider profile" data-rider-profile className="mt-5 rounded-lg border border-slate-600 bg-slate-950 p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div><h2 className="text-lg font-semibold">{rider.label}</h2>
-                  <p className="text-xs text-slate-400">Synthetic rider #{rider.syntheticRiderId} — not an original rider UUID</p></div>
+                  <p className="text-xs text-slate-400">Synthetic rider #{rider.syntheticRiderId} — not an original rider UUID</p>
+                  {rider.syntheticRiderUuid && <p className="mt-1 break-all text-xs text-cyan-200" data-synthetic-rider-uuid>Uranius synthetic UUID: {rider.syntheticRiderUuid}</p>}</div>
                 <button type="button" onClick={() => setSelectedRiderId(null)} className="rounded border border-slate-500 px-3 py-1">Close profile</button>
               </div>
               <dl className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
