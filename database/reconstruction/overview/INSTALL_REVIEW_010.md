@@ -94,3 +94,28 @@ From the Windows checkout, if the owner has the dedicated `uranius_migrator` pas
 ```
 
 Do not fabricate a CA path, reuse original production credentials or paste secrets into chat. If the dedicated migrator password is missing, stop rather than changing it without separate authorization. The script is not yet owner-executed. After reported success, inspect live 10-entry ledger, 4 FORCE RLS tables, scoped grants/policies and unchanged original fixture data read-only before enabling any schedule endpoint.
+
+## 2026-11-24: migration 010 live and frontend HTTPS smoke prepared
+
+The owner ran the reviewed direct-migrator Windows installer and obtained `Uranius overview migration 010 applied and transaction postflight passed`. Independent **read-only** hosted verification confirmed: custom ledger 10 entries with `010_overview_race_reader.sql` pinned to the exact SHA-256, four installed race tables, FORCE RLS on all, four expected SELECT policies, owner-specific private entry/preparation filters, no anonymous or ordinary authenticated private SELECT, no restricted-reader UPDATE, two original synthetic owners and 200 riders preserved, paused clock preserved. A subsequent Supabase security-advisor run reported no additional migration-010 findings; three earlier private-ledger RLS informational notices and the unrelated Auth leaked-password warning remain unchanged.
+
+The source `011_overview_schedule_REVIEW_ONLY.sql` was executed **read-only** against live installed tables and successfully returned `{"upcomingSchedule":[],"todayRaces":[]}`. All four race tables have zero rows; this **does not** establish populated A/B race isolation. A separate live role metadata query verified the `uranius_smoke_reader` account has the minimum column grants, both identity function permissions, race schema usage, no private administrative schema access and no database CREATE right.
+
+The limited local HTTPS smoke dashboard now requests `GET /fixture/overview-schedule` after authenticated login and renders Upcoming Schedule and Today's Races. Its UI **does not invent race rows**: a successful empty response is differentiated from a disconnected/error state. A new **read-only** PowerShell convenience launcher is provided at `scripts/run-approved-overview-https-windows.ps1`. It sets only local runtime environment and invokes the existing host-bound Node server, enabling the already-installed clock and schedule reader via local opt-in flags. It does not install schema, update Auth or modify production.
+
+**New source-level test** `tests/uraniusOverviewHostedFrontendBoundary.test.mjs` has not yet been executed. Run it alongside existing route/session tests before browser smoke:
+
+```bat
+git pull origin main
+node --test tests\uraniusOverviewHostedFrontendBoundary.test.mjs tests\uraniusOverviewScheduleRouteIsolation.test.mjs tests\uraniusOverviewHostedReadBoundary.test.mjs
+```
+
+If using the pre-existing trusted local loopback IP certificate/key and the existing dedicated `uranius_smoke_reader` password, start the read-only local HTTPS smoke from **a separate terminal**:
+
+```powershell
+powershell -NoProfile -File scripts\run-approved-overview-https-windows.ps1 -TlsCert "PATH_TO_EXISTING_LOOPBACK_CERT" -TlsKey "PATH_TO_EXISTING_LOOPBACK_KEY" -CaFile "%USERPROFILE%\Downloads\prod-ca-2021.crt" -PostgresBin "C:\Users\Aleks\Desktop\Project-Uranius\.uranius-pin-review\postgresql-17.12-portable\bin"
+```
+
+Replace *both* loopback TLS placeholder paths with real local trusted files. The server will ask, with hidden input, for the **reader's** password and the **Uranius publishable API key** (not the migrator password or database superuser password). Open the printed `https://127.0.0.1:<ephemeral-port>` in a browser that trusts the loopback certificate and sign in with each existing manager's user credentials separately. Verify: dashboard owner identity and schedule both render; empty schedule is correct until races are seeded through a separately approved workflow; unauthenticated GET 401, rejected cross-origin requests, and old session invalid after logout. Do not report these real HTTPS A/B tests as passed until performed.
+
+**Original production remains untouched.** Do not infer acceptance or racing-engine functionality merely from four empty source-backed tables. The whole original Overview frontend is still under reconstruction; the authenticated schedule is exposed only by a loopback smoke interface, not deployed to players.
