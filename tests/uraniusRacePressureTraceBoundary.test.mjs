@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs'
 const trace=readFileSync(new URL('../scripts/uranius-race-pressure-trace.ts',import.meta.url),'utf8')
 const runner=readFileSync(new URL('../scripts/run-uranius-race-pressure-trace.mjs',import.meta.url),'utf8')
 test('pressure trace inspects original calibrated runner per-tick fields without modifications',()=>{
- assert.match(trace,/runCalibratedTerrainSeparationStage\(createInitialState\(input\)\)/)
+ assert.match(trace,/runCalibratedTerrainSeparationStage\(createInitialState\(input\),\s*\{/)
  assert.match(trace,/tick\.pressureEvaluations/)
  assert.match(trace,/e\.hold\.capabilityMargin/)
  assert.match(trace,/nextConsecutiveCannotHoldSeconds/)
