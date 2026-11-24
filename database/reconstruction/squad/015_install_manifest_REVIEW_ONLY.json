@@ -1,0 +1,91 @@
+{
+  "projectRef": "sdtsivgtcaoaeoihcwzd",
+  "postgresMajor": 17,
+  "status": "REVIEW_ONLY_NOT_APPROVED",
+  "hostedApplied": false,
+  "approvalRequired": true,
+  "expectedLedgerEntries": 12,
+  "candidate": {
+    "file": "015_rider_uuid_owner_read_REVIEW_ONLY.sql",
+    "ledgerVersion": "015_rider_uuid_owner_read.sql",
+    "sha256": "71ade068c5cf5bbdc0e356663a0525f1e74b43e63a9c19f267748f7b46b6161e"
+  },
+  "requires": [
+    {
+      "file": "001_identity.sql",
+      "sha256": "87755f1d12a0b983d016e039d4ceb22aea1e5c165b65c2e6888049805fefbadd"
+    },
+    {
+      "file": "002_reference_schema.sql",
+      "sha256": "6cad841d012117a02daf7e89555cc870da5f9a5f90b4e4c8b7dfee52b84ed45f"
+    },
+    {
+      "file": "003_access.sql",
+      "sha256": "b42c96b647afd9b62573c75cd922b4f8de3eff9e39c5b1c8dd2ccd2f40afe8ee"
+    },
+    {
+      "file": "004_synthetic_reference.sql",
+      "sha256": "e788bf6cab85f12adce0a9227534cca57e318b15aaa69474ef2e5a950472b317"
+    },
+    {
+      "file": "005_club_identity.sql",
+      "sha256": "9550e9ef78288f9286387c43595e6649bd8bcea378d29b0db665d0b048a065fc"
+    },
+    {
+      "file": "006_synthetic_world.sql",
+      "sha256": "56f1a9f08ff1fba3f3ad9a91688c512316b74b2f37fb8806668147ae8813a9a3"
+    },
+    {
+      "file": "007_smoke_reader.sql",
+      "sha256": "dd0e9663adc2bf0717d4debc8b291ee04e859592369e381bbde7a42546a8f91b"
+    },
+    {
+      "file": "008_game_clock_v1.sql",
+      "sha256": "f3dadf7b7934e1c8677d24af2d0a57b2be19768f0bc2dc6b45729618c28e349b"
+    },
+    {
+      "file": "009_clock_smoke_reader.sql",
+      "sha256": "1be3ce5418ff8a03a787fae81fe2cbd543ad6002cc592222bc2b011245cc4c37"
+    },
+    {
+      "file": "010_overview_race_reader.sql",
+      "sha256": "56f52ac20c84aaf70ea63c68e0435da20084a3fe42e375a372c3d613cfa445af"
+    },
+    {
+      "file": "013_squad_reader_grant.sql",
+      "sha256": "8193d80743f6392709a3220441531636751a70fc487c111cc23d1865080be859"
+    },
+    {
+      "file": "014_synthetic_rider_uuid.sql",
+      "sha256": "f97126ed0a9259bfeac9ebf3c4158ece7a590b3ae77fd7d66f7efdc26894db6f"
+    }
+  ],
+  "scope": {
+    "changes": [
+      "Create one owner-scoped SELECT RLS policy on uranius_game.synthetic_rider_identity for uranius_smoke_reader only",
+      "Grant SELECT on rider_id and rider_uuid columns only to uranius_smoke_reader"
+    ],
+    "preserved": [
+      "200 synthetic identity mappings and their UUIDs",
+      "014 FORCE RLS enabled",
+      "Private provenance and created_at attributes",
+      "All 12 historical migration ledger entries",
+      "Existing Squad reader's inability to select team_id",
+      "Existing paused game state and owners"
+    ],
+    "excluded": [
+      "Original ProPeloton production",
+      "Original game identity data import",
+      "public.club_roster replacement",
+      "Anonymous/authenticated Data API grants",
+      "UI or Squad API integration",
+      "Writes to rider identity, training, finances or contracts"
+    ]
+  },
+  "evidence": {
+    "ownerReportedSourceTests": "8/8 passed 2026-11-24",
+    "ownerReportedFullHistoryNativePg17": "48/48 passed 2026-11-24",
+    "temporaryPgdataCleanup": true
+  },
+  "releaseGate": "REVIEW ONLY. Future guarded installer must compare all twelve historical ledger SHA-256 pairs bidirectionally inside one atomic TLS migrator transaction; separate owner approval required."
+}
