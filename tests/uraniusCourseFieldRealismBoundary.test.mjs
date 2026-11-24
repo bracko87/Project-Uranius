@@ -1,5 +1,6 @@
 import {test} from 'node:test'
 import assert from 'node:assert/strict'
+import {transformSync} from 'esbuild'
 import {readFileSync} from 'node:fs'
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8')
 const source=read('scripts/uranius-course-field-realism.ts')
@@ -65,4 +66,10 @@ test('steep stage traces actual attack velocity and dropped group finish fate',(
  assert.match(source,/pressureAtPostTick:/)
  assert.match(launcher,/STEEP ATTACK LAUNCH/)
  assert.match(launcher,/STEEP TERRAIN DROP FATE/)
+})
+
+test('course-field TypeScript diagnostic is syntactically transpileable',()=>{
+ const transformed=transformSync(source,{loader:'ts',format:'esm',target:'node20'})
+ assert.ok(transformed.code.includes('attackLaunchAudit'))
+ assert.ok(transformed.code.includes('terrainDropAudit'))
 })
