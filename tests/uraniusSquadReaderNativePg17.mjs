@@ -367,7 +367,34 @@ try {
   assert.equal(sql("SELECT count(*) FROM uranius_catalog.riders"),'200')
   pass('Anonymous reader and restricted writes denied; 010 ledger and catalog preserved')
 
-  console.log('PASS ' + tests + ' combined + Squad disposable native PostgreSQL 17 checks; hosted state unchanged')
+
+  // Exact proposed forward-only grant has not been approved and must not be
+  // tested against hosted Supabase. Reset only the disposable fixture ACL.
+  const candidate013 = readFileSync(join(root,'database/reconstruction/squad/013_squad_reader_grant_REVIEW_ONLY.sql'),'utf8')
+  sql('REVOKE SELECT (label,flat,climbing,stamina,resistance) ON uranius_catalog.riders FROM uranius_smoke_reader')
+  assert.equal(sql(grantCheck),'false')
+  assert.equal(sql("SELECT has_column_privilege('uranius_smoke_reader','uranius_catalog.riders','team_id','SELECT')"),'false')
+  sql(wrap(candidate013),'uranius_migrator',true)
+  assert.equal(sql(grantCheck),'false')
+  pass('Unmodified 013 forward candidate rejects local non-TLS and leaves ACL unchanged')
+
+  // Local-only fixture does not support TLS; bypass ONLY the pinned TLS
+  // guard in an in-memory copy to test every other production precondition.
+  const candidateTlsGuard="OR NOT EXISTS (SELECT 1 FROM pg_stat_ssl WHERE pid=pg_backend_pid() AND ssl)"
+  assert.equal(candidate013.split(candidateTlsGuard).length,2)
+  const fixtureCandidate013=candidate013.replace(candidateTlsGuard,'OR FALSE /* local-only native PG17 */')
+  sql(wrap(fixtureCandidate013),'postgres',true)
+  assert.equal(sql(grantCheck),'false')
+  pass('Proposed 013 preflight refuses non-migrator execution')
+
+  sql(wrap(fixtureCandidate013),'uranius_migrator')
+  assert.equal(sql(grantCheck),'true')
+  assert.equal(sql("SELECT has_column_privilege('uranius_smoke_reader','uranius_catalog.riders','team_id','SELECT')"),'false')
+  assert.equal(sql("SELECT count(*) FROM uranius_private.migration_ledger"),'10')
+  sql(wrap(fixtureCandidate013),'uranius_migrator',true)
+  pass('Proposed 013 grant is least-privilege and repeated application fails closed')
+
+  console.log('PASS ' + tests + ' combined + Squad 013 candidate disposable native PostgreSQL 17 checks; hosted state unchanged')
 } finally {
   // Windows may hold PGDATA files briefly after a failed initdb/pg_ctl or after
   // PostgreSQL has stopped. Cleanup must NEVER replace the original failure.
