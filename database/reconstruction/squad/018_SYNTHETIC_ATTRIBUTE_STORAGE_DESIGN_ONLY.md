@@ -62,3 +62,24 @@ node tests\uraniusRider018FullHistoryNativePg17.mjs --disposable-native-pg17 --p
 ```
 
 If failures occur, fix only the new review/test components when possible. If SQL candidate bytes change, invalidate and recompute its digest; no source freeze or hosted apply is currently approved. **Completion of the local tests permits a separate approval-manifest design, not automatic installation.**
+
+## 2026-11-24 — 57/57 owner-verified full native tests; exact release candidate frozen
+
+Owner's Windows terminal confirms **all 57/57** full 001–015 historical replay plus 018 candidate checks **PASS** on disposable PostgreSQL 17. Original unmodified 018 refused non-TLS; a disposable-only copy bypassed only the TLS predicate to prove the remaining guards/DDL. No incorrect provenance accepted, all three observed skills preserved exactly, other six values remained NULL, FORCE RLS and zero reader/public grants held, duplicate application was rejected, all 13 historical ledger fingerprints stayed intact, and the scratch PGDATA was removed. Prior source checks: **7/7 PASS**.
+
+Source SQL 018 remains **byte-for-byte unchanged**, SHA-256:
+`622d7626f5f6d93117cbb755398971d23ca0a870e49bc8c98e2df768630b48cc`.
+
+Prepared **`018_install_manifest_REVIEW_ONLY.json`**, which includes exact 13 historical version and SHA-256 pairs, isolated project ref, explicit unchanged 200 rider mapping and zero reader exposure scope, and `REVIEW_ONLY_NOT_APPROVED`. Its exact SHA-256:
+`9995c7a1558d222426e759b5af4911981d5d4b12688a4e2e3c1adee8d6975205`.
+
+Also prepared dormant, **NOT AUTHORIZED** `scripts/apply-uranius-rider-018.mjs` / `scripts/run-approved-rider-018-windows.ps1` with exact source and manifest hashes, bidirectional 13-ledger check, direct TLS migrator target restriction, atomic 14th-ledger insertion, force-RLS/privacy and unchanged-world postflight, typed Windows approval and private password prompt. `tests/uraniusRider018InstallerGate.test.mjs` verifies those guards, but has **not yet been executed**. Unlike 015, 018 introduces a table with NO SELECT RLS policy or any restricted-reader grants, so it will **not** make the six unknown skills appear in the live Squad client. That would need further separate source-backed data and owner-scoped read release.
+
+**Do not run the 018 installer/launcher.** The owner has **not** approved 018 hosted installation. Initial review only:
+```bat
+git pull origin main
+node --test tests\uraniusRider018SourceReview.test.mjs tests\uraniusRider018InstallerGate.test.mjs
+node scripts\review-uranius-rider-018.mjs --review
+node scripts\apply-uranius-rider-018.mjs --review
+```
+A separately owner-approved hash pair, final independent read-only hosted baseline and successful installer verification are prerequisites to any actual 018 release. Original ProPeloton production must never be targeted.
