@@ -2,10 +2,11 @@ import { randomBytes } from 'node:crypto'
 import { projectManagerClock } from './manager-clock-projection.mjs'
 import { projectOverviewScheduleResponse } from '../reconstruction/overview/overview-schedule-response.mjs'
 import { projectSyntheticSquadPreview } from '../reconstruction/squad/synthetic-squad-preview.mjs'
+import { projectSyntheticSquadUuidPreview } from '../reconstruction/squad/synthetic-squad-uuid-preview.mjs'
 
 const uuid = /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i
 
-export function createClubDashboardAdapter({ verifyLogin, readDashboard, readClock, readSchedule, readSquad, origin, secureCookie = true }) {
+export function createClubDashboardAdapter({ verifyLogin, readDashboard, readClock, readSchedule, readSquad, readSquadUuid, origin, secureCookie = true }) {
   const sessions = new Map()
   const cookieName = secureCookie ? '__Host-uranius_club_session' : 'uranius_club_session'
   async function revoke(key) {
@@ -16,7 +17,7 @@ export function createClubDashboardAdapter({ verifyLogin, readDashboard, readClo
   const cookieFlags = '; HttpOnly; SameSite=Strict; Path=/' + (secureCookie ? '; Secure' : '')
   async function handle(req, res) {
     const path = req.url
-    if (!['/fixture/login', '/fixture/logout', '/fixture/dashboard', '/fixture/clock', '/fixture/overview-schedule', '/fixture/squad'].includes(path)) return false
+    if (!['/fixture/login', '/fixture/logout', '/fixture/dashboard', '/fixture/clock', '/fixture/overview-schedule', '/fixture/squad', '/fixture/squad-uuid'].includes(path)) return false
     const send = (status, value) => {
       res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' })
       res.end(JSON.stringify(value))
@@ -84,6 +85,14 @@ export function createClubDashboardAdapter({ verifyLogin, readDashboard, readClo
         if (typeof readSchedule !== 'function') return send(503, { error: 'Overview schedule not connected' })
         const data = await readSchedule(current.subject)
         return send(200, projectOverviewScheduleResponse(data, { ownerVerified: true }))
+      }
+      if (path === '/fixture/squad-uuid' && req.method === 'GET') {
+        const current = sessions.get(sessionKey)
+        if (!current) return send(401, { error: 'Sign in required' })
+        // Dedicated 015 RLS reader and verified server subject only; no browser-supplied IDs.
+        if (typeof readSquadUuid !== 'function') return send(503, { error: 'UUID Squad preview not connected' })
+        const result = await readSquadUuid(current.subject)
+        return send(200, projectSyntheticSquadUuidPreview(result, { ownerVerified: true }))
       }
       if (path === '/fixture/squad' && req.method === 'GET') {
         const current = sessions.get(sessionKey)
