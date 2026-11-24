@@ -99,3 +99,27 @@ If this test fails, stop and inspect the exact failed assertion and cleanup repo
 The owner's first disposable PostgreSQL 17 run completed all **21** canonical Overview checks and successfully removed the PGDATA. The next Squad check stopped at a **test-only boolean rendering mismatch**: `has_column_privilege(...)::text` returned `false`, not `f`.
 
 Review then found a **more important permission flaw in the initial proposed review-only ACL**: since the synthetic rider table has exactly seven columns, granting six on top of existing `rider_id` would effectively expose every column. PostgreSQL `has_table_privilege(...,'SELECT')` also returns true with any selectable column, so it is not a valid guard for complete-row access. **No hosted grant was made.** The revised proposal grants only five new rider attributes and **never `team_id`**; the query relies on the actual PostgreSQL `riders_read` owner RLS filter instead of a reader-level `team_id` JOIN. The native test now checks `team_id` denial directly and uses correct PostgreSQL boolean text. This corrected design must pass all native PG17 checks before any hosted grant review. Do not run the old ACL source.
+
+## 2026-11-24: owner-confirmed native PG17 success, forward review candidate
+
+The owner confirmed **9/9 source-review checks and 28/28 disposable native PostgreSQL 17 checks PASS**, including manager A/B ten-rider RLS separation, unknown-user denial, restricted reader write and anonymous read denial, preservation of ten migration ledger rows and 200 rider rows, and successful disposal of the temporary native PostgreSQL instance. **No hosted DDL or grant was made.**
+
+After native acceptance, prepared `013_squad_reader_grant_REVIEW_ONLY.sql`, a **non-installable, explicit-approval-required forward candidate**. Unlike the rollback-only test query, this SQL has:
+- Direct `uranius_migrator` role, exact isolated project reference, PostgreSQL 17 and database/TLS guards.
+- Exact 10 migration ledger fingerprints including 010; expected 200 synthetic riders, two ownership mappings and frozen Season 1 game clock.
+- Existing `riders_read` row ownership policy and unchanged preexisting table privileges, including original `authenticated` role's SELECT grant. The latter was independently confirmed read-only on hosted Uranius and **must not be revoked or duplicated**.
+- The narrow reader-only grant of `label,flat,climbing,stamina,resistance`, preserving existing `rider_id` access and preventing `team_id` access. No server Auth, original project, public routes, Data API exposure, engine rules, scheduler or client privileges are changed.
+- A postflight that fails the transaction if anonymous access is broadened, reader `team_id` is exposed, or write privileges appear.
+
+There is **no install mode or approved SHA manifest**. A separate guarded atomic installer + manifest and independent PostgreSQL 17 candidate rehearsal must be completed before the owner can review an exact final hash and authorize any hosted change.
+
+New tests: `tests/uraniusSquadInstallCandidateReview.test.mjs` (four new static checks); the existing `tests/uraniusSquadReaderNativePg17.mjs` was extended with **three** candidate checks using only the disposable fixture: unmodified candidate denies non-TLS, wrong execution role denies, and a local-only TLS-disabled candidate rehearsal succeeds with exact restricted columns and duplicate rejection. Thus expected native count is **31** if successful (not yet run by owner). `scripts/review-uranius-squad.mjs --review` prints the draft SHA-256 locally without connecting to any database. These new tests are **not yet validated**.
+
+```bat
+git pull origin main
+node --test tests\uraniusSquadPreviewReview.test.mjs tests\uraniusSquadReaderAclReview.test.mjs tests\uraniusSquadInstallCandidateReview.test.mjs
+node tests\uraniusSquadReaderNativePg17.mjs --disposable-native-pg17 --postgres-bin "C:\Users\Aleks\Desktop\Project-Uranius\.uranius-pin-review\postgresql-17.12-portable\bin"
+node scripts\review-uranius-squad.mjs --review
+```
+
+**Important:** Owner acceptance of the 28-check disposable ACL test is **not** approval to run the 013 candidate on hosted Uranius. Do not paste SQL into the dashboard. No new password, hosted API, or billing step is needed for the above offline commands.
