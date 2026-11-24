@@ -113,3 +113,18 @@ git pull origin main
 node --test tests\uraniusRiderUuidMappingReview.test.mjs tests\uraniusRiderUuidManifestFreeze.test.mjs tests\uraniusRiderUuidGuardedInstaller.test.mjs
 node scripts\apply-uranius-rider-identity.mjs --review
 ```
+
+## 2026-11-24 — Native full-history 014 rehearsal prepared
+
+Owner confirms **12/12 security/freeze/installer source tests passed**, with unchanged exact hashes (candidate `f97126ed0a9259bfeac9ebf3c4158ece7a590b3ae77fd7d66f7efdc26894db6f`, manifest `620d5eacbd836e13a72fdaac9159162061fab8b490a30528b177d25d7952db62`). The guarded installer was only executed in `--review` mode, so nothing was applied.
+
+Added `tests/uraniusRiderUuidFullHistoryNativePg17.mjs`, based on the previously owner-passed 28-check native PG17 Squad fixture (not a new minimal schema). It replays canonical 001–010 with real populated A/B data, rehearses exact 013 with its original preflight and explicit local-only TLS guard substitution, then records 013 in the *disposable* ledger. It compares the entire eleven-element 014 manifest against the actual disposable ledger, checks deliberate earlier hash tampering is rejected, verifies unaltered 014 refuses non-TLS and unauthorized execution, executes 014 with only its TLS predicate substituted in-memory, then verifies 200 unique UUIDs, referential/provenance integrity, FORCE RLS, denied public/reader privileges, preserved original catalog/clock and duplicate-install denial. All PGDATA is disposable, bound to `127.0.0.1`; no hosted connection paths. Also added three static fixture boundary tests. **These latest tests are unexecuted**.
+
+Run:
+```bat
+git pull origin main
+node --test tests\uraniusRiderUuidFullHistoryBoundary.test.mjs
+node tests\uraniusRiderUuidFullHistoryNativePg17.mjs --disposable-native-pg17 --postgres-bin "C:\Users\Aleks\Desktop\Project-Uranius\.uranius-pin-review\postgresql-17.12-portable\bin"
+```
+
+Caution: this native test evaluates the **reviewed 014 SQL** against the complete synthetic 001–013 fixture; it does not yet execute the CLI installer as a real hosted transaction. That last separately-approved application step and independent read-only hosted verification remain outstanding. No change to either frozen 014 digest. Do not run `--apply-approved-014` yet.
