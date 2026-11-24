@@ -475,3 +475,18 @@ node scripts\run-uranius-chase-order-poc.mjs
 ```
 
 If it errors, repair the precise test or model cause without forcing an outcome. If it passes, compare physical gap closing and energy before proceeding to many-tick chase-versus-survival tests. A verified one-tick catch **is not required**; artificially swallowing a breakaway is unacceptable. Sporting realism release gate remains IMPROVE, official checklist 49/60; legacy/golden path unchanged until independent verification.
+
+
+## 2026-11-24 — Owner's chase POC first run uncovered a fixture group-ID assumption
+
+Owner pulled through commit `4c4a6f8`, ran the chase boundary assertions **3/3 PASS**, then the executable failed *before the first tick*: `createBreakawayGroup: source group peloton does not exist`. The POC hardcoded `sourceGroupId:'peloton'`, while `createInitialState` sets the group's ID using `INITIAL_PELOTON_GROUP_ID` (not guaranteed to be that string). This is **fixture setup**, not yet an engine chase defect or failed chase performance.
+
+Repaired `scripts/uranius-chase-order-poc.ts` to determine exactly one initial active group of type `peloton` from `createInitialState(stageInput).groups` and pass that *actual* `groupId` to `createBreakawayGroup`. Both the scheduled-order fixture and no-order negative control reuse this helper; the real 30s gap is preserved. Added a static regression test preventing a hardcoded source group ID. No engine rules, production game, baseline mode or DB changed. **Not yet executed on owner's Windows machine**.
+
+```bat
+git pull origin main
+node --test tests\uraniusChaseOrderBoundary.test.mjs
+node scripts\run-uranius-chase-order-poc.mjs
+```
+
+The one-tick physical speed, gap and energy comparisons remain unverified pending this rerun. Checklist 49/60; sporting GO withheld.
