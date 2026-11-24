@@ -131,6 +131,9 @@ import {
 export interface IntegratedTerrainSeparationOptions {
   readonly terrainCapabilityInfluence?: number
   readonly separationWindowSeconds?: number
+  /** POC ONLY: allow newborn dropped groups one physical movement tick before
+   * catch reconciliation; defaults false, preserving golden baseline. */
+  readonly experimentalPreserveBirthTickDroppedGroups?: boolean
 
   /**
    * Disabled by default so all earlier Phase 7B.8 diagnostics retain their
@@ -1407,6 +1410,13 @@ export function simulateIntegratedTerrainSeparationTick(
   const reconciledBreakaways =
     reconcileBreakawayGroups(
       stateBeforeBreakawayReconciliation,
+      options.experimentalPreserveBirthTickDroppedGroups
+        ? {
+            protectedNewDroppedGroupIds: transitionApplication.transitions
+              .filter(transition => transition.transitionKind === 'created')
+              .map(transition => transition.targetGroupId),
+          }
+        : {},
     )
 
   const finishDetection =
