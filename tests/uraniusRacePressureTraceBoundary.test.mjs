@@ -49,3 +49,15 @@ test('experimental drop repair runs only on explicit same-seed stress probe and 
  assert.match(trace,/scenario\.startsWith\('mountain_stress_'\)&&index%4===0/)
  assert.match(runner,/report\.results\.length!==4/)
 })
+
+test('experimental race checks rider conservation, unique classification and replay spatial gaps',()=>{
+ assert.match(trace,/finalRosterExact/)
+ assert.match(trace,/finishers=finalRiders\.filter/)
+ assert.match(trace,/uniqueNonNullRanks/)
+ assert.match(trace,/snapshotConservationFailures/)
+ assert.match(trace,/snapshotsWithMoreThanOneGroup/)
+ assert.match(trace,/peakGapBetweenActiveGroupsKm/)
+ assert.match(runner,/p\.finishers!==p\.fieldSize/)
+ assert.match(runner,/!p\.uniqueNonNullRanks/)
+ assert.match(runner,/p\.snapshotConservationFailures\.length>0/)
+})
