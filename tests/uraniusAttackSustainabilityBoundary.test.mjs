@@ -63,3 +63,11 @@ test('paired drafting ON/OFF keeps original controls and checks real shelter sav
  const transformed=transformSync(fixture,{loader:'ts',format:'esm',target:'node20'})
  assert.ok(transformed.code.includes('shelterScenarios'))
 })
+
+test('shelter tick count requires actual energy relief, not merely a computed shelter multiplier',()=>{
+ assert.match(fixture,/shelterEvaluatedTicks:riderEnergyTicks.filter\(t=>t.shelterMultiplier!==null\).length/)
+ assert.match(fixture,/shelterAppliedTicks:riderEnergyTicks.filter\(t=>t.shelterEnergySaved>0\).length/)
+ assert.match(fixture,/shelterSaved=sum\(riderEnergyTicks.map\(t=>t.shelterEnergySaved\)\)/)
+ const parsed=transformSync(fixture,{loader:'ts',format:'esm',target:'node20'})
+ assert.ok(parsed.code.includes('shelterEvaluatedTicks'))
+})
