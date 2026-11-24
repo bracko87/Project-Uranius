@@ -50,6 +50,17 @@ try{
   console.log('STEEP ATTACK LAUNCH '+r.distribution+' | '+JSON.stringify(r.attackLaunchAudit))
   console.log('STEEP TERRAIN DROP FATE '+r.distribution+' | '+JSON.stringify(r.terrainDropAudit))
  }
+ console.log('TRAILING ATTACK PHYSICAL CATCH CONTROL | '+JSON.stringify(
+  report.scenarios.find(r=>r.profile==='steep_160'&&r.distribution==='heterogeneous')?.attackLaunchAudit?.[0]))
+ console.log('TRAILING ATTACK PHYSICAL CATCH PROTECTED | '+JSON.stringify({
+  finishers:report.trailingAttackProtected.finishers,
+  finished:report.trailingAttackProtected.completed,
+  attackCaught:report.trailingAttackProtected.attackCaught,
+  positiveGapTicks:report.trailingAttackProtected.attackPositiveGapTicks,
+  attackLaunch:report.trailingAttackProtected.attackLaunchAudit?.slice(0,4),
+  finishSpreadSeconds:report.trailingAttackProtected.finishSpreadSeconds,
+  distinctTimes:report.trailingAttackProtected.finishingTimeUniqueCount,
+ }))
  console.log('TECHNICAL CHECKS '+JSON.stringify(report.checks))
  console.log('SPORTING EVIDENCE IS OBSERVATIONAL; NO GO REMAINS')
  if(args.length){
