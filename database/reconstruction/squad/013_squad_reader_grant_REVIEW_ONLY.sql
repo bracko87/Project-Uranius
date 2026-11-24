@@ -77,7 +77,7 @@ BEGIN
     OR has_table_privilege('uranius_smoke_reader','uranius_catalog.riders','UPDATE')
     OR has_table_privilege('uranius_smoke_reader','uranius_catalog.riders','DELETE')
     OR has_any_column_privilege('anon','uranius_catalog.riders','SELECT')
-    OR has_any_column_privilege('authenticated','uranius_catalog.riders','SELECT')
+    OR NOT has_table_privilege('authenticated','uranius_catalog.riders','SELECT')
  THEN RAISE EXCEPTION 'Uranius Squad 013 permission candidate refused: immutable isolated baseline mismatch';
  END IF;
 END
@@ -96,7 +96,7 @@ BEGIN
     OR has_table_privilege('uranius_smoke_reader','uranius_catalog.riders','UPDATE')
     OR has_table_privilege('uranius_smoke_reader','uranius_catalog.riders','DELETE')
     OR has_any_column_privilege('anon','uranius_catalog.riders','SELECT')
-    OR has_any_column_privilege('authenticated','uranius_catalog.riders','SELECT')
+    OR NOT has_table_privilege('authenticated','uranius_catalog.riders','SELECT')
  THEN RAISE EXCEPTION 'Uranius Squad 013 unexpected postflight ACL; must roll back';
  END IF;
 END
