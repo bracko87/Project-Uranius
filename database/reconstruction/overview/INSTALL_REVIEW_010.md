@@ -119,3 +119,26 @@ powershell -NoProfile -File scripts\run-approved-overview-https-windows.ps1 -Tls
 Replace *both* loopback TLS placeholder paths with real local trusted files. The server will ask, with hidden input, for the **reader's** password and the **Uranius publishable API key** (not the migrator password or database superuser password). Open the printed `https://127.0.0.1:<ephemeral-port>` in a browser that trusts the loopback certificate and sign in with each existing manager's user credentials separately. Verify: dashboard owner identity and schedule both render; empty schedule is correct until races are seeded through a separately approved workflow; unauthenticated GET 401, rejected cross-origin requests, and old session invalid after logout. Do not report these real HTTPS A/B tests as passed until performed.
 
 **Original production remains untouched.** Do not infer acceptance or racing-engine functionality merely from four empty source-backed tables. The whole original Overview frontend is still under reconstruction; the authenticated schedule is exposed only by a loopback smoke interface, not deployed to players.
+
+## 2026-11-24: frontend boundary 10/10 PASS; direct real-manager A/B read test staged
+
+The owner ran `node --test tests\\uraniusOverviewHostedFrontendBoundary.test.mjs tests\\uraniusOverviewScheduleRouteIsolation.test.mjs tests\\uraniusOverviewHostedReadBoundary.test.mjs` with **10/10 PASS, 0 failed**. These validate trusted session boundaries, SQL/permission requirements and the locally connected UI states; they are **not** hosted Auth positive tests.
+
+To avoid requiring a second loopback HTTPS certificate just for an authenticated backend test, the repo includes a new direct read-only test script `scripts/verify-uranius-overview-live.mjs` and Windows wrapper `scripts/run-overview-live-read-windows.ps1`. The test uses only the pinned `sdtsivgtcaoaeoihcwzd` hosted Auth origin and `uranius_smoke_reader` database user with `verify-full` TLS. It prompts privately for reader password, project publishable key and each existing manager's Auth password; verifies the two distinct manager identities through Supabase Auth; binds each verified subject to the **fixed** PostgreSQL read-only source query; projects and validates Upcoming/Today arrays; and signs out Auth sessions. No direct SQL writes or migration; normal Auth login/logout session records may be created/revoked. The script does not log passwords, publishable key, UUIDs or JWTs.
+
+The new offline test suite `tests/uraniusOverviewLiveReadBoundary.test.mjs` is **NOT YET EXECUTED**. Run first:
+
+```bat
+git pull origin main
+node --test tests\uraniusOverviewLiveReadBoundary.test.mjs
+```
+
+Then test **real hosted Auth and restricted reader** without any local webserver, browser certificate or key:
+
+```bat
+powershell -NoProfile -File scripts\run-overview-live-read-windows.ps1 -CaFile "%USERPROFILE%\Downloads\prod-ca-2021.crt" -PostgresBin "C:\Users\Aleks\Desktop\Project-Uranius\.uranius-pin-review\postgresql-17.12-portable\bin"
+```
+
+Use the dedicated existing **smoke reader** password, NOT `postgres` or `uranius_migrator`. The publishable API key is the **public**, project-scoped key from Uranius Dashboard Settings → API Keys, entered into the hidden prompt, not posted to chat. Use the existing two manager Auth passwords next. Both should return `upcoming=0 today=0` while the race tables remain empty. Only if both are confirmed may the *backend verified Auth + restricted reader* gate be marked passed; this is not full populated A/B race isolation, nor a live browser UI PASS. If missing reader credentials, stop and review access rather than guessing, resetting credentials or weakening role guards.
+
+The original ProPeloton Manager project remains outside every command and SQL endpoint.
