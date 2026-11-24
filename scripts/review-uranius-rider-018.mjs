@@ -9,10 +9,27 @@ if(args.length!==1||args[0]!=='--review'){
  try{
   const root=new URL('../database/reconstruction/squad/',import.meta.url)
   const bytes=readFileSync(new URL('018_synthetic_nine_skill_attributes_REVIEW_ONLY.sql',root))
+  const manifestBytes=readFileSync(new URL('018_install_manifest_REVIEW_ONLY.json',root))
+  const manifest=JSON.parse(manifestBytes.toString('utf8'))
+  const prior=JSON.parse(readFileSync(new URL('015_install_manifest_REVIEW_ONLY.json',root)).toString('utf8'))
+  const expected=[...prior.requires,{file:prior.candidate.ledgerVersion,sha256:prior.candidate.sha256}]
+  const expectedNames=['001_identity.sql','002_reference_schema.sql','003_access.sql','004_synthetic_reference.sql','005_club_identity.sql','006_synthetic_world.sql','007_smoke_reader.sql','008_game_clock_v1.sql','009_clock_smoke_reader.sql','010_overview_race_reader.sql','013_squad_reader_grant.sql','014_synthetic_rider_uuid.sql','015_rider_uuid_owner_read.sql']
+  const candidateHash=createHash('sha256').update(bytes).digest('hex')
+  const manifestHash=createHash('sha256').update(manifestBytes).digest('hex')
   const sql=bytes.toString('utf8')
   const names=['sprint','climbing','time_trial','endurance','flat','recovery','resistance','race_iq','teamwork']
   const three=['climbing','flat','resistance']
-  if(!sql.startsWith('-- PROJECT URANIUS — 018 SYNTHETIC NINE-SKILL STORAGE / OFFLINE REVIEW ONLY.') ||
+  if(candidateHash!=='622d7626f5f6d93117cbb755398971d23ca0a870e49bc8c98e2df768630b48cc' ||
+     manifest.projectRef!=='sdtsivgtcaoaeoihcwzd' || manifest.postgresMajor!==17 ||
+     manifest.status!=='REVIEW_ONLY_NOT_APPROVED' || manifest.hostedApplied!==false ||
+     manifest.approvalRequired!==true || manifest.expectedLedgerEntries!==13 ||
+     manifest.candidate?.file!=='018_synthetic_nine_skill_attributes_REVIEW_ONLY.sql' ||
+     manifest.candidate?.ledgerVersion!=='018_synthetic_nine_skill_attributes.sql' ||
+     manifest.candidate?.sha256!==candidateHash ||
+     JSON.stringify(manifest.requires)!==JSON.stringify(expected) ||
+     JSON.stringify(expected.map(x=>x.file))!==JSON.stringify(expectedNames) ||
+     expected.length!==13 || !expected.every(x=>/^[a-f0-9]{64}$/.test(x.sha256)) ||
+     !sql.startsWith('-- PROJECT URANIUS — 018 SYNTHETIC NINE-SKILL STORAGE / OFFLINE REVIEW ONLY.') ||
      !sql.includes('NOT APPROVED for hosted execution') ||
      !sql.includes("current_user <> 'uranius_migrator'") ||
      !sql.includes('pg_stat_ssl') ||
@@ -30,7 +47,9 @@ if(args.length!==1||args[0]!=='--review'){
    throw new Error('018 review source boundary changed; stop. No database connection.')
   }
   console.log('URANIUS 018 OFFLINE REVIEW PASSED — no database connection.')
-  console.log('018 candidate SHA-256: '+createHash('sha256').update(bytes).digest('hex'))
+  console.log('018 candidate SHA-256: '+candidateHash)
+  console.log('018 manifest SHA-256: '+manifestHash)
+  console.log('Exact historical prerequisites: '+expected.length)
   console.log('Nine skill slots: 9, directly sourced: 3, intentionally NULL: 6')
   console.log('Installed prerequisite: 015; next ledger count must remain 13 before any separate approval')
   console.log('Status: REVIEW ONLY, NOT APPROVED, NOT INSTALLED. No apply mode exists.')
