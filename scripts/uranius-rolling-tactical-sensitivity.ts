@@ -41,12 +41,50 @@ function makeInput(withAttack:boolean):StageInput{
    // Avoid a synthetic launch gap to observe actual attack movement.
    metadata:{uraniusLiveCommand:true}}]:[]}
 }
+function ticksFirstAttack(ticks:ReturnType<typeof runCalibratedTerrainSeparationStage>['ticks']){
+ for(let index=0;index<ticks.length;index++){
+  const attack=ticks[index].appliedOrderEffects.attackEffects[0]
+  if(attack)return {index,id:attack.separation.breakawayGroupId}
+ }
+ return null
+}
 function summarize(withAttack:boolean){
  const input=makeInput(withAttack)
  const result=runCalibratedTerrainSeparationStage(createInitialState(input),{
   experimentalPreserveBirthTickDroppedGroups:true,
   experimentalPreserveRecedingDroppedGroups:true,
  })
+ // Observe exactly how a launched attack moves and whether reconciliation catches it.
+ const attackTicks=result.ticks.filter(t=>t.appliedOrderEffects.attackEffects.length>0)
+ const attackTrace=attackTicks.slice(0,2).map(t=>{
+  const launch=t.appliedOrderEffects.attackEffects[0]
+  const id=launch?.separation.breakawayGroupId
+  const launched= id ? t.appliedOrderEffects.state.groups[id] : undefined
+  const proposal=id ? t.movement.movement.proposals.find(p=>p.groupId===id) : undefined
+  const pelotonProposal=t.movement.movement.proposals.find(p=>p.groupType==='peloton')
+  const beforeCatch=id ? t.reconciledBreakaways.previousState.groups[id] : undefined
+  const pelotonBeforeCatch=Object.values(t.reconciledBreakaways.previousState.groups)
+   .find(g=>g.active&&g.groupType==='peloton')
+  const caught=!!id&&t.reconciledBreakaways.reabsorbedBreakawayGroupIds.includes(id)
+  return {raceSecond:t.state.raceSecond,groupId:id??null,
+   launchSpeedKmh:launched?.speedKmh??null,
+   appliedFirstMovementSpeedKmh:proposal?.appliedSpeedKmh??null,
+   pelotonFirstMovementSpeedKmh:pelotonProposal?.appliedSpeedKmh??null,
+   gapBeforeReconcileKm:beforeCatch&&pelotonBeforeCatch?
+    beforeCatch.distanceKm-pelotonBeforeCatch.distanceKm:null,
+   caughtThisTick:caught,activeAfterCatch:id?!!t.state.groups[id]?.active:false}
+ })
+ const firstAttack=ticksFirstAttack(result.ticks)
+ const subsequentAttackTrace=firstAttack?result.ticks.slice(firstAttack.index,firstAttack.index+5).map(t=>{
+  const id=firstAttack.id
+  const group=t.reconciledBreakaways.previousState.groups[id]
+  const peloton=Object.values(t.reconciledBreakaways.previousState.groups).find(g=>g.active&&g.groupType==='peloton')
+  return {raceSecond:t.state.raceSecond,
+   breakawaySpeedKmh:group?.speedKmh??null,pelotonSpeedKmh:peloton?.speedKmh??null,
+   signedGapKm:group&&peloton?group.distanceKm-peloton.distanceKm:null,
+   caught:t.reconciledBreakaways.reabsorbedBreakawayGroupIds.includes(id),
+   activeAfterCatch:!!t.state.groups[id]?.active}
+ }):[]
  const final=Object.values(result.finalState.riders)
  const finishers=final.filter(r=>r.finished&&r.finishTimeSeconds!==null)
  const selected=final.find(r=>r.riderId==='tactic-rider-001')
@@ -68,7 +106,7 @@ function summarize(withAttack:boolean){
   attackEventCount:events.filter(x=>x.eventType==='ATTACK_STARTED').length,
   executedOrderCount:events.filter(x=>x.eventType==='ORDER_EXECUTED').length,
   eventSamples:events.slice(0,5).map(e=>({type:e.eventType,second:e.raceSecond,km:e.kmMarker})),
-  classificationAndEnergyHash:hash}
+  attackTrace,subsequentAttackTrace,classificationAndEnergyHash:hash}
 }
 const baseline=summarize(false)
 const attacked=summarize(true)
