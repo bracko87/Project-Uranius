@@ -162,3 +162,24 @@ node tests\uraniusOverviewCombinedInstallNativePg17.mjs --disposable-native-pg17
 ```
 
 After it passes, the only remaining limited Overview smoke gate is the *visual browser check* of the authenticated local HTTPS dashboard (requires existing loopback trusted TLS certificate/key, not the Supabase database CA). Do not equate this limited smoke dashboard with complete original Overview page/function parity.
+
+## 2026-11-24: local TLS placeholder fixed with on-device setup
+
+Owner tried the local HTTPS smoke with `PATH_TO_LOCAL_CERT` and `PATH_TO_LOCAL_KEY` placeholders. The launcher correctly rejected the nonexistent certificate **before starting a server or accessing any database**. This is not a migration failure.
+
+Added `scripts/setup-uranius-loopback-tls-windows.ps1` to generate the required **self-signed 127.0.0.1 IP-SAN certificate** and 3072-bit key with Git-for-Windows OpenSSL. The key and certificate are created exclusively in `%LOCALAPPDATA%\Uranius\loopback-tls\`, **outside Git**, and the script restricts the key's file permissions to the current Windows identity. The certificate expires after 2 days; automatic broad/system trust is prohibited.
+
+First run:
+```bat
+git pull origin main
+node --test tests\uraniusOverviewLoopbackTlsSetup.test.mjs
+powershell -NoProfile -File scripts\setup-uranius-loopback-tls-windows.ps1
+```
+
+This generates the files and prints the **complete local HTTPS smoke command with real paths**. It does *not* change browser trust by default. For an explicit opt-in to Windows **CurrentUser** browser trust (Edge/Chrome) rerun:
+```bat
+powershell -NoProfile -File scripts\setup-uranius-loopback-tls-windows.ps1 -TrustForCurrentUser
+```
+The Root store change is user-scoped; only the exact generated certificate is installed, and the separate `-RemoveTrust` mode removes by its exact thumbprint after testing. If browser trust is unavailable or organizational policy blocks it, stop and use the existing read-only backend A/B acceptance evidence; do not bypass TLS validation. The local certificate/key are **not** the remote Supabase database root CA.
+
+The setup is newly committed and has **not yet been owner-executed**; report any OpenSSL/Windows trust compatibility errors rather than assuming success. Hosted migration 010, 4/4 live read boundary checks, both managers' direct Auth/TLS reads, and 21/21 combined populated native PostgreSQL checks are already PASS. The remaining visual browser smoke test is **not** full original Overview parity.
