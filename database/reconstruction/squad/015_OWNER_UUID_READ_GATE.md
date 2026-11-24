@@ -50,3 +50,24 @@ git pull origin main
 node --test tests\uraniusRiderUuidOwnerReadReview.test.mjs tests\uraniusRiderUuidOwnerReadNativeBoundary.test.mjs
 node tests\uraniusRiderUuidOwnerReadNativePg17.mjs --disposable-native-pg17 --postgres-bin "C:\Users\Aleks\Desktop\Project-Uranius\.uranius-pin-review\postgresql-17.12-portable\bin"
 ```
+
+## 2026-11-24 — Owner 48/48 native acceptance; 015 release candidate frozen (NOT INSTALLED)
+
+Owner-provided terminal output confirms **8/8 source and boundary tests PASS** and **48/48 disposable native PostgreSQL 17 history checks PASS**, with PGDATA cleaned up. The corrected unknown-owner assertion passed. A and B each saw their own ten real UUID mappings; an unknown user saw none. The isolated candidate also denied hidden fields, public read, tampering, TLS-free and wrong-role execution. No hosted changes.
+
+Independent read-only hosted preflight checked `sdtsivgtcaoaeoihcwzd`: exactly **12 ledger entries**, installed 014 digest `f97126ed0a9259bfeac9ebf3c4158ece7a590b3ae77fd7d66f7efdc26894db6f`, 200 synthetic riders, 2 owners, 200 UUID mappings, FORCE RLS enabled, zero identity policies, no mapping SELECT for anonymous/authenticated/reader, no reader access to `team_id`, and paused Season 1 game clock.
+
+**Exact frozen 015 SQL source SHA-256**: `71ade068c5cf5bbdc0e356663a0525f1e74b43e63a9c19f267748f7b46b6161e`. **Frozen manifest SHA-256**: `f9d835dd58c242d83b7366976810be1eb0525d9e2c401e361ef7b6d66e76ec81`. The manifest `015_install_manifest_REVIEW_ONLY.json` includes 12 exact historical version/digest prerequisites; statuses `REVIEW_ONLY_NOT_APPROVED` and `hostedApplied:false` remain unchanged.
+
+Added guarded `scripts/apply-uranius-rider-015.mjs`: offline `--review` mode verifies the two hashes and prior ledger manifest, never connects; gated apply mode requires **separate explicit owner approval** of the exact 015 manifest hash and direct TLS `uranius_migrator` target `sdtsivgtcaoaeoihcwzd`. The future transaction checks all 12 historical ledger rows in both directions, applies only the frozen policy and two-column grant, adds a 13th ledger entry and validates FORCE RLS/ACLs/clock/owners. No fallback admin execution. The dormant `scripts/run-approved-rider-015-windows.ps1` captures a hidden password only after owner-approved digest and typed local confirmation. Four installer+manifest? Five `uraniusRider015ManifestAndInstaller.test.mjs` tests and three `uraniusRider015WindowsLauncher.test.mjs` tests are committed, **not yet executed by owner**. The full guarded CLI installer itself has not yet been rehearsed as an atomic transaction; source candidate had passed native execution.
+
+**DO NOT RUN THE 015 APPLY MODE** until the new installer checks and any needed offline atomic rehearsal pass and separate approval is explicitly obtained. Migration 014 is closed; no repeat.
+
+Next safe checks:
+```bat
+git pull origin main
+node --test tests\uraniusRider015ManifestAndInstaller.test.mjs tests\uraniusRider015WindowsLauncher.test.mjs tests\uraniusRiderUuidOwnerReadReview.test.mjs tests\uraniusRiderUuidOwnerReadNativeBoundary.test.mjs
+node scripts\apply-uranius-rider-015.mjs --review
+```
+
+The original ProPeloton project is entirely excluded; no synthetic UUID mapping has been represented as an original rider identity.
