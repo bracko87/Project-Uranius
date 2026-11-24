@@ -327,3 +327,12 @@ node scripts\inspect-uranius-seed-sensitivity.mjs race-long-stage-local.json
 ```
 
 Reconciliation-specific synthetic regression remains PASS, but sporting realism remains IMPROVE (rolling stages bunch, mountain gap potentially excessive). Canonical engine mode and production unchanged; checklist still **49/60**.
+
+
+## 2026-11-24 — Owner confirms zero seed sensitivity in all six long-stage comparisons
+
+Owner ran `tests/uraniusSeedSensitivityBoundary.test.mjs`: **2/2 PASS**. Read-only saved report inspection: every alpha/beta pair has `inputDiff true` but `classificationDiff false`, `speedSame true`, `spreadSame true`; this holds for rolling_120 and mountain_160, under default-off, birth-tick-only, and receding-drop-protected (six pairs). This is direct evidence that **changing the StageInput.seed string alone does not alter classifications in these fixtures**. It is NOT evidence of nondeterminism or a universal RNG defect.
+
+Source inspection adds a useful explanation: `runIntegratedTerrainSeparationStage.ts` does not directly read the seed in the actual per-tick movement/energy/pressure/transition path; `state.seed` is included later in the canonical deterministic report hash. `terrainAwareMultiGroupMovement.ts` also contains no direct seed/RNG references. Therefore the current calibrated path appears to implement **deterministic equations without seed-driven variation for these scenarios**. The seed appears to be part of replay identity rather than a random generator input here. This is a source-level observation over inspected files, not a proof across every transitive dependency or the older separate existing_v1 runner.
+
+**Decision:** Do not add artificial randomness to force different seeds to vary. Cycling performance should respond first to changes in rider strengths, team orders, terrain, weather, fatigue and race events with reproducible outputs. Seed-controlled stochastic incidents/tactical uncertainty require a separate explicit design decision, deterministic RNG and pinned golden tests. Sporting gate remains IMPROVE, particularly the all-bunched rolling race and excessive 160km mountain tail gap. The catch/rejoin and time-normalized energy-accounting sub-investigations are technically resolved, while realism remains unapproved. Keep canonical modes unchanged and no hosted/production change. Official checklist **49/60**.
