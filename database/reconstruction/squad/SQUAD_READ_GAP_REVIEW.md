@@ -61,3 +61,18 @@ A hosted `BEGIN READ ONLY` aggregate check (no rider identities or rows exported
 - `stamina` and `resistance`: min 55 / max 95.
 
 All observed values fit the projector's strict 0–100 skill range and 150-character label maximum. These aggregates validate the **current synthetic catalog only**, not the legacy original Squad attribute scale or broader gameplay rules.
+
+## 2026-11-24: 5/5 source-review tests PASS; restricted grant preview staged
+
+The owner reran `node --test tests\\uraniusSquadPreviewReview.test.mjs`: **5/5 PASS, zero failures** after correcting test-only JavaScript regular-expression escaping. This proves the projector contract and SQL static review gates, **not PostgreSQL execution**.
+
+Prepared `013_squad_reader_acl_DISPOSABLE_REVIEW_ONLY.sql`: **rollback-only, NOT APPROVED for hosted execution**. It guards direct `uranius_migrator` session, PostgreSQL 17, 10-entry ledger with the approved 010 candidate digest, RLS on synthetic riders, restricted reader role attributes, absent current reader permissions on `team_id` and `label`, and absence of broad reader write/privileged access. It temporarily grants **exactly six missing rider columns** (`team_id,label,flat,climbing,stamina,resistance`) to the existing restricted reader, retaining pre-existing `rider_id` grant, asserts seven columns are available and full-table reads, anon reads and writes stay denied, then **ROLLBACKs**. It has no new table, function, API access, policy, role, row or ledger writes that survive the transaction. No project-identity bypass and no authorization for live use is implied.
+
+Added `tests/uraniusSquadReaderAclReview.test.mjs` (four source-only checks). These newly committed tests have **not yet been executed** by the owner or against disposable PG17. Next:
+
+```bat
+git pull origin main
+node --test tests\uraniusSquadPreviewReview.test.mjs tests\uraniusSquadReaderAclReview.test.mjs
+```
+
+**Do not execute the SQL file against hosted Uranius** even though it rolls back: the planned direct role preconditions and exact ten-entry history still need a native PostgreSQL 17 dry run with populated A/B RLS. Any forward-only grant migration requires a separate reviewed installation manifest/hash and the owner's explicit approval. No new credentials or Supabase writes are needed for the next offline check.
