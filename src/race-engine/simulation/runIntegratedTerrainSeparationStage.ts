@@ -140,6 +140,8 @@ export interface IntegratedTerrainSeparationOptions {
   readonly experimentalPhysicalAttackLaunch?: boolean
   /** OFFLINE POC ONLY: executed final sprint and lead-out affect finish rank/energy. */
   readonly experimentalFinishTacticsEnabled?: boolean
+  /** OFFLINE POC: valid chase order affects actual peloton movement. */
+  readonly experimentalChaseOrdersEnabled?: boolean
 
   /**
    * Disabled by default so all earlier Phase 7B.8 diagnostics retain their
@@ -1285,6 +1287,8 @@ export function simulateIntegratedTerrainSeparationTick(
           steepGradientMovementSeverityEnabled,
         steepGradientSeverityModel:
           steepGradientMovementSeverityModel,
+        experimentalChaseOrdersEnabled:
+          options.experimentalChaseOrdersEnabled === true,
         ...(options.experimentalPhysicalAttackLaunch
           ? {
               experimentalLaunchSpeedByGroupId: Object.fromEntries(
