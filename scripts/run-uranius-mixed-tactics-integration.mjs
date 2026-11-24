@@ -30,6 +30,11 @@ try{
   'pursuerEnergy '+r.pursuerEnergy,'caught '+r.caughtAttack].join(' | '))
  console.log('Checks: '+JSON.stringify(report.checks))
  console.log('Observed (not assumed): '+JSON.stringify(report.comparison))
+ for(const [label,scenario] of [['CONTROL',report.off],['ALL-TACTICS',report.on]]){
+  for(const step of scenario.chaseTimeline||[])
+   console.log('CHASE PHYSICS '+label+' | '+JSON.stringify(step))
+ }
+
  const i=process.argv.indexOf('--out')
  if(i>=0){
   const target=process.argv[i+1]
