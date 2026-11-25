@@ -1047,3 +1047,22 @@ node scripts\\run-uranius-strength-gradient.mjs --out strength-gradient-local.js
 ```
 
 The original 15 scenario configurations and actual race engine are unchanged; a rerun is needed only to acquire NEW pace-decomposition observations. Before any mechanical edit, compare sustainable solo vs group speeds for ratings 82/86/90 early and 76/82 late, and investigate whether group average, no lead-puller choice, and lack of tactical peloton chase cause unrealistic long breakaways. Official sporting checklist remains **49/60; NO GO**, no production/hosted changes.
+
+
+## 2026-11-25 — Real group pace trace verifies strength cliff; catch-window geometry audit added
+
+Owner pulled through `ceeaf15` and ran `tests/uraniusStrengthGradientBoundary.test.mjs`: **5/5 PASS**. All **15/15** 120km/128-rider scenarios completed; `observedPaceDecomposition` and the seven previous technical gates TRUE. Owner's results show actual solo post-launch movement versus 127-rider peloton on early 0.3% grade: **76 = 41.32968 km/h; 82 = 42.62639 km/h; 86 = 43.49051 km/h; 90 = 44.35438 km/h; 94 = 45.21802 km/h**, while the peloton travels **40.748916 km/h** in all. Nevertheless attacks at 76/82/86 early are swallowed at second launch tick; 90/94 survive for hundreds of ticks and win large margins. The initial launch speed is ~44.75–45.22km/h across ratings. Late at 1.6% grade, rider 76 post-launch ~39.75747km/h against peloton ~38.87309km/h is swallowed while 82 at ~41.05377km/h survives. Baseline rated rider still ranks 126th at all ratings with one official finish time. This is a **documented catch sensitivity**, not yet a verified error in source code.
+
+Source examination: `reconcileBreakawayGroups.ts` computes `gapToPelotonSeconds` as **absolute difference of `gapFromLeaderSeconds`**, with a strict **<5-second** threshold; it also protects fresh breakaways only for one tick and unconditionally absorbs non-dropped groups physically at/behind peloton. Meanwhile `groupTerrainPace.ts` uses the average capability of all riders in each group, creating high-solo vs slower-peloton speed differential. The distinction between computed replay `gapFromLeaderSeconds` and actual spatial separation is important; do not equate these without measuring.
+
+**Additional diagnostic committed, not yet owner-executed:** per attack first three ticks print **signed km position gap, stored catch-window seconds, physical separation in seconds at peloton speed, strict <5s window decision, fresh-grace eligibility, actual catch outcome and group-active state**, together with applied speeds. The runner prints `CATCH GEOMETRY` for the most informative five cases (early 82/86/90; late 76/82) and retains earlier `PACE THRESHOLD` output. The technical report gains `catchAuditHasGeometry`; the boundary test checks the new trace fields and TypeScript transpilation. This is observation only; **no threshold, peloton pace, rider attributes, attack physics or canonical default modified**.
+
+Owner commands:
+
+```bat
+git pull origin main
+node --test tests\\uraniusStrengthGradientBoundary.test.mjs
+node scripts\\run-uranius-strength-gradient.mjs --out strength-gradient-local.json
+```
+
+Before any change, compare the stored five-second gap vs physical distance, and whether 86-rated early attacker was genuinely within the catch radius on its second movement tick. Follow up with a separate default-off policy comparison only if evidence establishes an inconsistency. Official **49/60 sporting NO GO**, no production/paid staging changes.
