@@ -9,7 +9,8 @@ import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 
 const args = process.argv.slice(2)
-const raceWorldSeed = args[0] === '--race-world-seed-review'
+const startlistReview = args[0] === '--startlist-engine-review'
+const raceWorldSeed = startlistReview || args[0] === '--race-world-seed-review'
 if (raceWorldSeed) args.shift()
 if (args.length !== 3 || args[0] !== '--disposable-native-pg17' || args[1] !== '--postgres-bin') {
   throw new Error('Usage: node tests/uraniusRider018FullHistoryNativePg17.mjs --disposable-native-pg17 --postgres-bin "C:\\path\\to\\postgresql-17.12-portable\\bin"')
@@ -646,6 +647,85 @@ try {
     assert.equal(sql("SELECT count(*) FROM uranius_catalog.riders"),'200')
     pass('019 duplicate seed denied, ledger, paused clock, roster and permissions intact')
     console.log('PASS '+(tests-seedChecksStart)+'/6 NEW populated race-world seed checks; disposable PG17 ONLY; hosted installation NOT authorized')
+    if(startlistReview){
+      const checksStart=tests
+      const manifest019=JSON.parse(readFileSync(join(root,'database/reconstruction/overview/019_install_manifest_REVIEW_ONLY.json'),'utf8'))
+      assert.equal(hash(seed),manifest019.candidate.sha256)
+      sql("INSERT INTO uranius_private.migration_ledger(version,sha256) VALUES ('019_synthetic_race_world.sql','"+hash(seed)+"')")
+      const startlistSql=readFileSync(join(root,'database/reconstruction/overview/021_synthetic_startlists_REVIEW_ONLY.sql'),'utf8')
+      assert.equal(startlistSql.split(tls).length,2)
+      const localStartlist=startlistSql.replace(tls,'OR FALSE /* scratch PGDATA rehearsal only */')
+      const missing=()=>sql("SELECT to_regclass('uranius_game.synthetic_race_startlists') IS NULL")
+      sql(wrap(startlistSql),'uranius_migrator',true)
+      sql(wrap(localStartlist),'postgres',true)
+      assert.equal(missing(),'t')
+      assert.equal(policies(),beforePolicies)
+      pass('021 exact source non-TLS/wrong-role denied; no table or policy change')
+      sql(wrap(localStartlist).replace(/COMMIT;$/,'ROLLBACK;'))
+      assert.equal(missing(),'t')
+      assert.equal(sql("SELECT count(*) FROM pg_constraint WHERE conname='uranius_club_team_pair'"),'0')
+      assert.equal(policies(),beforePolicies)
+      pass('021 rollback removes table, ownership constraint and temporary policies')
+      sql(wrap(localStartlist))
+      const sl='uranius_game.synthetic_race_startlists'
+      assert.equal(sql("SELECT count(*) FROM "+sl,'uranius_fixture_admin'),'10')
+      assert.equal(sql("SELECT string_agg(rider_id::text,',' ORDER BY rider_id) FROM "+sl+" WHERE team_id=1",'uranius_fixture_admin'),'1,2,3,4,5')
+      assert.equal(sql("SELECT string_agg(rider_id::text,',' ORDER BY rider_id) FROM "+sl+" WHERE team_id=2",'uranius_fixture_admin'),'11,12,13,14,15')
+      assert.equal(sql("SELECT count(*) FROM "+sl+" WHERE role='captain'",'uranius_fixture_admin'),'2')
+      assert.equal(sql("SELECT count(*) FROM "+sl+" l JOIN uranius_game.synthetic_rider_identity i USING(rider_id)",'uranius_fixture_admin'),'10')
+      assert.equal(policies(),beforePolicies)
+      pass('021 deterministic five-rider roster per accepted entry with UUID identity and one captain')
+      for(const [q,label] of [
+        ["UPDATE "+sl+" SET rider_id=11 WHERE team_id=1 AND selection_order=2","foreign-club rider"],
+        ["UPDATE "+sl+" SET role='captain' WHERE team_id=1 AND selection_order=2","duplicate captain"],
+        ["UPDATE "+sl+" SET selection_order=1 WHERE team_id=1 AND selection_order=2","duplicate selection"],
+        ["UPDATE "+sl+" SET race_id='"+fixtureWorld+"' WHERE team_id=1 AND selection_order=2","missing preparation"]
+      ]){sql('BEGIN;'+q+';ROLLBACK;','uranius_fixture_admin',true)}
+      assert.equal(sql("SELECT count(*) FROM "+sl,'uranius_fixture_admin'),'10')
+      pass('021 foreign rider, duplicate captain/slot and missing preparation rejected by constraints')
+      assert.equal(sql("SELECT relrowsecurity::text||':'||relforcerowsecurity::text FROM pg_class WHERE oid='"+sl+"'::regclass"),'true:true')
+      assert.equal(sql("SELECT count(*) FROM pg_policies WHERE schemaname='uranius_game' AND tablename='synthetic_race_startlists'"),'0')
+      for(const role of ['anon','authenticated','uranius_smoke_reader']){
+        assert.equal(sql("SELECT has_any_column_privilege('"+role+"','"+sl+"','SELECT')"),'f')
+        assert.equal(sql("SELECT has_table_privilege('"+role+"','"+sl+"','INSERT,UPDATE,DELETE')"),'f')
+      }
+      sql("SELECT rider_id FROM "+sl,'uranius_smoke_reader',true)
+      assert.equal(sql("SELECT count(*) FROM uranius_game.race_preparations WHERE rider_count=0 AND finance_transaction_id IS NULL",'uranius_fixture_admin'),'2')
+      pass('021 private FORCE RLS, no client/reader grants, no preparation or finance state advanced')
+      // Actual rows from disposable PostgreSQL, not hardcoded rider data.
+      const packetSql=`SELECT jsonb_build_object(
+        'raceId',r.id,'stageId',s.id,'stageName',s.name,'distanceKm',s.distance_km,
+        'terrainType',s.terrain_type,'stageFormat',s.stage_format,'stageNumber',s.stage_number,
+        'rows',(SELECT jsonb_agg(jsonb_build_object('riderUuid',i.rider_uuid,'clubId',l.club_id,
+          'teamId',l.team_id,'riderName',c.label,'teamName',t.label,'selectionOrder',l.selection_order,
+          'role',l.role,'flat',c.flat,'climbing',c.climbing,'stamina',c.stamina,'resistance',c.resistance,
+          'provenance',l.provenance) ORDER BY l.selection_order)
+          FROM ${sl} l JOIN uranius_catalog.riders c USING(rider_id)
+          JOIN uranius_game.synthetic_rider_identity i USING(rider_id)
+          JOIN uranius_catalog.teams t ON t.team_id=l.team_id WHERE l.race_id=r.id))
+        FROM uranius_game.races r JOIN uranius_game.race_stages s ON s.race_id=r.id
+        WHERE r.id='${fixtureA}' AND s.stage_number=1`
+      const packet=sql(packetSql,'uranius_fixture_admin')
+      const {build}=await import('esbuild')
+      const bundle=join(scratch,'startlist-engine.mjs')
+      await build({entryPoints:[join(root,'scripts/uranius-startlist-engine-review.ts')],outfile:bundle,bundle:true,platform:'node',format:'esm',target:'node20',logLevel:'warning'})
+      const engine=JSON.parse(run(process.execPath,[bundle],{input:packet}))
+      assert.equal(engine.finishers,5)
+      assert.equal(engine.deterministic,true)
+      assert.equal(engine.negativePacketsRejected,6)
+      assert.equal(engine.fixtureUnchanged,true)
+      console.log('ENGINE '+JSON.stringify(engine))
+      pass('021 disposable database UUID roster feeds unchanged existing_v1 engine, all five finish and repeated output matches')
+      sql(wrap(localStartlist),'uranius_migrator',true)
+      assert.equal(counts(),'3:4:2:2')
+      assert.equal(policies(),beforePolicies)
+      assert.equal(sql("SELECT count(*) FROM uranius_private.migration_ledger"),'15')
+      assert.equal(sql("SELECT count(*) FROM "+sl,'uranius_fixture_admin'),'10')
+      assert.equal(sql("SELECT count(*) FROM uranius_game.game_state WHERE season_number=1 AND month_number=1 AND day_number=1 AND is_paused"),'1')
+      pass('021 duplicate refused; fifteen historical entries, fixture rows and paused clock preserved')
+      console.log('PASS '+(tests-checksStart)+'/7 NEW startlist/engine checks; scratch PG17 only; hosted install NOT authorized')
+    }
+
   }
 
 
