@@ -146,6 +146,8 @@ export interface IntegratedTerrainSeparationOptions {
   readonly experimentalFinishTacticsEnabled?: boolean
   /** OFFLINE POC: valid chase order affects actual peloton movement. */
   readonly experimentalChaseOrdersEnabled?: boolean
+  /** OFFLINE only: funded selected-rider peloton chase, default OFF. */
+  readonly experimentalBudgetedPelotonChaseEnabled?: boolean
 
   /**
    * Disabled by default so all earlier Phase 7B.8 diagnostics retain their
@@ -1293,6 +1295,8 @@ export function simulateIntegratedTerrainSeparationTick(
           steepGradientMovementSeverityModel,
         experimentalChaseOrdersEnabled:
           options.experimentalChaseOrdersEnabled === true,
+        experimentalBudgetedPelotonChaseEnabled:
+          options.experimentalBudgetedPelotonChaseEnabled === true,
         ...(options.experimentalPhysicalAttackLaunch
           ? {
               experimentalLaunchSpeedByGroupId: Object.fromEntries(
@@ -1320,6 +1324,8 @@ export function simulateIntegratedTerrainSeparationTick(
         appliedMovement.state,
       movement:
         movement.movement,
+      ...(options.experimentalBudgetedPelotonChaseEnabled===true
+        ?{experimentalPullerEnergyCosts:movement.experimentalPullerEnergyCosts}:{}),
     })
 
   const enabledIncidentIntegrationCount =
