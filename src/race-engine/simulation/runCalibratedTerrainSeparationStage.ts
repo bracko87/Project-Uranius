@@ -37,6 +37,8 @@ export interface RunCalibratedTerrainSeparationStageOptions {
   readonly experimentalPreserveTrailingAttackGroups?: boolean
   /** OFFLINE COUNTERFACTUAL ONLY; default OFF. */
   readonly experimentalPreserveSeparatingBreakaways?: boolean
+  /** OFFLINE only: physical overtaking required instead of 5s catch radius. */
+  readonly experimentalRequirePhysicalBreakawayCatch?: boolean
   /** OFFLINE POC ONLY, defaults off. */
   readonly experimentalPhysicalAttackLaunch?: boolean
   /** OFFLINE POC ONLY, explicit and default-off finish scoring. */
@@ -161,6 +163,8 @@ export function runCalibratedTerrainSeparationStage(
           options.experimentalPreserveTrailingAttackGroups ?? false,
         experimentalPreserveSeparatingBreakaways:
           options.experimentalPreserveSeparatingBreakaways ?? false,
+        experimentalRequirePhysicalBreakawayCatch:
+          options.experimentalRequirePhysicalBreakawayCatch ?? false,
         experimentalPhysicalAttackLaunch:
           options.experimentalPhysicalAttackLaunch ?? false,
         experimentalFinishTacticsEnabled:
