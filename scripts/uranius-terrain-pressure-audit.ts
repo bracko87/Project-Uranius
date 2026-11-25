@@ -53,6 +53,7 @@ function buildInput(strength:Strength,timing:Timing):StageInput{
 
 type Row={
  second:number,km:number,gradient:number,pelotonRiders:number,
+ pressureEligibleRiders:number,finishCrossingTick:boolean,
  comfortable:number,underPressure:number,cannotHold:number,
  eligibleDrop:number,actualDrop:number,pelotonSpeed:number,
  meanCapability:number,groupDemand:number
@@ -65,6 +66,12 @@ const rows:Row[]=stage.ticks.map(tick=>{
  return {second:tick.state.raceSecond,km:peloton?.nextDistanceKm??0,
   gradient:peloton?.gradientPercent??0,pelotonSpeed:peloton?.appliedSpeedKmh??0,
   pelotonRiders:peloton?.riderIds.length??0,
+  // Pressure is evaluated AFTER movement: the crossing-tick group is at
+  // stageDistanceKm and is intentionally excluded from holding-pressure
+  // calculations before finish detection.
+  finishCrossingTick:peloton!==undefined&&
+   peloton.nextDistanceKm>=stage.initialState.stageDistanceKm,
+  pressureEligibleRiders:evaluations.length,
   comfortable:evaluations.filter(e=>e.hold.status==='comfortable').length,
   underPressure:evaluations.filter(e=>e.hold.status==='under_pressure').length,
   cannotHold:evaluations.filter(e=>e.hold.status==='cannot_hold').length,
@@ -75,10 +82,18 @@ const rows:Row[]=stage.ticks.map(tick=>{
   groupDemand:evaluations[0]?.groupDemandScore??0}
 })
 const maximum=Math.max(...rows.map(r=>r.cannotHold))
-const climbing=rows.filter(r=>r.gradient>=3)
-const flat=rows.filter(r=>Math.abs(r.gradient)<1)
+const pressureRows=rows.filter(r=>!r.finishCrossingTick)
+const climbing=pressureRows.filter(r=>r.gradient>=3)
+const flat=pressureRows.filter(r=>Math.abs(r.gradient)<1)
 const totals={
- evaluatedTicks:rows.length,
+ evaluatedTicks:pressureRows.length,
+ totalSimulationTicks:rows.length,
+ skippedFinishCrossingTicks:rows.length-pressureRows.length,
+ pressureCountMismatchTicks:pressureRows.filter(r=>
+  r.pressureEligibleRiders!==r.pelotonRiders).length,
+ maximalGradientPercent:Math.max(...pressureRows.map(r=>r.gradient)),
+ minimalGradientPercent:Math.min(...pressureRows.map(r=>r.gradient)),
+ maxUnderPressureRidersOneTick:Math.max(...pressureRows.map(r=>r.underPressure)),
  ticksWithCannotHold:rows.filter(r=>r.cannotHold>0).length,
  ticksWithDropEligibility:rows.filter(r=>r.eligibleDrop>0).length,
  actualDropTransitions:rows.reduce((sum,r)=>sum+r.actualDrop,0),
@@ -92,8 +107,10 @@ const totals={
 }
 const checks={
  completed:stage.completed&&Object.values(stage.finalState.riders).length===128,
- pressureRecorded:rows.length>0&&rows.every(r=>r.comfortable+r.underPressure+
-  r.cannotHold===r.pelotonRiders),
+ pressureRecorded:pressureRows.length>0&&
+  pressureRows.every(r=>r.comfortable+r.underPressure+
+   r.cannotHold===r.pelotonRiders)&&
+  rows.filter(r=>r.finishCrossingTick).every(r=>r.pressureEligibleRiders===0),
  noInventedTransitions:totals.actualDropTransitions===stage.ticks.reduce((sum,t)=>
   sum+t.transitions.filter(x=>x.sourceGroupId==='peloton_main').length,0),
  validClassification:rows.every(r=>r.cannotHold>=r.eligibleDrop&&
