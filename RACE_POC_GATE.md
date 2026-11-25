@@ -1452,3 +1452,25 @@ Owner pulled `7ee9393` and ran `tests/uraniusMatchedShelterEnergyBoundary.test.m
 **Actual full races with shelter OFF vs ON:** both complete 353 ticks, selected rank **1**, selected finish time **9939.315079131 s**, race-wide finish spread **647.108293786 s** (10m47s), unchanged. Solo rider spends **22.6485652042 energy** OFF, **22.5496372042** ON (sheltered while still in the peloton for the first 15 ticks); **exact solo-period energy spent 21.6306172042 in both runs**, with **0 solo shelter discount**. Peloton aggregate energy spent OFF **3326.540071632**, ON **3010.041925**; peloton shelter saved **316.498588** energy. The selected rider's final reserve rises **77.3514347958 -> 77.4503627958**. No artificial puller surcharges, energy ledgers conserved to ~1e-12.
 
 **Sporting decision:** Existing shelter does confer the correctly directed energy advantage, but energy conservation improvements do **not translate to changed group movement/finish times in this particular stage**. An extra global shelter multiplier cannot be justified by this evidence alone. Identify the precise energy-to-pace coupling (fatigue modifier, ability score, peloton mean, group terrain pace) and whether it has a threshold/saturation, before adding a *default-off* credible physiology/drag model. Note that the winning margin is not a solo-versus-peloton same-rider comparison because other riders have different attributes. This diagnostic stage and tests are complete; do not request redundant runs. Official **49/60 sporting NO GO** and no production changes.
+
+
+## 2026-11-25 — Fatigue onset root cause and opt-in absolute-speed effort candidate (owner E2E pending)
+
+Owner verified matched aerodynamic shelter audit **3/3 boundary** and **7/7 runtime checks**. In two real 128-rider 120km early-solo-attack races, shelter ON discounted peloton energy by ~316.50 total units but did not change rider/group movement, finish ranking or the solo victory spread **647.1083s**. The high-strength solo rider finished with **77.35** energy OFF / **77.45** ON, remaining **above the 70 energy threshold** where `calculateRiderFatigueModifier` first begins to reduce capability. The canonical energy cost's speed contribution depends on `speedKmh/baseSpeedKmh` and does not directly price absolute aerodynamic effort at sustained 43+km/h. Thus a fatigue-speed penalty cannot engage in this fixture merely by reducing energy consumption through drafting; the existing energy-spend path is too low to trip fatigue for the solo rider.
+
+Added an **explicitly default-OFF, offline-only** absolute-speed energy hypothesis for real physical E2E testing, not a claim of validated CdA/drag watts:
+- New pure `src/race-engine/simulation/absoluteSpeedEffort.ts`: adds a speed-cubed exposure above a 30km/h reference, 0.075 provisional energy units per 30s at unit exposure, attenuated by the existing gradient-dependent shelter factor; at <=30km/h no extra charge, to avoid overlapping the existing uphill slope term.
+- `SimulationState.experimentalAbsoluteSpeedEffortEnabled?:boolean` omitted / false by default, **not enabled by the calibrated wrapper**.
+- `applyMultiGroupEnergy` now conditionally charges this separately *after* existing weather/shelter and funded-puller debits, capped to available energy, with optional `experimentalAbsoluteSpeedEnergySurcharge` in application logs; when OFF, former result and calculations are untouched.
+- `scripts/uranius-absolute-speed-effort-e2e.ts`, `scripts/run-uranius-absolute-speed-effort-e2e.mjs` and `tests/uraniusAbsoluteSpeedEffortBoundary.test.mjs` evaluate two whole 128-rider real early-solo attack races, candidate OFF vs ON. Both must finish, baseline must preserve exact prior observed solo finish **9939.315079131s**, final-race spread **647.108293786s**; OFF has zero additional charges, ON actually charges solo and peloton, energy ledgers conserve, values stay finite/in-range. The trace reports candidate's impact on solo final energy, first time solo energy crosses 70, rank/time, winning spread and costs.
+
+**Important:** coefficient (0.075), reference speed (30km/h) and cubic scaling are exploratory, not experimentally validated physiological power-to-energy calibration. Even if the experiment changes results, it must **not** be promoted to standard physics without systematic controlled sensitivity tests, realism targets and compatibility checks. No production branch/data touched, no default feature switched.
+
+Owner commands, **not yet runtime-verified**:
+```bat
+git pull origin main
+node --test tests\\uraniusAbsoluteSpeedEffortBoundary.test.mjs
+node scripts\\run-uranius-absolute-speed-effort-e2e.mjs --out absolute-speed-effort-local.json
+```
+
+Official **49/60 sporting NO GO**.
