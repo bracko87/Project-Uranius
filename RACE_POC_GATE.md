@@ -1536,3 +1536,17 @@ node scripts\\run-uranius-peloton-front-gap-leadership.mjs --out peloton-front-g
 ```
 
 Current sporting gate remains **49/60 NO GO**. Do not infer actual gap or pace improvements until output is inspected.
+
+
+## 2026-11-25 — Peloton-front gap and funded leadership OWNER VERIFIED (3/3, 5/5)
+
+Owner pulled `707de3d`, ran `tests/uraniusPelotonFrontGapLeadershipBoundary.test.mjs`: **3/3 PASS**. The fixed runner `scripts/run-uranius-peloton-front-gap-leadership.mjs --out peloton-front-gap-leadership-local.json` completed **three real 128-rider 120km races** and **5/5 runtime checks PASS**: `allRealRacesComplete`, `firstPelotonFinisherFound`, `noOrdersBaselineIdentical`, `authorizedFunded`, `nonzeroAvailableLeaderPace`.
+
+**Measured actual solo-to-first-peloton-finisher gaps**, unlike field spread:
+- Control no chase orders: solo `sustain-rider-001` finishes **9939.315079131s** rank 1, first original-peloton rider `sustain-rider-002` finishes **10586.423372917s**, **647.108293786s** (10:47.108) behind. 127 riders in peloton.
+- Orders-off: all 24 chase orders executed, funded leadership disabled, *identical* finish times and 647.108293786s gap; no funded surcharge.
+- Leaders-on: all 24 chase orders executed, **316 paid leader ticks** involving real group movement, **78.318086** extra energy paid, actual peloton leader `sustain-rider-002` finishes **10306.232414526s** vs solo **9939.315079131s**, gap **366.917335395s** (6:06.917). **280.190958391s = 4:40.191 / 43.3%** gap reduction. Solo winning time unchanged.
+- Average actual peloton speed during ahead-breakaway ticks: **40.7694627km/h** control vs **41.9932102km/h** funded (+1.22375km/h). Base capability avg **71.59094**, authorized strongest-three leader capability avg **80.05132**; average theoretical authorized leader base pace advantage **2.03049km/h**, but existing `calculateFundedPelotonLeadership` caps funded leader bonus at **3%**, so most of the theoretical capability gap is not fully realized.
+- The model pays actual leaders (3 per ordinary tick) and only activates with executed chase orders and a physically ahead breakaway. The peloton does **not** catch the solo rider. Do not claim 6:07 is entire field spread; verified as first original-peloton finisher's gap.
+
+**Sporting diagnosis:** There is real, significant, funded team pursuit; the prior term “no useful chase” would be misleading. But peloton base pace is whole-group mean, and a fixed 3% pace-leader cap may suppress achievable organized pace, even with strong eligible rotating leaders. Next research should isolate dynamic energy-limited fraction of calculated leader-vs-group capability gap, rather than simply changing the fixed percentage globally. Verify that proposed ability-to-pace raises physical movement only when orders execute and costs increase appropriately, and compare actual solo-to-first-peloton gap (not whole-field spread), depleted-leader falloff and other stage types. Maintain previous experimental absolute-speed physics OFF. Official **49/60 sporting NO GO**. No production changes.
