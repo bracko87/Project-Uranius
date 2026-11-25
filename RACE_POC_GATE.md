@@ -1187,3 +1187,18 @@ node --test tests\\uraniusPelotonPaceLeadership.test.mjs
 ```
 
 Official release gate **49/60 sporting NO GO**, no production change.
+
+
+## 2026-11-25 — Funded pace-leader candidate added after 5/5 leadership tests
+
+Owner pulled through `3c190e7` and ran `tests/uraniusPelotonPaceLeadership.test.mjs`: **5/5 PASS**. This verifies selected capable leaders, deterministic rotation, exclusion of low-energy nominal leaders and no uplift in homogeneous peloton. It does **not** establish sport realism.
+
+Created default-inactive pure helper `src/race-engine/simulation/pelotonLeadershipBudget.ts` with unit tests `tests/uraniusPelotonLeadershipBudget.test.mjs`. This combines the previously verified capability-rank model with an **explicit eligible ordered rider-ID set**, selects only able designated leaders present in that set, computes capped max **3%** proposed peloton uplift and pays a separately bounded per-rider energy surcharge above a 5-point reserve. No eligible chase leader => **no uplift and zero charges**. Uniform field => no fictitious speed. This is deliberately still **NOT connected to full race movement or energy updates**, and has not yet been user-executed. Exact leadership rotation interval, coordination, effort and cost scaling remain uncalibrated hypotheses.
+
+Verify on Windows:
+```bat
+git pull origin main
+node --test tests\\uraniusPelotonPaceLeadership.test.mjs tests\\uraniusPelotonLeadershipBudget.test.mjs
+```
+
+The next milestone is single-flag simultaneous stage movement AND leader-energy integration, followed by a narrow matched full-race check. Do not change the accepted default-off paid-chase E2E comparisons or enable unverified models in production. Official **49/60 sporting NO GO**.
