@@ -49,7 +49,7 @@ function buildInput(strength:Strength,timing:Timing):StageInput{
    metadata:{uraniusLiveCommand:true}}],
  }
 }
-function evaluate(strength:Strength,timing:Timing,shelterEnergy=false){
+function evaluate(strength:Strength,timing:Timing,shelterEnergy=false,separatingCatch=false){
  const input=buildInput(strength,timing)
  const initial=createInitialState(input)
  const result=runCalibratedTerrainSeparationStage({...initial,
@@ -58,6 +58,7 @@ function evaluate(strength:Strength,timing:Timing,shelterEnergy=false){
   experimentalPreserveBirthTickDroppedGroups:true,
   experimentalPreserveRecedingDroppedGroups:true,
   experimentalPreserveTrailingAttackGroups:true,
+  experimentalPreserveSeparatingBreakaways:separatingCatch,
  })
  const final=Object.values(result.finalState.riders)
  const selected=final.find(r=>r.riderId===input.riders[0].riderId)!
@@ -175,7 +176,7 @@ function evaluate(strength:Strength,timing:Timing,shelterEnergy=false){
   attackFollowupTick:launch?
    riderEnergyTicks.find(t=>t.second===launch.second+input.settings.tickSeconds)??null:null,
  }
- return {strength,timing,shelterEnergy,completed:result.completed,
+ return {strength,timing,shelterEnergy,separatingCatch,completed:result.completed,
   all128Finish:final.filter(r=>r.finished&&Number.isFinite(r.finishTimeSeconds)).length===field,
   positionsUnique:ranks.every(r=>Number.isInteger(r)&&r!==null&&r>=1&&r<=field)&&new Set(ranks).size===field,
   allTimesFinite:times.every(t=>typeof t==='number'&&Number.isFinite(t)),
@@ -215,6 +216,20 @@ const scenarios=ratings.flatMap(strength=>
   try{return evaluate(strength,timing,true)}
   catch(error){return {strength,timing,error:error instanceof Error?error.message:String(error)}}
  }))
+// Matched six-case ON/OFF counterfactual. Never overwrite 15 verified controls.
+// Test only combinations straddling the observed catch threshold.
+const counterfactualCases=[
+ {strength:76,timing:'early'},
+ {strength:82,timing:'early'},
+ {strength:86,timing:'early'},
+ {strength:90,timing:'early'},
+ {strength:76,timing:'late'},
+ {strength:82,timing:'late'},
+] as const
+const counterfactual=counterfactualCases.map(({strength,timing})=>{
+ try{return evaluate(strength,timing,true,true)}
+ catch(error){return {strength,timing,error:error instanceof Error?error.message:String(error)}}
+})
 const checks={
  fifteenCompleted:scenarios.length===15&&scenarios.every(s=>
   'completed' in s&&s.completed),
@@ -229,7 +244,14 @@ const checks={
   Math.abs(s.effortAudit.energyBalanceError)<0.0001),
  draftingEnabled:scenarios.every(s=>'shelterEnergy' in s&&s.shelterEnergy&&
   s.effortAudit.shelterSaved>0),
- catchAuditHasGeometry:scenarios.filter(s=>s.timing!=='baseline').every(s=>
+ counterfactualComplete:counterfactual.length===6&&counterfactual.every(s=>
+  'completed' in s&&s.completed&&s.all128Finish&&s.positionsUnique&&
+  s.allTimesFinite&&s.executed&&s.attackEffects===1),
+ counterfactualEnergyExact:counterfactual.every(s=>'effortAudit' in s&&
+  Math.abs(s.effortAudit.energyBalanceError)<0.0001),
+ originalPoliciesUnchanged:scenarios.every(s=>
+  'separatingCatch' in s&&s.separatingCatch===false),
+  catchAuditHasGeometry:scenarios.filter(s=>s.timing!=='baseline').every(s=>
   'movementPaceAudit' in s&&s.movementPaceAudit.length>0&&
   s.movementPaceAudit[0].signedDistanceKm!==null&&
   s.movementPaceAudit[0].catchGapSeconds!==null&&
@@ -244,6 +266,6 @@ const checks={
 process.stdout.write(JSON.stringify({
  reportVersion:'uranius-strength-gradient-v1',
  scope:'OFFLINE 5 physical attribute strengths x baseline/early/late; fixed 120km, 128 riders, drafting enabled and real zero-gap orders',
- ratings,scenarios,checks,
+ ratings,scenarios,counterfactual,checks,
  note:'Observational sensitivity, no fabricated attack gap, no win required. Do not infer realism from synthetic field or promote production defaults.'
 },null,2)+'\n')
