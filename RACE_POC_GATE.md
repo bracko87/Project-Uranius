@@ -1374,3 +1374,23 @@ Owner pulled `08d19ff`, ran `tests/uraniusMountainTerrainAuditBoundary.test.mjs`
 **Mountain route:** 421 total simulation ticks, 391 peloton prefinish pressure ticks; sampled gradients −4.5% to +9%, **161 prefinish ticks at >=5% and >=8%**, 63 max under-pressure, **16 max cannot-hold in a tick**, **28 cannot-hold ticks**, **7 sustained-eligibility ticks**, **7 real dropped transitions involving 33 actual riders**, final main peloton **95**. Mean individual energy spent 39.4875029356, worst 46.15418288; selected rider 35.8574848; all finite and nonnegative. At first sustained +8% climb, 16 riders were `cannot_hold` at seconds 930,960,990, then became eligible at second 1020 and dropped (one transition, 16 riders), consistent with the configured 120-second threshold. Subsequent pressure and separations were resolved by existing engine mechanics, not scripted outcomes.
 
 **Interpretation:** genuine rider-level mountain separation is already supported and occurs in a 128-rider realistic-gradient full-race simulation. **Do not lower existing −8 hold-margin or 120-second thresholds merely to generate drops**. Neither scenario establishes calibration of real-world mountain survival rates, physiological leader/solo costs, full group composition, final time gaps, or tactical race outcomes. The 421 vs 391 difference includes later ticks with no pressure-evaluated active peloton, so avoid calling it a missing-data defect without tracing group state. Next sporting gate: inspect mountain dropped-group trajectories, reabsorptions and actual gaps; independently investigate solo attacker sustainable pace / energy cost versus funded peloton. Retain feature defaults OFF and official **49/60 sporting NO GO**. No production modifications.
+
+
+## 2026-11-25 — Mountain group trajectories and solo-vs-peloton energy audit (awaiting owner run)
+
+Owner previously verified **3/3** mountain audit boundary checks, 2/2 complete 128-rider 120km races and **6/6** runtime audit gates. On the 8–9% mountain profile, **33 actual rider drops across seven peloton transitions** were observed, main peloton finishing with 95 riders. These numbers establish separation triggering, **not** physically sound dropped-group persistence, finishing gaps or sustainability of solo attack.
+
+Added `scripts/uranius-group-trajectory-solo-cost.ts` and `scripts/run-uranius-group-trajectory-solo-cost.mjs`, plus three static/transpile guards in `tests/uraniusGroupTrajectorySoloCostBoundary.test.mjs`. The standalone audit executes exactly **two further actual offline 128-rider full stages** using existing policies, unchanged random seed and no invented movement or energy:
+1. The verified 9%-maximum mountain no-orders scenario with accepted birth-tick/receding-drop experimental preservation. It traces actual dropped transition group IDs and rider counts; per-group state over the following ticks; physical signed distance gap against peloton, max behind/ahead position; reabsorption and reclassification; terminal status and recorded finish ranks. Existing seven transitions / 33 riders are checked as an observational fixture fingerprint, not a target for new physics.
+2. The verified strength-86 early **solo escape** on original rolling course, with existing preservation policy and physical attack launch, **without new chase orders**. It captures real rider per-tick energy costs, solo vs peloton group duration/speed, final energy, independent comparison to peloton riders 009 and 010, and individual ledger conservation. Comparing average solo and peloton energy usage is diagnostic only because the individuals have different attributes and movement speeds; it does not establish a calibrated solo energy multiplier.
+
+The script fails closed if races do not complete, real dropped transition count changes unexpectedly, group/gap traces cannot be reconstructed, or rider energy ledgers deviate beyond 1e-4. It **does not** force the seven drops, alter a speed cap, change reconciliation, add leader costs, or touch production. Audit and boundary tests **not yet owner-run**.
+
+Owner verification:
+```bat
+git pull origin main
+node --test tests\\uraniusGroupTrajectorySoloCostBoundary.test.mjs
+node scripts\\run-uranius-group-trajectory-solo-cost.mjs --out group-trajectory-solo-cost-local.json
+```
+
+If the detailed audit reveals wrongly reabsorbed groups, trace the exact physical distance and speed at that transition before proposing a change. If solo speed is persistently higher but its incremental effort remains similar/lower than sheltered peloton costs, consider a separately funded physiological test, NOT a global arbitrary speed reduction. Official **49/60 sporting NO GO**, no production changes.
