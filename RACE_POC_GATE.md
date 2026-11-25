@@ -1363,3 +1363,14 @@ node scripts\\run-uranius-mountain-terrain-audit.mjs --out mountain-terrain-audi
 ```
 
 Official **49/60 sporting NO GO**.
+
+
+## 2026-11-25 — Mountain-versus-rolling challenge OWNER VERIFIED (sporting separation works)
+
+Owner pulled `08d19ff`, ran `tests/uraniusMountainTerrainAuditBoundary.test.mjs`: **3/3 PASS**, then ran `scripts/run-uranius-mountain-terrain-audit.mjs --out mountain-terrain-audit-local.json`: **two full 128-rider 120km races completed** and all **6/6 runtime checks TRUE** (`scenariosComplete`, `pressureComplete`, `dropsActuallyObserved`, `genuineMountainGradients`, `finiteEnergy`, `identicalRosterSize`).
+
+**Rolling control:** 353 ticks, 352 peloton prefinish pressure ticks, gradients −1.4% to +2%, 0 cannot-hold, 0 sustained eligibility, 0 actual dropped-group transitions, peloton remains 128; max 44 under pressure; mean individual energy spent 26.1535216084, worst 29.018318784, selected rider 24.08402976.
+
+**Mountain route:** 421 total simulation ticks, 391 peloton prefinish pressure ticks; sampled gradients −4.5% to +9%, **161 prefinish ticks at >=5% and >=8%**, 63 max under-pressure, **16 max cannot-hold in a tick**, **28 cannot-hold ticks**, **7 sustained-eligibility ticks**, **7 real dropped transitions involving 33 actual riders**, final main peloton **95**. Mean individual energy spent 39.4875029356, worst 46.15418288; selected rider 35.8574848; all finite and nonnegative. At first sustained +8% climb, 16 riders were `cannot_hold` at seconds 930,960,990, then became eligible at second 1020 and dropped (one transition, 16 riders), consistent with the configured 120-second threshold. Subsequent pressure and separations were resolved by existing engine mechanics, not scripted outcomes.
+
+**Interpretation:** genuine rider-level mountain separation is already supported and occurs in a 128-rider realistic-gradient full-race simulation. **Do not lower existing −8 hold-margin or 120-second thresholds merely to generate drops**. Neither scenario establishes calibration of real-world mountain survival rates, physiological leader/solo costs, full group composition, final time gaps, or tactical race outcomes. The 421 vs 391 difference includes later ticks with no pressure-evaluated active peloton, so avoid calling it a missing-data defect without tracing group state. Next sporting gate: inspect mountain dropped-group trajectories, reabsorptions and actual gaps; independently investigate solo attacker sustainable pace / energy cost versus funded peloton. Retain feature defaults OFF and official **49/60 sporting NO GO**. No production modifications.
