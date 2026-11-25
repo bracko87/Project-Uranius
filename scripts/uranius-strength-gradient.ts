@@ -84,6 +84,30 @@ function evaluate(strength:Strength,timing:Timing,shelterEnergy=false){
    caught:tick.reconciledBreakaways.reabsorbedBreakawayGroupIds.includes(launch.groupId),
    activeAfterCatch:!!tick.state.groups[launch.groupId]?.active}
  }).filter(t=>t.activeBeforeCatch):[]
+ // Capture the actual pace engine decomposition at launch + first follow-up.
+ // Do not use the observed finish outcome to modify any speed calculation.
+ const movementPaceAudit=launch?result.ticks.slice(launch.index,launch.index+3).map(tick=>{
+  const attackPace=tick.movement.groupDiagnostics.find(
+   d=>d.groupId===launch.groupId)?.pace
+  const pelotonId=Object.values(tick.appliedOrderEffects.state.groups).find(
+   g=>g.active&&g.groupType==='peloton')?.groupId
+  const pelotonPace=tick.movement.groupDiagnostics.find(d=>d.groupId===pelotonId)?.pace
+  const attackProposal=tick.movement.movement.proposals.find(p=>p.groupId===launch.groupId)
+  const pelotonProposal=tick.movement.movement.proposals.find(p=>p.groupId===pelotonId)
+  return {second:tick.state.raceSecond,
+   attackRiders:attackPace?.eligibleRiderCount??null,
+   pelotonRiders:pelotonPace?.eligibleRiderCount??null,
+   attackBaseKmh:attackPace?.currentBaseSpeedKmh??null,
+   pelotonBaseKmh:pelotonPace?.currentBaseSpeedKmh??null,
+   attackTerrainRatio:attackPace?.terrainAdjustmentMultiplier??null,
+   pelotonTerrainRatio:pelotonPace?.terrainAdjustmentMultiplier??null,
+   attackAppliedKmh:attackProposal?.appliedSpeedKmh??null,
+   pelotonAppliedKmh:pelotonProposal?.appliedSpeedKmh??null,
+   attackTerrainGradient:attackProposal?.gradientPercent??null,
+   pelotonTerrainGradient:pelotonProposal?.gradientPercent??null,
+   attackAverageCapability:attackPace?.averageFlatCapabilityScore??null,
+   pelotonAverageCapability:pelotonPace?.averageFlatCapabilityScore??null}
+ }):[]:[]
  const positive=trace.filter(t=>(t.gapKm??0)>0.000001)
  const catchTick=trace.find(t=>t.caught)
  const first=trace[0]
@@ -159,6 +183,7 @@ function evaluate(strength:Strength,timing:Timing,shelterEnergy=false){
    final.map(r=>[r.riderId,r.finishPosition,r.finishTimeSeconds,r.energy])
     .sort((a,b)=>String(a[0]).localeCompare(String(b[0]))))).digest('hex').slice(0,20),
   firstFiveTrace:trace.slice(0,5),
+  movementPaceAudit,
  }
 }
 // 5 plausible-to-elite physical capability bands; 3 matched tactical choices.
@@ -183,6 +208,12 @@ const checks={
   Math.abs(s.effortAudit.energyBalanceError)<0.0001),
  draftingEnabled:scenarios.every(s=>'shelterEnergy' in s&&s.shelterEnergy&&
   s.effortAudit.shelterSaved>0),
+ observedPaceDecomposition:scenarios.filter(s=>s.timing!=='baseline').every(s=>
+  'movementPaceAudit' in s&&s.movementPaceAudit.length>=2&&
+  s.movementPaceAudit[0].attackBaseKmh!==null&&
+  s.movementPaceAudit[0].pelotonBaseKmh!==null&&
+  s.movementPaceAudit[1].attackAppliedKmh!==null),
+
 }
 process.stdout.write(JSON.stringify({
  reportVersion:'uranius-strength-gradient-v1',
