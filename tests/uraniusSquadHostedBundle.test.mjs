@@ -19,4 +19,7 @@ test('real HTTPS Squad client compiles and bundles with original Login page',asy
  assert.match(js,/Squad data is unavailable/)
  assert.match(js,/syntheticSquadPreview/)
  assert.match(js,/Climbing/)
+ assert.match(js,/Race Results & Replay/)
+ assert.match(js,/Recorded race replay/)
+ assert.match(js,/Final classification/)
 })
