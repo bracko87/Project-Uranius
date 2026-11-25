@@ -1138,3 +1138,20 @@ node --test tests\\uraniusPelotonChaseEffort.test.mjs tests\\uraniusBudgetedChas
 ```
 
 **Official checklist 49/60 sporting NO GO**. Neither live routes nor production state changed.
+
+
+## 2026-11-25 — Nine funded chase wiring/unit tests pass; true offline movement/energy proof added
+
+Owner pulled through `9641d89` and executed both `tests/uraniusPelotonChaseEffort.test.mjs` and `tests/uraniusBudgetedChaseIntegrationBoundary.test.mjs`: **9/9 PASS**. The earlier 8/9 was only an obsolete source-comment assertion, corrected without changing active physics. **9/9 validates pure calculation and integration syntax, not a full race.**
+
+New E2E proving fixture (committed, not yet owner-tested): `scripts/uranius-funded-chase-e2e.ts` and fail-closed `scripts/run-uranius-funded-chase-e2e.mjs`, with `tests/uraniusFundedChaseE2EBoundary.test.mjs`. Runs **three matched 120km, 128-rider** races with physical strength-86 early breakaway and the prior default-off physically separating-breakaway experimental policy: (1) no chase orders, (2) two scheduled executed chase orders but budgeted effort flag OFF, (3) same orders with `experimentalBudgetedPelotonChaseEnabled:true`. Orders belong to two real peloton riders of Team 02 (`sustain-rider-009`/`-010`), valid from km5 to km120. It records first and last funded chase tick, group applied speeds, the actual per-tick `experimentalPullerEnergySurcharge`, selected rider energy conservation and end standings. The fail-closed report requires: 128 official finishers with unique positions, OFF scenarios giving identical race results, chase orders actually executed, strictly positive real funded chase ticks, charge only to peloton pullers, exact selected-rider energy ledgers and on-tick **higher actual peloton movement speed than flag-OFF at matched race second**. We deliberately do **not** force a win, catch or close outcome. This identifies whether the new pure model truly affects physical race execution with nonfree effort.
+
+Run locally (first static/TS test, then actual three-run proof):
+
+```bat
+git pull origin main
+node --test tests\\uraniusPelotonChaseEffort.test.mjs tests\\uraniusBudgetedChaseIntegrationBoundary.test.mjs tests\\uraniusFundedChaseE2EBoundary.test.mjs
+node scripts\\run-uranius-funded-chase-e2e.mjs --out funded-chase-e2e-local.json
+```
+
+No historical 15+6 race matrix repeated. **Official 49/60 sporting NO GO**. Production/calibrated defaults unchanged. Three-run E2E still requires owner verification before any balance verdict.
