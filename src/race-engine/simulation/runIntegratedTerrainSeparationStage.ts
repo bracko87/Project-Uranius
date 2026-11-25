@@ -152,6 +152,8 @@ export interface IntegratedTerrainSeparationOptions {
   readonly experimentalFundedPelotonLeadershipEnabled?: boolean
   /** OFFLINE only: capability-based funded leadership, defaults OFF. */
   readonly experimentalCapabilityBasedLeadershipEnabled?: boolean
+  /** OFFLINE optional rider-stable duty rotation; default OFF. */
+  readonly experimentalStableLeaderRotationEnabled?: boolean
 
   /**
    * Disabled by default so all earlier Phase 7B.8 diagnostics retain their
@@ -1288,6 +1290,9 @@ export function simulateIntegratedTerrainSeparationTick(
       appliedOrders.executedOrders,
     )
 
+  if(options.experimentalStableLeaderRotationEnabled===true&&
+     options.experimentalCapabilityBasedLeadershipEnabled!==true)
+    throw Error('runIntegratedTerrainSeparationStage: stable rotation requires capability-funded leadership')
   const selectedPursuitModels=Number(options.experimentalBudgetedPelotonChaseEnabled===true)+
     Number(options.experimentalFundedPelotonLeadershipEnabled===true)+
     Number(options.experimentalCapabilityBasedLeadershipEnabled===true)
@@ -1311,6 +1316,8 @@ export function simulateIntegratedTerrainSeparationTick(
           options.experimentalFundedPelotonLeadershipEnabled === true,
         experimentalCapabilityBasedLeadershipEnabled:
           options.experimentalCapabilityBasedLeadershipEnabled === true,
+        experimentalStableLeaderRotationEnabled:
+          options.experimentalStableLeaderRotationEnabled === true,
         ...(options.experimentalPhysicalAttackLaunch
           ? {
               experimentalLaunchSpeedByGroupId: Object.fromEntries(
