@@ -31,6 +31,7 @@ export function calculateFundedPelotonLeadership(input:FundedPelotonLeadershipIn
   riders:input.riders,minimumSpeedKmh:input.minimumSpeedKmh,
   maximumSpeedKmh:input.maximumSpeedKmh,raceSecond:input.raceSecond,
   tickSeconds:input.tickSeconds,maximumActiveLeaders:input.maximumActiveLeaders,
+  eligibleOrderedRiderIds:input.eligibleOrderedRiderIds,
  })
  const none=(reason:FundedPelotonLeadershipResult['reason']):FundedPelotonLeadershipResult=>({
   baseSpeedKmh:leadership.groupMeanBaseKmh,fundedSpeedKmh:leadership.groupMeanBaseKmh,
