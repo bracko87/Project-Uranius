@@ -19,3 +19,8 @@ node tests\uraniusRaceJobWorkerNativePg17.mjs --disposable-native-pg17 --postgre
 ```
 
 Expected 8/8 targeted checks and disposable PGDATA cleanup. No password or network connection needed; tests not executed in assistant environment (no native PG binaries or repo checkout). After success prepare role provisioning under separately approved admin boundary, guarded migration with exact 18 predecessors and one approved immutable input copied from existing archive, direct TLS worker runner, bounded loop/restart and independent readback. Only then enable one test job; separate schedule and game-clock enablement remains off. No paid worker/service or production action. Overall 49/60 unchanged, U5.04/U5.05/U5.06 IN_PROGRESS.
+
+
+## 2026-11-25 — owner native acceptance: 8/8 PASS
+
+Owner pulled aea96c1 and ran the focused disposable native PG17 worker harness. All eight checks passed: atomic FORCE RLS install/rollback, exact existing engine output, future job exclusion, duplicate job/concurrent claim prevention, expired lease recovery and stale completion fencing, actual restricted-role simulation/persistence, crash retry cap and unauthorized read/write/transition denial. Disposable PGDATA cleaned up; no hosted connection. This accepts the standalone job contract and core worker, not hosted deployment, general input finalization, live scheduling or checkpoints. No prior tests need repeating. Next prepare a guarded exact hosted install with one already verified archive input and separate non-elevated worker role; approval required before hosted changes.
