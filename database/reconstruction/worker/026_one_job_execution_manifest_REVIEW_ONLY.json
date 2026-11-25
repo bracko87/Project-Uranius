@@ -1,0 +1,51 @@
+{
+  "projectRef": "sdtsivgtcaoaeoihcwzd",
+  "operation": "single_queued_deterministic_repeat",
+  "status": "REVIEW_ONLY_REQUIRES_EXPLICIT_APPROVAL",
+  "jobId": "a8800680-3970-4826-aca7-aa0e72420f66",
+  "stageId": "25251441-bd5d-4f00-993d-859a95cf099e",
+  "inputSha256": "a4b666233b28e829ca55f3f3ca46f8cfd881eaa992897f70abc1c9b7fafd81bf",
+  "expectedOutputSha256": "0501d5fcdcb39237b1f371768f7e08d56ad3f9bd0c580cd8d97142498c18c3ed",
+  "maxLoginSeconds": 300,
+  "priorManifestSha256": "bdce37e954dd878e05e4d75fa6c387c5da17d98dd66bfc63f30c08841a5b816d",
+  "files": [
+    {
+      "path": "scripts/run-uranius-first-queued-race.mjs",
+      "sha256": "cf83ae4fe39d88b2cf3bf8a88f85329180b0ad4d7766e7941e47f6be57a9d7ed"
+    },
+    {
+      "path": "scripts/run-approved-first-queued-race-026-windows.ps1",
+      "sha256": "4f840d7fdcaf1664251f4b7931cce63fdb8bc19eb3bdaa7bcda4d5d5c8aa6678"
+    },
+    {
+      "path": "scripts/uranius-race-job-worker.mjs",
+      "sha256": "e8c0c3bec272b076f0649ae53efd7a6773dec6107fdb2e24ceb3eaf8476309cd"
+    },
+    {
+      "path": "scripts/uranius-race-job-engine.ts",
+      "sha256": "16068f359ced48edcf15d1b5c3efea981b377be7a45d0a9b5e5a1099454f4087"
+    },
+    {
+      "path": "scripts/assert-sandbox-target.mjs",
+      "sha256": "f129ef146ff4bd549b74af83ae774047f4f5055a42c851a4c0b95196130b24b6"
+    },
+    {
+      "path": "scripts/run-uranius-psql-batch.mjs",
+      "sha256": "4a0c0b81f2ba59cb1f9fa542d838348e1b1c2f777a27fd526b19b1950933d712"
+    },
+    {
+      "path": "database/reconstruction/worker/025_install_manifest_REVIEW_ONLY.json",
+      "sha256": "bdce37e954dd878e05e4d75fa6c387c5da17d98dd66bfc63f30c08841a5b816d"
+    }
+  ],
+  "scope": {
+    "temporaryWorkerLogin": true,
+    "restoreNoLogin": true,
+    "oneJob": true,
+    "noScheduler": true,
+    "noOfficialResults": true,
+    "noClockAdvance": true,
+    "noFinance": true,
+    "noProduction": true
+  }
+}
