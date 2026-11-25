@@ -1221,3 +1221,16 @@ node scripts\\run-uranius-funded-leadership-e2e.mjs --out funded-leadership-e2e-
 ```
 
 **At commit time neither new integration tests nor the three new race runs have been executed.** If a runtime check fails, investigate the actual mismatch before tuning a speed constant. The earlier 12/12 paid chase and 3 full races remain a separate verified reference. Official sporting calibration **49/60 NO GO**, default-off and production unchanged.
+
+
+## 2026-11-25 — Funded leadership E2E OWNER VERIFIED; do not enable for release
+
+Owner pulled `680be86`; **16/16** leadership unit, integration-boundary and E2E-boundary tests PASS. The new `scripts/run-uranius-funded-leadership-e2e.mjs` executed **3/3** matched offline 120 km / 128-rider races. All six runtime checks passed: `completed`, `defaultOffPreserved`, `actualExecutedOrders`, `fundedLeadersReallyMoved`, `onlyAuthorizedRidersCharged`, `conservation`.
+
+- `control` no chase orders: strength-86 early solo rider rank 1, finish **9939.315079131 s**, finishing spread **647.1082937859992 s**, no charged leadership ticks.
+- `orders-off`: **24** chase orders executed; finish, spread and zero-funded-tick results **exactly identical** to control.
+- `leaders-on`: same 24 orders all executed; solo rider still wins at identical finish time, finishing spread **508.62207119400045 s** (**138.486222592 s / ~21.4% less** than control), **156 funded ticks**, **25.863915** total incremental energy, **23 distinct charged ordered riders**, first paid tick second 510 at peloton **41.97138409 km/h**, last second 9960 peloton **42.64603547 km/h**. Maximum measured rider ledger discrepancy **0.0000025704** (within explicit 1e-4 tolerance). The candidate does provide actual movement speed and nonfree funded rider work without fabricating gaps or guaranteed outcomes.
+
+Comparison with previous `experimentalBudgetedPelotonChaseEnabled` trial should NOT be described as a controlled head-to-head: that earlier two-rider funded chase produced **493.844570594 s** final spread with **314** paid ticks and **28.658084** extra energy; the leadership trial allowed **24 orders** with different selection and gating, 156 paid ticks and 25.864 extra energy. A plausible *hypothesis*, requiring validation, is that the leadership candidate rotates over the full set of qualifying riders before filtering to authorized chase riders; this leaves many ticks with no funded chosen leader even when 24 other nominated riders are eligible, making its chase intermittent. Do not infer this is the only issue or immediately raise the 3% ceiling. Inspect selection order and interval, and protect physiological energy budget/rotation fairness. Consider selecting eligible authorized riders **before** rotating, provided it does not turn the candidate into permanent free collective speed; test on/off hashes and energy charges. Maintain both paid policies mutually exclusive and disabled by default.
+
+Sporting gate **49/60 NO GO**; production/default race engine unchanged. No further reproduction of the verified 3-run fixture required unless candidate policy changes.
