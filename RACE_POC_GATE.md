@@ -1155,3 +1155,17 @@ node scripts\\run-uranius-funded-chase-e2e.mjs --out funded-chase-e2e-local.json
 ```
 
 No historical 15+6 race matrix repeated. **Official 49/60 sporting NO GO**. Production/calibrated defaults unchanged. Three-run E2E still requires owner verification before any balance verdict.
+
+
+## 2026-11-25 — Funded peloton chase end-to-end execution PASSED; balance remains NO GO
+
+Owner pulled `9efe703` and ran `tests/uraniusPelotonChaseEffort.test.mjs`, `tests/uraniusBudgetedChaseIntegrationBoundary.test.mjs`, and `tests/uraniusFundedChaseE2EBoundary.test.mjs`: **12/12 PASS**. The three 120km/128-rider offline e2e races completed, and all **7 runtime e2e checks TRUE**: `allComplete`, `defaultUnchanged`, `executedChaseOrders`, `realFundedChase`, `onlyPelotonPullersCharged`, `exactSelectedRiderLedgers`, `physicallyHigherPelotonSpeed`.
+
+**Observed three-way results (strength-86 early attacker with experimental physically separating breakaway):**
+- No chase orders: breakaway selected rider wins, finish time **9939.315079131 s**, stage time spread **647.108293786 s**; zero paid chase ticks.
+- Two valid chase orders with funded option OFF: same finish time and spread, same rider rank; zero paid chase ticks; both orders executed. Canonical/off baseline preserved.
+- Two chase orders and funded option ON: both orders executed, **314** actual paid chase ticks, **28.658084** total additional energy charged to the two specific peloton riders (Rider 009 **13.782035**, Rider 010 **14.876049**); selected solo rider still wins at same **9939.315079131 s**, but stage spread falls to **493.844570594 s**, a **153.263723192 s / 23.7% reduction**. First paid tick at **raceSecond=570** with peloton speed **41.416103 km/h** and solo attacker **43.490511 km/h**. On late chase tick raceSecond=9960, peloton **42.094899 km/h**, attacker **44.064308 km/h**. Rider energy ledger balance errors are at floating-point noise (<1e-12), no duplicate or free surcharge observed for the nominated riders.
+
+**Decision:** The technical funded-chase integration is demonstrated at full offline race scale, including correct default-off preservation and energy charges. Sporting outcome **still unacceptable** in this example: a lone strength-86 rider wins by 8m14s against an organized 127-rider peloton. A 3% theoretical funded boost from two ordered pullers does not overcome the persistent solo-versus-whole-peloton-average pace bias. Do not automatically raise the bonus, forcibly catch, or enable either experimental flag. Next investigate actual peloton pace leadership (who physically sets group pace), which riders should contribute, sustainable chase intensity and rider fatigue, plus baseline no-order ranking/zero-spread anomalies. Document plausible independent constraints and run a limited controlled A/B only after specifying them.
+
+**Official checklist remains 49/60 sporting NO GO.** No production or hosted game changes.
