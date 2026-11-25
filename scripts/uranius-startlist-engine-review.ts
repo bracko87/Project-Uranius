@@ -17,29 +17,38 @@ function adapt(p:Packet):StageInput {
  assert.equal(p.raceId,raceA,'Only the isolated flat fixture is supported')
  assert.ok(validUuid(p.stageId)&&text(p.stageName))
  assert.equal(p.distanceKm,120);assert.equal(p.terrainType,'flat');assert.equal(p.stageFormat,'road_race');assert.equal(p.stageNumber,1)
- assert.ok(Array.isArray(p.rows)&&p.rows.length===5)
- const rows=[...p.rows].sort((a,b)=>a.selectionOrder-b.selectionOrder)
- const club=rows[0].clubId
- assert.ok(validUuid(club))
+ assert.ok(Array.isArray(p.rows)&&p.rows.length===10)
+ const rows=[...p.rows].sort((a,b)=>a.teamId-b.teamId||a.selectionOrder-b.selectionOrder)
  const ids=new Set<string>()
- for(const [i,row] of rows.entries()){
-  assert.ok(validUuid(row.riderUuid)&&!ids.has(row.riderUuid.toLowerCase()))
-  ids.add(row.riderUuid.toLowerCase())
-  assert.equal(row.clubId,club);assert.equal(row.teamId,1);assert.equal(row.teamName,rows[0].teamName)
-  assert.equal(row.provenance,'uranius_synthetic_fixture')
-  assert.ok(text(row.riderName)&&text(row.teamName))
-  assert.equal(row.selectionOrder,i+1);assert.equal(row.role,i===0?'captain':'domestique')
-  for(const value of [row.flat,row.climbing,row.stamina,row.resistance])assert.ok(score(value))
+ const clubs=new Set<string>()
+ for(const team of [1,2]){
+  const roster=rows.filter(row=>row.teamId===team)
+  assert.equal(roster.length,5,'Two complete teams required')
+  const club=roster[0].clubId
+  assert.ok(validUuid(club)&&!clubs.has(club.toLowerCase()))
+  clubs.add(club.toLowerCase())
+  for(const [i,row] of roster.entries()){
+   assert.ok(validUuid(row.riderUuid)&&!ids.has(row.riderUuid.toLowerCase()))
+   ids.add(row.riderUuid.toLowerCase())
+   assert.equal(row.clubId,club);assert.equal(row.teamName,roster[0].teamName)
+   assert.equal(row.provenance,'uranius_synthetic_fixture')
+   assert.ok(text(row.riderName)&&text(row.teamName))
+   assert.equal(row.selectionOrder,i+1);assert.equal(row.role,i===0?'captain':'domestique')
+   for(const value of [row.flat,row.climbing,row.stamina,row.resistance])assert.ok(score(value))
+  }
  }
  // Explicit test-only assumptions, never saved as original rider skills.
  // The synthetic catalog Stamina is not mapped to original Endurance.
- const riders=rows.map(r=>({riderId:r.riderUuid,teamId:club,riderName:r.riderName,teamName:r.teamName,role:r.role,
+ const riders=rows.map(r=>({riderId:r.riderUuid,teamId:r.clubId,riderName:r.riderName,teamName:r.teamName,role:r.role,
   attributes:{flat:r.flat,climbing:r.climbing,stamina:r.stamina,resistance:r.resistance,
    sprint:75,acceleration:75,timeTrial:75,recovery:75,raceIq:75,teamwork:75}}))
  const stage:StageInput={raceId:p.raceId,stageId:p.stageId,stageName:p.stageName,stageFormat:'road_race',distanceKm:p.distanceKm,
-  seed:'uranius-021-disposable-flat-startlist-v1',
+  seed:'uranius-021-disposable-two-team-flat-v2',
   settings:{tickSeconds:30,replaySnapshotIntervalSeconds:30,maximumBreakawaySize:8,minimumSpeedKmh:24,maximumSpeedKmh:72},
-  teams:[{teamId:club,teamName:rows[0].teamName,captainRiderId:rows[0].riderUuid,riderIds:riders.map(r=>r.riderId)}],
+  teams:[1,2].map(team=>{
+   const roster=rows.filter(r=>r.teamId===team)
+   return {teamId:roster[0].clubId,teamName:roster[0].teamName,captainRiderId:roster[0].riderUuid,riderIds:roster.map(r=>r.riderUuid)}
+  }),
   riders,profilePoints:[{kilometre:0,elevationMetres:100},{kilometre:p.distanceKm,elevationMetres:100}],orders:[]}
  validateStageInput(stage)
  return stage
@@ -58,7 +67,7 @@ const digest=(x:unknown)=>createHash('sha256').update(JSON.stringify(x)).digest(
 assert.equal(digest(first),digest(second),'Non-deterministic repeated race')
 assert.equal(first.raceId,input.raceId);assert.equal(first.stageId,input.stageId)
 assert.deepEqual(first.finalRiderStates.map(r=>r.riderId).sort(),input.riders.map(r=>r.riderId).sort())
-assert.deepEqual(first.finalRiderStates.map(r=>r.finishPosition).sort((a,b)=>Number(a)-Number(b)),[1,2,3,4,5])
+assert.deepEqual(first.finalRiderStates.map(r=>r.finishPosition).sort((a,b)=>Number(a)-Number(b)),[1,2,3,4,5,6,7,8,9,10])
 assert.ok(first.finalRiderStates.every(r=>r.finished&&r.stageStatus==='finished'&&typeof r.finishTimeSeconds==='number'&&r.finishTimeSeconds>0))
 assert.equal(JSON.stringify(packet),before)
-console.log(JSON.stringify({finishers:5,outputSha256:digest(first),frames:first.snapshots.length,events:first.events.length,deterministic:true,negativePacketsRejected:6,fixtureUnchanged:true,mode:'existing_v1',syntheticCourse:true,syntheticEngineDefaults:true}))
+console.log(JSON.stringify({finishers:10,teams:2,outputSha256:digest(first),frames:first.snapshots.length,events:first.events.length,deterministic:true,negativePacketsRejected:6,fixtureUnchanged:true,mode:'existing_v1',syntheticCourse:true,syntheticEngineDefaults:true}))
