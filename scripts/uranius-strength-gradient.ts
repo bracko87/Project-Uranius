@@ -94,7 +94,28 @@ function evaluate(strength:Strength,timing:Timing,shelterEnergy=false){
   const pelotonPace=tick.movement.groupDiagnostics.find(d=>d.groupId===pelotonId)?.pace
   const attackProposal=tick.movement.movement.proposals.find(p=>p.groupId===launch.groupId)
   const pelotonProposal=tick.movement.movement.proposals.find(p=>p.groupId===pelotonId)
+  const beforeCatch=tick.reconciledBreakaways.previousState
+  const candidate=beforeCatch.groups[launch.groupId]
+  const pelotonAtCatch=Object.values(beforeCatch.groups).find(
+   g=>g.active&&g.groupType==='peloton')
+  const signedDistanceKm=candidate&&pelotonAtCatch?
+   candidate.distanceKm-pelotonAtCatch.distanceKm:null
+  const catchGapSeconds=candidate&&pelotonAtCatch?
+   Math.abs(candidate.gapFromLeaderSeconds-pelotonAtCatch.gapFromLeaderSeconds):null
+  const physicalGapAtPelotonSpeedSeconds=signedDistanceKm!==null&&pelotonAtCatch?
+   Math.abs(signedDistanceKm)/Math.max(0.000001,pelotonAtCatch.speedKmh)*3600:null
+  const withinFiveSecondReportedWindow=catchGapSeconds!==null&&catchGapSeconds<5
+  const freshBreakaway=candidate?.active===true&&
+   beforeCatch.raceSecond-candidate.createdAtRaceSecond<=input.settings.tickSeconds
   return {second:tick.state.raceSecond,
+   activeBeforeCatch:candidate?.active??false,
+   signedDistanceKm,
+   catchGapSeconds,
+   physicalGapAtPelotonSpeedSeconds,
+   withinFiveSecondReportedWindow,
+   freshBreakaway,
+   actuallyCaught:tick.reconciledBreakaways.reabsorbedBreakawayGroupIds.includes(launch.groupId),
+   groupActiveAfterCatch:!!tick.reconciledBreakaways.state.groups[launch.groupId]?.active,
    attackRiders:attackPace?.eligibleRiderCount??null,
    pelotonRiders:pelotonPace?.eligibleRiderCount??null,
    attackBaseKmh:attackPace?.currentBaseSpeedKmh??null,
@@ -208,7 +229,12 @@ const checks={
   Math.abs(s.effortAudit.energyBalanceError)<0.0001),
  draftingEnabled:scenarios.every(s=>'shelterEnergy' in s&&s.shelterEnergy&&
   s.effortAudit.shelterSaved>0),
- observedPaceDecomposition:scenarios.filter(s=>s.timing!=='baseline').every(s=>
+ catchAuditHasGeometry:scenarios.filter(s=>s.timing!=='baseline').every(s=>
+  'movementPaceAudit' in s&&s.movementPaceAudit.length>0&&
+  s.movementPaceAudit[0].signedDistanceKm!==null&&
+  s.movementPaceAudit[0].catchGapSeconds!==null&&
+  s.movementPaceAudit[0].physicalGapAtPelotonSpeedSeconds!==null),
+  observedPaceDecomposition:scenarios.filter(s=>s.timing!=='baseline').every(s=>
   'movementPaceAudit' in s&&s.movementPaceAudit.length>=2&&
   s.movementPaceAudit[0].attackBaseKmh!==null&&
   s.movementPaceAudit[0].pelotonBaseKmh!==null&&
