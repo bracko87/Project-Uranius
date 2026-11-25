@@ -1121,3 +1121,20 @@ node --test tests\\uraniusPelotonChaseEffort.test.mjs
 ```
 
 No full 15/21-race rerun requested for this pure model. Official **49/60 sporting NO GO**, production unchanged.
+
+
+## 2026-11-25 — Owner passes funded chase pure helper; offline integration committed
+
+Owner pulled through `784d473` and executed `tests/uraniusPelotonChaseEffort.test.mjs`: **5/5 PASS**. Covers real executed-order authorization, deterministic top-3 pullers, funding/energy reserves, speed limits, grade/teamwork response and input immutability.
+
+Completed **default-off OFFLINE integration** of the already tested helper into (a) `terrainAwareMultiGroupMovement.ts`: on a live ahead breakaway, only a correctly executed chase order in its active km window can nominate peloton members; calculate funded selected-puller speed and return an explicit per-rider surcharge ledger, and (b) `applyMultiGroupEnergy.ts`: apply each nominated rider's additional energy cost on top of the canonical group movement cost/shelter result and expose it in tick `MultiGroupRiderEnergyApplication.experimentalPullerEnergySurcharge`. The `experimentalBudgetedPelotonChaseEnabled` flag is threaded through `runCalibratedTerrainSeparationStage` and `runIntegratedTerrainSeparationStage`, explicitly disabled by default. Both movement and rider-energy accounting are under **the same flag**, so pursuit speed is not meant to become free. The prior `experimentalChaseOrdersEnabled` 1.5% mechanism remains separate. No fabricated gap, automatic catch, arbitrary winning outcome, or server-side production execution.
+
+Created `tests/uraniusBudgetedChaseIntegrationBoundary.test.mjs`: source and TypeScript-transpile checks require the flag across the full path and verify the movement proposal and extra rider-charge calculation, while keeping the historical default-off path. **This new integration and its boundary test have NOT yet been executed by owner** and no new full-race sporting results are claimed. Even if the boundary passes, real integration proof still needs a matched commanded-chase race fixture demonstrating nonzero per-rider charges and improved physical peloton speed in the same tick, conservation of energy, and unmodified default-off hashes. That is the next validation step before any calibration/production decision.
+
+Owner CMD:
+```bat
+git pull origin main
+node --test tests\\uraniusPelotonChaseEffort.test.mjs tests\\uraniusBudgetedChaseIntegrationBoundary.test.mjs
+```
+
+**Official checklist 49/60 sporting NO GO**. Neither live routes nor production state changed.
