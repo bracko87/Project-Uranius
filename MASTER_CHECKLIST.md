@@ -86,13 +86,13 @@ Gate: PASSED
 | ID | Task | Status | Evidence / commit |
 |---|---|---|---|
 | U5.01 | Authorize and provision isolated infrastructure | PASS | Owner provisioned the approved Micro. Scoped verification and exact project guard evidence in TEST_REPORT.md. |
-| U5.02 | Reconstruct existing sandbox DB | BLOCKED | Hosted migrations through 021 independently verified: 16 exact ledger entries, 200 riders/UUIDs/attributes, 2 owners, paused S1D1; 3 synthetic races, 4 stages, 2 accepted entries/preparations and 10 private owned startlist selections. Original clock progression, full original race lifecycle, remaining data/logic contracts not reconstructed. |
-| U5.03 | Seed full test world | IN_PROGRESS | A/B authenticated Overview/Squad and populated Calendar data display verified. 019 and 021 native 70/70 and hosted readback PASS; 120 km disposable DB-to-engine race completed with 2 teams, 10 finishers and deterministic repeat. Hosted private startlists 5+5 verified; separate races, no additional opponents or live startlist submission. Full test-world assets, competitive hosted race and operational lifecycle pending. |
-| U5.04 | Implement hybrid DB contracts | IN_PROGRESS | 022 native 76/76 PASS and hosted installation independently verified: 17 exact ledger entries; empty private immutable completed-run archive, validated trigger and constraints, FORCE RLS, zero client/reader grants. Actual disposable DB-to-engine-to-DB payload readback and digest equality proved. General input/run lifecycle, worker privileges, checkpoints, commands, timeline revisions and official finalization pending. |
+| U5.02 | Reconstruct existing sandbox DB | BLOCKED | Hosted 001–022 exact 17 ledger records, 200 riders/UUIDs/attributes, 2 owners, paused S1D1; 3 races, 4 stages, 3 accepted entries/preparations, 15 private selections and one verified synthetic archive after 023. Original clock progression and remaining original data/logic contracts not reconstructed. |
+| U5.03 | Seed full test world | IN_PROGRESS | A/B authenticated Overview/Squad and populated Calendar verified. 023 independently verified two competing teams, ten finishers, 347 replay frames, 12 events stored in hosted DB; B Mountain Tour preserved. Full test-world assets and operational lifecycle pending. |
+| U5.04 | Implement hybrid DB contracts | IN_PROGRESS | 022 native 76/76 and hosted installation PASS; 023 one private immutable competitive archive, actual hosted data-to-local-engine-to-hosted-DB readback, exact digests, ranks 1–10 and restored RLS verified. General input/run lifecycle, worker privileges, checkpoints, commands, timeline revisions and official finalization pending. |
 | U5.05 | Secure sandbox APIs and storage | TODO | — |
 | U5.06 | Deploy sandbox workers and schedule | TODO | — |
 | U5.07 | Integrate complete clone | TODO | — |
-| U5.08 | End-to-end no-command and active-manager races | TODO | — |
+| U5.08 | End-to-end no-command and active-manager races | IN_PROGRESS | 023 manually executed no-command synthetic competitive race archived and independently verified, with no deployed worker or official effects. Automated no-command and active-manager race paths, live commands, UI integration and acceptance pending. |
 | U5.09 | Multi-stage and game accounting tests | TODO | — |
 | U5.10 | Performance, recovery and regression | TODO | — |
 | U5.11 | Owner acceptance and evidence | TODO | — |
