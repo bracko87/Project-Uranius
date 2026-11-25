@@ -1605,3 +1605,27 @@ node scripts\\run-uranius-leader-availability-sensitivity.mjs --out leader-avail
 ```
 
 This is a controlled sensitivity study of the prior candidate, not a new approved physics calibration. Production remains unchanged, dynamic model OFF by default, and official **49/60 sporting NO GO**.
+
+
+## 2026-11-25 — Six-case leader sensitivity: owner results, exhausted debit bug, and reabsorption audit fix
+
+Owner pulled `e6be4f5` and verified **3/3 boundary tests**. Six actual 128-rider 120km races ran and returned structured results; **9/10 runtime gates TRUE**, with `riderEnergyConserved:false`. Fail-closed runner did not save the report because the depleted case contained a real inconsistency: maximum leader ledger residual **17.281602482** energy units with 24 ordered leaders starting at **12 energy**. The canonical `calculateRiderEnergyCost` may report energy spent even after `nextEnergy` has clamped to zero, causing `applyMultiGroupEnergy` to emit an energyCost larger than the available reserve. No production/default-on engine change was authorized.
+
+Case findings **before repair**:
+- No orders: actual solo vs first peloton gap **647.1083s**, leader surcharge 0.
+- One strong authorized leader: **461.3651s** gap, 316 paid ticks, **27.029747** surcharge, leader final energy **45.3326**.
+- Three leaders: **271.6299s** gap, 298 paid ticks, **177.80644** surcharge, lowest final leader energy **3.1282**.
+- Eight leaders: attacker finished **126th**, first original-peloton finisher time equal to selected finish time at **10576.953909878s**; only **one paid leader tick** at 510s, surcharge **1.835691**. This suggests a very early genuine breakaway *reabsorption* (subsequent pursuit is no longer required), not eight leaders sustaining 120km of chasing or guaranteed winner. The report must explicitly trace the actual rider group transition to verify this interpretation.
+- 24 leaders: prior owner-verified **190.97821s** gap, 316 paid ticks, **290.76428** surcharge, all prior fingerprints preserved.
+- 24 leaders with only 12 starting energy: **687.040914s** gap (11:27.041), 74 paid ticks ending at 2700s, **18.332972** surcharge, final leader energy all zero. Overstated canonical costs create the 17.28 residual; actual physical rider reserves are within bounds.
+
+**Scoped fixes committed, owner verification pending:** Added `SimulationState.experimentalConservedEnergyLedgerEnabled?:boolean` (default OFF) and an opt-in normalization in `applyMultiGroupEnergy`: the reported `energyCost` (including the nested result ledger) equals the **actual difference** between previous and next rider energy, bounded by zero, without changing the existing movement, final rider energy, or normal default ledger. Enabled **only in the 12-energy leader test**. This is diagnostic protection for exhausted riders, *not yet a validated global accounting migration*. The updated six-case scenario also excludes the attack rider from the initial-peloton finishing reference, traces explicit breakaway-to-peloton group transition and its second, and rejects claiming the eight-leader catch as unexplained/free. Improved boundary suite to assert both opt-in debit conservation and reabsorption reporting.
+
+Owner verification:
+```bat
+git pull origin main
+node --test tests\\uraniusLeaderAvailabilitySensitivityBoundary.test.mjs
+node scripts\\run-uranius-leader-availability-sensitivity.mjs --out leader-availability-sensitivity-local.json
+```
+
+If all checks pass, diagnose the broader low-reserve over-debit outside this opt-in experiment before considering default behavior changes. **49/60 sporting NO GO. No production changes.**
