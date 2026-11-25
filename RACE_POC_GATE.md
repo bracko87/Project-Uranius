@@ -1823,3 +1823,22 @@ git pull origin main
 node scripts\run-uranius-final-race-regression.mjs --out final-race-regression-local.json
 ```
 The runner prints each golden, calibrated comparison, integration and candidate outcome and saves nested evidence, even for failed gates. Execution is pending; no claims of PASS until observed. This is a scoped sporting candidate gate, not a full 60-task acceptance or promotion. Even if all five pass, actual human/AI manager integration, accounting, broader sporting calibration and release approval remain open. **49/60 sporting NO GO; no production changes or paid resources.**
+
+
+## 2026-11-25 — Consolidated final physical-catch regression OWNER VERIFIED (5/5)
+
+Owner pulled `8dde316` and executed `node scripts\run-uranius-final-race-regression.mjs --out final-race-regression-local.json`. All five final gates TRUE; complete console evidence supplied, local JSON saved by owner (not independently retrieved).
+
+| Frozen existing_v1 reference | Exact observed hash | Runtime ms | Output bytes | Frames/events |
+|---|---|---:|---:|---|
+| micro-10 | 98cdb350835b7fde | 265 | 28192 | 32/12 |
+| flat-24 | a16eeb4aa3fd0bc6 | 1303 | 103014 | 86/26 |
+| hilly-48 | 7ed8f7c2a7e0d7c6 | 2716 | 180860 | 89/50 |
+| mountain-96 | c5152197cecfe4d0 | 7102 | 359771 | 100/98 |
+| flat-96 | 364c8989142147b5 | 5515 | 324675 | 86/98 |
+
+All rosters complete, historical hashes/frame/event counts exact, performance and output size within original limits. Calibrated default current/pre-change full-output hashes also match exactly: micro-10 `19dadf2e4632042e`, flat-24 `29a691d0d9cb09ef`, hilly-48 `249357ee3231f203`.
+
+Final integration 11/11 and matrix 13/13 passed against the corrected source. All eight 128-rider races completed, all prior attacker ranks and reported finish times reproduced: flat weak early 126/126 (one genuine physical catch, zero premature under candidate), rolling strong late 1/1, mountain medium early 123/1 (legacy premature catch only), mountain strong late 1/1. No stranded crossed groups, unauthorized pursuit charges or failed ledger gates.
+
+**Disposition:** scoped physical-catch development and offline validation COMPLETE; retain candidate default OFF, with verified finish crossing and independent option wiring. No further repetitions of these specific tests are required absent source changes. This does not establish universal sporting realism or authorize production/default promotion. Resume outstanding Milestone 5 database reconstruction and original Overview/Squad/Calendar integration (U5.02/U5.03), followed by hybrid persistence and complete active-manager acceptance. Official project checklist remains **49/60, sporting release NO GO**. No production or paid infrastructure changes.
