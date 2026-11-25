@@ -1,0 +1,41 @@
+import {test} from 'node:test'
+import assert from 'node:assert/strict'
+import {readFileSync} from 'node:fs'
+import {transformSync} from 'esbuild'
+const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8')
+const fund=read('src/race-engine/simulation/pelotonLeadershipBudget.ts')
+const pace=read('src/race-engine/simulation/terrainAwareMultiGroupMovement.ts')
+const integrated=read('src/race-engine/simulation/runIntegratedTerrainSeparationStage.ts')
+const calibrated=read('src/race-engine/simulation/runCalibratedTerrainSeparationStage.ts')
+const scenario=read('scripts/uranius-capability-funded-leadership.ts')
+const runner=read('scripts/run-uranius-capability-funded-leadership.mjs')
+test('capability leader funding is isolated from historical 3 percent funded model',()=>{
+ assert.match(fund,/experimentalCapabilityBasedFunding\?:boolean/)
+ assert.match(fund,/clamp\(leadership.potentialGainPercent,0,8\)/)
+ assert.match(fund,/clamp\(leadership.potentialGainPercent,0,3\)/)
+ assert.match(fund,/const effortFactor=dynamic\?1\+desiredBonusPercent\/4:1/)
+ assert.match(pace,/experimentalCapabilityBasedFunding:/)
+ assert.match(pace,/experimentalCapabilityBasedLeadershipEnabled===true/)
+ assert.match(calibrated,/experimentalCapabilityBasedLeadershipEnabled\?: boolean/)
+ assert.match(integrated,/selectedPursuitModels>1/)
+})
+test('authorized orders and actual physical leader energy are both required',()=>{
+ assert.match(scenario,/const field=128/)
+ assert.match(scenario,/const cases=\[run\('control'\),run\('fixed-3pct'\),run\('dynamic'\)\]/)
+ assert.match(scenario,/firstPelotonFinishTime:/)
+ assert.match(scenario,/soloToFirstPelotonSeconds:/)
+ assert.match(scenario,/historicalCappedModelPreserved:/)
+ assert.match(scenario,/leaderEnergyConserved:/)
+ assert.match(scenario,/moreCapabilityMoreEnergy:/)
+ assert.match(scenario,/experimentalCapabilityBasedLeadershipEnabled:mode==='dynamic'/)
+ assert.doesNotMatch(scenario,/forceWinner|fabricatedGap|fakeEnergy/i)
+})
+test('offline execution compiles and fails closed on 3 actual cases and checks',()=>{
+ for(const s of [fund,pace,integrated,calibrated,scenario])
+  assert.doesNotThrow(()=>transformSync(s,{loader:'ts',target:'node20',format:'esm'}))
+ assert.match(runner,/Array.isArray\(report.cases\)/)
+ assert.match(runner,/report.cases.length!==3/)
+ assert.match(runner,/Object.values\(report.checks\).some\(x=>x!==true\)/)
+ assert.match(runner,/for\(const r of report.cases\)/)
+ assert.doesNotMatch(scenario+runner,/@supabase|service_role|createClient\(|fetch\(|https?:\/\//i)
+})
