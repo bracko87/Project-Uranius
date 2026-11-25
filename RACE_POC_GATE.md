@@ -1629,3 +1629,14 @@ node scripts\\run-uranius-leader-availability-sensitivity.mjs --out leader-avail
 ```
 
 If all checks pass, diagnose the broader low-reserve over-debit outside this opt-in experiment before considering default behavior changes. **49/60 sporting NO GO. No production changes.**
+
+
+## 2026-11-25 — Six-stage depleted-energy accounting OWNER VERIFIED; missing static gate repaired
+
+Owner supplied complete run after `37258b2`: **6/6 actual 128-rider races completed; all 10/10 runtime checks TRUE**, `leader-availability-sensitivity-local.json` saved successfully. Depleted 24-rider group starting on 12 energy now shows maximum leader ledger residual **3.20e-14** with explicit offline `experimentalConservedEnergyLedgerEnabled` (versus previous **17.2816** excess debit), 74 charged ticks and **18.332972** paid leadership energy; physical finish gap remains **687.040914s**. Existing baseline and full-energy 24-leader fingerprints hold.
+
+The separately executed Node boundary tests reported **3/4 PASS**, with one **test/producer contract mismatch**: `tests/uraniusLeaderAvailabilitySensitivityBoundary.test.mjs` expected `eightLeaderCatchIsObserved:` and `notAnUnpaidReabsorption:` in the source `checks`, but these check entries had inadvertently been omitted from the previously committed scenario. The actual scenario output already shows the rider physically moved from breakaway into `peloton_main` at **race second 510**, finished **126th**, and had **one paid funded pursuit tick** with **1.835691** extra leader energy. This is genuinely distinct from the 24-leader case (solo still first, **190.978211s** ahead after 316 paid pursuit ticks), so do NOT interpret it as evidence of monotonic chase performance or a validated simulation result across team composition.
+
+Repaired scenario by adding the two explicit fail-closed checks with **recorded owner fingerprints**: eight-leader reabsorption at 510s, final peloton group, rank 126, exactly one funded tick, zero solo-to-peloton group time difference, while 24-leader scenario does not reabsorb; and actual 510s charge with positive rider-specific surcharge. The tests already assert the presence of these gates. No change to the underlying race mechanics, pace models, rider energy or production.
+
+Owner only needs to rerun `node --test tests\\uraniusLeaderAvailabilitySensitivityBoundary.test.mjs` after `git pull origin main` for static verification. The 6-race actual runtime result is already proven on preceding source. If a complete 12/12 check refresh is desired, running the CLI will include these 2 new gates, but rerunning six full races is **not necessary to confirm the physics result**. The **8-leader vs 24-leader non-monotonic capture** remains a sporting investigation blocker and calls for examining group merging/instantaneous order effects. Official **49/60 sporting NO GO**; no production change.
