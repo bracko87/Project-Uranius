@@ -107,7 +107,7 @@ function evaluate(strength:Strength,timing:Timing,shelterEnergy=false){
    pelotonTerrainGradient:pelotonProposal?.gradientPercent??null,
    attackAverageCapability:attackPace?.averageFlatCapabilityScore??null,
    pelotonAverageCapability:pelotonPace?.averageFlatCapabilityScore??null}
- }):[]:[]
+ }):[]
  const positive=trace.filter(t=>(t.gapKm??0)>0.000001)
  const catchTick=trace.find(t=>t.caught)
  const first=trace[0]
