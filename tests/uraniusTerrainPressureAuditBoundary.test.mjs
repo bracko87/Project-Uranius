@@ -29,3 +29,12 @@ test('runtime audit fail-closed offline and TypeScript syntax valid',()=>{
  assert.match(runner,/TERRAIN PRESSURE TOTALS/)
  assert.doesNotMatch(source+runner,/@supabase|service_role|createClient\(|fetch\(|https?:\/\//i)
 })
+
+test('terminal crossing is excluded from hold-pressure expectation without hiding earlier gaps',()=>{
+ assert.match(source,/finishCrossingTick:peloton!==undefined&&/)
+ assert.match(source,/peloton.nextDistanceKm>=stage.initialState.stageDistanceKm/)
+ assert.match(source,/pressureRows=rows.filter\(r=>!r.finishCrossingTick\)/)
+ assert.match(source,/pressureCountMismatchTicks:/)
+ assert.match(source,/pressureRows.every\(r=>r.comfortable\+r.underPressure\+/)
+ assert.match(source,/rows.filter\(r=>r.finishCrossingTick\).every\(r=>r.pressureEligibleRiders===0\)/)
+})
