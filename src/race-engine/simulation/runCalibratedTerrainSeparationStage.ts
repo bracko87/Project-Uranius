@@ -47,6 +47,8 @@ export interface RunCalibratedTerrainSeparationStageOptions {
   readonly experimentalBudgetedPelotonChaseEnabled?: boolean
   /** OFFLINE only: ordered energy-funded peloton leadership, defaults OFF. */
   readonly experimentalFundedPelotonLeadershipEnabled?: boolean
+  /** OFFLINE only: capability-limited rotating leader contribution, default OFF. */
+  readonly experimentalCapabilityBasedLeadershipEnabled?: boolean
 }
 
 export interface RunCalibratedTerrainSeparationStageResult
@@ -167,6 +169,8 @@ export function runCalibratedTerrainSeparationStage(
           options.experimentalBudgetedPelotonChaseEnabled ?? false,
         experimentalFundedPelotonLeadershipEnabled:
           options.experimentalFundedPelotonLeadershipEnabled ?? false,
+        experimentalCapabilityBasedLeadershipEnabled:
+          options.experimentalCapabilityBasedLeadershipEnabled ?? false,
       },
     )
 
