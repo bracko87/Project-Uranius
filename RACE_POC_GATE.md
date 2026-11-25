@@ -1066,3 +1066,22 @@ node scripts\\run-uranius-strength-gradient.mjs --out strength-gradient-local.js
 ```
 
 Before any change, compare the stored five-second gap vs physical distance, and whether 86-rated early attacker was genuinely within the catch radius on its second movement tick. Follow up with a separate default-off policy comparison only if evidence establishes an inconsistency. Official **49/60 sporting NO GO**, no production/paid staging changes.
+
+
+## 2026-11-25 — Catch geometry confirmed; six-case alternative catch policy comparison queued
+
+Owner pulled through `3da760d` and passed **6/6** boundary tests. All **15/15** 120km/128-rider original strength-gradient races completed with all **9 technical checks true**, including catch geometry.
+
+**Observed exact second-tick catch boundary:** strength **86 early** at t=510: rider **56.358m ahead** of peloton, velocity **43.4905 km/h vs 40.7489 km/h** (separating), stored `gapFromLeaderSeconds` difference **4.665155s**, physical gap at peloton speed **4.979028s**, `freshBreakaway=false`, reabsorbed **true**. Strength **90 early**, otherwise matched, rider **63.614m ahead**, velocity **44.3544 vs 40.7489 km/h**, stored catch difference **5.163164s** and physical gap **5.620000s**, reabsorbed **false**. Strength **76 late**, 52.769m ahead with faster velocity 39.7575 vs 38.8731, stored catch gap **4.778218s**, physically **4.886924s**, reabsorbed. Strength **82 late**, 63.657m ahead moving 41.0538 vs 38.8731, stored catch gap **5.582039s**, physically **5.895177s**, not reabsorbed. Hence the 5s rule **correctly follows its current code**, yet **absorption can occur when rider is actively moving away**; this rule plus sustained high solo vs peloton average speed causes a sharp sporting discontinuity. Inactive group position on later ticks is stale and must not be interpreted as a live physical gap.
+
+**Default-off, strictly isolated counterfactual committed, NOT YET OWNER RUN:** `reconcileBreakawayGroups` accepts `experimentalPreserveSeparatingBreakaways` (default false). When true only, an active `breakaway` physically **ahead** of the peloton and **faster** than peloton is not reabsorbed merely because it is within five stored gap seconds; if behind or slower, existing catch rules remain eligible. Wired through calibrated/integrated offline options. `uranius-strength-gradient.ts` retains all 15 original scenarios unchanged and adds exactly **6 matched true-flag replays** (strength 76/82/86/90 early; 76/82 late). Fail closed on 128-rider classification/energy balance/order execution, compare ranks, catch, sustained gap, stage spread and hashes. CLI adds `COUNTERFACTUAL` lines, static tests guard option default and TS compilation. This DOES NOT introduce an approved new rule, no production activation, and we may reject it if it simply causes implausible hours-long solo escapes. The purpose is to distinguish a catch-window policy effect from peloton pace imbalance.
+
+Owner commands:
+
+```bat
+git pull origin main
+node --test tests\\uraniusStrengthGradientBoundary.test.mjs
+node scripts\\run-uranius-strength-gradient.mjs --out strength-gradient-local.json
+```
+
+**Status:** Historical 15-race baseline VERIFIED; counterfactual runtime pending. Sporting release gate **49/60 NO GO**. Do not change canonical/default behavior.
