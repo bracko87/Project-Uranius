@@ -299,6 +299,92 @@ function CalendarPreview() {
   </main>
 }
 
+type ReplayGroup={id:string;type:string;km:number;speed:number;gap:number;count:number;active:boolean}
+type ReplayFrame={second:number;km:number;groups:ReplayGroup[]}
+type ReplayPacket={clubId:string;replay:null|{
+ runId:string;raceId:string;stageId:string;title:string;kind:string;distanceKm:number;
+ classification:{rank:number;rider:string;team:string;seconds:number}[];
+ frames:ReplayFrame[];events:{sequence:number;second:number;km:number;type:string}[]
+}}
+function formatRaceTime(seconds:number) {
+ const n=Math.floor(seconds)
+ return [Math.floor(n/3600),Math.floor(n%3600/60),n%60].map(v=>String(v).padStart(2,'0')).join(':')
+}
+function RaceReplayPreview() {
+ const navigate=useNavigate()
+ const [data,setData]=useState<ReplayPacket|null>(null)
+ const [status,setStatus]=useState<'loading'|'ready'|'unavailable'>('loading')
+ const [index,setIndex]=useState(0)
+ const [playing,setPlaying]=useState(false)
+ const [speed,setSpeed]=useState(30)
+ useEffect(()=>{
+  let active=true
+  void Promise.all([getMyClubContext(),request('race-replay')]).then(([club,packet])=>{
+   if(!active)return
+   if(club.mainClub&&packet&&packet.clubId===club.mainClub.id&&
+      (packet.replay===null||(packet.replay?.kind==='syntheticRaceReplay'&&Array.isArray(packet.replay.frames)&&packet.replay.frames.length===347))){
+    setData(packet);setStatus('ready')
+   }else{setData(null);setStatus('unavailable')}
+  }).catch(()=>{if(active){setData(null);setStatus('unavailable')}})
+  return()=>{active=false}
+ },[])
+ const replay=data?.replay
+ const frame=replay?.frames[index]
+ const lastIndex=(replay?.frames.length??1)-1
+ useEffect(()=>{
+  if(!playing||!replay||index>=lastIndex){if(playing)setPlaying(false);return}
+  const delay=(replay.frames[index+1].second-replay.frames[index].second)*1000/speed
+  const timer=window.setTimeout(()=>setIndex(i=>Math.min(i+1,lastIndex)),Math.max(20,delay))
+  return()=>window.clearTimeout(timer)
+ },[playing,replay,index,lastIndex,speed])
+ return <main className="min-h-screen bg-slate-950 text-white">
+  <section className="mx-auto max-w-5xl rounded-xl bg-slate-900 p-6">
+   <div className="flex flex-wrap items-center justify-between gap-3">
+    <div><h1 className="text-2xl font-semibold">Race results and replay</h1>
+    <p className="text-sm text-slate-300">Participant-only · synthetic test · read-only</p></div>
+    <button onClick={()=>navigate('/dashboard/overview')} className="rounded border border-slate-600 px-3 py-2">Back to Overview</button>
+   </div>
+   <div aria-live="polite" className="mt-6" data-replay-state={status}>
+    {status==='loading'&&<p>Loading authenticated race archive…</p>}
+    {status==='unavailable'&&<p className="text-amber-200">Replay unavailable or your club could not be verified. No fixture fallback is shown.</p>}
+    {status==='ready'&&!replay&&<p>No authorized synthetic race results are available for this club.</p>}
+    {status==='ready'&&replay&&frame&&<>
+     <h2 className="text-xl font-semibold">{replay.title}</h2>
+     <p className="text-sm text-amber-200">This archived test does not count toward sporting results, points or prize money.</p>
+     <section className="mt-5 rounded border border-slate-700 p-4">
+      <h3 className="font-semibold">Recorded race replay</h3>
+      <p className="mt-2 tabular-nums">{formatRaceTime(frame.second)} · {frame.km.toFixed(2)} / {replay.distanceKm} km · Frame {index+1} / {replay.frames.length}</p>
+      <div className="mt-4 space-y-3">
+       {frame.groups.map(g=><div key={g.id}>
+        <p className="text-sm">{g.type} · {g.count} riders · {g.speed.toFixed(1)} km/h · Gap {g.gap.toFixed(1)} s{g.active?'':' · Finished/inactive'}</p>
+        <div className="relative mt-2 h-3 rounded bg-slate-700"><span className="absolute h-3 w-3 rounded-full bg-cyan-300" style={{left:`calc(${100*g.km/replay.distanceKm}% - ${12*g.km/replay.distanceKm}px)`}}/></div>
+       </div>)}
+       <div className="flex justify-between text-xs text-slate-400"><span>Start · 0 km</span><span>Finish · {replay.distanceKm} km</span></div>
+      </div>
+      <label className="mt-4 block text-sm">Replay position<input className="block w-full" type="range" min={0} max={lastIndex} value={index} onChange={e=>{setPlaying(false);setIndex(Number(e.target.value))}}/></label>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+       <button className="rounded border border-slate-600 px-3 py-2" onClick={()=>{setPlaying(false);setIndex(0)}}>Restart</button>
+       <button className="rounded border border-slate-600 px-3 py-2" onClick={()=>{if(index===lastIndex)setIndex(0);setPlaying(p=>!p)}}>{playing?'Pause':'Play'}</button>
+       <button className="rounded border border-slate-600 px-3 py-2" disabled={index===0} onClick={()=>{setPlaying(false);setIndex(i=>i-1)}}>Previous frame</button>
+       <button className="rounded border border-slate-600 px-3 py-2" disabled={index===lastIndex} onClick={()=>{setPlaying(false);setIndex(i=>i+1)}}>Next frame</button>
+       <label>Speed <select className="bg-slate-800" value={speed} onChange={e=>setSpeed(Number(e.target.value))}>{[10,30,60,120].map(s=><option key={s} value={s}>{s}×</option>)}</select></label>
+      </div>
+      <p className="mt-3 text-xs text-slate-400">Positions are recorded frames, not interpolated live rider positions. No tactical controls.</p>
+     </section>
+     <section className="mt-6"><h3 className="font-semibold">Final classification</h3>
+      <div className="overflow-x-auto"><table className="mt-2 w-full text-left text-sm"><thead><tr>{['Rank','Rider','Team','Time','Gap'].map(h=><th key={h} className="p-2">{h}</th>)}</tr></thead><tbody>
+       {replay.classification.map(r=><tr key={r.rank} className="border-b border-slate-700"><td className="p-2">{r.rank}</td><td className="p-2">{r.rider}</td><td className="p-2">{r.team}</td><td className="p-2">{formatRaceTime(r.seconds)}</td><td className="p-2">+{formatRaceTime(Math.max(0,r.seconds-replay.classification[0].seconds))}</td></tr>)}
+      </tbody></table></div>
+     </section>
+     <section className="mt-6"><h3 className="font-semibold">Recorded events ({replay.events.length})</h3>
+      <ol className="mt-2 space-y-1 text-sm">{replay.events.filter(e=>e.second<=frame.second).map(e=><li key={e.sequence}>{formatRaceTime(e.second)} · {e.km.toFixed(2)} km · {e.type.replaceAll('_',' ')}</li>)}</ol>
+     </section>
+    </>}
+   </div>
+  </section>
+ </main>
+}
+
 function ClubDashboard() {
   const navigate = useNavigate()
   const [data, setData] = useState<{ name: string; riders: number; credits: number; calendar: number }>()
@@ -324,6 +410,7 @@ function ClubDashboard() {
       {data && <ScheduleStatus />}
       {data && <button onClick={() => navigate('/dashboard/squad')} className="mt-4 mr-4 rounded border border-slate-600 px-3 py-2" data-open-squad>View Squad</button>}
       {data && <button onClick={()=>navigate('/dashboard/calendar')} className="mt-4 mr-4 rounded border border-slate-600 px-3 py-2" data-open-calendar>View Calendar</button>}
+      {data && <button onClick={()=>navigate('/dashboard/race-replay')} className="mt-4 mr-4 rounded border border-slate-600 px-3 py-2" data-open-race-replay>Race Results & Replay</button>}
       <button onClick={async () => {
         try { await supabase.auth.signOut() }
         catch { window.alert('The local session is closed. Uranius Auth sign-out could not be confirmed.') }
@@ -339,6 +426,7 @@ createRoot(document.getElementById('root')!).render(<HashRouter>
     <Route path="/dashboard/overview" element={<ClubDashboard />} />
     <Route path="/dashboard/squad" element={<SquadPreview />} />
     <Route path="/dashboard/calendar" element={<CalendarPreview />} />
+    <Route path="/dashboard/race-replay" element={<RaceReplayPreview />} />
     <Route path="*" element={<Navigate to="/login" replace />} />
   </Routes>
 </HashRouter>)
