@@ -88,7 +88,7 @@ Gate: PASSED
 | U5.01 | Authorize and provision isolated infrastructure | PASS | Owner provisioned the approved Micro. Scoped verification and exact project guard evidence in TEST_REPORT.md. |
 | U5.02 | Reconstruct existing sandbox DB | BLOCKED | Hosted migrations through 021 independently verified: 16 exact ledger entries, 200 riders/UUIDs/attributes, 2 owners, paused S1D1; 3 synthetic races, 4 stages, 2 accepted entries/preparations and 10 private owned startlist selections. Original clock progression, full original race lifecycle, remaining data/logic contracts not reconstructed. |
 | U5.03 | Seed full test world | IN_PROGRESS | A/B authenticated Overview/Squad and populated Calendar data display verified. 019 and 021 native 70/70 and hosted readback PASS; 120 km disposable DB-to-engine race completed with 2 teams, 10 finishers and deterministic repeat. Hosted private startlists 5+5 verified; separate races, no additional opponents or live startlist submission. Full test-world assets, competitive hosted race and operational lifecycle pending. |
-| U5.04 | Implement hybrid DB contracts | TODO | — |
+| U5.04 | Implement hybrid DB contracts | IN_PROGRESS | 022 native 76/76 PASS: private immutable synthetic completed-run archive, actual DB/engine payload readback and digest equality, roster and rank checks, duplicate and mutation denial. Hosted install awaiting separate approval; general race input/run, checkpoints, commands, timeline revisions and official finalization not yet complete. |
 | U5.05 | Secure sandbox APIs and storage | TODO | — |
 | U5.06 | Deploy sandbox workers and schedule | TODO | — |
 | U5.07 | Integrate complete clone | TODO | — |
