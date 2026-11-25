@@ -1,0 +1,16 @@
+# U5.04/U5.06 — first competitive hosted synthetic race (023 operational package)
+
+022 hosted installation closed. Independent read-only preflight confirmed 17 ledger rows, empty private archive, 10 selections, 2 separate accepted entries, paused clock and five expected existing reader SELECT policies. No hosted writes in preparing this package.
+
+023 is **not a schema migration**. It uses the existing dedicated TLS migrator, locked exact fixture tables and temporary transaction-scoped RLS policies, with no permanent permission or worker changes. It adds Club B to Club A's existing 120 km flat race, copies its five already selected riders while preserving their mountain-tour selections, and stores exactly one private review archive. The prior validated existing_v1 adapter consumes the actual hosted UUIDs and four catalog skills; course and unavailable skill defaults remain explicitly synthetic. Race status stays scheduled, no official results, accounting, scheduler or clock advancement.
+
+The runner checks the SHA-256 of eight frozen files and checks the engine source/package lock against the prior native-validated commit. It previews the roster in a rollback transaction; runs the pure engine twice and checks ten finishers and matching output digest; performs the full archive write and policy cleanup in another rollback rehearsal; then repeats the exact transaction with the database packet compared against the original before inserting the archive and committing. All permanent writes are atomic. Expected after commit: 17 unchanged ledger records, 3 races, 4 stages, 3 entries and preparations, 15 selections (10 Flat Classic, 5 Mountain Tour), one private archive, 200 riders, two owners and unchanged paused clock and existing policies. No 023 temporary policy may survive. Stop on any failure; independent database readback required, do not retry blindly.
+
+**Approval pending.** Final corrected package manifest SHA-256: `3da43c7b2358a6c19462c3c1d9148d6d8826a9a6b944158ae9e4cbcad9db983e`. Earlier draft manifest superseded after correcting a PowerShell regex generation defect before execution. New 023 wrapper and SQL have not been runtime-tested. Do not repeat the historical 76 tests. After explicit approval of this exact scope and manifest, run the owner-local launcher (same trusted CA, portable PG17, dedicated migrator password locally), which performs the full rollback rehearsal before committing.
+
+```bat
+git pull origin main
+powershell -NoProfile -File scripts\run-approved-first-hosted-race-023-windows.ps1 -CaFile "%USERPROFILE%\Downloads\prod-ca-2021.crt" -PostgresBin "C:\Users\Aleks\Desktop\Project-Uranius\.uranius-pin-review\postgresql-17.12-portable\bin" -ApprovedManifestSha256 "3da43c7b2358a6c19462c3c1d9148d6d8826a9a6b944158ae9e4cbcad9db983e"
+```
+
+Type RUN URANIUS RACE 023 only when authorized. Original production explicitly excluded. No additional infrastructure costs. Overall 49/60 unchanged. Automated worker, scheduler, live tactical commands, public result display and sporting/financial finalization remain outstanding.
