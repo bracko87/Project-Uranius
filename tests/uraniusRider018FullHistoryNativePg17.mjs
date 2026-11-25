@@ -699,23 +699,45 @@ try {
         'rows',(SELECT jsonb_agg(jsonb_build_object('riderUuid',i.rider_uuid,'clubId',l.club_id,
           'teamId',l.team_id,'riderName',c.label,'teamName',t.label,'selectionOrder',l.selection_order,
           'role',l.role,'flat',c.flat,'climbing',c.climbing,'stamina',c.stamina,'resistance',c.resistance,
-          'provenance',l.provenance) ORDER BY l.selection_order)
+          'provenance',l.provenance) ORDER BY l.team_id,l.selection_order)
           FROM ${sl} l JOIN uranius_catalog.riders c USING(rider_id)
           JOIN uranius_game.synthetic_rider_identity i USING(rider_id)
           JOIN uranius_catalog.teams t ON t.team_id=l.team_id WHERE l.race_id=r.id))
         FROM uranius_game.races r JOIN uranius_game.race_stages s ON s.race_id=r.id
         WHERE r.id='${fixtureA}' AND s.stage_number=1`
-      const packet=sql(packetSql,'uranius_fixture_admin')
+      // The real engine requires two teams. Add B to A's race ONLY inside
+      // one rolled-back scratch transaction, preserving the exact tested 021 SQL.
+      // Reuse B's five actual database-selected riders and its existing club.
+      const opponentSql=`WITH rival AS (
+        SELECT club_id FROM uranius_game.club_profiles WHERE team_id=2
+      ), entry AS (
+        INSERT INTO uranius_game.race_team_entries(race_id,club_id,participating_club_id,status,entry_source)
+        SELECT '${fixtureA}',club_id,club_id,'accepted','uranius_synthetic_fixture' FROM rival
+        RETURNING id,club_id
+      )
+      INSERT INTO uranius_game.race_preparations(race_id,club_id,participating_club_id,race_team_entry_id,status,startlist_status,metadata)
+      SELECT '${fixtureA}',club_id,club_id,id,'submitted','submitted','{"uranius_synthetic":true}'::jsonb FROM entry;
+      INSERT INTO ${sl}(race_id,club_id,team_id,rider_id,selection_order,role,provenance)
+      SELECT '${fixtureA}',club_id,team_id,rider_id,selection_order,role,provenance
+      FROM ${sl} WHERE race_id='${fixtureB}' AND team_id=2;`
+      const packet=sql('BEGIN;\n'+opponentSql+'\n'+packetSql+';\nROLLBACK;','uranius_fixture_admin')
+      const parsedPacket=JSON.parse(packet)
+      assert.equal(parsedPacket.rows.length,10)
+      assert.equal(new Set(parsedPacket.rows.map(r=>r.clubId)).size,2)
+      assert.equal(counts(),'3:4:2:2')
+      assert.equal(sql("SELECT count(*) FROM "+sl,'uranius_fixture_admin'),'10')
+      assert.equal(policies(),beforePolicies)
       const {build}=await import('esbuild')
       const bundle=join(scratch,'startlist-engine.mjs')
       await build({entryPoints:[join(root,'scripts/uranius-startlist-engine-review.ts')],outfile:bundle,bundle:true,platform:'node',format:'esm',target:'node20',logLevel:'warning'})
       const engine=JSON.parse(run(process.execPath,[bundle],{input:packet}))
-      assert.equal(engine.finishers,5)
+      assert.equal(engine.finishers,10)
+      assert.equal(engine.teams,2)
       assert.equal(engine.deterministic,true)
       assert.equal(engine.negativePacketsRejected,6)
       assert.equal(engine.fixtureUnchanged,true)
       console.log('ENGINE '+JSON.stringify(engine))
-      pass('021 disposable database UUID roster feeds unchanged existing_v1 engine, all five finish and repeated output matches')
+      pass('021 disposable database UUID roster feeds unchanged existing_v1 engine, two teams, all ten finish, repeated output matches; temporary opponent rolled back')
       sql(wrap(localStartlist),'uranius_migrator',true)
       assert.equal(counts(),'3:4:2:2')
       assert.equal(policies(),beforePolicies)
