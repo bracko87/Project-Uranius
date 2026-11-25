@@ -461,6 +461,14 @@ export function applyMultiGroupEnergy(
                nextEnergy:roundEnergy(Math.max(0,finalResult.nextEnergy-paidAbsoluteSurcharge))}
             :finalResult
 
+          // An exhausted rider cannot physically spend more energy than is held.
+          // Keep historical ledgers byte-identical unless explicitly opted in.
+          const recordedResult:RiderEnergyCostResult=
+            state.experimentalConservedEnergyLedgerEnabled===true
+              ?{...energyWithAbsoluteEffort,
+                 energyCost:Math.max(0,rider.energy-energyWithAbsoluteEffort.nextEnergy)}
+              :energyWithAbsoluteEffort
+
           const runtimeFatigueResult =
             runtimeWeatherFatigueEnabled
               ? calculateRuntimeWeatherFatigue({
@@ -491,7 +499,7 @@ export function applyMultiGroupEnergy(
             nextEnergy:
               energyWithAbsoluteEffort.nextEnergy,
             energyCost:
-              energyWithAbsoluteEffort.energyCost,
+              recordedResult.energyCost,
             baseSpeedKmh:
               proposal.baseSpeedKmh,
             appliedSpeedKmh:
@@ -500,7 +508,7 @@ export function applyMultiGroupEnergy(
             gradientPercent:
               proposal
                 .gradientPercent,
-            result:energyWithAbsoluteEffort,
+            result:recordedResult,
             ...(absoluteSpeedCandidate?{experimentalAbsoluteSpeedEnergySurcharge:paidAbsoluteSurcharge}:{}),
             ...(paidPullerSurcharge>0?{experimentalPullerEnergySurcharge:paidPullerSurcharge}:{}),
             ...(shelterResult
