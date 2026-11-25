@@ -1497,3 +1497,27 @@ The two full E2E race runs are verified and do not need repeating.
 Owner pulled `cff68d0` and reran `node --test tests\\uraniusAbsoluteSpeedEffortBoundary.test.mjs`: **3/3 PASS** (existing baseline strictly gated by explicit offline flag, candidate surcharge bounded after existing weather/shelter costs, syntactically valid offline fail-closed E2E wrapper). The earlier actual two full 128-rider candidate OFF/ON races remain **6/6 runtime checks PASS** and need no further rerun. The test's previous empty-interface emission false negative is resolved.
 
 **Decision:** provisional absolute-speed coefficient remains a default-OFF candidate, *not approved* for authoritative physics. Solo now crosses fatigue threshold and slows ~66.3 seconds, but the peloton does not meaningfully narrow the ~10-minute finish spread. Next target: analyze peloton-front finish gap separately from whole-field spread, test whether averaging 128 riders' capabilities suppresses actual pace despite strong authorized leaders, and distinguish voluntary peloton coasting from a physics defect. Official **49/60 sporting NO GO**, production unchanged.
+
+
+## 2026-11-25 — True peloton-front gap vs group-average pace audit added (owner execution pending)
+
+Owner pulled `cff68d0`, reran `tests/uraniusAbsoluteSpeedEffortBoundary.test.mjs`, and verified **3/3 PASS**. The opt-in absolute-speed candidate remains **OFF** by default, is not promoted for actual release, and has no production effect. Its observed strength-86 rider finishes with only 27.64 energy and still wins; raw first-vs-last field spread is not the same as true breakaway-to-peloton gap.
+
+Code inspection established:
+- `pelotonPace.ts`: flat base speed = minimum speed + 0.5 * (maximum-minimum) * **mean capability of all current group members / 100**, with rider energy below 70 reducing capability through `fatigueModifier`.
+- `groupTerrainPace.ts` calls the same pace logic for **every group**, including solo breakaway (one rider) and peloton (many riders). Thus a strong solo automatically gets own high capability pace, but entire peloton is paced off its mean even while high-capability leaders are available.
+- Existing `pelotonPaceLeadership.ts` can derive qualified rotating leaders from orders, while `pelotonLeadershipBudget.ts` funds their speed-up capped at **3%** with rider-specific charged energy. The actual terrain-aware movement applies this only with executed chase orders, actual breakaway ahead, and `experimentalFundedPelotonLeadershipEnabled=true`; default OFF. Previous owner-funded E2E established 24 chase orders, 316 funded ticks and 78.318 additional energy across 23 leaders, while an early escape survived by ~6:07 in *whole field spread*, not necessarily peloton-front gap.
+
+Added new **read-only diagnostic using this existing leader model**:
+- `scripts/uranius-peloton-front-gap-leadership.ts` and its CLI `scripts/run-uranius-peloton-front-gap-leadership.mjs`, with `tests/uraniusPelotonFrontGapLeadershipBoundary.test.mjs`.
+- Three genuine 128-rider 120km full races (control / same 24 chase orders with flag OFF / same chase orders with funded leaders ON) as in already verified E2E. The report now measures *finish time of the first actual `peloton_main` member* vs the solo winner, unlike misleading first-vs-last spread. For every peloton tick while the breakaway is physically ahead, reports whole-group average capability, authorized leader potential capability and speed, real applied peloton movement speed, charged active leader count and surcharge, and initial/mid/final chase snapshots. It does **not** add new chase bonuses, change the energy model, or assume the peloton should catch a solo without actual orders.
+- Fail-closed invariants ensure all 3 races complete, the first peloton finisher is identified, control equals orders-OFF and authorized energy-funded rotation is actually executed.
+
+Owner CMD (pending):
+```bat
+git pull origin main
+node --test tests\\uraniusPelotonFrontGapLeadershipBoundary.test.mjs
+node scripts\\run-uranius-peloton-front-gap-leadership.mjs --out peloton-front-gap-leadership-local.json
+```
+
+**Decision path:** if the true breakaway-to-first-peloton time gap remains excessive even with funded leadership, quantify potential qualified-leader gain vs capped funded movement before changing policy. Such a change would be a new, default-off realistic-cooperation implementation requiring individual energy funding and fatigue-dependent leader eligibility, not a fabricated free peloton catch. Official **49/60 sporting NO GO**, no production updates.
