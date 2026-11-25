@@ -1252,3 +1252,16 @@ node scripts\\run-uranius-funded-leadership-e2e.mjs --out funded-leadership-rota
 ```
 
 Official **49/60 sporting NO GO**; both funded pace policy options remain default OFF. No production mutation.
+
+
+## 2026-11-25 — Authorized-before-rotation full E2E OWNER VERIFIED (18/18)
+
+Owner ran 18/18 Node leadership/budget/integration/e2e boundary tests: **ALL PASS**, with three complete 120km/128-rider offline comparison races. `ALL E2E CHECKS` again **6/6 true** (`completed`, `defaultOffPreserved`, `actualExecutedOrders`, `fundedLeadersReallyMoved`, `onlyAuthorizedRidersCharged`, `conservation`).
+
+**Measured results:**
+- No-orders control and 24-executed-orders feature-OFF: exactly the same strength-86 solo-rider rank 1, finish **9939.315079131 s**, finishing spread **647.108293786 s**, **0** charged leadership ticks, **0** extra energy.
+- 24 orders with authorized-before-rotation feature ON: the solo still finishes first at **9939.315079131 s**; spread **366.917335395 s**, **316** charged ticks (previous pre-fix: **156**), **78.318086** total additional paid leader energy (previous: **25.863915**), **23** distinct charged riders; first paid tick second **510**, peloton **41.97138409 km/h**, last second **9960**, peloton **42.64596821 km/h**; maximum energy ledger residual **0.00000731703**, below 0.0001 gate.
+
+The fix therefore **increases funded chase continuity by 160 ticks** and cuts the finishing spread **280.190958391 s / 43.3%** vs original control, compared with the prior leadership model's 138.486222592 s improvement. It also charges **~3× more total extra energy**, so improved finishing spread must **not** be described as cost-free or yet sustainably calibrated. The observed finish spread in this single solo escape scenario is not evidence of credible race tactics, general field ranking or full sporting readiness. Do **not** force a catch or increase the 3% cap blindly.
+
+**Next priority:** investigate the persistent ~6m07 solo lead and unresolved no-attack 0-time-spread/strength-vs-rank anomaly via targeted trace review rather than additional redundant full-race runs. Evaluate whether leadership rotation every 30-second tick, selectivity and exhaustion are physiologically plausible, and whether leader abilities are reflected in their individual race results as opposed to only shared group speed. Then define evidence-based sporting acceptance criteria. Both new options remain default OFF; official **49/60 — sporting NO GO**; no production changes.
