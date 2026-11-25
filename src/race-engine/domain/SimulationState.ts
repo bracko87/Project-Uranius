@@ -131,6 +131,8 @@ export interface SimulationState {
 
   /** Offline experiment only; default OFF, never activated by calibrated wrapper. */
   readonly experimentalAbsoluteSpeedEffortEnabled?: boolean
+  /** Offline-only: report actual energy debited when reserves hit zero. Default OFF. */
+  readonly experimentalConservedEnergyLedgerEnabled?: boolean
 
   /**
    * Enables deterministic shared-effort pace adjustments for organized groups.
