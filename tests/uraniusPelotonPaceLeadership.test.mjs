@@ -2,9 +2,10 @@ import {test} from 'node:test'
 import assert from 'node:assert/strict'
 import {readFileSync} from 'node:fs'
 import {buildSync} from 'esbuild'
+import {fileURLToPath} from 'node:url'
 const src=new URL('../src/race-engine/simulation/pelotonPaceLeadership.ts',import.meta.url)
 const source=readFileSync(src,'utf8')
-const bundle=buildSync({entryPoints:[src.pathname],bundle:true,platform:'node',
+const bundle=buildSync({entryPoints:[fileURLToPath(src)],bundle:true,platform:'node',
  format:'esm',write:false,target:'node20'}).outputFiles[0].text
 const {calculatePelotonPaceLeadership:lead}=await import('data:text/javascript,'+encodeURIComponent(bundle))
 const rider=(i,flat,energy=90)=>({
