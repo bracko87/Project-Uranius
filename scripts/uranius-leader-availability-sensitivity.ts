@@ -164,6 +164,15 @@ const checks={
  riderEnergyConserved:cases.every(c=>c.maximumLeaderLedgerResidual<1e-4),
  validRiderEnergy:cases.every(c=>c.allRiderEnergyBounded),
  lowEnergyIsNotUnlimited:depleted.leaderEnergyPaid<full.leaderEnergyPaid,
+ // Explicitly classify this non-monotonic 8-vs-24 leader result as
+ // a physical reabsorption, not a zero-second sustained chase gap.
+ eightLeaderCatchIsObserved:eight.soloReabsorbedSecond===510&&
+  eight.soloFinalGroupId==='peloton_main'&&eight.selectedRank===126&&
+  eight.fundedTickCount===1&&eight.soloToPelotonSeconds===0&&
+  full.soloReabsorbedSecond===null,
+ notAnUnpaidReabsorption:eight.firstFundedSecond===510&&
+  eight.lastFundedSecond===510&&eight.leaderEnergyPaid>0&&
+  eight.chargedRiderCount>0,
  noGuaranteedCatch:cases.every(c=>Number.isFinite(c.soloToPelotonSeconds)&&
   Number.isFinite(c.firstPelotonFinisherTime)),
 }
