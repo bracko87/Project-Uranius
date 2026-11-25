@@ -1717,3 +1717,18 @@ node scripts\\run-uranius-physical-breakaway-catch.mjs --out physical-breakaway-
 ```
 
 The physical-only option may allow breakaways to persist longer or alter finishes; it is a sporting rule hypothesis, not verified as realistic. Maintain default-off and **49/60 sporting NO GO**. No production state or paid infrastructure changed.
+
+
+## 2026-11-25 — Physical-only breakaway catch owner VERIFIED: 3/3 static and 8/8 real-race checks
+
+Owner pulled `b8ac45b`, ran `tests/uraniusPhysicalBreakawayCatchBoundary.test.mjs` (**3/3 PASS**), and `scripts/run-uranius-physical-breakaway-catch.mjs --out physical-breakaway-catch-local.json` (**4/4 authentic 128-rider 120km races completed, 8/8 E2E checks TRUE**; local report saved).
+
+Identical 8/24 authorized leaders under unchanged dynamic capability-funded, historical cyclic rotation; only `experimentalRequirePhysicalBreakawayCatch` differs:
+- **8 leaders, existing 5-second proximity rule**: attacker still **30.217931 m physically ahead** at second 510; peloton **43.885764 km/h** vs attacker **43.490511 km/h**, yet `breakaway_1` is reabsorbed at **510s** despite no physical overtake. Attacker eventually rank **126**, group finish gap **0s**; only 1 funded tick and **1.835691** energy charged.
+- **8 leaders, physical-only catch**: same selected leaders, speed, cost and **30.217931 m** separation at 510s, so no premature reabsorption. At 540/570/600s physical gaps are **32.465287 / 41.705023 / 53.253564 m**; solo ultimately wins with **244.920818354s (4:04.921)** over first original peloton rider, after **316 funded ticks**, **251.974850** actual paid leader energy; maximum ledger error **0.000009898**.
+- **24 leaders, proximity and physical-only catch**: both maintain the *same exact prior owner fingerprint*: solo rank **1**, **190.978210843s (3:10.978)** ahead, **316 funded ticks**, **290.764280** paid additional energy, maximum ledger residual **0.000003539**. No reabsorption under either flag. These identical outcomes protect established 24-leader physics.
+- All four runs reported **128 finishers**, **0 unauthorized leader energy charges**, and maximum leader ledger residual <1e-4.
+
+**Finding:** the main demonstrated premature-catch defect stems from the five-second proximity reclassification of an ahead-of-peloton breakaway, NOT a verified physical catch. Requiring the peloton to physically reach a breakaway corrects this exact scenario and preserves the old no-catch 24-leader result. Eight-versus-24 leader finishing gaps remain different due to dynamically selected authorized leaders and energy; no claim of monotonicity should be made. The alternative physical-catch rule is a **leading default-OFF experimental candidate**, not yet approved canonical behavior.
+
+**Next release-safety validation:** test isolated default-OFF physical catch across varied stage profiles (rolling/steep), attacker capability, attack timing, chaser count and controlled genuinely caught scenarios. Need explicit evidence that *actual physical overtakes still reabsorb* and no stranded overlapping groups or spurious finish ranks develop; add a direct unit test of separation >0 versus <=0 at reconciliation boundary. Do not promote or conflate with stable-duty rotation until these gates pass. **49/60 sporting NO GO. No production changes.**
