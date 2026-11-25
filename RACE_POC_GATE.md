@@ -1414,3 +1414,10 @@ git pull origin main
 node --test tests\\uraniusGroupTrajectorySoloCostBoundary.test.mjs
 ```
 Prior full two-race CLI is verified; do not rerun unless the audit implementation changes. Official 49/60 sporting NO GO; production unchanged.
+
+
+## 2026-11-25 — Corrected group trajectory / solo energy boundary suite owner-verified
+
+Owner pulled `2ac0748` and reran `node --test tests\\uraniusGroupTrajectorySoloCostBoundary.test.mjs`: **3/3 PASS** (actual mountain group/solo stage sourcing; physical group distances and energy applications; TypeScript/offline safety). This confirms the earlier **2/3** suite outcome was only an incorrect boundary-test variable-name match (`tick` vs source `t`) and that the repair has passed. The previously verified two full 128-rider trajectory/solo race runs and **6/6 runtime checks** need no rerun; no race physics were modified.
+
+**Technical audit closed; sporting issue remains open.** Original 7 mountain dropped groups / 33 riders persist; solo speed **43.5925 km/h** with **0.0682354** energy per solo tick vs selected peloton comparators **40.8072 km/h** and **0.0711391** or **0.0791729** energy per tick. Rider attributes are not controlled, and group shelter-energy is OFF in the observed scenario, so this is a warning sign, not causal proof of a missing solo aerodynamic surcharge. Next isolate energy costs with matched attributes and speed, explicit aero shelter toggles and time/gradient matching before adjusting physiology. Official **49/60 sporting NO GO**; production unchanged.
