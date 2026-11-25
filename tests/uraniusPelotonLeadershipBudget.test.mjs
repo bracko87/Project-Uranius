@@ -48,3 +48,21 @@ test('selection and funding remain deterministic and capped',()=>{
  assert.ok(a.fundedSpeedKmh<=56)
  assert.ok(a.totalSurcharge>0)
 })
+
+test('authorized leaders are filtered BEFORE rotation, avoiding empty-puller ticks',()=>{
+ const riders=Array.from({length:12},(_,i)=>rider(i+1,65+i*2))
+ const nominated=['r10','r11','r12']
+ const initial=run(riders,nominated)
+ assert.equal(initial.reason,'funded')
+ assert.ok(initial.selectedRiderIds.every(id=>nominated.includes(id)))
+ for(let tick=0;tick<60;tick++){
+  const x=run(riders,nominated,{raceSecond:tick*30})
+  assert.equal(x.reason,'funded',`tick ${tick} lost funded leader despite authorized candidates`)
+  assert.ok(x.totalSurcharge>0)
+  assert.ok(x.selectedRiderIds.length>0)
+  assert.ok(x.selectedRiderIds.every(id=>nominated.includes(id)))
+ }
+ const noAuthorized=run(riders,['not-in-peloton'],{raceSecond:300})
+ assert.equal(noAuthorized.fundedBonusPercent,0)
+ assert.equal(noAuthorized.totalSurcharge,0)
+})
