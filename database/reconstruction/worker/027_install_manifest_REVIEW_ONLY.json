@@ -117,7 +117,7 @@
     },
     {
       "path": "scripts/run-approved-calendar-027-windows.ps1",
-      "sha256": "1029f62748830819dc8ffc62398c091bd28b53c7cebb469d82da016f491b497a"
+      "sha256": "14bbefcfe417657ec132b3d0ba857dd1d2f93d641a2f4c83c9ffb5784cf02665"
     },
     {
       "path": "scripts/assert-sandbox-target.mjs",
