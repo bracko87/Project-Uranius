@@ -1550,3 +1550,23 @@ Owner pulled `707de3d`, ran `tests/uraniusPelotonFrontGapLeadershipBoundary.test
 - The model pays actual leaders (3 per ordinary tick) and only activates with executed chase orders and a physically ahead breakaway. The peloton does **not** catch the solo rider. Do not claim 6:07 is entire field spread; verified as first original-peloton finisher's gap.
 
 **Sporting diagnosis:** There is real, significant, funded team pursuit; the prior term “no useful chase” would be misleading. But peloton base pace is whole-group mean, and a fixed 3% pace-leader cap may suppress achievable organized pace, even with strong eligible rotating leaders. Next research should isolate dynamic energy-limited fraction of calculated leader-vs-group capability gap, rather than simply changing the fixed percentage globally. Verify that proposed ability-to-pace raises physical movement only when orders execute and costs increase appropriately, and compare actual solo-to-first-peloton gap (not whole-field spread), depleted-leader falloff and other stage types. Maintain previous experimental absolute-speed physics OFF. Official **49/60 sporting NO GO**. No production changes.
+
+
+## 2026-11-25 — Capability-based energy-funded rotating leaders (experimental, owner E2E pending)
+
+Owner verified previous peloton-front audit: **3/3 tests**, **5/5 E2E checks**, genuine 128-rider 120km solo vs first original-peloton finisher gap **647.1083 s** without pursuit versus **366.9173 s** after 24 actual chase orders, 316 funded ticks and **78.318086** energy paid. Existing peloton movement is computed using **mean of all group rider capabilities ~71.59** while authorized leaders average **~80.05**; historical funded leader bonus is capped at **3%**, although observed calculated leader potential averages ~2.03 km/h.
+
+**Implemented a second, mutually exclusive default-OFF pursuit alternative** to test this restrictive cap. `src/race-engine/simulation/pelotonLeadershipBudget.ts` now accepts `experimentalCapabilityBasedFunding?:boolean`. The **existing model and default** still cap potential at 3% and retain historical costs; the new candidate uses measured actual authorized-leader-vs-peloton capability gain, bounded at 8% as an explicit experimental numerical safety ceiling rather than granting free speed, with incremental effort cost multiplying by `1+desiredBonusPercent/4`. Affordability scales the bonus and charges to the actual available energy of the 1–3 current rotating authorized leaders; riders under 5 energy remain ineligible as before. The higher bonus is applied to the same physically advanced peloton distance and group energy ledger. Both models require actual executed valid chase orders and a breakaway physically ahead. Existing absolute-speed-effort experiment remains OFF.
+
+Wired `experimentalCapabilityBasedLeadershipEnabled?:boolean` through calibrated runner -> integrated runner -> terrain-aware movement, default false in each. Three funded pursuit variants (budgeted chase, historical 3% funded leadership, new capability based leadership) are now explicitly **mutually exclusive** to prevent double credits and double energy debits.
+
+Added `scripts/uranius-capability-funded-leadership.ts`, fail-closed CLI `scripts/run-uranius-capability-funded-leadership.mjs`, and `tests/uraniusCapabilityFundedLeadershipBoundary.test.mjs`. Real **three 128-rider 120km** comparison: control (no orders), fixed 3% model (24 ordered real pullers), dynamic capability model (same orders). Every result reports actual solo-to-first-peloton time gap, winner rank, average peloton speed during real pursuit, authorized paid effort ticks, charged leader energy, leader final energy, and conservation residual. Fail closed if baseline win time/gap differ from previous owner fingerprint, if historical capped result differs from prior owner's **366.917335395s** and **78.318086** energy fingerprint, if the candidate fails to pay more energy and move the peloton faster, or if any ledger/race completion invariant fails. **Owner has not yet executed these new tests or scenario; do not treat candidate as verified or production-ready.**
+
+Owner verification:
+```bat
+git pull origin main
+node --test tests\\uraniusCapabilityFundedLeadershipBoundary.test.mjs
+node scripts\\run-uranius-capability-funded-leadership.mjs --out capability-funded-leadership-local.json
+```
+
+This is a provisional game-mechanics hypothesis (not established real cycling power/drag/fatigue physics). **49/60 sporting NO GO; production unchanged**.
