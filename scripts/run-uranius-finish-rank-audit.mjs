@@ -1,4 +1,4 @@
-// Offline-only 128-rider funded-chase proof; fail closed.
+// Offline-only 128-rider finish ranking audit; fail closed.
 import {build} from 'esbuild'
 import {mkdtempSync,rmSync,writeFileSync} from 'node:fs'
 import {tmpdir} from 'node:os'
@@ -7,7 +7,7 @@ import {fileURLToPath} from 'node:url'
 import {spawnSync} from 'node:child_process'
 const args=process.argv.slice(2)
 if(args.length!==0&&!(args.length===2&&args[0]==='--out'&&args[1]))
- throw Error('Usage: node scripts/run-uranius-finish-rank-audit-e2e.mjs [--out finish-rank-audit-local.json]')
+ throw Error('Usage: node scripts/run-uranius-finish-rank-audit.mjs [--out finish-rank-audit-local.json]')
 const dir=mkdtempSync(join(tmpdir(),'uranius-finish-rank-audit-'))
 try{
  const entry=fileURLToPath(new URL('uranius-finish-rank-audit.ts',import.meta.url))
@@ -22,7 +22,7 @@ try{
  if(report.reportVersion!=='uranius-finish-rank-audit-v1'||
    Object.values(report.checks).some(x=>x!==true))
    throw Error('Finish audit FAILED: '+JSON.stringify(report.checks)+'\n'+
-    JSON.stringify(report.cases).slice(0,10000))
+    JSON.stringify(report.scenarios).slice(0,10000))
  console.log('URANIUS BUNCH FINISH RANK AUDIT — 2 NO-ORDER 128-RIDER RACES')
  for(const c of report.scenarios)
   console.log('FINISH AUDIT strength '+c.strength+' | selected rank '+c.selected.position+
