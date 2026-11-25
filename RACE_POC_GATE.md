@@ -1474,3 +1474,19 @@ node scripts\\run-uranius-absolute-speed-effort-e2e.mjs --out absolute-speed-eff
 ```
 
 Official **49/60 sporting NO GO**.
+
+
+## 2026-11-25 — Absolute-speed effort E2E OWNER VERIFIED; experimental model NOT approved
+
+Owner pulled `b60085a`. `tests/uraniusAbsoluteSpeedEffortBoundary.test.mjs` reported **2/3 pass**, with the third failing solely because its syntax test required every TypeScript source to transpile to >100 bytes; `SimulationState.ts` is an interface-only module whose emitted JavaScript is legitimately empty. Changed the boundary test to assert that all four files transpile without throwing, and to apply the nontrivial-output guard only to three source files containing runtime code; **repaired test still awaits owner re-run**.
+
+More importantly, `scripts/run-uranius-absolute-speed-effort-e2e.mjs --out absolute-speed-effort-local.json` ran **2/2 complete 128-rider 120km races** and passed **6/6 runtime checks**: bothRacesComplete, zeroDefaultCandidateCharge, candidateActuallyCharges, baselineFingerprint, conservation, candidatePreservesEnergyBounds. Baseline (candidate OFF) preserved exactly the accepted rider finish time **9939.315079131s**, 128 finishes, solo final reserve **77.35143479584**, 647.108293786s spread, **zero new charges**, and **never below 70-energy fatigue threshold**. Candidate ON: solo finish time **10005.640238028s** (+66.325s), chosen rider **still rank 1**, final reserve **27.636059** (−49.7154 versus OFF), charged chosen absolute-speed energy **49.593352**, first fatigue crossing at race second **4230** (70m30s), total stage ticks **355** versus **353**, observed finish spread **630.337331604s** (only −16.771s). Aggregate additional charges to peloton energy applications were **4545.348266**, so the new speed-exposure cost indiscriminately taxes many riders, not just the isolated attacker. Conservation residual of ~−0.00003156 is below the current 0.0001 tolerance, arising in repeated rounded debits, but is not exact zero.
+
+**Decision:** opt-in candidate successfully makes absolute speed consume enough rider energy to reach the existing fatigue-to-pace pathway, but it is **not validated** as realistic aerodynamic physiology or appropriate tactical balance. A 66s solo slowdown with only 17s reduction in overall field spread does not solve the overpowered solo exploit. The provisional coefficient, reference speed, and group-based shelter scaling must not be promoted to default or production. Finish spread is a *whole-field first-to-last interval*, not necessarily the gap from solo rider to first peloton member. Future targeted measurement should compare leader to peloton-front finish time and examine whether group movement uses group-average capability in a way that suppresses pursuit. No production modifications; **49/60 sporting NO GO**.
+
+Owner only needs to rerun the corrected short boundary suite:
+```bat
+git pull origin main
+node --test tests\\uraniusAbsoluteSpeedEffortBoundary.test.mjs
+```
+The two full E2E race runs are verified and do not need repeating.
