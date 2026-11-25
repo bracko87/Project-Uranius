@@ -129,6 +129,9 @@ export interface SimulationState {
   readonly groupShelterEnergyEnabled?:
     boolean
 
+  /** Offline experiment only; default OFF, never activated by calibrated wrapper. */
+  readonly experimentalAbsoluteSpeedEffortEnabled?: boolean
+
   /**
    * Enables deterministic shared-effort pace adjustments for organized groups.
    *
