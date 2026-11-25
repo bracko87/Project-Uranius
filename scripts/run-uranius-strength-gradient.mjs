@@ -66,6 +66,24 @@ try{
     attackAppliedKmh:t.attackAppliedKmh,
     pelotonAppliedKmh:t.pelotonAppliedKmh,
    }))))
+ console.log('SEPARATING BREAKAWAY COUNTERFACTUAL — MATCHED CASES')
+ for(const r of data.counterfactual){
+  const control=data.scenarios.find(s=>s.strength===r.strength&&s.timing===r.timing)
+  console.log('COUNTERFACTUAL '+r.strength+' '+r.timing+' | '+
+   JSON.stringify({
+    baselineCaught:control.caught,
+    protectedCaught:r.caught,
+    baselinePositiveGapTicks:control.positiveGapTicks,
+    protectedPositiveGapTicks:r.positiveGapTicks,
+    baselineRank:control.selectedRank,
+    protectedRank:r.selectedRank,
+    baselineSpreadSeconds:control.stageFinishSpreadSeconds,
+    protectedSpreadSeconds:r.stageFinishSpreadSeconds,
+    baselineEnergy:control.selectedFinalEnergy,
+    protectedEnergy:r.selectedFinalEnergy,
+    baselineHash:control.digest,protectedHash:r.digest,
+   }))
+ }
  console.log('TECHNICAL CHECKS '+JSON.stringify(data.checks))
  console.log('SPORTING CALIBRATION STILL NO GO; comparisons observational')
  if(args.length){const path=resolve(args[1]);writeFileSync(path,JSON.stringify(data,null,2)+'\n',{mode:0o600});console.log('Saved: '+path)}
