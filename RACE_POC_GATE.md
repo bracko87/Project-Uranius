@@ -1394,3 +1394,23 @@ node scripts\\run-uranius-group-trajectory-solo-cost.mjs --out group-trajectory-
 ```
 
 If the detailed audit reveals wrongly reabsorbed groups, trace the exact physical distance and speed at that transition before proposing a change. If solo speed is persistently higher but its incremental effort remains similar/lower than sheltered peloton costs, consider a separately funded physiological test, NOT a global arbitrary speed reduction. Official **49/60 sporting NO GO**, no production changes.
+
+
+## 2026-11-25 — Owner verifies mountain group trajectories and identifies solo-energy calibration concern
+
+Owner pulled `5abfeb9`; the 3-test static boundary suite passed **2/3**, with one **false-negative assertion**: it matched literal `tick.appliedEnergy.applications.filter`, but source correctly uses `t.appliedEnergy.applications.filter(a=>a.riderId===id)`. Repaired that exact boundary assertion in `tests/uraniusGroupTrajectorySoloCostBoundary.test.mjs`; **repair awaiting owner rerun**. No simulator changes.
+
+The full offline CLI `scripts/run-uranius-group-trajectory-solo-cost.mjs` completed **2/2 real 128-rider races** and **6/6 runtime checks passed**: `mountainCompleted`, `soloCompleted`, `dropEventsGrounded`, `realGroupTrace`, `physicalGapFinite`, `soloEnergyLedger`.
+
+**Mountain groups:** 7 dropped transitions and **33** riders in 7 unique dropped groups, none reabsorbed/reclassified in this run. Maximum measured distance behind peloton: dropped_1 **7.269 km** (16 riders), dropped_2 **4.826 km** (5), dropped_3 **9.873 km** (3), dropped_4 **5.142 km** (1), dropped_5 **3.444 km** (3), dropped_6 **2.131 km** (4), dropped_7 **2.132 km** (1). All finished, 95 remained in the original peloton. Caveat: terminal trace entries show 0 gap when both finished groups are clamped at stage distance; interpret *in-race maximum gap* and actual finish times, not final clamped distance.
+
+**Early solo vs peloton:** strength-86 rider `sustain-rider-001` solo for **317 ticks** with mean speed **43.5925 km/h**, mean cost **0.0682354 energy per solo tick**, total spent **22.6486**, final energy **77.3514**, rank 1 and 647.108 s victory gap. Peloton comparators: rider 009 had mean speed **40.8072 km/h**, mean cost **0.0711391/tick**, total spent **25.1121** over 353 ticks; rider 010 same mean group speed, mean cost **0.0791729/tick**, total spent **27.9480**. All rider energy ledgers match to ~1e-12.
+
+**Finding:** a solo rider maintaining ~2.8 km/h greater mean speed can have *lower per-tick energy expenditure* than peloton riders. Not conclusive physiological error until controlling for the solo rider's deliberately elevated stamina/resistance/recovery (86), the other riders' lower efficiency scores, and shelter-energy behavior. Source inspection: `calculateRiderEnergyCost` uses **speed / group-relative baseSpeedKmh**, not absolute aerodynamic speed / watts, and multiplies by a weighted stamina/resistance/recovery efficiency. Group shelter is applied only if `state.groupShelterEnergyEnabled===true`. The specific test does not turn that flag on. This makes the present solo advantage a serious realism calibration candidate, but do not claim an independently isolated same-rider solo-vs-sheltered causal result. Next experiment should hold rider attributes and speed constant and compare within-tick energy under solo versus peloton/shelter conditions before implementing a default-off physiological fatigue extension.
+
+**Next command:**
+```bat
+git pull origin main
+node --test tests\\uraniusGroupTrajectorySoloCostBoundary.test.mjs
+```
+Prior full two-race CLI is verified; do not rerun unless the audit implementation changes. Official 49/60 sporting NO GO; production unchanged.
