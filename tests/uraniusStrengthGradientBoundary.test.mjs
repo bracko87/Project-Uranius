@@ -33,3 +33,14 @@ test('standalone TypeScript compiles and CLI gates all sporting observations',()
  assert.match(runner,/RIDER STRENGTH DELTA/)
  assert.match(runner,/SPORTING CALIBRATION STILL NO GO/)
 })
+
+test('actual movement decomposition distinguishes launch and post-launch group pace',()=>{
+ for(const key of ['movementPaceAudit','groupDiagnostics','currentBaseSpeedKmh',
+  'terrainAdjustmentMultiplier','averageFlatCapabilityScore','observedPaceDecomposition'])
+  assert.match(source,new RegExp(key))
+ assert.match(source,/s.caught===true/)
+ assert.match(runner,/PACE MODEL THRESHOLD TRACE/)
+ assert.match(runner,/PACE THRESHOLD/)
+ const compiled=transformSync(source,{loader:'ts',format:'esm',target:'node20'})
+ assert.ok(compiled.code.includes('movementPaceAudit'))
+})
