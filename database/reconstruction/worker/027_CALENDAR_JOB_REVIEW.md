@@ -16,3 +16,8 @@ node tests\uraniusCalendarJobNativePg17.mjs --disposable-native-pg17 --postgres-
 ```
 
 Expected 7/7 and scratch cleanup. No credentials. After pass, freeze guarded 027 upgrade and one controlled Mountain Tour stage 1 preview job. Explicit separate approval needed to add Club A opponent (one accepted entry, submitted zero-cost preparation and five existing owned synthetic riders) to Club B Mountain Tour, enqueue one novel job under paused-clock test override, and then execute with temporary worker login. No Stage 2 until fatigue/GC carryover, no clock advance or scheduled service. Actual enqueue wrapper, owner-local hosted migration/upgrade and full game-calendar dispatcher are not yet implemented; no paid services or original production access. Overall 49/60 tasks.
+
+
+## 2026-11-25 — owner native acceptance 7/7 PASS
+
+Owner pulled 4f846f8 and ran the focused native PG17 harness. All seven checks passed: paused/future/preview gates; eligibility, duplicates, roster and stage carryover; canonical new hilly input without expected digest; atomic upgrade/rollback preserving completed legacy job; private access and unique calendar stage; actual restricted worker runs new race twice and stores one exact output; divergent output denied and terminal legacy preserved. Scratch cleanup successful, no hosted connection. Standalone candidate accepted; hosted upgrade and enqueue not yet executed. Do not repeat prior tests.
