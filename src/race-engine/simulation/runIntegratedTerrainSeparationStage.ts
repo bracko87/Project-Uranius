@@ -148,6 +148,8 @@ export interface IntegratedTerrainSeparationOptions {
   readonly experimentalChaseOrdersEnabled?: boolean
   /** OFFLINE only: funded selected-rider peloton chase, default OFF. */
   readonly experimentalBudgetedPelotonChaseEnabled?: boolean
+  /** OFFLINE only: ordered energy-funded peloton leadership, defaults OFF. */
+  readonly experimentalFundedPelotonLeadershipEnabled?: boolean
 
   /**
    * Disabled by default so all earlier Phase 7B.8 diagnostics retain their
@@ -1284,6 +1286,10 @@ export function simulateIntegratedTerrainSeparationTick(
       appliedOrders.executedOrders,
     )
 
+  if(options.experimentalBudgetedPelotonChaseEnabled===true&&
+     options.experimentalFundedPelotonLeadershipEnabled===true)
+    throw Error('runIntegratedTerrainSeparationStage: funded chase and funded leadership experiments cannot be combined')
+
   const movement =
     calculateTerrainAwareMultiGroupMovement(
       appliedOrderEffects.state,
@@ -1297,6 +1303,8 @@ export function simulateIntegratedTerrainSeparationTick(
           options.experimentalChaseOrdersEnabled === true,
         experimentalBudgetedPelotonChaseEnabled:
           options.experimentalBudgetedPelotonChaseEnabled === true,
+        experimentalFundedPelotonLeadershipEnabled:
+          options.experimentalFundedPelotonLeadershipEnabled === true,
         ...(options.experimentalPhysicalAttackLaunch
           ? {
               experimentalLaunchSpeedByGroupId: Object.fromEntries(
@@ -1324,7 +1332,8 @@ export function simulateIntegratedTerrainSeparationTick(
         appliedMovement.state,
       movement:
         movement.movement,
-      ...(options.experimentalBudgetedPelotonChaseEnabled===true
+      ...((options.experimentalBudgetedPelotonChaseEnabled===true||
+          options.experimentalFundedPelotonLeadershipEnabled===true)
         ?{experimentalPullerEnergyCosts:movement.experimentalPullerEnergyCosts}:{}),
     })
 
