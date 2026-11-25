@@ -1169,3 +1169,21 @@ Owner pulled `9efe703` and ran `tests/uraniusPelotonChaseEffort.test.mjs`, `test
 **Decision:** The technical funded-chase integration is demonstrated at full offline race scale, including correct default-off preservation and energy charges. Sporting outcome **still unacceptable** in this example: a lone strength-86 rider wins by 8m14s against an organized 127-rider peloton. A 3% theoretical funded boost from two ordered pullers does not overcome the persistent solo-versus-whole-peloton-average pace bias. Do not automatically raise the bonus, forcibly catch, or enable either experimental flag. Next investigate actual peloton pace leadership (who physically sets group pace), which riders should contribute, sustainable chase intensity and rider fatigue, plus baseline no-order ranking/zero-spread anomalies. Document plausible independent constraints and run a limited controlled A/B only after specifying them.
 
 **Official checklist remains 49/60 sporting NO GO.** No production or hosted game changes.
+
+
+## 2026-11-25 — Peloton leadership mechanics: deterministic candidate implemented, unapproved
+
+After owner-verified **12/12 tests** and **3/3 128-rider funded-chase races**, source inspection confirmed `groupTerrainPace.ts` uses `calculatePelotonBasePace` built from **every current rider's group-wide mean** (45% flat, 25% stamina, 20% resistance, 10% teamwork). Thus a 127-person peloton does **not** currently distinguish pace-setting pullers from sheltered, weaker riders. The completed funded-chase experiment proves technical per-puller charging but still allows a strength-86 early solo rider to win by 493.845 seconds (down from 647.108), even after 314 paid chase ticks.
+
+**New POC pure candidate:** `src/race-engine/simulation/pelotonPaceLeadership.ts` and `tests/uraniusPelotonPaceLeadership.test.mjs` identify deterministic capability-ranked candidate leaders, drop riders at <=5 energy, break ties by rider ID, and expose a leader-only potential intended base speed against original whole-group average, with cycle selection by race tick. Unit tests check whether leaders are distinct and stronger than the whole-group average, deterministic selection and rotation, low-energy exclusion, no fabricated boost for a uniform field, and immutability. **This model is not yet connected to movement or charged energy.** It intentionally does **not** grant any leader-speed advantage by default and is **NOT an accepted sport-calibration proposal**. Rotation per 30-second tick, capability cutoff, and leader count are technical initial hypotheses; meaningful chase order assignment, rotation duration, sustainable energy expenditure and possible catch-up constraints still need to be designed.
+
+In the next step, establish an explicit plan for **leader energy cost and ownership of chase leadership**, integrate both speed and charges behind a single default-off flag, and compare with a real matched 128-rider fixture before claiming improved sporting realism. Investigate why baseline finishes have no time spread and the selected top-rated rider finishes 126th even with high attributes; that likely indicates collective time assignments/tie breaks, not automatically a rider-specific ability bug. Avoid ad-hoc speed bonuses and repeated run matrices.
+
+Owner verification:
+
+```bat
+git pull origin main
+node --test tests\\uraniusPelotonPaceLeadership.test.mjs
+```
+
+Official release gate **49/60 sporting NO GO**, no production change.
