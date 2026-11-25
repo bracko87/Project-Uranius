@@ -4,7 +4,8 @@ param(
   [Parameter(Mandatory=$true)][string]$TlsCert,
   [Parameter(Mandatory=$true)][string]$TlsKey,
   [Parameter(Mandatory=$true)][string]$CaFile,
-  [Parameter(Mandatory=$true)][string]$PostgresBin
+  [Parameter(Mandatory=$true)][string]$PostgresBin,
+  [switch]$RaceReplay
 )
 $ErrorActionPreference = 'Stop'
 $paths = @($TlsCert,$TlsKey,$CaFile)
@@ -28,6 +29,8 @@ try {
   # Migration 015 independently verified on isolated Uranius; UUID route remains
   # restricted to server-owned reader sessions, never public Data API.
   $env:URANIUS_SQUAD_UUID_READ_APPROVED = '1'
+  # Only use -RaceReplay after approved 024 installation and independent verification.
+  $env:URANIUS_RACE_REPLAY_READ_APPROVED = if ($RaceReplay) {'1'} else {'0'}
   Write-Host 'Local HTTPS Overview + Squad smoke: isolated Uranius project sdtsivgtcaoaeoihcwzd only.'
   Write-Host 'No schema writes, external listener, original production access or client Data API grants.'
   Write-Host 'The Node process will prompt privately for the uranius_smoke_reader password and Uranius publishable API key.'
@@ -40,7 +43,7 @@ try {
   foreach ($name in @('URANIUS_SMOKE_TLS_CERT','URANIUS_SMOKE_TLS_KEY',
     'URANIUS_DATABASE_CA_FILE','URANIUS_PSQL_PATH',
     'URANIUS_CLOCK_READ_APPROVED','URANIUS_OVERVIEW_SCHEDULE_READ_APPROVED',
-    'URANIUS_SQUAD_READ_APPROVED','URANIUS_SQUAD_UUID_READ_APPROVED')) {
+    'URANIUS_SQUAD_READ_APPROVED','URANIUS_SQUAD_UUID_READ_APPROVED','URANIUS_RACE_REPLAY_READ_APPROVED')) {
     Remove-Item "Env:$name" -ErrorAction SilentlyContinue
   }
 }
