@@ -6,8 +6,8 @@
   "files": [
     {
       "path": "database/reconstruction/overview/023_first_competitive_race_REVIEW_ONLY.sql",
-      "sha256": "f5b4b76e2cdbf020410564c52c385941d471f3af0d85a2fbdab6fc3f57ec0319",
-      "gitBlob": "9bac0023009954fc6eaa6bc83d3efd7e15e10d60"
+      "sha256": "98ad3fb248e199f2718dd912ef24d441f02a400b53b312b3b2553b156769db63",
+      "gitBlob": "5d9012d93206aeb90542c6ddbcde7382169283a2"
     },
     {
       "path": "database/reconstruction/overview/023_first_competitive_race_postflight_REVIEW_ONLY.sql",
@@ -62,5 +62,5 @@
     "scheduler": false,
     "productionExcluded": true
   },
-  "priorNativeEvidence": "022 76/76 PASS; this new one-shot wrapper not yet executed"
+  "priorNativeEvidence": "022 76/76 PASS; initial 023 failed SQLSTATE 42601 without writes; read-only PostgreSQL probe reproduces CASE parser error and verifies corrected expression; full corrected prefix compiles, direct-role boundary refuses connector; corrected full transaction not yet executed"
 }
