@@ -1698,3 +1698,22 @@ node scripts\\run-uranius-stable-duty-leadership.mjs --out stable-duty-leadershi
 ```
 
 Only after these results are inspected should the separately unresolved physical-catch-vs-five-second-window policy be considered. No production changes. **49/60 sporting NO GO**.
+
+
+## 2026-11-25 — Stable duty owner VERIFIED; physical-only catch counterfactual added (owner run pending)
+
+Owner executed `tests/uraniusStableDutyLeadershipBoundary.test.mjs` **3/3 PASS** and `scripts/run-uranius-stable-duty-leadership.mjs --out stable-duty-leadership-local.json`, completing **four authentic 128-rider rolling 120km races** with **7/7 runtime checks TRUE**.
+
+Historical modulo rotation fingerprints preserved: 8 chasers reabsorb attacker at **510s** and finish rank **126**; 24 chasers leave solo winner **190.978211s** ahead. Under new identity-stable duty rotation, **8** chasers reabsorb at **630s** (five paid ticks, **6.205807** additional energy), while **24** chasers reabsorb at **510s** (one paid tick, **1.737303** additional energy). At 510s in this latter case the peloton's **43.774941 km/h** exceeds breakaway's **43.490511 km/h**, but breakaway is physically **31.141m ahead**. The group reabsorbs under existing five-second window, without a completed physical catch. Stable rotation technically works but does not remove the discontinuity, and is **NOT approved** for gameplay.
+
+**Second, independent, default-OFF experiment committed** to test proximity reclassification apart from leader rotation, without changing the authorized leader selection, speed, charges, or order rules:
+- Added `experimentalRequirePhysicalBreakawayCatch?:boolean` to `reconcileBreakawayGroups`, wired explicitly through the calibrated and integrated offline stage runners (default false). When true, only a *breakaway physically ahead of the peloton* is excluded from peloton reabsorption; breakaways at or behind the peloton retain existing physical-catch handling; chase and dropped groups retain unchanged rules. The existing five-second proximity and protection rules remain untouched when false.
+- Added `scripts/uranius-physical-breakaway-catch.ts`, `scripts/run-uranius-physical-breakaway-catch.mjs`, `tests/uraniusPhysicalBreakawayCatchBoundary.test.mjs`. Four full 128-rider races: old 8/24 authorized capability-funded leaders with their original proximity rule and identical 8/24 authorized capability-funded leaders with physical-only breakaway catch. Explicit controls require original owner fingerprints (510s capture for 8, 190.978211-second solo lead for 24), no 510s artificial reabsorption for physical-only 8, actual funded energy and authorized riders, conservation of debits, all 128 finishers. Actual catch, finish outcome and gap under physical-only mode are reported rather than forced. No stable duty flag is used in this comparison, preserving one-factor-at-a-time discipline.
+- **Do not claim the new four races or static tests have run**, until owner executes:
+```bat
+git pull origin main
+node --test tests\\uraniusPhysicalBreakawayCatchBoundary.test.mjs
+node scripts\\run-uranius-physical-breakaway-catch.mjs --out physical-breakaway-catch-local.json
+```
+
+The physical-only option may allow breakaways to persist longer or alter finishes; it is a sporting rule hypothesis, not verified as realistic. Maintain default-off and **49/60 sporting NO GO**. No production state or paid infrastructure changed.
