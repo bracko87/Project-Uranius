@@ -15,6 +15,8 @@ export interface FundedPelotonLeadershipInput {
  readonly maximumActiveLeaders?:number
  /** OFFLINE ONLY: actual leader capability fraction instead of historical fixed 3% bonus. */
  readonly experimentalCapabilityBasedFunding?:boolean
+ /** OFFLINE candidate: deterministic rider-specific duty windows. */
+ readonly experimentalStableDutyRotation?:boolean
 }
 export interface FundedPelotonLeadershipResult {
  readonly baseSpeedKmh:number
@@ -34,6 +36,7 @@ export function calculateFundedPelotonLeadership(input:FundedPelotonLeadershipIn
   maximumSpeedKmh:input.maximumSpeedKmh,raceSecond:input.raceSecond,
   tickSeconds:input.tickSeconds,maximumActiveLeaders:input.maximumActiveLeaders,
   eligibleOrderedRiderIds:input.eligibleOrderedRiderIds,
+  experimentalStableDutyRotation:input.experimentalStableDutyRotation===true,
  })
  const none=(reason:FundedPelotonLeadershipResult['reason']):FundedPelotonLeadershipResult=>({
   baseSpeedKmh:leadership.groupMeanBaseKmh,fundedSpeedKmh:leadership.groupMeanBaseKmh,
