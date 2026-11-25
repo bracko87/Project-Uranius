@@ -41,8 +41,8 @@
     },
     {
       "path": "scripts/run-approved-first-hosted-race-023-windows.ps1",
-      "sha256": "d3d77b8397bb08763d2a0b04fc5138f42c36a36ee9ce4d25e58f0728e43a45fe",
-      "gitBlob": "287b0bea765917f153329bfe0e7d3c9662b6f563"
+      "sha256": "8cf9944444f641f49d4f609f25cf5d326da4441fef524082a5bb47f0f08bb1df",
+      "gitBlob": "b4171238594c8c0393f8983048c34dfb09d8f11e"
     }
   ],
   "scope": {
