@@ -1421,3 +1421,23 @@ Prior full two-race CLI is verified; do not rerun unless the audit implementatio
 Owner pulled `2ac0748` and reran `node --test tests\\uraniusGroupTrajectorySoloCostBoundary.test.mjs`: **3/3 PASS** (actual mountain group/solo stage sourcing; physical group distances and energy applications; TypeScript/offline safety). This confirms the earlier **2/3** suite outcome was only an incorrect boundary-test variable-name match (`tick` vs source `t`) and that the repair has passed. The previously verified two full 128-rider trajectory/solo race runs and **6/6 runtime checks** need no rerun; no race physics were modified.
 
 **Technical audit closed; sporting issue remains open.** Original 7 mountain dropped groups / 33 riders persist; solo speed **43.5925 km/h** with **0.0682354** energy per solo tick vs selected peloton comparators **40.8072 km/h** and **0.0711391** or **0.0791729** energy per tick. Rider attributes are not controlled, and group shelter-energy is OFF in the observed scenario, so this is a warning sign, not causal proof of a missing solo aerodynamic surcharge. Next isolate energy costs with matched attributes and speed, explicit aero shelter toggles and time/gradient matching before adjusting physiology. Official **49/60 sporting NO GO**; production unchanged.
+
+
+## 2026-11-25 — Matched solo vs sheltered peloton energy counterfactual added (unverified)
+
+After owner's corrected group-trajectory suite **3/3 PASS**, the actual 128-rider solo-run diagnosis still showed attacker mean **43.5925 km/h** at **0.0682354 energy/tick**, compared with peloton riders near **40.8072 km/h** at **0.0711391** and **0.0791729** energy/tick. Source review showed `calculateRiderEnergyCost` computes relative speed `speedKmh/baseSpeedKmh` and rider-specific stamina/resistance/recovery efficiency; `applyMultiGroupEnergy` has an **existing default-OFF `groupShelterEnergyEnabled`** which discounts energy by the `groupShelter` model (solo size 1 receives zero bonus; peloton receives up to 10% flat and 2.5% at +8%). A new surcharge would be premature without understanding the existing switch.
+
+Created `scripts/uranius-matched-shelter-energy.ts`, offline CLI `scripts/run-uranius-matched-shelter-energy.mjs` and `tests/uraniusMatchedShelterEnergyBoundary.test.mjs`:
+
+- **Nine exactly matched pure-cost comparisons:** same selected rider's stamina/resistance/recovery, energy 90, base 42 km/h, 30-second ticks, speeds 38/42/46 km/h and gradients 0/2/8%. Only the context changes: solo breakaway group size 1 versus 128-rider peloton; existing calculated group shelter percent and cost savings recorded. No rider attribute or physically applied speed differences between matched pairs.
+- **Two full actual 128-rider early solo-attack 120km races:** identical input, fixed seed and physical escape options; only difference is `groupShelterEnergyEnabled:false` vs `true` on the initial state. Report actual selected finish rank/time, lead spread, real solo and peloton energy ledgers, total shelter savings, selected rider residual and any unauthorized puller surcharges. Guard both races complete, solo gets no shelter, peloton gets savings only when enabled, matched solo/peloton cost difference on every sample, and ledger conservation.
+
+**This is not a newly calibrated aerodynamic power model.** The existing shelter model caps discounts at 10% and is inactive unless explicitly requested. A matched-cost comparison demonstrates what the *existing switch* does, not automatically that it matches real-world drag watts. No existing simulation files or production behavior were modified. Owner-run results pending:
+
+```bat
+git pull origin main
+node --test tests\\uraniusMatchedShelterEnergyBoundary.test.mjs
+node scripts\\run-uranius-matched-shelter-energy.mjs --out matched-shelter-energy-local.json
+```
+
+**Decision:** if shelter-on remains insufficient to affect solo victory margins (or over-protects a 128-rider peloton), isolate other issues such as relative-speed cost, team cooperation and climb demand before adding default-off physically calibrated resistance. Official **49/60 sporting NO GO**.
