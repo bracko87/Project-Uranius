@@ -59,7 +59,7 @@ BEGIN
    IF NOT EXISTS(SELECT 1 FROM pg_class WHERE relnamespace='uranius_game'::regnamespace AND relname=t
       AND relrowsecurity AND relforcerowsecurity AND relowner=current_user::regrole)
    OR (SELECT count(*) FROM pg_policies WHERE schemaname='uranius_game' AND tablename=t)
-       <>CASE WHEN t='synthetic_race_startlists' THEN 0 ELSE 1 END
+       <>(CASE WHEN t='synthetic_race_startlists' THEN 0 ELSE 1 END)
    OR EXISTS(SELECT 1 FROM pg_policies WHERE schemaname='uranius_game' AND tablename=t AND (cmd<>'SELECT' OR roles<>ARRAY['uranius_smoke_reader']::name[]))
    THEN RAISE EXCEPTION '023 unexpected game policy or owner: %',t; END IF;
    EXECUTE format('CREATE POLICY uranius_023_temp_read ON uranius_game.%I FOR SELECT TO uranius_migrator USING (true)',t);
