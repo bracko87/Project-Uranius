@@ -84,7 +84,7 @@ try {
  const enc=s=>"convert_from(decode('"+Buffer.from(s,'utf8').toString('hex')+"','hex'),'UTF8')"
  // Existing repeat row remains unchanged after upgrade. Use a different stage.
  const priorStage='25251441-bd5d-4f00-993d-859a95cf099e',priorText='{}'
- sql("INSERT INTO "+table+"(stage_id,input_text,input_sha256,expected_output_sha256,due_at) VALUES ('"+priorStage+"',"+enc(priorText)+",'"+digest(priorText)+"','"+digest('{}')+"',clock_timestamp()+interval '1 day')",admin)
+ sql("INSERT INTO "+table+"(stage_id,input_text,input_sha256,expected_output_sha256,due_at,status,attempt,output_text,output_sha256,completed_at) VALUES ('"+priorStage+"',"+enc(priorText)+",'"+digest(priorText)+"','"+digest('{}')+"',clock_timestamp()-interval '1 day','completed',1,"+enc('{}')+",'"+digest('{}')+"',clock_timestamp())",admin)
  const priorBefore=sql("SELECT to_jsonb(j)::text FROM "+table+" j",admin)
  const candidate=src('027_calendar_job_contract_REVIEW_ONLY.sql')
  sql('BEGIN;\n'+candidate+'\nROLLBACK;')
