@@ -1804,3 +1804,22 @@ Owner pulled `f6661f0` and ran `node scripts\run-uranius-physical-catch-integrat
 - Real integrated finish tick: independently expected breakaway 901.770270406897s and peloton 914.043475174961s; actual 901.770270407s and 914.043475175s. Breakaway rank 1, advantage 12.273204768s; old rule rank 10 and time 914.043475175s. All ten riders finished, no premature reabsorption.
 
 Scoped integration task complete; no repeat needed. Next consolidate the candidate with existing canonical golden regression tests and a final candidate end-to-end comparison, explicitly including finish order and trailing-group interactions. No default promotion until sporting acceptance and broader regression. Official checklist remains **49/60 sporting NO GO**; database integration remains outstanding. No production changes or additional paid resources.
+
+
+## 2026-11-25 — Consolidated final candidate regression gate prepared (owner execution pending)
+
+Added `scripts/uranius-frozen-race-regression.ts` and `scripts/run-uranius-final-race-regression.mjs`. No engine or default configuration modifications in this task. The candidate remains the previously verified offline matrix configuration: physical attack launch, birth/receding dropped-group protections, trailing/separating breakaway protection, capability-funded leadership, physical-only catch, and calibrated sub-tick finish correction. Stable-duty rotation and unrelated experimental pace/finish-tactics models remain OFF.
+
+The single runner has five fail-closed gates:
+1. All five historical `existing_v1` full-output hashes from RACE_BASELINE.md must exactly match (10, 24, 48, 96 mountain and 96 flat riders), with original frame/event counts, complete unique roster, 1 MiB and 20-second per-stage engineering limits. Frozen inputs are unchanged. 
+2. Three calibrated default full-output comparisons (10, 24, 48 riders) against exact pre-integration source commit `35b9e7b5e9d997af4cdf7215fae6c414ceaba729`. GitHub comparison verified that only reconcileBreakawayGroups.ts and runIntegratedTerrainSeparationStage.ts changed under src/race-engine between that commit and `a56f48a`. The runner checks the current local source diff matches these two paths and bundles their historical git-object content with all other unchanged source; no checkout, network or mutation of source. Both sides use identical local timeTrial/raceIq enrichment only for calibrated tests. This is pre-change parity, distinct from the prior omitted/false same-source comparison.
+3. All 11 independent-catch/finish-order integration gates against the final source.
+4. All 13 matrix gates across eight complete 128-rider races after the finish correction.
+5. Reproduce the eight previously observed attacker rank fingerprints. Changes are surfaced for review, not silently accepted.
+
+Owner command (no install, no network after pull, no database access):
+```bat
+git pull origin main
+node scripts\run-uranius-final-race-regression.mjs --out final-race-regression-local.json
+```
+The runner prints each golden, calibrated comparison, integration and candidate outcome and saves nested evidence, even for failed gates. Execution is pending; no claims of PASS until observed. This is a scoped sporting candidate gate, not a full 60-task acceptance or promotion. Even if all five pass, actual human/AI manager integration, accounting, broader sporting calibration and release approval remain open. **49/60 sporting NO GO; no production changes or paid resources.**
