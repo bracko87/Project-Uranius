@@ -1,4 +1,4 @@
-// Offline-only matched shelter energy analysis; fail closed.
+// Offline-only three-race peloton-front gap and leadership report; fail closed.
 import {build} from 'esbuild'
 import {mkdtempSync,rmSync,writeFileSync} from 'node:fs'
 import {tmpdir} from 'node:os'
@@ -20,12 +20,13 @@ try{
  if(p.status!==0)throw Error('Peloton-front leadership gap audit execution failed: '+(p.stderr||p.stdout).slice(0,4000))
  const report=JSON.parse(p.stdout)
  if(report.reportVersion!=='uranius-peloton-front-gap-leadership-v1'||
-   Object.values(report.checks).some(x=>x!==true))
+   !Array.isArray(report.cases)||report.cases.length!==3||
+   !report.checks||Object.values(report.checks).some(x=>x!==true))
    throw Error('Peloton-front leadership gap audit FAILED: '+JSON.stringify(report.checks)+'\n'+
-    JSON.stringify(report.races).slice(0,10000))
+    JSON.stringify(report.cases).slice(0,10000))
  console.log('URANIUS REAL SOLO-TO-PELOTON GAP & LEADER PACE — 3 RACES')
  
- for(const r of report.races)console.log('REAL RACE '+JSON.stringify(r))
+ for(const r of report.cases)console.log('REAL RACE '+JSON.stringify(r))
  console.log('ALL E2E CHECKS '+JSON.stringify(report.checks))
  console.log('Audit only. Sporting release still NO GO. No production changes.')
  if(args.length){const path=resolve(args[1]);writeFileSync(path,JSON.stringify(report,null,2)+'\n',{mode:0o600});console.log('Saved: '+path)}
