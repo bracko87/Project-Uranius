@@ -44,3 +44,10 @@ test('actual movement decomposition distinguishes launch and post-launch group p
  const compiled=transformSync(source,{loader:'ts',format:'esm',target:'node20'})
  assert.ok(compiled.code.includes('movementPaceAudit'))
 })
+
+test('pace audit ternary contains exactly one empty fallback',()=>{
+ assert.doesNotMatch(source,/\}\):\[\]:\[\]/)
+ assert.match(source,/const movementPaceAudit=launch\?/)
+ const output=transformSync(source,{loader:'ts',format:'esm',target:'node20'})
+ assert.ok(output.code.includes('movementPaceAudit'))
+})
