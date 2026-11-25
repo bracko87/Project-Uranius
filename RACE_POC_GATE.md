@@ -1285,3 +1285,14 @@ node scripts\\run-uranius-finish-rank-audit.mjs --out finish-rank-audit-local.js
 ```
 
 If exact group ranking comparator is not satisfied, **inspect and explain** actual state/finish order rather than treating the audit's assumption as proven. Once verified, separate *physical group crossing* from *rank order* in sporting requirements. Do not invent staggered rider times solely to avoid ties. Original 18/18 funded-leadership tests and rotation E2E remain verified. No production changes, official **49/60 sporting NO GO**.
+
+
+## 2026-11-25 — Owner verifies no-order bunch rank is NOT a classification defect
+
+Owner ran `tests/uraniusFinishRankAuditBoundary.test.mjs`: **3/3 PASS**; then `scripts/run-uranius-finish-rank-audit.mjs --out finish-rank-audit-local.json` on **two complete 128-rider 120 km no-order races**. Audit **6/6 checks TRUE** (`bothComplete`, `groupTimeEquality`, `groupRankComparator`, `globalRankComparator`, `deliberateSprintUnchanged`, `deliberatelyChangedPhysicalStrength`).
+
+At rider physical strength **76** and **94**, the selected rider finishes **rank 126** and has **sprint-comparator rank 126**. Each run yields **one physical peloton group (`peloton_main`), all 128 riders with exactly one shared interpolated finish time**. Actual order exactly matches descending sprint, acceleration, remaining energy and lexical tie-break. The experiment deliberately modified the selected rider's flat/climbing/stamina/other physical attributes but **not their sprint score**, so this is expected under the current ranking rule. **Do not label rank 126 or same bunch time as an independently confirmed bug.** No reason to fabricate finish gaps just to generate variable times.
+
+This resolves two previously suspected classification issues as intentional group-time and sprint-rank behavior **for the tested no-order races only**. It does **not** validate whether all riders staying in one peloton under a 120km changing gradient is sporting-realistic, and does **not** resolve the remaining **366.917 s** solo-lead advantage of the strength-86 early attacker under 316 funded leadership ticks and 78.318 extra energy.
+
+**Next sport priority:** rider-level within-peloton separation and positioning behavior during terrain changes and final kilometers, plus sustainable solo exertion versus coordinated group work. Evaluate whether dropping, attack, sprint and lead-out already provide supported individual differentiation before adding new physics. Do not adjust identical group finish times arbitrarily. Official **49/60 sporting NO GO**, production unchanged.
