@@ -68,6 +68,10 @@ async function main() {
   const squadUuidSql = env.URANIUS_SQUAD_UUID_READ_APPROVED === '1'
     ? await readFile(new URL('hosted-squad-uuid-read_REVIEW_ONLY.sql', world), 'utf8')
     : null
+  // Explicit opt-in only after 024 is approved, applied and independently verified.
+  if(env.URANIUS_RACE_REPLAY_READ_APPROVED && !['0','1'].includes(env.URANIUS_RACE_REPLAY_READ_APPROVED)) throw Error('Invalid replay flag')
+  const replaySql=env.URANIUS_RACE_REPLAY_READ_APPROVED==='1'
+    ?await readFile(new URL('hosted-race-replay-read_REVIEW_ONLY.sql',world),'utf8'):null
   startupStage = 'local-css-processing'
   const cssPath = fileURLToPath(new URL('src/shadcn.css', root))
   const css = (await postcss([tailwindcss(fileURLToPath(new URL('tailwind.config.js', root)))]).process(await readFile(cssPath, 'utf8'), { from: cssPath })).css
@@ -165,6 +169,18 @@ async function main() {
         executable: env.URANIUS_PSQL_PATH, env: childEnv,
         input: '\\set verified_subject ' + id + '\n' + scheduleSql,
         timeout: 10000, stage: 'Uranius read-only Overview schedule query',
+        extraArgs: ['--tuples-only', '--no-align'],
+      })
+      return JSON.parse(output.trim().split(/\r?\n/).at(-1))
+    } : undefined,
+    readRaceReplay: replaySql ? (id) => {
+      if (!/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(id)) {
+        throw new Error('Invalid verified subject.')
+      }
+      const output = runPsqlBatch({
+        executable: env.URANIUS_PSQL_PATH, env: childEnv,
+        input: '\\set verified_subject ' + id + '\n' + replaySql,
+        timeout: 10000, stage: 'Uranius read-only race replay query',
         extraArgs: ['--tuples-only', '--no-align'],
       })
       return JSON.parse(output.trim().split(/\r?\n/).at(-1))
