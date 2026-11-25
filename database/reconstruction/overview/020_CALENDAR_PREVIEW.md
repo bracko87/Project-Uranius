@@ -13,3 +13,10 @@ node --test tests\uraniusCalendarPreview.test.mjs tests\uraniusOverviewScheduleR
 Then use the previously approved local HTTPS launcher run-approved-overview-https-windows.ps1 with existing certificate, key, CA and portable PostgreSQL client. It bundles the new client before asking for credentials. Both managers must see 4 shared Calendar stage rows, 1 global today's race; manager A has 1 accepted Calendar stage and its own one upcoming race, manager B has 2 accepted Calendar stages and its own one upcoming race. Filter must not show another manager's entry status. Test logout and unavailable response separately. No passwords or full identifiers need be sent to chat.
 
 No further 019 installation or 63-case rehearsal needed. Overall 49/60 unchanged; full startlists, full Calendar and application/engine/accounting acceptance still pending.
+
+
+## Owner offline acceptance — 2026-11-25
+
+Owner pulled `8439b33` and ran the exact three-file Node suite documented above. **9/9 PASS, 0 failures, 0 skipped, 1193.88 ms.** This includes five Calendar projection/HTTP isolation/SQL source tests, three existing Overview isolation tests and actual esbuild React client compilation through the original Login page. These are local test-provider and source/bundle checks, not actual hosted Calendar SQL or real authenticated browser execution.
+
+019 installation was already independently verified; the repeated installer success text in the supplied console is not evidence of a necessary second installation. Do not rerun the installer. Next: launch the established local HTTPS smoke with the existing reader credentials, verify populated A/B Overview plus Calendar, shared four stage records, own accepted filter A=1/B=2, and log out. No new migrations, permissions or paid resources. 49/60 unchanged.
