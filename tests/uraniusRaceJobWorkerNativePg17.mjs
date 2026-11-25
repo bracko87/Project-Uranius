@@ -1,6 +1,5 @@
 // Offline-only native PG17 worker acceptance. Never uses hosted credentials.
 import assert from 'node:assert/strict'
-import { createHash } from 'node:crypto'
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { basename, delimiter, join, resolve } from 'node:path'
@@ -12,7 +11,7 @@ import { fileURLToPath } from 'node:url'
 import {spawn} from 'node:child_process'
 import {randomUUID} from 'node:crypto'
 import {build} from 'esbuild'
-import {claimSql,completeSql,executeOne,digest,expireExhaustedSql} from '../scripts/uranius-race-job-worker.mjs'
+import {claimSql,completeSql,executeOne,expireExhaustedSql} from '../scripts/uranius-race-job-worker.mjs'
 const args=process.argv.slice(2)
 assert.ok(args.length===3&&args[0]==='--disposable-native-pg17'&&args[1]==='--postgres-bin')
 const root = fileURLToPath(new URL('../', import.meta.url))
@@ -92,15 +91,16 @@ try {
  pass('025 future job not claimed')
  seed()
  sql(insert("clock_timestamp()"),admin,true)
- const [a,b]=await Promise.all([childSql(claimSql(randomUUID(),1)),childSql(claimSql(randomUUID(),1))])
+ const [a,b]=await Promise.all([childSql(claimSql(randomUUID(),3)),childSql(claimSql(randomUUID(),3))])
  const claims=[JSON.parse(a),JSON.parse(b)].filter(Boolean)
  assert.equal(claims.length,1)
  const stale=claims[0]
  assert.equal(stale.attempt,1)
  pass('025 duplicate job and concurrent claim rejected; exactly one lease')
- sql("SELECT pg_sleep(1.2)",admin)
+ sql("SELECT pg_sleep(3.2)",admin)
  const fresh=JSON.parse(q(claimSql(randomUUID(),180)))
  assert.equal(fresh.job_id,stale.job_id);assert.equal(fresh.attempt,2)
+ assert.throws(()=>completeSql(fresh,artifact.outputText+' '),/digest mismatch/)
  assert.equal(q(completeSql(stale,artifact.outputText)),'0')
  assert.equal(q(completeSql(fresh,artifact.outputText)),'1')
  assert.equal(count(),'1')
@@ -130,6 +130,8 @@ try {
  sql("DELETE FROM "+table,worker,true)
  sql("UPDATE "+table+" SET input_text='tamper'",worker,true)
  sql("UPDATE "+table+" SET status='completed'",worker,true)
+ assert.throws(()=>claimSql("invalid"),/Invalid job identity/)
+ assert.throws(()=>claimSql(randomUUID(),181),/Invalid lease duration/)
  assert.equal(sql("SELECT count(*) FROM "+table,admin),'1')
  assert.equal(sql("SELECT status FROM "+table,admin),'queued')
  pass('025 unauthorized role access, inserts, deletes, input edits and invalid transition denied')
