@@ -95,6 +95,9 @@ function run(scenario:Scenario){
  const nominated=chaseRiders.slice(0,scenario.leaderCount).map(r=>r.riderId)
  const initial={
   ...original,
+  // Explicit correction for the depleted-energy scenario only. It changes
+  // the logged debit, not rider movement, energy reserve, or prior fingerprints.
+  experimentalConservedEnergyLedgerEnabled:scenario.initialLeaderEnergy===12,
   riders:Object.fromEntries(Object.entries(original.riders).map(([id,r])=>
    [id,nominated.includes(id)?{...r,energy:scenario.initialLeaderEnergy}:r])),
  }
@@ -105,8 +108,12 @@ function run(scenario:Scenario){
  const fin=Object.values(result.finalState.riders)
  const solo=result.finalState.riders['sustain-rider-001']
  const pelotonIds=result.finalState.groups['peloton_main']?.riderIds??[]
- const firstPeloton=Math.min(...pelotonIds.map(id=>
+ const firstPeloton=Math.min(...pelotonIds.filter(id=>id!==solo.riderId).map(id=>
   result.finalState.riders[id].finishTimeSeconds??Infinity))
+ const reabsorbed=result.ticks.find(t=>
+  t.previousState.riders[solo.riderId].currentGroupId!=='peloton_main'&&
+  t.state.riders[solo.riderId].currentGroupId==='peloton_main')
+ const soloReabsorbedSecond=reabsorbed?.state.raceSecond??null
  const app=result.ticks.flatMap(t=>t.appliedEnergy.applications)
  const funded=app.filter(a=>(a.experimentalPullerEnergySurcharge??0)>0)
  const firstFundedSecond=result.ticks.find(t=>t.appliedEnergy.applications.some(a=>
@@ -129,6 +136,7 @@ function run(scenario:Scenario){
   completed:result.completed,finishCount:fin.filter(r=>r.stageStatus==='finished').length,
   selectedFinishTime:solo.finishTimeSeconds,selectedRank:solo.finishPosition,
   firstPelotonFinisherTime:firstPeloton,soloToPelotonSeconds:firstPeloton-(solo.finishTimeSeconds??0),
+  soloReabsorbedSecond,soloFinalGroupId:solo.currentGroupId,
   executedOrders:selectedOrders.filter(o=>result.finalState.orders[o.orderId]?.status==='executed').length,
   fundedTickCount:paidTicks.length,chargedRiderCount:chargedIds.size,
   authorizedChargedOnly:unauthorizedCharges.length===0,
