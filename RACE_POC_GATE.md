@@ -1649,3 +1649,21 @@ Owner pulled `6e63201` and ran `node --test tests\\uraniusLeaderAvailabilitySens
 **Unresolved sporting investigation:** 8 authorized leaders produced a real breakaway-to-peloton group transition at second 510 (first paid chase tick; attacker ultimately rank 126), while 24 authorized leaders preserved a solo win with a 190.978211-second gap after 316 paid chase ticks. This non-monotonic difference could be due to deterministic leader rotation, group threshold/transition, order application, or another interaction; cause is **not yet established**. Investigate the first 2–4 movement/transition ticks for both cases, including selected leaders, actual movement speed and calculated gap, order execution state, group merge conditions and charged costs. Do not force monotonic results or loosen pursuit energy bounds without evidence.
 
 Official sporting gate remains **49/60 NO GO**. Production and default-on physics unchanged.
+
+
+## 2026-11-25 — Focused 8-versus-24 funded leaders reabsorption mechanism trace (owner run pending)
+
+Owner confirmed **4/4** static leader-availability boundary tests, and previous six 128-rider 120km sensitivity races were **10/10 E2E checks PASS**. The remaining sporting anomaly is a real `breakaway_1` -> `peloton_main` move at race second **510** for eight authorized chasers after only one funded pursuit tick (solo later rank 126), while 24 authorized chasers did not reabsorb the attacker and the solo still won with a **190.978211-second** lead.
+
+Inspected real integration pathway: after orders execute, `calculateTerrainAwareMultiGroupMovement` computes physical proposals, `applyMultiGroupMovement` advances groups, `applyMultiGroupEnergy` charges real leaders, and `reconcileBreakawayGroups` merges physically caught or close-enough breakaways. The normal reconciliation can absorb a breakaway that is **at or behind** the peloton, and also uses a **five-second proximity window** subject to launch and separating-breakaway experimental protections. This means a leader-rotation difference **during the first pursuit tick** could switch a binary reabsorption outcome and alter the entire remainder of the stage. This is a hypothesis awaiting per-tick verification, not a confirmed root cause.
+
+Added independent offline diagnostic `scripts/uranius-early-reabsorption-mechanism.ts`, fail-closed CLI `scripts/run-uranius-early-reabsorption-mechanism.mjs`, and static boundary guard `tests/uraniusEarlyReabsorptionMechanismBoundary.test.mjs`. Two complete authentic 128-rider rolling 120km scenarios (same inputs, same selected strongest 8 vs 24 chase orders) isolate the first attack/chase ticks, from race seconds **450 through 600**, and report: group member/leader selection, actual peloton and attack physical speeds and before/after-movement distance differences, the capability-funded leader speed bonus, rider-specific funded energy, and actual `reconciledBreakaways.reabsorbedBreakawayGroupIds`. The report additionally identifies whether the catch was a physical overtake or within the rule's five-second window. It hard-gates both races complete, selected leaders differ by rotation, the observed reabsorption at 510 seconds for eight, no equivalent catch for 24 during the sampled window, and a real positive funded energy debit in each. **No physics or state change**: diagnostic only.
+
+Owner verification (not yet run):
+```bat
+git pull origin main
+node --test tests\\uraniusEarlyReabsorptionMechanismBoundary.test.mjs
+node scripts\\run-uranius-early-reabsorption-mechanism.mjs --out early-reabsorption-mechanism-local.json
+```
+
+The diagnostic distinguishes a genuine physical crossing from an arguably overly coarse five-second merge rule and can identify an early threshold-driven discontinuity. Do not adjust merge radius, leader rotation, chase coefficient, or default-off experimental flags without observed results. **Official 49/60 sporting NO GO; production unchanged.**
