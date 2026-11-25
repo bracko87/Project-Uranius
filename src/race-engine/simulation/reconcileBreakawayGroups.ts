@@ -316,6 +316,8 @@ export function reconcileBreakawayGroups(
     /** OFFLINE COUNTERFACTUAL ONLY: an ahead-of-peloton breakaway still
      * moving faster cannot be reabsorbed under the mere proximity window. */
     readonly experimentalPreserveSeparatingBreakaways?: boolean
+    /** OFFLINE ONLY: an ahead breakaway must be physically reached before peloton reabsorption. */
+    readonly experimentalRequirePhysicalBreakawayCatch?: boolean
   } = {},
 ): ReconcileBreakawayGroupsResult {
   validateSimulationState(
@@ -475,6 +477,14 @@ export function reconcileBreakawayGroups(
             group.distanceKm < peloton.distanceKm -
               peloton.speedKmh * (PELOTON_REABSORPTION_WINDOW_SECONDS / 3600)
           ) {
+            return false
+          }
+          // This counterfactual does not treat an ahead breakaway within the
+          // five-second proximity band as caught, even when the peloton is closing.
+          // The existing at-or-behind catch rule below remains authoritative.
+          if (options.experimentalRequirePhysicalBreakawayCatch === true &&
+              group.groupType === 'breakaway' &&
+              group.distanceKm > peloton.distanceKm) {
             return false
           }
           const physicallyCaught =
