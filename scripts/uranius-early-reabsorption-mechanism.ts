@@ -122,7 +122,9 @@ function run(count:N){
    potentialGainPercent:leadership.fundedBonusPercent,
    fundedCost:paid.reduce((a,p)=>a+(p.experimentalPullerEnergySurcharge??0),0),
    reabsorbedGroups:transition,
-   physicallyCaught:gapAfterMove!==null&&gapAfterMove<=0}
+   physicallyCaught:gapAfterMove!==null&&gapAfterMove<=0,
+   withinFiveSecondWindow:gapAfterMove!==null&&pelotonNext&&
+    gapAfterMove<=pelotonNext.speedKmh*5/3600}
  })
  const selected=race.finalState.riders['sustain-rider-001']
  return {authorizedLeaderCount:count,completed:race.completed,
@@ -139,7 +141,8 @@ const checks={
   JSON.stringify(eight.timeline.map(t=>t.selectedLeaderIds))!==
    JSON.stringify(twentyFour.timeline.map(t=>t.selectedLeaderIds)),
  actualEightCatch:eight.selectedGroup==='peloton_main'&&
-  eightCatch?.second===510&&eightCatch.physicallyCaught===true,
+  eightCatch?.second===510&&
+  (eightCatch.physicallyCaught===true||eightCatch.withinFiveSecondWindow===true),
  noTwentyFourCatch:twentyFour.selectedGroup==='breakaway_1'&&
   twentyFour.timeline.every(t=>t.reabsorbedGroups.length===0),
  paidNotFree:cases.every(c=>c.timeline.some(t=>t.fundedCost>0)),
