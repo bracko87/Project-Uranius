@@ -28,6 +28,10 @@ test('provisional speed cubed exposure adds bounded debit after original weather
 })
 test('offline code syntax and fail-closed E2E behavior',()=>{
  for(const s of [candidate,scenario,app,state])
+  assert.doesNotThrow(()=>transformSync(s,{loader:'ts',format:'esm',target:'node20'}))
+ // An interface-only module legitimately transpiles to an empty JS module.
+ // Require nonempty executable output only from modules containing runtime code.
+ for(const s of [candidate,scenario,app])
   assert.ok(transformSync(s,{loader:'ts',format:'esm',target:'node20'}).code.length>100)
  assert.match(runner,/Object.values\(report.checks\).some\(x=>x!==true\)/)
  assert.doesNotMatch(candidate+scenario+runner,/@supabase|service_role|createClient\(|fetch\(|https?:\/\//i)
