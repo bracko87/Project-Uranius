@@ -1490,3 +1490,10 @@ git pull origin main
 node --test tests\\uraniusAbsoluteSpeedEffortBoundary.test.mjs
 ```
 The two full E2E race runs are verified and do not need repeating.
+
+
+## 2026-11-25 — Absolute-speed experimental boundary suite OWNER VERIFIED (3/3)
+
+Owner pulled `cff68d0` and reran `node --test tests\\uraniusAbsoluteSpeedEffortBoundary.test.mjs`: **3/3 PASS** (existing baseline strictly gated by explicit offline flag, candidate surcharge bounded after existing weather/shelter costs, syntactically valid offline fail-closed E2E wrapper). The earlier actual two full 128-rider candidate OFF/ON races remain **6/6 runtime checks PASS** and need no further rerun. The test's previous empty-interface emission false negative is resolved.
+
+**Decision:** provisional absolute-speed coefficient remains a default-OFF candidate, *not approved* for authoritative physics. Solo now crosses fatigue threshold and slows ~66.3 seconds, but the peloton does not meaningfully narrow the ~10-minute finish spread. Next target: analyze peloton-front finish gap separately from whole-field spread, test whether averaging 128 riders' capabilities suppresses actual pace despite strong authorized leaders, and distinguish voluntary peloton coasting from a physics defect. Official **49/60 sporting NO GO**, production unchanged.
