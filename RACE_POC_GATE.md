@@ -1732,3 +1732,21 @@ Identical 8/24 authorized leaders under unchanged dynamic capability-funded, his
 **Finding:** the main demonstrated premature-catch defect stems from the five-second proximity reclassification of an ahead-of-peloton breakaway, NOT a verified physical catch. Requiring the peloton to physically reach a breakaway corrects this exact scenario and preserves the old no-catch 24-leader result. Eight-versus-24 leader finishing gaps remain different due to dynamically selected authorized leaders and energy; no claim of monotonicity should be made. The alternative physical-catch rule is a **leading default-OFF experimental candidate**, not yet approved canonical behavior.
 
 **Next release-safety validation:** test isolated default-OFF physical catch across varied stage profiles (rolling/steep), attacker capability, attack timing, chaser count and controlled genuinely caught scenarios. Need explicit evidence that *actual physical overtakes still reabsorb* and no stranded overlapping groups or spurious finish ranks develop; add a direct unit test of separation >0 versus <=0 at reconciliation boundary. Do not promote or conflate with stable-duty rotation until these gates pass. **49/60 sporting NO GO. No production changes.**
+
+
+## 2026-11-25 — Physical-only catch acceptance matrix added (owner execution pending)
+
+Following verified commit dd0d5b7, added `scripts/uranius-physical-catch-matrix.ts` and `scripts/run-uranius-physical-catch-matrix.mjs`. These are offline-only validation files; no race-engine, canonical configuration, production or database changes. Existing verified four races are not repeated.
+
+- Five controlled post-movement reconciliation fixtures use the real reconciliation implementation and validated 10-rider state: legacy catch at +30m, physical-only preservation at +30m and +1mm, rejoin at 0m and -30m. Check membership, inactive source group, energy/clock invariance, no mutation and repeated reconciliation stability.
+- Eight 128-rider 120km races compare proximity vs physical-only mode in four matched scenarios: flat/76-strength/early/24 chasers; rolling/94-strength/late/8; mountainous/82-strength/early/24; mountainous/90-strength/late/8. Early=5km, late=70km. Selected chasers come from actual attributes. Same input within each pair; no forced winner or catch.
+- Audit the actual pre-reconciliation state and previous tick, distinguish non-finish positive-to-nonpositive crossings from groups arriving simultaneously at the finish, check exact rejoin membership, catch only after physical contact, absence of stranded crossed breakaways, launch execution, finish ranks, authorization and leader energy ledger conservation. The runner saves structured evidence before rejecting failed gates; no observed natural crossing is a FAIL (coverage gap), not proof of broken physics or permission to relax tests. Mountain scenarios may reveal the previously known low-energy ledger limitation; report separately rather than silently normalize it.
+- Integration observation: the existing physical-only option is passed by the integrated runner only inside the birth-tick dropped-group protection branch. The matrix explicitly enables that prerequisite, preserving the previous experiment's configuration. Independence of the flag needs a separate decision before canonical promotion.
+
+Owner verification, one pull and two commands:
+```bat
+git pull origin main
+node scripts\run-uranius-physical-catch-matrix.mjs --boundary-only
+node scripts\run-uranius-physical-catch-matrix.mjs --out physical-catch-matrix-local.json
+```
+Expected report contains 5 boundary cases / 4 boundary gates, and full matrix 8 races / 13 gates. No execution evidence yet; do not claim PASS until results arrive. **49/60 sporting NO GO**, experimental rule default OFF.
