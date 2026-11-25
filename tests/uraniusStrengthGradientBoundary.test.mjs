@@ -51,3 +51,14 @@ test('pace audit ternary contains exactly one empty fallback',()=>{
  const output=transformSync(source,{loader:'ts',format:'esm',target:'node20'})
  assert.ok(output.code.includes('movementPaceAudit'))
 })
+
+test('catch-window geometry records both real distances and reported gap seconds',()=>{
+ for(const marker of ['signedDistanceKm','catchGapSeconds',
+  'physicalGapAtPelotonSpeedSeconds','withinFiveSecondReportedWindow',
+  'freshBreakaway','actuallyCaught','catchAuditHasGeometry'])
+  assert.match(source,new RegExp(marker))
+ assert.match(runner,/CATCH THRESHOLD GEOMETRY/)
+ assert.match(runner,/CATCH GEOMETRY/)
+ const parsed=transformSync(source,{loader:'ts',format:'esm',target:'node20'})
+ assert.ok(parsed.code.includes('catchAuditHasGeometry'))
+})
