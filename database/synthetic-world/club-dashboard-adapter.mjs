@@ -1,3 +1,4 @@
+import { projectRaceReplay } from '../reconstruction/overview/race-replay-preview.mjs'
 import { randomBytes } from 'node:crypto'
 import { projectCalendar } from '../reconstruction/overview/calendar-preview.mjs'
 import { projectManagerClock } from './manager-clock-projection.mjs'
@@ -7,7 +8,7 @@ import { projectSyntheticSquadUuidPreview } from '../reconstruction/squad/synthe
 
 const uuid = /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i
 
-export function createClubDashboardAdapter({ verifyLogin, readDashboard, readClock, readSchedule, readCalendar, readSquad, readSquadUuid, origin, secureCookie = true }) {
+export function createClubDashboardAdapter({ verifyLogin, readDashboard, readClock, readSchedule, readCalendar, readRaceReplay, readSquad, readSquadUuid, origin, secureCookie = true }) {
   const sessions = new Map()
   const cookieName = secureCookie ? '__Host-uranius_club_session' : 'uranius_club_session'
   async function revoke(key) {
@@ -18,7 +19,7 @@ export function createClubDashboardAdapter({ verifyLogin, readDashboard, readClo
   const cookieFlags = '; HttpOnly; SameSite=Strict; Path=/' + (secureCookie ? '; Secure' : '')
   async function handle(req, res) {
     const path = req.url
-    if (!['/fixture/login', '/fixture/logout', '/fixture/dashboard', '/fixture/clock', '/fixture/overview-schedule', '/fixture/calendar', '/fixture/squad', '/fixture/squad-uuid'].includes(path)) return false
+    if (!['/fixture/login', '/fixture/logout', '/fixture/dashboard', '/fixture/clock', '/fixture/overview-schedule', '/fixture/calendar', '/fixture/race-replay', '/fixture/squad', '/fixture/squad-uuid'].includes(path)) return false
     const send = (status, value) => {
       res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' })
       res.end(JSON.stringify(value))
@@ -92,6 +93,12 @@ export function createClubDashboardAdapter({ verifyLogin, readDashboard, readClo
         if (!current) return send(401, { error: 'Sign in required' })
         if (typeof readCalendar !== 'function') return send(503, { error: 'Calendar preview not connected' })
         return send(200, projectCalendar(await readCalendar(current.subject)))
+      }
+      if (path === '/fixture/race-replay' && req.method === 'GET') {
+        const current=sessions.get(sessionKey)
+        if(!current)return send(401,{error:'Sign in required'})
+        if(typeof readRaceReplay!=='function')return send(503,{error:'Race replay not connected'})
+        return send(200,projectRaceReplay(await readRaceReplay(current.subject)))
       }
       if (path === '/fixture/squad-uuid' && req.method === 'GET') {
         const current = sessions.get(sessionKey)
