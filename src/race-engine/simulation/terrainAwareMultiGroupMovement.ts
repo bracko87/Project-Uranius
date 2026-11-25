@@ -18,6 +18,7 @@
 
 import {calculateExperimentalChaseMultiplier} from './experimentalChasePace'
 import {calculatePelotonChaseEffort} from './pelotonChaseEffort'
+import {calculateFundedPelotonLeadership} from './pelotonLeadershipBudget'
 import type {
   GroupState,
 } from '../domain/GroupState'
@@ -74,6 +75,8 @@ export interface TerrainAwareMultiGroupMovementOptions {
   readonly experimentalChaseOrdersEnabled?: boolean
   /** OFFLINE only: explicit pullers and paid pursuit. */
   readonly experimentalBudgetedPelotonChaseEnabled?: boolean
+  /** OFFLINE only: authorized pace leadership with rider-specific energy. */
+  readonly experimentalFundedPelotonLeadershipEnabled?: boolean
   readonly steepGradientSeverityEnabled?: boolean
   readonly steepGradientSeverityModel?:
     SteepGradientSeverityModel
@@ -291,7 +294,33 @@ export function calculateTerrainAwareMultiGroupMovement(
              pelotonSpeedLimitKmh:state.input.settings.maximumSpeedKmh,
              gradientPercent:terrainSample.gradientPercent,tickSeconds,
            }):null
+        // Independently switchable candidate. The selected pace setters must
+        // actually have executed, active chase orders; a visible escape is
+        // required before this experimental leadership can raise pace.
+        const authorizedLeaderIds=group.groupType==='peloton'&&
+          aheadBreakawayDistances.length>0
+          ?Object.values(state.orders).filter(o=>
+             o.type==='chase'&&o.status==='executed'&&
+             o.executionRaceSecond!==undefined&&
+             o.executionRaceSecond<=state.raceSecond&&
+             state.currentKm>=o.eligibleFromKm&&
+             state.currentKm<o.eligibleUntilKm&&
+             riders.some(r=>r.riderId===o.riderId&&r.teamId===o.teamId)
+           ).map(o=>o.riderId):[]
+        const leaderPace=options.experimentalFundedPelotonLeadershipEnabled===true&&
+          group.groupType==='peloton'&&aheadBreakawayDistances.length>0
+          ?calculateFundedPelotonLeadership({
+             riders,minimumSpeedKmh:state.input.settings.minimumSpeedKmh,
+             maximumSpeedKmh:state.input.settings.maximumSpeedKmh,
+             raceSecond:state.raceSecond,tickSeconds,
+             eligibleOrderedRiderIds:authorizedLeaderIds,
+           }):null
+        const leadershipSpeedKmh=leaderPace?
+          Math.min(state.input.settings.maximumSpeedKmh,
+             physicalAppliedSpeedKmh*(leaderPace.fundedSpeedKmh/leaderPace.baseSpeedKmh))
+          :physicalAppliedSpeedKmh
         const chaseAdjustedAppliedSpeedKmh =
+          leaderPace?leadershipSpeedKmh:
           pullerChase?pullerChase.appliedSpeedKmh:
           options.experimentalChaseOrdersEnabled
             ? Math.min(
@@ -334,6 +363,7 @@ export function calculateTerrainAwareMultiGroupMovement(
           terrainSample,
           pace,
           pullerChase,
+          leaderPace,
           weatherAdjustedAppliedSpeedKmh,
           nextDistanceKm,
           distanceAdvancedKm:
@@ -512,10 +542,13 @@ export function calculateTerrainAwareMultiGroupMovement(
         activeLeaderDistanceKm,
       proposals,
     },
-    ...(options.experimentalBudgetedPelotonChaseEnabled
+    ...((options.experimentalBudgetedPelotonChaseEnabled||
+          options.experimentalFundedPelotonLeadershipEnabled)
       ? {experimentalPullerEnergyCosts:Object.fromEntries(
-           preliminary.flatMap(entry=>entry.pullerChase?
-             Object.entries(entry.pullerChase.energySurchargeByRiderId):[]))}
+           preliminary.flatMap(entry=>entry.leaderPace?
+             Object.entries(entry.leaderPace.surchargeByRiderId):
+             entry.pullerChase?
+               Object.entries(entry.pullerChase.energySurchargeByRiderId):[]))}
       : {}),
     groupDiagnostics:
       preliminary.map(
