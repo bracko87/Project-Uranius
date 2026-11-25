@@ -8,7 +8,11 @@ import {validateSimulationState} from '../src/race-engine/validation/validateSim
 import type {SimulationState} from '../src/race-engine/domain/SimulationState'
 import type {GroupState} from '../src/race-engine/domain/GroupState'
 
-const base=syntheticTenRiderStage
+// The older shared micro-fixture predates the full terrain capability schema.
+ // Enrich only this test input, leaving shared fixtures and golden hashes intact.
+const base={...syntheticTenRiderStage,riders:syntheticTenRiderStage.riders.map(r=>({
+ ...r,attributes:{...r.attributes,timeTrial:r.attributes.timeTrial??75,raceIq:r.attributes.raceIq??75}
+}))}
 const physical={experimentalRequirePhysicalBreakawayCatch:true}
 const initial=createInitialState({...base,riders:base.riders.map((r,i)=>i===0
  ?{...r,attributes:{...r.attributes,flat:45,climbing:45,stamina:55,resistance:55,acceleration:55}}
