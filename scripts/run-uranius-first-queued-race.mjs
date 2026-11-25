@@ -102,7 +102,7 @@ async function execute(history){
  THEN RAISE EXCEPTION '026 exact baseline refused'; END IF;
  END $baseline026$;`
  const dir=mkdtempSync(join(tmpdir(),'uranius-026-worker-'))
- let activationAttempted=false
+ let activationAttempted=false,expiresAt=null
  try{
   const {build}=await import('esbuild'),bundle=join(dir,'engine.mjs')
   await build({entryPoints:[fileURLToPath(new URL('scripts/uranius-race-job-engine.ts',root))],outfile:bundle,bundle:true,platform:'node',format:'esm',target:'node20',logLevel:'warning'})
@@ -110,9 +110,11 @@ async function execute(history){
   console.log('PASS 026 exact hosted baseline and local engine bundle')
   // Activation transaction rechecks baseline; password expires even if local process crashes.
   const verifier=scram(password)
+  expiresAt=qAdmin(`SELECT to_char((clock_timestamp()+interval '5 minutes') AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"');`)
+  assert.match(expiresAt,/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$/)
   activationAttempted=true
-  qAdmin(baseline+`\nDO $activate026$ BEGIN
-  EXECUTE format('ALTER ROLE uranius_worker LOGIN PASSWORD %L VALID UNTIL %L', '${verifier}', (clock_timestamp()+interval '5 minutes')::text);
+  qAdmin("SELECT pg_advisory_xact_lock(410526);\n"+baseline+`\nDO $activate026$ BEGIN
+  EXECUTE format('ALTER ROLE uranius_worker LOGIN PASSWORD %L VALID UNTIL %L', '${verifier}', '${expiresAt}');
   END $activate026$;`)
   console.log('PASS temporary worker login enabled, maximum five minutes')
   assert.equal(qWorker(`SELECT count(*) FROM uranius_jobs.race_jobs WHERE ${sameJob} AND status='queued' AND attempt=0;`),'1')
@@ -132,9 +134,13 @@ async function execute(history){
   delete worker.PGPASSWORD
   try{
    if(activationAttempted){
-    qAdmin(`DO $restore026$ BEGIN ${adminGuard}
+    qAdmin(`SELECT pg_advisory_xact_lock(410526);\nDO $restore026$ BEGIN ${adminGuard}
       IF NOT EXISTS(SELECT 1 FROM pg_roles WHERE ${roleSafe}) THEN RAISE EXCEPTION '026 role drift; manual cleanup required'; END IF;
-      ALTER ROLE uranius_worker NOLOGIN PASSWORD NULL;
+      IF EXISTS(SELECT 1 FROM pg_roles WHERE rolname='uranius_worker' AND rolcanlogin AND rolvaliduntil='${expiresAt}'::timestamptz) THEN
+       ALTER ROLE uranius_worker NOLOGIN PASSWORD NULL;
+      ELSIF EXISTS(SELECT 1 FROM pg_roles WHERE rolname='uranius_worker' AND rolcanlogin) THEN
+       RAISE EXCEPTION '026 unexpected activation window; independent cleanup required';
+      END IF;
     END $restore026$;`)
     assert.equal(qAdmin("SELECT count(*) FROM pg_roles WHERE "+roleSafe+" AND NOT rolcanlogin;"),'1')
     console.log('PASS worker restored to NOLOGIN; temporary credential removed')
