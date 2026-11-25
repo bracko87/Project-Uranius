@@ -35,6 +35,8 @@ export interface RunCalibratedTerrainSeparationStageOptions {
   readonly experimentalPreserveRecedingDroppedGroups?: boolean
   /** OFFLINE OPT-IN: trailing breakaways must physically reach the peloton. */
   readonly experimentalPreserveTrailingAttackGroups?: boolean
+  /** OFFLINE COUNTERFACTUAL ONLY; default OFF. */
+  readonly experimentalPreserveSeparatingBreakaways?: boolean
   /** OFFLINE POC ONLY, defaults off. */
   readonly experimentalPhysicalAttackLaunch?: boolean
   /** OFFLINE POC ONLY, explicit and default-off finish scoring. */
@@ -149,6 +151,8 @@ export function runCalibratedTerrainSeparationStage(
           options.experimentalPreserveRecedingDroppedGroups ?? false,
         experimentalPreserveTrailingAttackGroups:
           options.experimentalPreserveTrailingAttackGroups ?? false,
+        experimentalPreserveSeparatingBreakaways:
+          options.experimentalPreserveSeparatingBreakaways ?? false,
         experimentalPhysicalAttackLaunch:
           options.experimentalPhysicalAttackLaunch ?? false,
         experimentalFinishTacticsEnabled:
