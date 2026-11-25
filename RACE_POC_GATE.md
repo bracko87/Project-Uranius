@@ -1202,3 +1202,22 @@ node --test tests\\uraniusPelotonPaceLeadership.test.mjs tests\\uraniusPelotonLe
 ```
 
 The next milestone is single-flag simultaneous stage movement AND leader-energy integration, followed by a narrow matched full-race check. Do not change the accepted default-off paid-chase E2E comparisons or enable unverified models in production. Official **49/60 sporting NO GO**.
+
+
+## 2026-11-25 — Owner verifies 9/9 leader budget tests; funded leadership connected to offline movement + energy
+
+Owner pulled through `cbe1bc1` and ran both `tests/uraniusPelotonPaceLeadership.test.mjs` and `tests/uraniusPelotonLeadershipBudget.test.mjs`: **9/9 PASS**, showing capability-ranked rotating leaders, authorized funding, no leader boost without actual orders, bounded speeds, low-energy exclusion, deterministic selection and no fake uplift on equal riders.
+
+**New integration, committed but not yet owner-run:** `experimentalFundedPelotonLeadershipEnabled` is now threaded through `runCalibratedTerrainSeparationStage`, the offline integrated stage and terrain movement. This is a **separate default-off policy**, mutually exclusive with the previously verified `experimentalBudgetedPelotonChaseEnabled` to prevent stacked funded pace uplifts. Only while an active breakaway is physically ahead AND designated peloton riders have correctly executed authorized chase orders from matching teams in the valid km window can the candidate `calculateFundedPelotonLeadership` raise applied group movement speed. The speed uplift scales the actual calculated terrain/physical group speed by the funded leader's relative base-speed gain, limited to 3%, and rider-specific surcharges flow through the same `experimentalPullerEnergyCosts` per-tick map to `applyMultiGroupEnergy`. Existing energy accounting applies each charge on top of the usual movement cost exactly once. Default-off path is unchanged; neither canonical simulator nor production backend is modified.
+
+Added `tests/uraniusFundedLeadershipIntegrationBoundary.test.mjs` (4 checks covering default-off, real authorized orders, shared movement/charge flag, TypeScript transpilation). Added `scripts/uranius-funded-leadership-e2e.ts` and `scripts/run-uranius-funded-leadership-e2e.mjs` plus `tests/uraniusFundedLeadershipE2EBoundary.test.mjs`. The E2E reuses the real fixed 120km/128-rider rolling synthetic stage with strength-86 early attacking solo and actual chase orders from 24 capability candidates selected *before* the race. Compares (a) no orders control; (b) executed orders with leadership flag off; (c) executed orders with new leadership flag on. Fail-closed checks confirm 128 distinct finish places, untouched off-control finish outcome, actually executed orders, higher matched-tick **physical** peloton pace, actual separately charged authorized riders, energy conservation for all 24 nominated riders. All simulation output remains observational: no forced catch, teleport or predefined win.
+
+Owner CMD:
+
+```bat
+git pull origin main
+node --test tests\\uraniusPelotonPaceLeadership.test.mjs tests\\uraniusPelotonLeadershipBudget.test.mjs tests\\uraniusFundedLeadershipIntegrationBoundary.test.mjs tests\\uraniusFundedLeadershipE2EBoundary.test.mjs
+node scripts\\run-uranius-funded-leadership-e2e.mjs --out funded-leadership-e2e-local.json
+```
+
+**At commit time neither new integration tests nor the three new race runs have been executed.** If a runtime check fails, investigate the actual mismatch before tuning a speed constant. The earlier 12/12 paid chase and 3 full races remain a separate verified reference. Official sporting calibration **49/60 NO GO**, default-off and production unchanged.
