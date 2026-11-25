@@ -9,7 +9,8 @@ import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 
 const args = process.argv.slice(2)
-const archiveReview = args[0] === '--race-persistence-review'
+const replayReview = args[0] === '--participant-replay-review'
+const archiveReview = replayReview || args[0] === '--race-persistence-review'
 const startlistReview = archiveReview || args[0] === '--startlist-engine-review'
 const raceWorldSeed = startlistReview || args[0] === '--race-world-seed-review'
 if (raceWorldSeed) args.shift()
@@ -832,6 +833,61 @@ try {
         assert.equal(archiveCount(),'1')
         pass('022 duplicate schema refused; ledger, clock, policies and financial preparations unchanged')
         console.log('PASS '+(tests-archiveChecksStart)+'/6 NEW completed race archive checks; disposable PG17 only; hosted install NOT authorized')
+        if(replayReview){
+          const start=tests
+          const manifest022=JSON.parse(readFileSync(join(root,'database/reconstruction/overview/022_install_manifest_REVIEW_ONLY.json'),'utf8'))
+          assert.equal(hash(archiveSql),manifest022.candidate.sha256)
+          sql("INSERT INTO uranius_private.migration_ledger(version,sha256) VALUES ('022_completed_race_archive.sql','"+hash(archiveSql)+"')")
+          const source=readFileSync(join(root,'database/reconstruction/overview/024_participant_replay_preview_REVIEW_ONLY.sql'),'utf8')
+          const runId=sql("SELECT run_id FROM "+ar,admin)
+          assert.match(runId,/^[a-f0-9-]{36}$/)
+          const scratchSource=source.replaceAll('ff57a18f-9eca-4c65-9692-5d9bec28b101',runId)
+            .replaceAll('a4b666233b28e829ca55f3f3ca46f8cfd881eaa992897f70abc1c9b7fafd81bf',artifact.inputSha256)
+            .replaceAll('0501d5fcdcb39237b1f371768f7e08d56ad3f9bd0c580cd8d97142498c18c3ed',artifact.outputSha256)
+          const tls024='OR NOT EXISTS(SELECT 1 FROM pg_stat_ssl WHERE pid=pg_backend_pid() AND ssl)'
+          assert.equal(scratchSource.split(tls024).length,2)
+          const local=scratchSource.replace(tls024,'OR FALSE /* scratch PGDATA only */')
+          const table='uranius_game.synthetic_race_replay_preview'
+          const absent=()=>sql("SELECT to_regclass('"+table+"') IS NULL")
+          sql(wrap(scratchSource),'uranius_migrator',true)
+          sql(wrap(local),'postgres',true)
+          assert.equal(absent(),'t')
+          sql(wrap(local).replace(/COMMIT;$/,'ROLLBACK;'))
+          assert.equal(absent(),'t')
+          pass('024 non-TLS and wrong role rejected; rollback removes projection')
+          sql(wrap(local))
+          const {projectRaceReplay}=await import('../database/reconstruction/overview/race-replay-preview.mjs')
+          const packetExpr="jsonb_build_object('clubId',uranius_game.get_my_club_id(),'replay',(SELECT packet FROM "+table+"))"
+          const aa=projectRaceReplay(JSON.parse(readFor(a,packetExpr)))
+          const bb=projectRaceReplay(JSON.parse(readFor(b,packetExpr)))
+          assert.notEqual(aa.clubId,bb.clubId)
+          assert.deepEqual(aa.replay,bb.replay)
+          assert.equal(aa.replay.classification.length,10)
+          assert.equal(aa.replay.frames.length,347)
+          assert.equal(aa.replay.events.length,12)
+          assert.equal(aa.replay.runId,runId)
+          pass('024 both accepted managers see the same validated real archive projection')
+          assert.equal(readFor('00000000-0000-4000-8000-000000000003',"count(packet) FROM "+table),'0')
+          // Known owner with no accepted entry must also see zero.
+          sql("BEGIN; UPDATE uranius_game.race_team_entries SET status='withdrawn' WHERE race_id='"+fixtureA+"' AND club_id=(SELECT club_id FROM uranius_game.club_profiles WHERE team_id=2); COMMIT;",admin)
+          assert.equal(readFor(b,"count(packet) FROM "+table),'0')
+          assert.equal(readFor(a,"count(packet) FROM "+table),'1')
+          sql("UPDATE uranius_game.race_team_entries SET status='accepted' WHERE race_id='"+fixtureA+"' AND club_id=(SELECT club_id FROM uranius_game.club_profiles WHERE team_id=2);",admin)
+          pass('024 unknown subject and known withdrawn participant denied; accepted participant retained')
+          for(const role of ['anon','authenticated'])sql("SELECT packet FROM "+table,role,true)
+          sql("SELECT * FROM "+table,'uranius_smoke_reader',true)
+          sql("SELECT input_text FROM "+ar,'uranius_smoke_reader',true)
+          sql("UPDATE "+table+" SET packet='{}'::jsonb",'uranius_smoke_reader',true)
+          assert.equal(sql("SELECT relrowsecurity::text||':'||relforcerowsecurity::text FROM pg_class WHERE oid='"+table+"'::regclass"),'true:true')
+          assert.equal(sql("SELECT count(*) FROM pg_policies WHERE schemaname='uranius_private' AND tablename='synthetic_completed_race_runs'"),'0')
+          assert.equal(sql("SELECT count(*) FROM pg_policies WHERE policyname='uranius_024_temp_read'"),'0')
+          sql(wrap(local),'uranius_migrator',true)
+          assert.equal(archiveCount(),'1')
+          assert.equal(sql("SELECT count(*) FROM uranius_private.migration_ledger"),'17')
+          pass('024 raw archive, full-row and mutation access denied; security restored and duplicate refused')
+          console.log('PASS '+(tests-start)+'/4 NEW participant replay database checks; scratch PG17 only; hosted install NOT authorized')
+        }
+
       }
 
     }
