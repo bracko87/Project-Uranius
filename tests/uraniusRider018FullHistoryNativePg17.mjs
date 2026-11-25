@@ -9,7 +9,8 @@ import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 
 const args = process.argv.slice(2)
-const startlistReview = args[0] === '--startlist-engine-review'
+const archiveReview = args[0] === '--race-persistence-review'
+const startlistReview = archiveReview || args[0] === '--startlist-engine-review'
 const raceWorldSeed = startlistReview || args[0] === '--race-world-seed-review'
 if (raceWorldSeed) args.shift()
 if (args.length !== 3 || args[0] !== '--disposable-native-pg17' || args[1] !== '--postgres-bin') {
@@ -730,13 +731,14 @@ try {
       const {build}=await import('esbuild')
       const bundle=join(scratch,'startlist-engine.mjs')
       await build({entryPoints:[join(root,'scripts/uranius-startlist-engine-review.ts')],outfile:bundle,bundle:true,platform:'node',format:'esm',target:'node20',logLevel:'warning'})
-      const engine=JSON.parse(run(process.execPath,[bundle],{input:packet}))
+      const engine=JSON.parse(run(process.execPath,archiveReview?[bundle,'--emit-private-review-artifact']:[bundle],{input:packet}))
       assert.equal(engine.finishers,10)
       assert.equal(engine.teams,2)
       assert.equal(engine.deterministic,true)
       assert.equal(engine.negativePacketsRejected,6)
       assert.equal(engine.fixtureUnchanged,true)
-      console.log('ENGINE '+JSON.stringify(engine))
+      const {artifact,...engineSummary}=engine
+      console.log('ENGINE '+JSON.stringify(engineSummary))
       pass('021 disposable database UUID roster feeds unchanged existing_v1 engine, two teams, all ten finish, repeated output matches; temporary opponent rolled back')
       sql(wrap(localStartlist),'uranius_migrator',true)
       assert.equal(counts(),'3:4:2:2')
@@ -746,6 +748,92 @@ try {
       assert.equal(sql("SELECT count(*) FROM uranius_game.game_state WHERE season_number=1 AND month_number=1 AND day_number=1 AND is_paused"),'1')
       pass('021 duplicate refused; fifteen historical entries, fixture rows and paused clock preserved')
       console.log('PASS '+(tests-checksStart)+'/7 NEW startlist/engine checks; scratch PG17 only; hosted install NOT authorized')
+      if(archiveReview){
+        const archiveChecksStart=tests
+        const manifest021=JSON.parse(readFileSync(join(root,'database/reconstruction/overview/021_install_manifest_REVIEW_ONLY.json'),'utf8'))
+        assert.equal(hash(startlistSql),manifest021.candidate.sha256)
+        sql("INSERT INTO uranius_private.migration_ledger(version,sha256) VALUES ('021_synthetic_startlists.sql','"+hash(startlistSql)+"')")
+        const archiveSql=readFileSync(join(root,'database/reconstruction/overview/022_completed_race_archive_REVIEW_ONLY.sql'),'utf8')
+        assert.equal(archiveSql.split(tls).length,2)
+        const localArchive=archiveSql.replace(tls,'OR FALSE /* scratch PGDATA rehearsal only */')
+        const ar='uranius_private.synthetic_completed_race_runs'
+        const admin='uranius_fixture_admin'
+        const absent=()=>sql("SELECT to_regclass('"+ar+"') IS NULL")
+        const archiveCount=()=>sql("SELECT count(*) FROM "+ar,admin)
+        sql(wrap(archiveSql),'uranius_migrator',true)
+        sql(wrap(localArchive),'postgres',true)
+        assert.equal(absent(),'t')
+        sql(wrap(localArchive).replace(/COMMIT;$/,'ROLLBACK;'))
+        assert.equal(absent(),'t')
+        assert.equal(sql("SELECT to_regprocedure('uranius_private.validate_synthetic_completed_race_run()') IS NULL"),'t')
+        pass('022 exact source denies non-TLS and wrong role; schema rollback leaves nothing')
+        sql(wrap(localArchive))
+        assert.equal(archiveCount(),'0')
+        assert.equal(sql("SELECT relrowsecurity::text||':'||relforcerowsecurity::text FROM pg_class WHERE oid='"+ar+"'::regclass"),'true:true')
+        assert.equal(sql("SELECT count(*) FROM pg_policies WHERE schemaname='uranius_private' AND tablename='synthetic_completed_race_runs'"),'0')
+        for(const role of ['anon','authenticated','uranius_smoke_reader']){
+          assert.equal(sql("SELECT has_any_column_privilege('"+role+"','"+ar+"','SELECT,INSERT,UPDATE,REFERENCES')"),'f')
+          assert.equal(sql("SELECT has_table_privilege('"+role+"','"+ar+"','INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')"),'f')
+          assert.equal(sql("SELECT has_function_privilege('"+role+"','uranius_private.validate_synthetic_completed_race_run()','EXECUTE')"),'f')
+          sql("SELECT * FROM "+ar,role,true)
+        }
+        pass('022 empty private archive has FORCE RLS and no client or reader access')
+        assert.equal(typeof artifact?.inputText,'string')
+        assert.equal(typeof artifact?.outputText,'string')
+        assert.equal(hash(artifact.inputText),artifact.inputSha256)
+        assert.equal(hash(artifact.outputText),artifact.outputSha256)
+        assert.equal(artifact.outputSha256,engine.outputSha256)
+        // This competitive entry is committed ONLY to the disposable database,
+        // so the archive can enforce actual race/roster foreign relationships.
+        // The hosted 021 state still has separate single-club entries.
+        sql('BEGIN;\n'+opponentSql+'\nCOMMIT;',admin)
+        assert.equal(counts(),'3:4:3:3')
+        assert.equal(sql("SELECT count(*) FROM "+sl+" WHERE race_id='"+fixtureA+"'",admin),'10')
+        const hex=s=>Buffer.from(s,'utf8').toString('hex')
+        const encoded=s=>"convert_from(decode('"+hex(s)+"','hex'),'UTF8')"
+        const insertRun=(inputText=artifact.inputText,outputText=artifact.outputText,inputHash=hash(inputText),outputHash=hash(outputText))=>
+          "INSERT INTO "+ar+"(race_id,stage_id,contract_version,engine_lane,provenance,input_text,output_text,input_sha256,output_sha256) VALUES ('"+fixtureA+"','"+parsedPacket.stageId+"',1,'existing_v1','uranius_synthetic_review',"+encoded(inputText)+","+encoded(outputText)+",'"+inputHash+"','"+outputHash+"');"
+        const insert=insertRun()
+        sql('BEGIN;\n'+insert+'\nROLLBACK;',admin)
+        assert.equal(archiveCount(),'0')
+        sql(insert,admin)
+        assert.equal(archiveCount(),'1')
+        const stored=JSON.parse(sql("SELECT jsonb_build_object('inputSha',input_sha256,'outputSha',output_sha256,'inputCheck',encode(sha256(convert_to(input_text,'UTF8')),'hex'),'outputCheck',encode(sha256(convert_to(output_text,'UTF8')),'hex'),'finishers',jsonb_array_length(output_text::jsonb->'finalRiderStates'),'frames',jsonb_array_length(output_text::jsonb->'snapshots'),'events',jsonb_array_length(output_text::jsonb->'events'),'teams',jsonb_array_length(input_text::jsonb->'teams')) FROM "+ar,admin))
+        assert.equal(stored.inputSha,artifact.inputSha256)
+        assert.equal(stored.inputCheck,artifact.inputSha256)
+        assert.equal(stored.outputSha,artifact.outputSha256)
+        assert.equal(stored.outputCheck,artifact.outputSha256)
+        assert.equal(stored.finishers,10)
+        assert.equal(stored.teams,2)
+        assert.equal(stored.frames,engine.frames)
+        assert.equal(stored.events,engine.events)
+        console.log('ARCHIVE '+JSON.stringify(stored))
+        pass('022 actual engine payloads commit and read back in new SQL sessions with exact hashes, ten results and full replay')
+        sql(insert,admin,true)
+        sql("UPDATE "+ar+" SET created_at=now()",admin,true)
+        sql("DELETE FROM "+ar,admin,true)
+        assert.equal(archiveCount(),'1')
+        pass('022 duplicate run, update and delete rejected; one immutable archive retained')
+        const malformedInput=JSON.parse(artifact.inputText)
+        malformedInput.riders[0].riderId='ffffffff-ffff-4fff-8fff-ffffffffffff'
+        const malformedOutput=JSON.parse(artifact.outputText)
+        malformedOutput.finalRiderStates[1].finishPosition=malformedOutput.finalRiderStates[0].finishPosition
+        sql(insertRun(JSON.stringify(malformedInput)),admin,true)
+        sql(insertRun(artifact.inputText,JSON.stringify(malformedOutput)),admin,true)
+        // Same valid content but wrong digest; unique constraint cannot mask this check.
+        sql(insertRun(artifact.inputText,artifact.outputText,'0'.repeat(64),artifact.outputSha256),admin,true)
+        assert.equal(archiveCount(),'1')
+        pass('022 mismatched roster, duplicate finish rank and tampered hash refused')
+        sql(wrap(localArchive),'uranius_migrator',true)
+        assert.equal(sql("SELECT count(*) FROM uranius_private.migration_ledger"),'16')
+        assert.equal(sql("SELECT count(*) FROM uranius_game.game_state WHERE season_number=1 AND month_number=1 AND day_number=1 AND is_paused"),'1')
+        assert.equal(policies(),beforePolicies)
+        assert.equal(sql("SELECT count(*) FROM uranius_game.race_preparations WHERE rider_count<>0 OR total_cost_cash<>0 OR finance_transaction_id IS NOT NULL",admin),'0')
+        assert.equal(archiveCount(),'1')
+        pass('022 duplicate schema refused; ledger, clock, policies and financial preparations unchanged')
+        console.log('PASS '+(tests-archiveChecksStart)+'/6 NEW completed race archive checks; disposable PG17 only; hosted install NOT authorized')
+      }
+
     }
 
   }
