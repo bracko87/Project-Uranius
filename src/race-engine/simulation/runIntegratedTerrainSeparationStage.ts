@@ -1288,9 +1288,11 @@ export function simulateIntegratedTerrainSeparationTick(
       appliedOrders.executedOrders,
     )
 
-  if(options.experimentalBudgetedPelotonChaseEnabled===true&&
-     options.experimentalFundedPelotonLeadershipEnabled===true)
-    throw Error('runIntegratedTerrainSeparationStage: funded chase and funded leadership experiments cannot be combined')
+  const selectedPursuitModels=Number(options.experimentalBudgetedPelotonChaseEnabled===true)+
+    Number(options.experimentalFundedPelotonLeadershipEnabled===true)+
+    Number(options.experimentalCapabilityBasedLeadershipEnabled===true)
+  if(selectedPursuitModels>1)
+    throw Error('runIntegratedTerrainSeparationStage: funded pursuit experiments are mutually exclusive')
 
   const movement =
     calculateTerrainAwareMultiGroupMovement(
