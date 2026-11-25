@@ -1521,3 +1521,18 @@ node scripts\\run-uranius-peloton-front-gap-leadership.mjs --out peloton-front-g
 ```
 
 **Decision path:** if the true breakaway-to-first-peloton time gap remains excessive even with funded leadership, quantify potential qualified-leader gain vs capped funded movement before changing policy. Such a change would be a new, default-off realistic-cooperation implementation requiring individual energy funding and fatigue-dependent leader eligibility, not a fabricated free peloton catch. Official **49/60 sporting NO GO**, no production updates.
+
+
+## 2026-11-25 — Peloton gap audit wrapper payload mismatch repaired (owner rerun pending)
+
+Owner pulled `2b22261`, verified **3/3 static boundary tests PASS**, and ran `scripts/run-uranius-peloton-front-gap-leadership.mjs --out peloton-front-gap-leadership-local.json`. The bundled simulation returned structured JSON successfully; the command-line wrapper then crashed when trying to iterate `report.races` although the actual script emits `{checks,cases,...}`. Because the wrapper crashed before printing the results, the owner did not receive the three scenario metrics or a saved report. **This was a reporting/schema bug, not direct evidence of a race-engine failure**.
+
+Changed CLI to use `report.cases` in both the failure diagnostics and the report loop, and added an explicit `Array.isArray(report.cases) && report.cases.length===3` fail-closed payload validation. Improved boundary test to assert producer `checks,cases,note`, consumer `report.cases`, and absence of `report.races`. No simulation rules, physics, orders or production state changed. Owner verification required:
+
+```bat
+git pull origin main
+node --test tests\\uraniusPelotonFrontGapLeadershipBoundary.test.mjs
+node scripts\\run-uranius-peloton-front-gap-leadership.mjs --out peloton-front-gap-leadership-local.json
+```
+
+Current sporting gate remains **49/60 NO GO**. Do not infer actual gap or pace improvements until output is inspected.
