@@ -1316,3 +1316,21 @@ node scripts\\run-uranius-terrain-pressure-audit.mjs --out terrain-pressure-audi
 ```
 
 Official **49/60 sporting NO GO**, original race behavior and production unchanged.
+
+
+## 2026-11-25 — Terrain pressure audit false failure diagnosed and repaired (owner re-run pending)
+
+Owner pulled `08933ac`; `tests/uraniusTerrainPressureAuditBoundary.test.mjs` **3/3 passed**, but the actual 128-rider 120km full-race audit intentionally failed its `pressureRecorded` check: `{"completed":true,"pressureRecorded":false,"noInventedTransitions":true,"validClassification":true}`. Crucially the trace completed **353 simulation ticks**, and recorded **0 cannot-hold ticks**, **0 sustained drop eligibility**, **0 dropped transitions**, **0 grade >=3% ticks** and **233 |grade|<1% ticks**. Its maximum observed challenge involved **44 under-pressure riders** of 128 on a **2%** gradient, mean rider effective capability **79.549** vs group demand **71.424**. Those recorded observations are real, though they don't prove performance on a steeper stage.
+
+**Root cause of failed audit check:** the check wrongly required hold evaluations for every rider listed in the movement proposal, including the **terminal finish-crossing tick**. The integrated runner runs `evaluatePressure` on state **after** movement, and deliberately excludes active groups at `distanceKm >= stageDistanceKm` (because those riders are now arriving, not continuing to hold the group). The crossing movement proposal still legitimately lists those 128 riders. Therefore an empty terminal pressure evaluation is expected, **not** absent rider accounting.
+
+**Repair:** in `scripts/uranius-terrain-pressure-audit.ts`, mark finish-crossing ticks from actual `proposal.nextDistanceKm >= stage.initialState.stageDistanceKm`; assert **every nonterminal tick** still has exactly one pressure classification per peloton rider; assert **terminal ticks** have zero holding evaluations. Record terminal tick count, prefinish pressure mismatches, maximum/minimum gradients and maximum under-pressure rider count. Existing real transition/eligibility and valid-classification checks retained, and added a regression boundary test `tests/uraniusTerrainPressureAuditBoundary.test.mjs`. These checks are **not yet owner-run**; no changed physics or forced drops.
+
+Run:
+```bat
+git pull origin main
+node --test tests\\uraniusTerrainPressureAuditBoundary.test.mjs
+node scripts\\run-uranius-terrain-pressure-audit.mjs --out terrain-pressure-audit-local.json
+```
+
+Once confirmed, the 120 km fixture establishes only that this **mild rolling course** does not meet sustained drop threshold. Next study genuinely steep gradients and attacker energy efficiency before calibration. Official **49/60 sporting NO GO**, production unchanged.
