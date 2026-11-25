@@ -51,3 +51,19 @@ test('standalone leadership model never automatically changes production physics
  assert.doesNotMatch(source,/runIntegratedTerrainSeparationStage|applyMultiGroupEnergy|createClient\(/)
  assert.match(source,/No movement, mutations, free catch or production integration/)
 })
+
+test('explicit authorized pool rotates only eligible riders and never falls back',()=>{
+ const riders=[rider(1,50),rider(2,60),rider(3,80),rider(4,90),rider(5,95)]
+ const authorized=['r4','r5']
+ for(let tick=0;tick<12;tick++){
+  const x=lead(options(riders,tick*30,{eligibleOrderedRiderIds:authorized,maximumActiveLeaders:1}))
+  assert.equal(x.designatedRiderIds.length,1)
+  assert.ok(authorized.includes(x.designatedRiderIds[0]))
+ }
+ const blocked=lead(options(riders,0,{eligibleOrderedRiderIds:['r1']}))
+ assert.deepEqual(blocked.designatedRiderIds,[])
+ assert.equal(blocked.potentialGainKmh,0)
+ const none=lead(options(riders,0,{eligibleOrderedRiderIds:[]}))
+ assert.deepEqual(none.designatedRiderIds,[])
+ assert.equal(none.potentialLeaderBaseKmh,none.groupMeanBaseKmh)
+})
