@@ -318,6 +318,8 @@ export function reconcileBreakawayGroups(
     readonly experimentalPreserveSeparatingBreakaways?: boolean
     /** OFFLINE ONLY: an ahead breakaway must be physically reached before peloton reabsorption. */
     readonly experimentalRequirePhysicalBreakawayCatch?: boolean
+    /** Crossing times from the actual movement tick; only used by physical-only experiment. */
+    readonly experimentalFinishCrossingSecondsByGroupId?: Readonly<Record<string, number>>
   } = {},
 ): ReconcileBreakawayGroupsResult {
   validateSimulationState(
@@ -486,6 +488,17 @@ export function reconcileBreakawayGroups(
               group.groupType === 'breakaway' &&
               group.distanceKm > peloton.distanceKm) {
             return false
+          }
+          // Distances are capped at the finish. A breakaway that crossed
+          // before the peloton must not be reclassified as caught merely
+          // because both tick-end positions now equal the stage distance.
+          if (options.experimentalRequirePhysicalBreakawayCatch === true &&
+              group.groupType === 'breakaway') {
+            const finishTimes = options.experimentalFinishCrossingSecondsByGroupId
+            const breakawayCrossing = finishTimes?.[group.groupId]
+            const pelotonCrossing = finishTimes?.[peloton.groupId]
+            if (breakawayCrossing !== undefined && pelotonCrossing !== undefined &&
+                breakawayCrossing < pelotonCrossing) return false
           }
           const physicallyCaught =
             group.groupType !==
@@ -675,6 +688,9 @@ export function reconcileBreakawayGroups(
   const remainingBreakaways =
     activeBreakaways(
       nextGroups,
+    ).filter(group =>
+      !(options.experimentalRequirePhysicalBreakawayCatch === true &&
+        options.experimentalFinishCrossingSecondsByGroupId?.[group.groupId] !== undefined),
     )
 
   const clusters =
