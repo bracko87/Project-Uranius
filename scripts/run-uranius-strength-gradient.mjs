@@ -46,6 +46,10 @@ try{
    }))
   }
  }
+ console.log('PACE MODEL THRESHOLD TRACE — FIRST THREE TICKS')
+ for(const r of data.scenarios.filter(s=>s.timing!=='baseline'))
+  console.log('PACE THRESHOLD '+r.strength+' '+r.timing+' | '+
+   JSON.stringify(r.movementPaceAudit))
  console.log('TECHNICAL CHECKS '+JSON.stringify(data.checks))
  console.log('SPORTING CALIBRATION STILL NO GO; comparisons observational')
  if(args.length){const path=resolve(args[1]);writeFileSync(path,JSON.stringify(data,null,2)+'\n',{mode:0o600});console.log('Saved: '+path)}
