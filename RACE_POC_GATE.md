@@ -1334,3 +1334,12 @@ node scripts\\run-uranius-terrain-pressure-audit.mjs --out terrain-pressure-audi
 ```
 
 Once confirmed, the 120 km fixture establishes only that this **mild rolling course** does not meet sustained drop threshold. Next study genuinely steep gradients and attacker energy efficiency before calibration. Official **49/60 sporting NO GO**, production unchanged.
+
+
+## 2026-11-25 — Owner verifies repaired terrain-pressure audit (4/4 plus real race)
+
+Owner pulled `53cb75c` and ran `tests/uraniusTerrainPressureAuditBoundary.test.mjs`: **4/4 PASS**. Then `scripts/run-uranius-terrain-pressure-audit.mjs --out terrain-pressure-audit-local.json` completed the genuine 120km / 128-rider no-order stage and ALL **4/4 runtime audit checks TRUE**: `completed`, `pressureRecorded`, `noInventedTransitions`, `validClassification`. The earlier audit failure was confirmed to be the intentional absence of hold-pressure evaluations on the terminal group-crossing tick; the repaired audit now treats it appropriately.
+
+Measured: **353** total simulation ticks, **352** prefinish pressure evaluations, **1** finish-crossing tick skipped, **0** missing/mismatched prefinish pressure counts. Course gradients ranged **−1.4% to +2.0%** (no >=3% climbing ticks); **232** of the 352 prefinish ticks were below 1% absolute gradient. Up to **44 of 128** riders were `under_pressure` at a +2% stretch; **0** riders were `cannot_hold` on any tick, **0** reached sustained-drop eligibility, **0** actual dropped-wave transitions. At the observed +2% pressure peak, mean effective capability was **79.5490** vs group demand **71.4240**.
+
+**Finding:** this relatively mild rolling fixture does not challenge the `cannot_hold` threshold; it cannot validate mountain-stage dropping. Do **not** artificially lower the group-hold threshold just to force drops in this test. Distinguish future genuinely steep graded courses with extended +5% to +10% climbs, terrain severity flags, energy loss and actual sustained rider transitions. Reassess if a mountainous fixture also produces zero cannot-hold riders. Solo attacker sustainability remains separately unresolved. No production changes. Official **49/60 sporting NO GO**.
