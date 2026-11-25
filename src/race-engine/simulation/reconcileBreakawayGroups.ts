@@ -313,6 +313,9 @@ export function reconcileBreakawayGroups(
     /** OFFLINE OPT-IN: a trailing attack group cannot teleport to a peloton
      * farther than the physical 5-second catch radius ahead of it. */
     readonly experimentalPreserveTrailingAttackGroups?: boolean
+    /** OFFLINE COUNTERFACTUAL ONLY: an ahead-of-peloton breakaway still
+     * moving faster cannot be reabsorbed under the mere proximity window. */
+    readonly experimentalPreserveSeparatingBreakaways?: boolean
   } = {},
 ): ReconcileBreakawayGroupsResult {
   validateSimulationState(
@@ -522,6 +525,17 @@ export function reconcileBreakawayGroups(
            * Any breakaway, chase, or dropped group closer than five seconds to the
            * peloton is treated as part of the peloton.
            */
+          // This is an explicitly opt-in counterfactual, NOT an accepted
+          // sporting rule. A group that is ahead and pulling farther away
+          // is not physically being caught merely because it is nearby.
+          if (
+            options.experimentalPreserveSeparatingBreakaways === true &&
+            group.groupType === 'breakaway' &&
+            group.distanceKm > peloton.distanceKm &&
+            group.speedKmh > peloton.speedKmh
+          ) {
+            return false
+          }
           const withinCatchWindow =
             gapToPelotonSeconds(
               group,
