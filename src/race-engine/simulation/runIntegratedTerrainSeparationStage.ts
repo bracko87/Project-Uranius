@@ -1465,7 +1465,10 @@ export function simulateIntegratedTerrainSeparationTick(
   const reconciledBreakaways =
     reconcileBreakawayGroups(
       stateBeforeBreakawayReconciliation,
-      options.experimentalPreserveBirthTickDroppedGroups
+      {
+        experimentalRequirePhysicalBreakawayCatch:
+          options.experimentalRequirePhysicalBreakawayCatch === true,
+        ...(options.experimentalPreserveBirthTickDroppedGroups
         ? {
             experimentalPreserveRecedingDroppedGroups:
               options.experimentalPreserveRecedingDroppedGroups === true,
@@ -1473,13 +1476,12 @@ export function simulateIntegratedTerrainSeparationTick(
               options.experimentalPreserveTrailingAttackGroups === true,
             experimentalPreserveSeparatingBreakaways:
               options.experimentalPreserveSeparatingBreakaways === true,
-            experimentalRequirePhysicalBreakawayCatch:
-              options.experimentalRequirePhysicalBreakawayCatch === true,
             protectedNewDroppedGroupIds: transitionApplication.transitions
               .filter(transition => transition.transitionKind === 'created')
               .map(transition => transition.targetGroupId),
           }
-        : {},
+        : {}),
+      },
     )
 
   const finishDetection =
