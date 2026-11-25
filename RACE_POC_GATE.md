@@ -1570,3 +1570,17 @@ node scripts\\run-uranius-capability-funded-leadership.mjs --out capability-fund
 ```
 
 This is a provisional game-mechanics hypothesis (not established real cycling power/drag/fatigue physics). **49/60 sporting NO GO; production unchanged**.
+
+
+## 2026-11-25 — Capability-based funded leader rotation OWNER VERIFIED (3/3 + 8/8)
+
+Owner pulled `33bea69` and ran `tests/uraniusCapabilityFundedLeadershipBoundary.test.mjs`: **3/3 PASS**. The genuine 128-rider 120km end-to-end comparison `scripts/run-uranius-capability-funded-leadership.mjs --out capability-funded-leadership-local.json` completed **3/3 races** with **8/8 TRUE checks**: allRacesComplete, baselinePreserved, historicalCappedModelPreserved, realOrdersAndFunding, moreCapabilityMoreEnergy, chargedRidersHaveEnergy, leaderEnergyConserved, noForcedVictory.
+
+**Actual solo-to-first-peloton-finish gap:**
+- Control, no chase orders: strong solo finishes **9939.315079131 s**, first peloton **10586.423372917 s**, **647.108293786 s / 10:47.108** behind; avg peloton speed during breakaway **40.7694627 km/h**, zero leader surcharge, 0 paid ticks.
+- Historical capped 3% experiment: 24 executed chase orders, **316 funded ticks**, **78.318086 energy** paid by rotating leaders; first peloton finishes **10306.232414526 s**, **366.917335395 s / 6:06.917** behind; mean peloton chase speed **41.9932102 km/h**, mean leader final energy **70.4603**, minimum **68.8544**.
+- Dynamic authorized capability-funded model: same 24 chase orders and 316 paid ticks, **290.764280** extra leader energy (**3.7127×** fixed capped funding); first peloton finishes **10130.293289974 s**, gap **190.978210843 s / 3:10.978** behind; mean actual peloton speed **42.7623536 km/h**, mean leader final energy **61.6534**, minimum **53.1855**. Solo itself retains rank 1, finish **9939.315079131 s**, final energy **77.3514**, unaffected by different pursuit mechanics.
+
+Gap improvement from control to dynamic **456.130082943 s (7:36.130), 70.49%**. Compared with fixed 3%, improvement **175.939124552 s (2:55.939)**. No forced rider catch or winner; 128 real finishers per race. Leader energy residuals within 1e-4 (~3.54e-6 dynamic).
+
+**Sporting interpretation:** A capability-based, energy-funded leader rotation produces genuine faster movement, much tighter pursuit and consequential rider energy costs. The 8% experimental safety ceiling and rising coefficient are still gameplay hypotheses, not physical calibrated cycling power/watts. **DO NOT PROMOTE TO DEFAULT** on one fixed-seed 128-rider rolling course. Next meaningful gates: fewer authorized chase riders, varied team/rider strengths and initial energy, slower/faster stage profiles including steep grades, order authorization and turning pursuit off, resistance to depleted leaders and repeatable deterministic outputs. Preserve historical fixed 3% path and baseline fingerprints. Official **49/60 sporting NO GO**, no production changes.
