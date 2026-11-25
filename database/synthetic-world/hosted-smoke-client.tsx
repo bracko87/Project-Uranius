@@ -246,6 +246,59 @@ function SquadPreview() {
   </main>
 }
 
+type CalendarStage = {
+  raceId: string; title: string; category: string; countryCode: string|null;
+  raceStatus: string; stageNumber: number; stageDate: string; stageFormat: string|null;
+  ownAccepted: boolean
+}
+type CalendarPacket = { clubId: string; gameDate: string; stages: CalendarStage[] }
+function CalendarPreview() {
+  const navigate=useNavigate()
+  const [data,setData]=useState<CalendarPacket|null>(null)
+  const [status,setStatus]=useState<'loading'|'ready'|'unavailable'>('loading')
+  const [ownOnly,setOwnOnly]=useState(false)
+  useEffect(()=>{
+    let active=true
+    void Promise.all([getMyClubContext(),request('calendar')]).then(([club,packet])=>{
+      if(!active)return
+      if(club.mainClub && packet && packet.clubId===club.mainClub.id &&
+          typeof packet.gameDate==='string' && Array.isArray(packet.stages)) {
+        setData(packet);setStatus('ready')
+      } else {setData(null);setStatus('unavailable')}
+    }).catch(()=>{if(active){setData(null);setStatus('unavailable')}})
+    return ()=>{active=false}
+  },[])
+  const visible=data?.stages.filter(row=>!ownOnly||row.ownAccepted)??[]
+  return <main className="min-h-screen bg-slate-950 text-white">
+    <section className="mx-auto max-w-5xl rounded-xl bg-slate-900 p-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div><h1 className="text-2xl font-semibold">Calendar</h1>
+          <p className="text-sm text-slate-300">Synthetic race world · read-only next 30 game days</p></div>
+        <button onClick={()=>navigate('/dashboard/overview')} className="rounded border border-slate-600 px-3 py-2">Back to Overview</button>
+      </div>
+      <div aria-live="polite" className="mt-6" data-calendar-state={status}>
+        {status==='loading'&&<p>Checking authenticated race calendar…</p>}
+        {status==='unavailable'&&<p className="text-amber-200">Calendar unavailable or club not verified. No fixture fallback is shown.</p>}
+        {status==='ready'&&data&&<>
+          <p className="text-sm text-slate-300">Game date: {data.gameDate} · {data.stages.length} scheduled stage records</p>
+          <label className="mt-3 flex gap-2"><input type="checkbox" checked={ownOnly} onChange={e=>setOwnOnly(e.target.checked)}/> Show only my accepted races</label>
+          {visible.length===0?<p className="mt-3">No stages match this view.</p>:<div className="mt-4 overflow-x-auto">
+            <table className="w-full text-left text-sm" data-calendar-table><thead><tr className="border-b border-slate-600">
+              {['Date','Race','Stage','Format','Race status','My entry'].map(label=><th key={label} className="p-2">{label}</th>)}</tr></thead>
+              <tbody>{visible.map(row=><tr key={row.raceId+':'+row.stageNumber} className="border-b border-slate-800">
+                <td className="p-2">{row.stageDate}</td><td className="p-2">{row.title}<div className="text-xs text-slate-400">{row.countryCode??'Country unavailable'} · {row.category}</div></td>
+                <td className="p-2">{row.stageNumber}</td><td className="p-2">{row.stageFormat?.replaceAll('_',' ')??'Unavailable'}</td>
+                <td className="p-2">{row.raceStatus}</td><td className="p-2">{row.ownAccepted?'Accepted':'No accepted entry'}</td>
+              </tr>)}</tbody>
+            </table>
+          </div>}
+          <p className="mt-4 text-xs text-slate-400">No applications, startlists or simulation controls are available. Other clubs’ private entry data is never shown.</p>
+        </>}
+      </div>
+    </section>
+  </main>
+}
+
 function ClubDashboard() {
   const navigate = useNavigate()
   const [data, setData] = useState<{ name: string; riders: number; credits: number; calendar: number }>()
@@ -270,6 +323,7 @@ function ClubDashboard() {
       {data && <ClockStatus />}
       {data && <ScheduleStatus />}
       {data && <button onClick={() => navigate('/dashboard/squad')} className="mt-4 mr-4 rounded border border-slate-600 px-3 py-2" data-open-squad>View Squad</button>}
+      {data && <button onClick={()=>navigate('/dashboard/calendar')} className="mt-4 mr-4 rounded border border-slate-600 px-3 py-2" data-open-calendar>View Calendar</button>}
       <button onClick={async () => {
         try { await supabase.auth.signOut() }
         catch { window.alert('The local session is closed. Uranius Auth sign-out could not be confirmed.') }
@@ -284,6 +338,7 @@ createRoot(document.getElementById('root')!).render(<HashRouter>
     <Route path="/login" element={<LoginPage />} />
     <Route path="/dashboard/overview" element={<ClubDashboard />} />
     <Route path="/dashboard/squad" element={<SquadPreview />} />
+    <Route path="/dashboard/calendar" element={<CalendarPreview />} />
     <Route path="*" element={<Navigate to="/login" replace />} />
   </Routes>
 </HashRouter>)
