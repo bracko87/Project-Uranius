@@ -15,6 +15,8 @@ export interface PelotonPaceLeadershipInput {
  readonly maximumActiveLeaders?:number
  /** When provided, select authorized riders BEFORE the cyclic rotation. */
  readonly eligibleOrderedRiderIds?:readonly string[]
+ /** OFFLINE: rider-specific fixed duty epochs; no candidate-count modulo rotation. */
+ readonly experimentalStableDutyRotation?:boolean
 }
 export interface PelotonPaceLeadershipResult {
  readonly groupMeanBaseKmh:number
@@ -26,7 +28,7 @@ export interface PelotonPaceLeadershipResult {
  readonly designatedRiderIds:readonly string[]
  readonly rotationIndex:number
  readonly eligibleRiderCount:number
- readonly model:'ordered_cyclic_rotation_candidate'
+ readonly model:'ordered_cyclic_rotation_candidate'|'rider_stable_duty_candidate'
 }
 
 export function calculatePelotonPaceLeadership(input:PelotonPaceLeadershipInput):PelotonPaceLeadershipResult{
@@ -59,12 +61,23 @@ export function calculatePelotonPaceLeadership(input:PelotonPaceLeadershipInput)
   potentialGainKmh:0,potentialGainPercent:0,
   designatedRiderIds:[],rotationIndex:0,
   eligibleRiderCount:base.eligibleRiderCount,
-  model:'ordered_cyclic_rotation_candidate',
+  model:input.experimentalStableDutyRotation?'rider_stable_duty_candidate':'ordered_cyclic_rotation_candidate',
  }
- const rotationIndex=Math.floor(input.raceSecond/input.tickSeconds)%
-  candidates.length
- const leaders=Array.from({length:Math.min(slots,candidates.length)},(_,i)=>
-  candidates[(rotationIndex+i)%candidates.length])
+ // Each rider's duty window depends only on their identity and the race clock,
+ // never on the size of the authorized pool. Adding candidates cannot change
+ // when an already-authorized rider is eligible for a shift.
+ const stable=input.experimentalStableDutyRotation===true
+ const clockEpoch=Math.floor(input.raceSecond/(input.tickSeconds*10))
+ const dutyHash=(id:string)=>Array.from(id).reduce((n,c)=>
+  (n*31+c.charCodeAt(0))>>>0,2166136261)
+ const onDuty=stable?candidates.filter(p=>
+  (dutyHash(p.riderId)+clockEpoch)%3!==0):candidates
+ const dutyPool=stable&&onDuty.length?onDuty:candidates
+ const rotationIndex=stable?clockEpoch:
+  Math.floor(input.raceSecond/input.tickSeconds)%candidates.length
+ const leaders=stable?dutyPool.slice(0,Math.min(slots,dutyPool.length)):
+  Array.from({length:Math.min(slots,candidates.length)},(_,i)=>
+   candidates[(rotationIndex+i)%candidates.length])
  const leaderCapabilityMean=leaders.reduce((sum,r)=>sum+r.capabilityScore,0)/leaders.length
  const speedRangeKmh=input.maximumSpeedKmh-input.minimumSpeedKmh
  const speed=Math.min(input.maximumSpeedKmh,input.minimumSpeedKmh+
@@ -77,5 +90,5 @@ export function calculatePelotonPaceLeadership(input:PelotonPaceLeadershipInput)
    Math.max(0,(speed/base.baseSpeedKmh-1)*100):0,
   designatedRiderIds:leaders.map(p=>p.riderId),rotationIndex,
   eligibleRiderCount:base.eligibleRiderCount,
-  model:'ordered_cyclic_rotation_candidate'}
+  model:stable?'rider_stable_duty_candidate':'ordered_cyclic_rotation_candidate'}
 }
