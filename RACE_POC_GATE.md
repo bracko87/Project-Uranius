@@ -1296,3 +1296,23 @@ At rider physical strength **76** and **94**, the selected rider finishes **rank
 This resolves two previously suspected classification issues as intentional group-time and sprint-rank behavior **for the tested no-order races only**. It does **not** validate whether all riders staying in one peloton under a 120km changing gradient is sporting-realistic, and does **not** resolve the remaining **366.917 s** solo-lead advantage of the strength-86 early attacker under 316 funded leadership ticks and 78.318 extra energy.
 
 **Next sport priority:** rider-level within-peloton separation and positioning behavior during terrain changes and final kilometers, plus sustainable solo exertion versus coordinated group work. Evaluate whether dropping, attack, sprint and lead-out already provide supported individual differentiation before adding new physics. Do not adjust identical group finish times arbitrarily. Official **49/60 sporting NO GO**, production unchanged.
+
+
+## 2026-11-25 — Per-rider terrain pressure investigation (offline audit, pending execution)
+
+After owner verified finish-rank audit **3/3** + two full no-order controls: the strength 76 and 94 rider ranks both **126**, matching sprint rank **126** and one shared peloton crossing time. This is expected under currently implemented bunch ranking rather than a newly identified classification defect.
+
+Reviewed the existing individual separation mechanics: `groupHold.ts` defines comfortable margin at **+5**, `cannot_hold` below a rider-vs-group-demand margin of **−8**; ordinary `under_pressure` does **not** trigger a drop. `groupSeparationEligibility.ts` accumulates `cannot_hold` ticks until a sustained window is reached (default windows 60,120,180s, integrated calibrated stage uses **120s**). The integrated runner computes each rider's terrain-adjusted capability including shelter and steep-gradient severity, compares with group demand, tracks a rider's cannot-hold duration, then applies actual dropped-wave transitions if eligible. The presence of this machinery does **not** prove it triggers on the current moderately rolling 120km fixture.
+
+Added targeted read-only audit `scripts/uranius-terrain-pressure-audit.ts`, fail-closed runner `scripts/run-uranius-terrain-pressure-audit.mjs` and static TS/boundary checks `tests/uraniusTerrainPressureAuditBoundary.test.mjs`. Runs exactly one 128-rider 120km no-order strength-86 stage using the existing calibrated engine. It records per tick: gradient and km, peloton size, group speed and demand, counts of comfortable/under-pressure/cannot-hold riders, sustained eligible drops, actual source peloton transitions. Summarizes total ticks with cannot-hold, ticks of actual sustained drop eligibility, number of genuine group transitions, climbed vs flat pressure and top eight high-pressure moments. The audit does **not** modify state, force an escape, tweak hold thresholds, or produce fake finish gaps.
+
+**Decision gate:** if the race's 128 riders never reach sustained `cannot_hold`, distinguish the following possible causes *using recorded numbers*: terrain gradients not severe enough; steep-terrain capability/demand/shelter thresholds too lenient; or physical within-group speeds not contributing enough to drop demand. Do not change policy until pressure observations support it. Solo-exertion economics remains an independent unresolved mechanism requiring its own evidence.
+
+Owner CMD (unverified as of commit):
+```bat
+git pull origin main
+node --test tests\\uraniusTerrainPressureAuditBoundary.test.mjs
+node scripts\\run-uranius-terrain-pressure-audit.mjs --out terrain-pressure-audit-local.json
+```
+
+Official **49/60 sporting NO GO**, original race behavior and production unchanged.
