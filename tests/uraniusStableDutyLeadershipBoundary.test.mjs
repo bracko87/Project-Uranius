@@ -1,0 +1,40 @@
+import {test} from 'node:test'
+import assert from 'node:assert/strict'
+import {readFileSync} from 'node:fs'
+import {transformSync} from 'esbuild'
+const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8')
+const leader=read('src/race-engine/simulation/pelotonPaceLeadership.ts')
+const funded=read('src/race-engine/simulation/pelotonLeadershipBudget.ts')
+const movement=read('src/race-engine/simulation/terrainAwareMultiGroupMovement.ts')
+const integrated=read('src/race-engine/simulation/runIntegratedTerrainSeparationStage.ts')
+const calibrated=read('src/race-engine/simulation/runCalibratedTerrainSeparationStage.ts')
+const scenario=read('scripts/uranius-stable-duty-leadership.ts')
+const runner=read('scripts/run-uranius-stable-duty-leadership.mjs')
+test('stable duty is rider-identity and clock based, independent of authorized pool size',()=>{
+ assert.match(leader,/experimentalStableDutyRotation\?:boolean/)
+ assert.match(leader,/dutyHash\(p.riderId\)\+clockEpoch/)
+ assert.match(leader,/dutyPool\.slice\(0,Math.min\(slots,dutyPool.length\)\)/)
+ assert.match(leader,/Math.floor\(input.raceSecond\/input.tickSeconds\)%candidates.length/)
+ assert.match(leader,/model:stable\?'rider_stable_duty_candidate'/)
+})
+test('candidate is isolated and connected to real order-funded movement',()=>{
+ assert.match(funded,/experimentalStableDutyRotation:input.experimentalStableDutyRotation===true/)
+ assert.match(movement,/experimentalStableLeaderRotationEnabled\?: boolean/)
+ assert.match(movement,/experimentalStableDutyRotation:/)
+ assert.match(integrated,/stable rotation requires capability-funded leadership/)
+ assert.match(calibrated,/experimentalStableLeaderRotationEnabled:/)
+ assert.match(scenario,/const cases=\[run\(8,'old'\),run\(24,'old'\),run\(8,'stable'\),run\(24,'stable'\)\]/)
+ assert.match(scenario,/oldTwentyFourFingerprint:/)
+ assert.match(scenario,/noUnauthorizedCharges:/)
+ assert.match(scenario,/noOverDebit:/)
+ assert.doesNotMatch(scenario,/forceCatch|forceWinner|fakeGap/i)
+})
+test('all offline modules parse and CLI rejects any failing four-race check',()=>{
+ for(const s of [leader,funded,movement,integrated,calibrated,scenario])
+  assert.doesNotThrow(()=>transformSync(s,{loader:'ts',format:'esm',target:'node20'}))
+ assert.match(runner,/report.cases.length!==4/)
+ assert.match(runner,/Object.values\(report.checks\).some\(x=>x!==true\)/)
+ assert.match(runner,/for\(const r of report.cases\)/)
+ assert.doesNotMatch(runner,/report.races/)
+ assert.doesNotMatch(scenario+runner,/@supabase|service_role|createClient\(|fetch\(|https?:\/\//i)
+})
