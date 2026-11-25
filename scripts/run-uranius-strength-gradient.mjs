@@ -50,6 +50,22 @@ try{
  for(const r of data.scenarios.filter(s=>s.timing!=='baseline'))
   console.log('PACE THRESHOLD '+r.strength+' '+r.timing+' | '+
    JSON.stringify(r.movementPaceAudit))
+ console.log('CATCH THRESHOLD GEOMETRY — CAUGHT VS ESCAPED')
+ for(const r of data.scenarios.filter(s=>s.timing==='early'&&[82,86,90].includes(s.strength)||
+  s.timing==='late'&&[76,82].includes(s.strength)))
+  console.log('CATCH GEOMETRY '+r.strength+' '+r.timing+' | '+
+   JSON.stringify(r.movementPaceAudit.slice(0,3).map(t=>({
+    second:t.second,activeBeforeCatch:t.activeBeforeCatch,
+    signedDistanceKm:t.signedDistanceKm,
+    catchGapSeconds:t.catchGapSeconds,
+    physicalGapAtPelotonSpeedSeconds:t.physicalGapAtPelotonSpeedSeconds,
+    withinFiveSecondReportedWindow:t.withinFiveSecondReportedWindow,
+    freshBreakaway:t.freshBreakaway,
+    actuallyCaught:t.actuallyCaught,
+    groupActiveAfterCatch:t.groupActiveAfterCatch,
+    attackAppliedKmh:t.attackAppliedKmh,
+    pelotonAppliedKmh:t.pelotonAppliedKmh,
+   }))))
  console.log('TECHNICAL CHECKS '+JSON.stringify(data.checks))
  console.log('SPORTING CALIBRATION STILL NO GO; comparisons observational')
  if(args.length){const path=resolve(args[1]);writeFileSync(path,JSON.stringify(data,null,2)+'\n',{mode:0o600});console.log('Saved: '+path)}
