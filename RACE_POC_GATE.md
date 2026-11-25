@@ -1584,3 +1584,24 @@ Owner pulled `33bea69` and ran `tests/uraniusCapabilityFundedLeadershipBoundary.
 Gap improvement from control to dynamic **456.130082943 s (7:36.130), 70.49%**. Compared with fixed 3%, improvement **175.939124552 s (2:55.939)**. No forced rider catch or winner; 128 real finishers per race. Leader energy residuals within 1e-4 (~3.54e-6 dynamic).
 
 **Sporting interpretation:** A capability-based, energy-funded leader rotation produces genuine faster movement, much tighter pursuit and consequential rider energy costs. The 8% experimental safety ceiling and rising coefficient are still gameplay hypotheses, not physical calibrated cycling power/watts. **DO NOT PROMOTE TO DEFAULT** on one fixed-seed 128-rider rolling course. Next meaningful gates: fewer authorized chase riders, varied team/rider strengths and initial energy, slower/faster stage profiles including steep grades, order authorization and turning pursuit off, resistance to depleted leaders and repeatable deterministic outputs. Preserve historical fixed 3% path and baseline fingerprints. Official **49/60 sporting NO GO**, no production changes.
+
+
+## 2026-11-25 — Leader availability and exhaustion sensitivity matrix added (owner execution pending)
+
+Previously owner verified capability-funded rotating leadership in three full 128-rider 120km races: 3/3 static PASS and 8/8 E2E checks PASS. Solo-to-first-peloton finishing gaps: no orders **647.1083 s**, fixed 3% funded leaders **366.9173 s**, dynamic capability-funded leaders **190.9782 s**. Dynamic candidate paid **290.76428 extra leader energy** with 24 authorized chasers, improving physical movement but still NOT approved for default gameplay.
+
+Created `scripts/uranius-leader-availability-sensitivity.ts`, offline `scripts/run-uranius-leader-availability-sensitivity.mjs`, and `tests/uraniusLeaderAvailabilitySensitivityBoundary.test.mjs`. This is the next **six actual 128-rider rolling 120km stage** sensitivity experiment using the **unchanged** default-OFF capability-funded leader model:
+- Control: **0** chase orders, normal leader energy 100, leadership disabled.
+- Dynamic authorized leader cases: **1**, **3**, **8**, **24** selected from exactly the same deterministic top-ranked rider list (full 100 starting leader energy).
+- Leader exhaustion case: **24** same orders, but their **initial energy set to 12**, while rider attributes and all other rider conditions/starting course remain identical.
+
+Results show actual first-peloton-finisher delay after solo (not entire field spread), real executed chase order count, physically funded ticks, unique authorized riders charged, individual leader ending energy, total energy-paid surcharge, and conservation residual for every nominated leader. There is **no synthetic catch, guaranteed victory, changed attack, injected leaderboard ranking or artificial race-time bonus**. Hard gates require 128 real finishers for all six, preserved full-energy baseline and 24-leader dynamic owner fingerprints, correct order execution, no unpaid speed, actual funded effort for the candidate variants, no unauthorized rider charged, energy conservation, bounded energies, and lower aggregate leader surcharge for the energy-depleted case. Do **not** require monotonic gap reduction purely from number of chasers: rotating selections are sensitive to pool and race conditions and could legitimately vary.
+
+Owner CLI, **not yet verified**:
+```bat
+git pull origin main
+node --test tests\\uraniusLeaderAvailabilitySensitivityBoundary.test.mjs
+node scripts\\run-uranius-leader-availability-sensitivity.mjs --out leader-availability-sensitivity-local.json
+```
+
+This is a controlled sensitivity study of the prior candidate, not a new approved physics calibration. Production remains unchanged, dynamic model OFF by default, and official **49/60 sporting NO GO**.
