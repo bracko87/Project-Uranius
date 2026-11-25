@@ -13,6 +13,8 @@ export interface FundedPelotonLeadershipInput {
  readonly tickSeconds:number
  readonly eligibleOrderedRiderIds:readonly string[]
  readonly maximumActiveLeaders?:number
+ /** OFFLINE ONLY: actual leader capability fraction instead of historical fixed 3% bonus. */
+ readonly experimentalCapabilityBasedFunding?:boolean
 }
 export interface FundedPelotonLeadershipResult {
  readonly baseSpeedKmh:number
@@ -48,12 +50,18 @@ export function calculateFundedPelotonLeadership(input:FundedPelotonLeadershipIn
   return none('no_funding')
  // Leadership advantage is capped separately from its potential physical maximum.
  // This is a bounded hypothesis, not a historically calibrated multiplier.
- const desiredBonusPercent=clamp(leadership.potentialGainPercent,0,3)
+ const dynamic=input.experimentalCapabilityBasedFunding===true
+ const desiredBonusPercent=dynamic
+  ?clamp(leadership.potentialGainPercent,0,8)
+  :clamp(leadership.potentialGainPercent,0,3)
  if(desiredBonusPercent===0)return none('no_capable_leaders')
  const desiredCharge=nominated.map(r=>{
   const stamina=r.attributes.stamina
+  // Dynamic leadership is more expensive at higher effort, so an
+  // unrestricted capability jump is not free. Historical cost is unchanged.
+  const effortFactor=dynamic?1+desiredBonusPercent/4:1
   const gross=round((input.tickSeconds/60)*0.06*desiredBonusPercent*
-   (1.15-0.003*stamina))
+   (1.15-0.003*stamina)*effortFactor)
   return {rider:r,charge:gross,available:Math.max(0,r.energy-5)}
  })
  const affordability=clamp(Math.min(...desiredCharge.map(p=>
