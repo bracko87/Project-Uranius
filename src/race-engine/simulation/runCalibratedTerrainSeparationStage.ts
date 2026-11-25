@@ -49,6 +49,8 @@ export interface RunCalibratedTerrainSeparationStageOptions {
   readonly experimentalFundedPelotonLeadershipEnabled?: boolean
   /** OFFLINE only: capability-limited rotating leader contribution, default OFF. */
   readonly experimentalCapabilityBasedLeadershipEnabled?: boolean
+  /** OFFLINE optional rider-stable leader rotation; default OFF. */
+  readonly experimentalStableLeaderRotationEnabled?: boolean
 }
 
 export interface RunCalibratedTerrainSeparationStageResult
@@ -171,6 +173,8 @@ export function runCalibratedTerrainSeparationStage(
           options.experimentalFundedPelotonLeadershipEnabled ?? false,
         experimentalCapabilityBasedLeadershipEnabled:
           options.experimentalCapabilityBasedLeadershipEnabled ?? false,
+        experimentalStableLeaderRotationEnabled:
+          options.experimentalStableLeaderRotationEnabled ?? false,
       },
     )
 
