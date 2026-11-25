@@ -9,6 +9,8 @@ import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 
 const args = process.argv.slice(2)
+const raceWorldSeed = args[0] === '--race-world-seed-review'
+if (raceWorldSeed) args.shift()
 if (args.length !== 3 || args[0] !== '--disposable-native-pg17' || args[1] !== '--postgres-bin') {
   throw new Error('Usage: node tests/uraniusRider018FullHistoryNativePg17.mjs --disposable-native-pg17 --postgres-bin "C:\\path\\to\\postgresql-17.12-portable\\bin"')
 }
@@ -586,6 +588,65 @@ try {
   pass('018 duplicate proposal refused; 13 exact historical rows and paused world remain intact')
 
   console.log('PASS '+tests+' full-history 001–015 plus 018 REVIEW candidate checks on disposable PG17; NO hosted apply')
+
+  if (raceWorldSeed) {
+    const seedChecksStart=tests
+    // This branch runs ONLY inside the already-created scratch PGDATA.
+    // The earlier 010 test populated its own disposable rows; remove just
+    // those four fixture relations' rows before replaying the empty hosted baseline.
+    sql("TRUNCATE uranius_game.race_preparations, uranius_game.race_team_entries, uranius_game.race_stages, uranius_game.races",'uranius_fixture_admin')
+    assert.equal(hash(raw018),'622d7626f5f6d93117cbb755398971d23ca0a870e49bc8c98e2df768630b48cc')
+    sql("INSERT INTO uranius_private.migration_ledger(version,sha256) VALUES ('018_synthetic_nine_skill_attributes.sql','"+hash(raw018)+"')")
+    const seed=readFileSync(join(root,'database/reconstruction/overview/019_synthetic_race_world_REVIEW_ONLY.sql'),'utf8')
+    const tls="OR NOT EXISTS (SELECT 1 FROM pg_stat_ssl WHERE pid=pg_backend_pid() AND ssl)"
+    assert.equal(seed.split(tls).length,2)
+    const localSeed=seed.replace(tls,'OR FALSE /* scratch PGDATA rehearsal only */')
+    const counts=()=>sql("SELECT (SELECT count(*) FROM uranius_game.races)||':'||(SELECT count(*) FROM uranius_game.race_stages)||':'||(SELECT count(*) FROM uranius_game.race_team_entries)||':'||(SELECT count(*) FROM uranius_game.race_preparations)",'uranius_fixture_admin')
+    const policies=()=>sql("SELECT jsonb_agg(to_jsonb(p) ORDER BY tablename,policyname)::text FROM pg_policies p WHERE schemaname='uranius_game' AND tablename IN ('races','race_stages','race_team_entries','race_preparations')",'uranius_fixture_admin')
+    const beforePolicies=policies()
+    assert.equal(counts(),'0:0:0:0')
+    sql(wrap(seed),'uranius_migrator',true)
+    sql(wrap(localSeed),'postgres',true)
+    assert.equal(counts(),'0:0:0:0')
+    assert.equal(policies(),beforePolicies)
+    pass('019 exact source rejects non-TLS and wrong role with zero rows and unchanged policies')
+    sql(wrap(localSeed).replace(/COMMIT;$/,'ROLLBACK;'))
+    assert.equal(counts(),'0:0:0:0')
+    assert.equal(policies(),beforePolicies)
+    pass('019 full transaction rollback removes fixture rows and temporary policies')
+    sql(wrap(localSeed))
+    assert.equal(counts(),'3:4:2:2')
+    assert.equal(policies(),beforePolicies)
+    assert.equal(sql("SELECT count(*) FROM pg_class WHERE relnamespace='uranius_game'::regnamespace AND relname IN ('races','race_stages','race_team_entries','race_preparations') AND relrowsecurity AND relforcerowsecurity"),'4')
+    pass('019 exact synthetic fixture counts; FORCE RLS and existing policy definitions preserved')
+    const fixtureA='19000000-0000-4000-8000-000000000001'
+    const fixtureB='19000000-0000-4000-8000-000000000002'
+    const fixtureWorld='19000000-0000-4000-8000-000000000003'
+    for(const [subject,own] of [[a,fixtureA],[b,fixtureB]]){
+      const response=scheduleFor(subject)
+      assert.equal(response.upcomingSchedule.length,1)
+      assert.equal(response.upcomingSchedule[0].id,own)
+      assert.equal(response.todayRaces.length,1)
+      assert.equal(response.todayRaces[0].id,fixtureWorld+':1')
+      assert.equal(readFor(subject,"count(*) FROM uranius_game.race_team_entries WHERE status='accepted'"),'1')
+      assert.equal(readFor(subject,"count(*) FROM uranius_game.race_preparations WHERE status='submitted' AND startlist_status='submitted'"),'1')
+      assert.equal(readFor(subject,"count(*) FROM uranius_game.race_stages"),'4')
+    }
+    pass('019 populated real JWT A/B schedule isolation, one shared world event, four global stages')
+    assert.equal(readFor(unknown015,"count(*) FROM uranius_game.race_preparations"),'0')
+    assert.equal(readFor(unknown015,"count(*) FROM uranius_game.race_team_entries"),'0')
+    sql("SELECT id FROM uranius_game.races",'anon',true)
+    sql("INSERT INTO uranius_game.races(name) VALUES ('unauthorized')",'uranius_smoke_reader',true)
+    pass('019 unknown owner private rows, anonymous access and reader writes denied')
+    sql(wrap(localSeed),'uranius_migrator',true)
+    assert.equal(counts(),'3:4:2:2')
+    assert.equal(policies(),beforePolicies)
+    assert.equal(sql("SELECT count(*) FROM uranius_private.migration_ledger"),'14')
+    assert.equal(sql("SELECT count(*) FROM uranius_game.game_state WHERE season_number=1 AND month_number=1 AND day_number=1 AND is_paused"),'1')
+    assert.equal(sql("SELECT count(*) FROM uranius_catalog.riders"),'200')
+    pass('019 duplicate seed denied, ledger, paused clock, roster and permissions intact')
+    console.log('PASS '+(tests-seedChecksStart)+'/6 NEW populated race-world seed checks; disposable PG17 ONLY; hosted installation NOT authorized')
+  }
 
 
 
