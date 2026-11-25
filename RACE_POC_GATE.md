@@ -1010,3 +1010,22 @@ Original-strength no order/early/late: ON shelter saved respectively **2.742159*
 **Minor diagnostic interpretation defect fixed, not yet owner-retested:** the printed `shelteredTicks` had been counting all ticks where `shelterMultiplier` was non-null, including **solo groups with zero actual energy saved**. The underlying energy ledger and `shelterSaved` totals were correct. The report now separates `shelterEvaluatedTicks` (multiplier was calculated) from `shelterAppliedTicks` (strictly positive `shelterEnergySaved`). Added a static TypeScript compilation test for both metrics. No race engine, actual energy, ranks, speed, or default options changed.
 
 **Next distinct sporting priority:** investigate the strong rider's unreasonably large solo winning margin using a *gradient of plausible rider strength*, rather than repeating the known successful extreme 95-attribute run. Evaluate deterministic finish/attack and energy vs close-by strengths (e.g. multiple ability values), keep paired no-order baselines, and do not claim sporting GO without real-race-like calibration. Official checklist **49/60**, sporting NO GO. No hosted/production data touched.
+
+
+## 2026-11-25 — Moderate rider-strength attack sustainability matrix committed
+
+Previous owner-executed drafting energy study completed 12/12 128-rider race scenarios, with **6/6 boundary tests and every technical check PASS**. Existing `groupShelterEnergyEnabled:true` provided real deterministic peloton energy savings without changing stage placement/times in that 12-race scope. A subsequent reporting-only patch distinguished evaluated from positive-saving shelter ticks; that patch is not yet owner-run.
+
+New, distinct sporting test, **committed but not yet dynamically executed**: `scripts/uranius-strength-gradient.ts`, `scripts/run-uranius-strength-gradient.mjs`, and `tests/uraniusStrengthGradientBoundary.test.mjs`. It runs **15** deterministic 120km rolling-stage races with 128 riders (16 teams), one nominated rider at five physical capability levels **76 / 82 / 86 / 90 / 94**, each with **no-order / early attack at km5–8 / late attack at km70–73**. Only the nominated rider's flat, climbing, acceleration, stamina, resistance and recovery are set to each target value; opponents and seed/course remain identical. Unlike the earlier extreme-95-only test, all 15 start with existing `groupShelterEnergyEnabled:true` and the pre-verified offline no-teleport option ON. The engine is otherwise unchanged, and there is no fabricated gap or deterministic forced winner.
+
+The matrix records actual attack effect, positive-gap ticks, physical gap peak and catch; rider finish rank/time/energy, actual per-tick charged energy and shelter savings, and classification digest. The CLI prints matched `RIDER STRENGTH DELTA` versus that ability's no-order control. It fails closed unless all fifteen races complete with 128 finite official finish times and unique ranks, ten actual scheduled attack effects, five zero-order controls and executed orders, energy reserve reconciliation and real drafting savings. A 3-part Node boundary suite also transpiles the source with esbuild before simulation.
+
+Owner command (new test, not a repeat of prior accepted matrices):
+
+```bat
+git pull origin main
+node --test tests\\uraniusStrengthGradientBoundary.test.mjs
+node scripts\\run-uranius-strength-gradient.mjs --out strength-gradient-local.json
+```
+
+**Decision gate:** Examine whether a capability threshold causes a sudden implausible jump from two-tick catch to multi-kilometre escapes. If so, characterize the pace/cost mechanism before modifying any canonical threshold. DO NOT mark sporting GO from synthetic 15-race sensitivity. Official checklist remains **49/60**; no production, hosted state or default engine settings changed.
