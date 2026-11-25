@@ -150,6 +150,8 @@ export interface IntegratedTerrainSeparationOptions {
   readonly experimentalBudgetedPelotonChaseEnabled?: boolean
   /** OFFLINE only: ordered energy-funded peloton leadership, defaults OFF. */
   readonly experimentalFundedPelotonLeadershipEnabled?: boolean
+  /** OFFLINE only: capability-based funded leadership, defaults OFF. */
+  readonly experimentalCapabilityBasedLeadershipEnabled?: boolean
 
   /**
    * Disabled by default so all earlier Phase 7B.8 diagnostics retain their
@@ -1305,6 +1307,8 @@ export function simulateIntegratedTerrainSeparationTick(
           options.experimentalBudgetedPelotonChaseEnabled === true,
         experimentalFundedPelotonLeadershipEnabled:
           options.experimentalFundedPelotonLeadershipEnabled === true,
+        experimentalCapabilityBasedLeadershipEnabled:
+          options.experimentalCapabilityBasedLeadershipEnabled === true,
         ...(options.experimentalPhysicalAttackLaunch
           ? {
               experimentalLaunchSpeedByGroupId: Object.fromEntries(
@@ -1333,7 +1337,8 @@ export function simulateIntegratedTerrainSeparationTick(
       movement:
         movement.movement,
       ...((options.experimentalBudgetedPelotonChaseEnabled===true||
-          options.experimentalFundedPelotonLeadershipEnabled===true)
+          options.experimentalFundedPelotonLeadershipEnabled===true||
+          options.experimentalCapabilityBasedLeadershipEnabled===true)
         ?{experimentalPullerEnergyCosts:movement.experimentalPullerEnergyCosts}:{}),
     })
 
