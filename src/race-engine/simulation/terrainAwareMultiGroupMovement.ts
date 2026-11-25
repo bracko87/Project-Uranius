@@ -79,6 +79,8 @@ export interface TerrainAwareMultiGroupMovementOptions {
   readonly experimentalFundedPelotonLeadershipEnabled?: boolean
   /** OFFLINE: alternative to 3% funded leader model, defaults OFF. */
   readonly experimentalCapabilityBasedLeadershipEnabled?: boolean
+  /** OFFLINE optional rider-stable rotation (requires capability-funded leadership). */
+  readonly experimentalStableLeaderRotationEnabled?: boolean
   readonly steepGradientSeverityEnabled?: boolean
   readonly steepGradientSeverityModel?:
     SteepGradientSeverityModel
@@ -319,6 +321,8 @@ export function calculateTerrainAwareMultiGroupMovement(
              eligibleOrderedRiderIds:authorizedLeaderIds,
              experimentalCapabilityBasedFunding:
               options.experimentalCapabilityBasedLeadershipEnabled===true,
+             experimentalStableDutyRotation:
+              options.experimentalStableLeaderRotationEnabled===true,
            }):null
         const leadershipSpeedKmh=leaderPace?
           Math.min(state.input.settings.maximumSpeedKmh,
