@@ -17,6 +17,7 @@
  */
 
 import {calculateExperimentalChaseMultiplier} from './experimentalChasePace'
+import {calculatePelotonChaseEffort} from './pelotonChaseEffort'
 import type {
   GroupState,
 } from '../domain/GroupState'
@@ -58,6 +59,8 @@ export interface TerrainAwareMultiGroupMovementResult {
     MultiGroupMovementResult
   readonly groupDiagnostics:
     readonly TerrainAwareGroupMovementDiagnostic[]
+  /** Present only for opt-in budgeted puller pursuit. */
+  readonly experimentalPullerEnergyCosts?: Readonly<Record<string,number>>
 }
 
 export interface TerrainAwareMultiGroupMovementOptions {
@@ -69,6 +72,8 @@ export interface TerrainAwareMultiGroupMovementOptions {
   readonly experimentalLaunchSpeedByGroupId?: Readonly<Record<string, number>>
   /** OFFLINE POC ONLY: executed chase can modestly raise actual peloton speed. */
   readonly experimentalChaseOrdersEnabled?: boolean
+  /** OFFLINE only: explicit pullers and paid pursuit. */
+  readonly experimentalBudgetedPelotonChaseEnabled?: boolean
   readonly steepGradientSeverityEnabled?: boolean
   readonly steepGradientSeverityModel?:
     SteepGradientSeverityModel
@@ -261,7 +266,33 @@ export function calculateTerrainAwareMultiGroupMovement(
                 state.input.settings.maximumSpeedKmh,
                 Math.max(pace.appliedSpeedKmh, launchSpeedKmh),
               )
+        const aheadBreakawayDistances=group.groupType==='peloton'
+          ?Object.values(state.groups).filter(other=>other.active&&
+            other.groupType==='breakaway'&&other.distanceKm>group.distanceKm)
+            .map(other=>other.distanceKm-group.distanceKm):[]
+        const pullerChase=options.experimentalBudgetedPelotonChaseEnabled===true&&
+          group.groupType==='peloton'
+          ?calculatePelotonChaseEffort({
+             riders:riders.map(r=>({
+               riderId:r.riderId,teamId:r.teamId,teamwork:r.attributes.teamwork,
+               stamina:r.attributes.stamina,currentEnergy:r.energy,
+               raceStatus:'racing' as const,
+             })),
+             orders:Object.values(state.orders).filter(o=>o.type==='chase').map(o=>({
+               riderId:o.riderId,teamId:o.teamId,
+               executed:o.status==='executed'&&
+                 o.executionRaceSecond!==undefined&&o.executionRaceSecond<=state.raceSecond,
+               currentKm:state.currentKm,eligibleFromKm:o.eligibleFromKm,
+               eligibleUntilKm:o.eligibleUntilKm,
+             })),
+             pelotonSpeedKmh:physicalAppliedSpeedKmh,
+             breakawayDistanceAheadKm:aheadBreakawayDistances.length?
+               Math.max(...aheadBreakawayDistances):0,
+             pelotonSpeedLimitKmh:state.input.settings.maximumSpeedKmh,
+             gradientPercent:terrainSample.gradientPercent,tickSeconds,
+           }):null
         const chaseAdjustedAppliedSpeedKmh =
+          pullerChase?pullerChase.appliedSpeedKmh:
           options.experimentalChaseOrdersEnabled
             ? Math.min(
                 state.input.settings.maximumSpeedKmh,
@@ -302,6 +333,7 @@ export function calculateTerrainAwareMultiGroupMovement(
           group,
           terrainSample,
           pace,
+          pullerChase,
           weatherAdjustedAppliedSpeedKmh,
           nextDistanceKm,
           distanceAdvancedKm:
@@ -480,6 +512,11 @@ export function calculateTerrainAwareMultiGroupMovement(
         activeLeaderDistanceKm,
       proposals,
     },
+    ...(options.experimentalBudgetedPelotonChaseEnabled
+      ? {experimentalPullerEnergyCosts:Object.fromEntries(
+           preliminary.flatMap(entry=>entry.pullerChase?
+             Object.entries(entry.pullerChase.energySurchargeByRiderId):[]))}
+      : {}),
     groupDiagnostics:
       preliminary.map(
         (entry) => ({
