@@ -1,0 +1,66 @@
+{
+  "projectRef": "sdtsivgtcaoaeoihcwzd",
+  "status": "REVIEW_ONLY_REQUIRES_EXPLICIT_APPROVAL",
+  "operation": "one_shot_competitive_synthetic_archive",
+  "existingLedgerEntries": 17,
+  "files": [
+    {
+      "path": "database/reconstruction/overview/023_first_competitive_race_REVIEW_ONLY.sql",
+      "sha256": "f5b4b76e2cdbf020410564c52c385941d471f3af0d85a2fbdab6fc3f57ec0319",
+      "gitBlob": "9bac0023009954fc6eaa6bc83d3efd7e15e10d60"
+    },
+    {
+      "path": "database/reconstruction/overview/023_first_competitive_race_postflight_REVIEW_ONLY.sql",
+      "sha256": "9a9d259f95b43d714243d0510026c73dac6a7693d41ee0c05ac31831457ea4c0",
+      "gitBlob": "bed82e3787e3792c7c6f74ac05a24790fb5d35ae"
+    },
+    {
+      "path": "scripts/run-uranius-first-hosted-race.mjs",
+      "sha256": "5d7d8cd366ffa729ca56715a06a5aa89d1d303c39d6b2216bc6898ad938085ab",
+      "gitBlob": "071211554602e49d1e8b54e33cee769bea403376"
+    },
+    {
+      "path": "scripts/uranius-startlist-engine-review.ts",
+      "sha256": "5bfb8e619225c9c1df44fc668ff6ed7ecac8e4f486b421c1cbfa5d80126f3322",
+      "gitBlob": "5bf2ad84d25390f4abdd04a8f1652322db894970"
+    },
+    {
+      "path": "scripts/assert-sandbox-target.mjs",
+      "sha256": "f129ef146ff4bd549b74af83ae774047f4f5055a42c851a4c0b95196130b24b6",
+      "gitBlob": "50273ab2ae954269b31529e0671e0b81ee5f3ac8"
+    },
+    {
+      "path": "scripts/run-uranius-psql-batch.mjs",
+      "sha256": "4a0c0b81f2ba59cb1f9fa542d838348e1b1c2f777a27fd526b19b1950933d712",
+      "gitBlob": "5d45f6ed6c15cc205ce7dafde8c80bd3c40890fe"
+    },
+    {
+      "path": "database/reconstruction/overview/022_install_manifest_REVIEW_ONLY.json",
+      "sha256": "39ba9742640369d0239b6eb4f7bfb2c0b6c32751d54e0094156f26b48e64a267",
+      "gitBlob": "1a58f0bdee482bf94e1e60ea08cafed0bd815894"
+    },
+    {
+      "path": "scripts/run-approved-first-hosted-race-023-windows.ps1",
+      "sha256": "d3d77b8397bb08763d2a0b04fc5138f42c36a36ee9ce4d25e58f0728e43a45fe",
+      "gitBlob": "287b0bea765917f153329bfe0e7d3c9662b6f563"
+    }
+  ],
+  "scope": {
+    "race": "19000000-0000-4000-8000-000000000001",
+    "distanceKm": 120,
+    "addClubBEntry": 1,
+    "addClubBPreparation": 1,
+    "copyExistingClubBSelections": 5,
+    "completedPrivateArchive": 1,
+    "temporaryPoliciesOnly": true,
+    "fullRollbackRehearsal": true,
+    "unchangedLedger": true,
+    "gameClockPaused": true,
+    "financeEffects": false,
+    "officialResults": false,
+    "permanentWorker": false,
+    "scheduler": false,
+    "productionExcluded": true
+  },
+  "priorNativeEvidence": "022 76/76 PASS; this new one-shot wrapper not yet executed"
+}
