@@ -15,3 +15,8 @@ node tests\uraniusRider018FullHistoryNativePg17.mjs --participant-replay-review 
 ```
 
 Expected five Node tests and four new native PG17 checks (historical setup replays automatically within the new isolated test). Native scratch adapts only pinned archive ID/digests to actual disposable archive and TLS predicate for local rehearsal, never targets hosted DB. Validate both participants see same archive, unknown and withdrawn participant see no rows, no raw/private or mutation access, rollback/duplicate refusal and policy restoration. New tests and bundle not executed by assistant; no local checkout or direct migrator credentials here. After passing, freeze 024 SQL/manifest, obtain explicit approval, install via guarded launcher and independently verify. Only then use existing HTTPS launcher with -RaceReplay. Current progress 49/60 unchanged. No production changes or added costs.
+
+
+## 2026-11-25 — owner native acceptance
+
+Owner pulled a25811b; five frontend/API/React bundle tests passed, zero failures. Native disposable PG17 replay completed 57 historical + 6 race-world + 7 startlist + 6 archive + 4 new replay checks = 80/80. Both real fixture participants saw the same validated actual archive projection; unknown subject and known withdrawn participant denied, accepted participant retained; raw archive/full-row/mutation access denied, security restored and duplicate refused; non-TLS/wrong-role denial and rollback verified. Scratch PGDATA cleaned up. This is acceptance of the review candidate, not hosted installation or browser visual acceptance. No need to repeat these tests absent relevant changes. Next freeze exact 024 candidate and request isolated installation approval. No hosted changes.
