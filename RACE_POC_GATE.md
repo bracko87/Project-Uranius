@@ -1792,3 +1792,15 @@ Expect 11/11 gates, pending execution. The test saves and displays failed gate e
 ### Owner execution correction — 2026-11-25
 
 Owner pulled `f660e07`; esbuild succeeded, but the integrated runtime stopped at `calculateRiderTerrainCapability` because the historical ten-rider fixture lacks `timeTrial` and `raceIq` (both required by this engine path). No integration gate results were produced. Commit `bd8c4ea` enriches only this new test's local input with neutral 75 for both missing attributes, including the two default-stage comparisons; existing shared fixture, physics, and prior golden baselines are untouched. Re-run the same integration command after pulling main. Verification remains pending; 49/60 sporting NO GO.
+
+
+## 2026-11-25 — Independent physical catch and finish crossing OWNER VERIFIED (11/11)
+
+Owner pulled `f6661f0` and ran `node scripts\run-uranius-physical-catch-integration.mjs --out physical-catch-integration-local.json`. All 11 gates TRUE; JSON saved locally (console evidence supplied, local file not independently retrieved). The enriched fixture repaired the previous setup failure.
+
+- Independent integrated tick: starting separation 50m, after movement +3.710802801724m. Omitted and explicit false reabsorbed the attacker, with identical states; explicit true preserved the attacker both with and without birth-tick protection.
+- Two complete default/explicit-false ten-rider stages yielded identical hash `689760ab9433a1ea` and results. This is a same-source equivalence check, not a pre-change golden comparison.
+- Cooperative breakaways merge correctly in the controlled fixture; distant trailing attack remains separate; one caught breakaway rejoins without absorbing the other. Unfinished breakaway stays at 9.97km instead of being moved to the finish. Earlier crossing protected, later and equal crossing reabsorption behavior retained; all five direct fixtures immutable.
+- Real integrated finish tick: independently expected breakaway 901.770270406897s and peloton 914.043475174961s; actual 901.770270407s and 914.043475175s. Breakaway rank 1, advantage 12.273204768s; old rule rank 10 and time 914.043475175s. All ten riders finished, no premature reabsorption.
+
+Scoped integration task complete; no repeat needed. Next consolidate the candidate with existing canonical golden regression tests and a final candidate end-to-end comparison, explicitly including finish order and trailing-group interactions. No default promotion until sporting acceptance and broader regression. Official checklist remains **49/60 sporting NO GO**; database integration remains outstanding. No production changes or additional paid resources.
