@@ -69,6 +69,8 @@ export interface MultiGroupRiderEnergyApplication {
   readonly energyCostBeforeShelter?: number
   readonly shelterEnergySaved?: number
   readonly shelterResult?: GroupShelterResult
+  /** Additional rider-specific pursuit charge (offline opt-in only). */
+  readonly experimentalPullerEnergySurcharge?: number
 
   /**
    * Present only when calibrated weather creates runtime fatigue.
@@ -94,6 +96,8 @@ export interface ApplyMultiGroupEnergyInput {
   readonly state: SimulationState
   /** Previously calculated multi-group movement result (must match state) */
   readonly movement: MultiGroupMovementResult
+  /** Accepted only by explicit offline experimental runtime option. */
+  readonly experimentalPullerEnergyCosts?: Readonly<Record<string,number>>
 }
 
 /**
@@ -424,6 +428,17 @@ export function applyMultiGroupEnergy(
                 }
               : weatherAdjustedResult
 
+          const requestedPullerSurcharge=input.experimentalPullerEnergyCosts?.[riderId]??0
+          if(!Number.isFinite(requestedPullerSurcharge)||requestedPullerSurcharge<0)
+            throw Error('applyMultiGroupEnergy: invalid experimental puller energy surcharge')
+          const paidPullerSurcharge=requestedPullerSurcharge>0
+            ?roundEnergy(Math.min(requestedPullerSurcharge,Math.max(0,result.nextEnergy)))
+            :0
+          const finalResult:RiderEnergyCostResult=paidPullerSurcharge>0
+            ?{...result,energyCost:result.energyCost+paidPullerSurcharge,
+               nextEnergy:roundEnergy(Math.max(0,result.nextEnergy-paidPullerSurcharge))}
+            :result
+
           const runtimeFatigueResult =
             runtimeWeatherFatigueEnabled
               ? calculateRuntimeWeatherFatigue({
@@ -452,9 +467,9 @@ export function applyMultiGroupEnergy(
             previousEnergy:
               rider.energy,
             nextEnergy:
-              result.nextEnergy,
+              finalResult.nextEnergy,
             energyCost:
-              result.energyCost,
+              finalResult.energyCost,
             baseSpeedKmh:
               proposal.baseSpeedKmh,
             appliedSpeedKmh:
@@ -463,7 +478,8 @@ export function applyMultiGroupEnergy(
             gradientPercent:
               proposal
                 .gradientPercent,
-            result,
+            result:finalResult,
+            ...(paidPullerSurcharge>0?{experimentalPullerEnergySurcharge:paidPullerSurcharge}:{}),
             ...(shelterResult
               ? {
                   shelterBonus:
@@ -503,7 +519,7 @@ export function applyMultiGroupEnergy(
             {
               ...rider,
               energy:
-                result.nextEnergy,
+                finalResult.nextEnergy,
               ...(runtimeFatigueResult
                 ? {
                     runtimeFatigue:
