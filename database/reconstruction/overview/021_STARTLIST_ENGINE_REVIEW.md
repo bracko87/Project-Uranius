@@ -16,3 +16,12 @@ node tests\uraniusRider018FullHistoryNativePg17.mjs --startlist-engine-review --
 ```
 
 Expected seven new checks plus prerequisite replay. Native SQL and engine execution NOT yet run. Candidate is not a complete operational startlist system; no hosted installation until new native gate, exact digest freeze and separate explicit approval. Next: persisted validated race input and real competing-team roster, owner-scoped startlist read/submission, race run/result persistence, checkpoint/command integration. No production changes, no additional infrastructure cost. 49/60 unchanged.
+
+
+## Owner native run and corrected two-team fixture — 2026-11-25
+
+Owner pulled `8ee3bd2`: 57 historical + 6 seed checks and first 5 new 021 checks passed (68 positive checks before failure). Candidate created exactly 10 correctly owned startlist rows, rejected foreign riders/duplicate captain/slot/missing preparation, and preserved privacy/finance/clock. Scratch PGDATA cleaned up. Engine execution failed with `TEAMS: at least two teams must exist.` This is a test fixture defect, not a failure of the validated engine or 021 DDL.
+
+Corrected adapter (`fed68ef`) now requires two distinct clubs with five riders and one captain each, ten unique UUIDs, exact roles and bounded catalog scores. Corrected native harness (`2c46a9a`) temporarily adds Club B's accepted entry/preparation to Club A's 120 km flat classic, copies B's five already selected DB riders to that same race, reads both rosters inside the transaction and ROLLBACKs the temporary entry/preparation/startlist before invoking the existing_v1 engine. Verifies original 3/4/2/2 counts, 10 startlist rows and policies unchanged after rollback. Expected ten finishers, ranks 1–10, deterministic repeated output, six invalid inputs rejected, two teams. The final duplicate gate was not reached in the first run. No change to 021 SQL (Git blob 634724160f97cd08584f5f44fd170751a7f59c8c) or engine source. No hosted opponent, startlist, skill, finance or clock change.
+
+Rerun the same documented command after git pull; corrected runtime not yet verified. Because the previous scratch database was removed, prerequisite replay occurs in the same command; do not run separate historical suites. No hosted installation authorized. 49/60 unchanged.
