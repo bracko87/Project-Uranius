@@ -13,6 +13,8 @@ export interface PelotonPaceLeadershipInput {
  readonly raceSecond:number
  readonly tickSeconds:number
  readonly maximumActiveLeaders?:number
+ /** When provided, select authorized riders BEFORE the cyclic rotation. */
+ readonly eligibleOrderedRiderIds?:readonly string[]
 }
 export interface PelotonPaceLeadershipResult {
  readonly groupMeanBaseKmh:number
@@ -44,7 +46,21 @@ export function calculatePelotonPaceLeadership(input:PelotonPaceLeadershipInput)
   b.capabilityScore-a.capabilityScore||a.riderId.localeCompare(b.riderId))
  const qualified=pool.filter(p=>p.capabilityScore>=base.averageCapabilityScore&&
   input.riders.some(r=>r.riderId===p.riderId&&r.energy>5))
- const candidates=qualified.length?qualified:pool
+ const permitted=input.eligibleOrderedRiderIds===undefined?null:
+  new Set(input.eligibleOrderedRiderIds)
+ const candidates=permitted===null?(qualified.length?qualified:pool):
+  qualified.filter(p=>permitted.has(p.riderId))
+ // An empty authorized pool must not fall back to unauthorized riders.
+ if(candidates.length===0)return {
+  groupMeanBaseKmh:base.baseSpeedKmh,
+  groupCapabilityMean:base.averageCapabilityScore,
+  leaderCapabilityMean:base.averageCapabilityScore,
+  potentialLeaderBaseKmh:base.baseSpeedKmh,
+  potentialGainKmh:0,potentialGainPercent:0,
+  designatedRiderIds:[],rotationIndex:0,
+  eligibleRiderCount:base.eligibleRiderCount,
+  model:'ordered_cyclic_rotation_candidate',
+ }
  const rotationIndex=Math.floor(input.raceSecond/input.tickSeconds)%
   candidates.length
  const leaders=Array.from({length:Math.min(slots,candidates.length)},(_,i)=>
