@@ -49,6 +49,10 @@ async function main() {
   const scheduleSql = env.URANIUS_OVERVIEW_SCHEDULE_READ_APPROVED === '1'
     ? await readFile(new URL('hosted-overview-schedule-read_REVIEW_ONLY.sql', world), 'utf8')
     : null
+  // Calendar uses the same authorized existing 010 read scope as Overview.
+  const calendarSql = scheduleSql
+    ? await readFile(new URL('hosted-calendar-read_REVIEW_ONLY.sql', world), 'utf8')
+    : null
   // Opt-in only after independent hosted migration 013 verification.
   if (env.URANIUS_SQUAD_READ_APPROVED && !['0','1'].includes(env.URANIUS_SQUAD_READ_APPROVED)) {
     throw new Error('Invalid Squad reader review flag.')
@@ -161,6 +165,18 @@ async function main() {
         executable: env.URANIUS_PSQL_PATH, env: childEnv,
         input: '\\set verified_subject ' + id + '\n' + scheduleSql,
         timeout: 10000, stage: 'Uranius read-only Overview schedule query',
+        extraArgs: ['--tuples-only', '--no-align'],
+      })
+      return JSON.parse(output.trim().split(/\r?\n/).at(-1))
+    } : undefined,
+    readCalendar: calendarSql ? (id) => {
+      if (!/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(id)) {
+        throw new Error('Invalid verified subject.')
+      }
+      const output = runPsqlBatch({
+        executable: env.URANIUS_PSQL_PATH, env: childEnv,
+        input: '\\set verified_subject ' + id + '\n' + calendarSql,
+        timeout: 10000, stage: 'Uranius read-only Calendar query',
         extraArgs: ['--tuples-only', '--no-align'],
       })
       return JSON.parse(output.trim().split(/\r?\n/).at(-1))
