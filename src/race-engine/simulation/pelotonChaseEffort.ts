@@ -1,6 +1,7 @@
 /**
  * Offline POC: explicit, effort-funded peloton chase proposal.
- * Pure calculation only: NOT wired into stage runtime or production.
+ * Pure calculation. Wired only to an explicit OFF-by-default experimental
+ * branch of the offline calibrated stage; never to canonical production.
  * Only executed chase orders nominate pullers. No automatic catch or gap.
  */
 export interface ChasePuller {
