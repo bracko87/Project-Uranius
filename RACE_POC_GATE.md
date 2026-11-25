@@ -1766,3 +1766,24 @@ Owner pulled `2a031a2`, ran both documented commands, and supplied complete cons
 All four physical cases: zero premature catches, zero stranded crossed groups, zero unauthorized charges. Maximum observed leader ledger residual across all eight runs 0.000006217054, below 0.0001 threshold. Genuine non-finish crossing observed in flat weak early scenario. Mountain medium physical chase paid 304.780992 energy vs 3.214549 with proximity; outcome is materially changed, not evidence of universal sporting calibration. The physical-only catch candidate has passed its scoped validation matrix; no rerun required.
 
 Next: make the experimental physical-catch option independently forwarded by the integrated runner without requiring birth-tick dropped-group protection, and test explicit true/false/omitted flag behavior with default regression fingerprints. Then validate interactions with multiple attacking groups, trailing attacks and finish-line crossing order before deciding canonical behavior. No default promotion, no production change, no paid resources. Official checklist remains **49/60 sporting NO GO**; broader integration and acceptance remain pending.
+
+
+## 2026-11-25 — Independent physical catch and finish-crossing regression package (owner execution pending)
+
+Implemented independent forwarding of `experimentalRequirePhysicalBreakawayCatch` through the integrated tick even when birth-tick dropped-group protection is absent or false. Other previously bundled flags retain their historical forwarding semantics. Default remains false.
+
+Code inspection also identified a finish-line edge case: movement caps group distances at stage length, so reconciliation before sub-tick finish detection can merge an earlier-crossing breakaway into the later-crossing peloton, erasing its own crossing time. In explicit physical-only mode with sub-tick interpolation, the integrated tick now supplies crossing seconds derived from each actual movement proposal (remaining distance / speed). A breakaway crossing before the peloton retains its group, and groups with a recorded finish crossing are excluded from cooperative breakaway merges. Equal or later crossings keep the existing reabsorption decision. Non-finish reconciliation and default-off execution remain unchanged by design. This is a scoped candidate fix, not a general continuous-motion/finish rewrite.
+
+New `scripts/uranius-physical-catch-integration.ts` and fail-closed runner contain 11 gates:
+- real integrated tick demonstrating independently enabled physical catch without birth protection, and identical explicit false/omitted legacy behavior;
+- complete ten-rider stage hash/result equivalence between default and explicit false (not an independently captured pre-change golden);
+- cooperative ahead breakaway merge, distant trailing attack preservation, actual catch of one breakaway without absorbing another;
+- controlled finish state: no teleportation of unfinished group into a finishing breakaway, earlier finish preserved and later catch retained, exact finish tie handling;
+- real integrated finish tick with independent calculation of crossing times, winner and all ten finishers; controlled fixture immutability.
+
+Owner verification:
+```bat
+git pull origin main
+node scripts\run-uranius-physical-catch-integration.mjs --out physical-catch-integration-local.json
+```
+Expect 11/11 gates, pending execution. The test saves and displays failed gate evidence before exiting nonzero; do not interpret missing observations as a PASS. The previously verified eight-race physical catch matrix remains recorded; no immediate repeat is required for this focused check. Final candidate promotion requires broader regression against prior canonical golden hashes and sporting acceptance. **49/60 sporting NO GO; no production/database changes or paid resources.**
