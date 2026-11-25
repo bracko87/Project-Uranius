@@ -1,0 +1,89 @@
+{
+  "projectRef": "sdtsivgtcaoaeoihcwzd",
+  "postgresMajor": 17,
+  "status": "REVIEW_ONLY_NOT_APPROVED",
+  "hostedApplied": false,
+  "approvalRequired": true,
+  "expectedLedgerEntries": 14,
+  "candidate": {
+    "file": "019_synthetic_race_world_REVIEW_ONLY.sql",
+    "ledgerVersion": "019_synthetic_race_world.sql",
+    "sha256": "7e5f8a727dfc44784c0a8abf48c51b8ddfb19766a2cc319b7ff31686a068283b",
+    "gitBlob": "9b846c4133b3be2ccc85ced9bf57afa588de3cd6"
+  },
+  "requires": [
+    {
+      "file": "001_identity.sql",
+      "sha256": "87755f1d12a0b983d016e039d4ceb22aea1e5c165b65c2e6888049805fefbadd"
+    },
+    {
+      "file": "002_reference_schema.sql",
+      "sha256": "6cad841d012117a02daf7e89555cc870da5f9a5f90b4e4c8b7dfee52b84ed45f"
+    },
+    {
+      "file": "003_access.sql",
+      "sha256": "b42c96b647afd9b62573c75cd922b4f8de3eff9e39c5b1c8dd2ccd2f40afe8ee"
+    },
+    {
+      "file": "004_synthetic_reference.sql",
+      "sha256": "e788bf6cab85f12adce0a9227534cca57e318b15aaa69474ef2e5a950472b317"
+    },
+    {
+      "file": "005_club_identity.sql",
+      "sha256": "9550e9ef78288f9286387c43595e6649bd8bcea378d29b0db665d0b048a065fc"
+    },
+    {
+      "file": "006_synthetic_world.sql",
+      "sha256": "56f1a9f08ff1fba3f3ad9a91688c512316b74b2f37fb8806668147ae8813a9a3"
+    },
+    {
+      "file": "007_smoke_reader.sql",
+      "sha256": "dd0e9663adc2bf0717d4debc8b291ee04e859592369e381bbde7a42546a8f91b"
+    },
+    {
+      "file": "008_game_clock_v1.sql",
+      "sha256": "f3dadf7b7934e1c8677d24af2d0a57b2be19768f0bc2dc6b45729618c28e349b"
+    },
+    {
+      "file": "009_clock_smoke_reader.sql",
+      "sha256": "1be3ce5418ff8a03a787fae81fe2cbd543ad6002cc592222bc2b011245cc4c37"
+    },
+    {
+      "file": "010_overview_race_reader.sql",
+      "sha256": "56f52ac20c84aaf70ea63c68e0435da20084a3fe42e375a372c3d613cfa445af"
+    },
+    {
+      "file": "013_squad_reader_grant.sql",
+      "sha256": "8193d80743f6392709a3220441531636751a70fc487c111cc23d1865080be859"
+    },
+    {
+      "file": "014_synthetic_rider_uuid.sql",
+      "sha256": "f97126ed0a9259bfeac9ebf3c4158ece7a590b3ae77fd7d66f7efdc26894db6f"
+    },
+    {
+      "file": "015_rider_uuid_owner_read.sql",
+      "sha256": "71ade068c5cf5bbdc0e356663a0525f1e74b43e63a9c19f267748f7b46b6161e"
+    },
+    {
+      "file": "018_synthetic_nine_skill_attributes.sql",
+      "sha256": "622d7626f5f6d93117cbb755398971d23ca0a870e49bc8c98e2df768630b48cc"
+    }
+  ],
+  "scope": {
+    "races": 3,
+    "stages": 4,
+    "entries": 2,
+    "preparations": 2,
+    "syntheticOnly": true,
+    "preserveForceRls": true,
+    "unchangedReaderPolicies": true,
+    "pausedClock": true,
+    "noEngineActivation": true
+  },
+  "evidence": {
+    "commit": "614825d0b0ddfa2029d042795ddd12e47d075467",
+    "ownerNative": "63/63 PASS (57 historical + 6 new)",
+    "date": "2026-11-25",
+    "cleanup": true
+  }
+}
