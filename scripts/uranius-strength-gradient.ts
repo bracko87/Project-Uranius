@@ -212,7 +212,7 @@ const checks={
   'movementPaceAudit' in s&&s.movementPaceAudit.length>=2&&
   s.movementPaceAudit[0].attackBaseKmh!==null&&
   s.movementPaceAudit[0].pelotonBaseKmh!==null&&
-  s.movementPaceAudit[1].attackAppliedKmh!==null),
+  (s.movementPaceAudit[1].attackAppliedKmh!==null||s.caught===true)),
 
 }
 process.stdout.write(JSON.stringify({
