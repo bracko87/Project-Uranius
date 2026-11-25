@@ -16,7 +16,7 @@ test('compare actual mountain dropped-group trajectories with solo race energy a
 })
 test('actual group distances and rider energy applications determine diagnostic output',()=>{
  assert.match(source,/p.distanceKm-g.distanceKm/)
- assert.match(source,/tick.appliedEnergy.applications.filter/)
+ assert.match(source,/t\.appliedEnergy\.applications\.filter\(a=>a\.riderId===id\)/)
  assert.match(source,/soloEnergySpent:/)
  assert.match(source,/ledgerError:/)
  assert.match(source,/Math.abs\(r.ledgerError\)<1e-4/)
