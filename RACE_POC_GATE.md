@@ -1343,3 +1343,23 @@ Owner pulled `53cb75c` and ran `tests/uraniusTerrainPressureAuditBoundary.test.m
 Measured: **353** total simulation ticks, **352** prefinish pressure evaluations, **1** finish-crossing tick skipped, **0** missing/mismatched prefinish pressure counts. Course gradients ranged **−1.4% to +2.0%** (no >=3% climbing ticks); **232** of the 352 prefinish ticks were below 1% absolute gradient. Up to **44 of 128** riders were `under_pressure` at a +2% stretch; **0** riders were `cannot_hold` on any tick, **0** reached sustained-drop eligibility, **0** actual dropped-wave transitions. At the observed +2% pressure peak, mean effective capability was **79.5490** vs group demand **71.4240**.
 
 **Finding:** this relatively mild rolling fixture does not challenge the `cannot_hold` threshold; it cannot validate mountain-stage dropping. Do **not** artificially lower the group-hold threshold just to force drops in this test. Distinguish future genuinely steep graded courses with extended +5% to +10% climbs, terrain severity flags, energy loss and actual sustained rider transitions. Reassess if a mountainous fixture also produces zero cannot-hold riders. Solo attacker sustainability remains separately unresolved. No production changes. Official **49/60 sporting NO GO**.
+
+
+## 2026-11-25 — Owner confirms +2% terrain audit; mountain challenge added (pending execution)
+
+Owner pulled through `53cb75c`; reran fixed terrain-boundary tests **4/4 PASS** and real 128-rider rolling audit **4/4 runtime checks PASS**. There were 353 simulation ticks, 352 evaluated, exactly one terminal no-pressure crossing tick, **zero pressure-accounting mismatches**, gradients **−1.4% to +2.0%**, **44 under-pressure riders** maximum, **0 cannot-hold**, **0 sustained eligible drops**, **0 actual transitions**. This only verifies non-dropping on the deliberately mild course, not mountain physics.
+
+Implemented observational mountain challenge `scripts/uranius-mountain-terrain-audit.ts`, CLI `scripts/run-uranius-mountain-terrain-audit.mjs` and boundary checks `tests/uraniusMountainTerrainAuditBoundary.test.mjs`. It compares exactly two offline 128-rider no-order races with identical roster, seed, 120km distance, calibrated 120-second hold threshold and steep-gradient pressure/movement options:
+- Existing verified **rolling** profile.
+- New **mountain** profile sampled every 10km with metres `[100,150,950,1750,2000,1900,1800,2600,3500,3550,3100,2800,2500]`, giving sustained sections up to **+9%** (10km segments), e.g. +8% from 10 to 30 km, +8% from 60 to 70km, +9% from 70 to 80km. The extreme cumulative elevation is intentionally a stress-test route, not a claimed historical race course. All numbers are authentic terrain samples from the fixture and actual runner.
+
+It observes, but does not force or artificially expect: number of >=5%, >=8% pressure ticks, `comfortable`/`under_pressure`/`cannot_hold` counts, 120-second sustained-drop eligibility, physical dropped-rider transitions, final group size, remaining and spent rider energy. Validates both race completions, nonterminal classification counts, real mountain gradients, authentic transition ledger and finite nonnegative energy. **Even zero actual drops is an informational outcome; it does not automatically fail the audit**. If mountain drops remain absent, inspect measured demand/shelter versus capability before tuning. No physical changes or production updates.
+
+Owner CMD (not yet verified):
+```bat
+git pull origin main
+node --test tests\\uraniusMountainTerrainAuditBoundary.test.mjs
+node scripts\\run-uranius-mountain-terrain-audit.mjs --out mountain-terrain-audit-local.json
+```
+
+Official **49/60 sporting NO GO**.
