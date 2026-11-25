@@ -1029,3 +1029,21 @@ node scripts\\run-uranius-strength-gradient.mjs --out strength-gradient-local.js
 ```
 
 **Decision gate:** Examine whether a capability threshold causes a sudden implausible jump from two-tick catch to multi-kilometre escapes. If so, characterize the pace/cost mechanism before modifying any canonical threshold. DO NOT mark sporting GO from synthetic 15-race sensitivity. Official checklist remains **49/60**; no production, hosted state or default engine settings changed.
+
+
+## 2026-11-25 — 15/15 owner-tested strength gradient reveals discontinuous attack escape outcomes
+
+Owner pulled through `9961c3d`, passed `tests/uraniusStrengthGradientBoundary.test.mjs` **3/3**, and executed **15/15 completed 128-rider 120km stages** with all seven technical checks TRUE, including 10 actual attack effects and five no-order controls. All no-order controls finish the nominated rider **126th** at every strength 76, 82, 86, 90, 94, and exhibit **0 official finish-time spread** despite heterogeneous field. An early attack at 76/82/86 is caught after two positive-gap ticks, with no rank gain. Early at **90/94** survives for >300 positive-gap ticks and wins by stage spreads **831.44s / 1009.20s**. Late at **76** is caught but **82/86/90/94** succeeds and wins with stage spreads **191.37s / 273.67s / 348.75s / 425.30s**. Winners' peak physical leads range ~2.19–11.62km. Rated 94 early attack ends with slightly more energy than its own no-order control; energy ledger and drafting savings checks pass.
+
+**Sporting diagnosis:** The abrupt transition between two-tick catch and enormous escape does not follow directly from rider attribute input alone. `groupTerrainPace.ts` calculates each group's speed from that **group's average attributes**, while `pelotonPace.ts` averages every peloton member (flat 45%, stamina 25%, resistance 20%, teamwork 10%), so a lone sufficiently capable rider can travel considerably faster than a diluted large-group average. The movement engine permits this differential to persist for hundreds of ticks, and a near-peloton catch rule can eliminate small launches. This is a code-grounded **candidate mechanism**, not yet a quantified/verified causal attribution. Do not artificially cap the winning margin or modify default movement before comparing actual pace components.
+
+**New default-neutral observation-only probe committed but owner-run pending:** The same 15-race strength experiment now reports `movementPaceAudit` for each attack's first three ticks from the **existing `tick.movement.groupDiagnostics[].pace`**, paired with actual movement proposals, including group sizes, `currentBaseSpeedKmh`, flat capability averages, terrain ratio, real movement speed and gradient for solo and peloton. Strong escape and caught cases are examined with identical diagnostic structure; caught groups may have no proposal on subsequent ticks and are correctly treated as such. The CLI prints `PACE THRESHOLD <rating> <timing>`. Added a short static TypeScript compilation test and a runtime `observedPaceDecomposition` gate (requires actual valid first-tick solo/peloton values, allows post-catch absent solo proposals).
+
+Run:
+```bat
+git pull origin main
+node --test tests\\uraniusStrengthGradientBoundary.test.mjs
+node scripts\\run-uranius-strength-gradient.mjs --out strength-gradient-local.json
+```
+
+The original 15 scenario configurations and actual race engine are unchanged; a rerun is needed only to acquire NEW pace-decomposition observations. Before any mechanical edit, compare sustainable solo vs group speeds for ratings 82/86/90 early and 76/82 late, and investigate whether group average, no lead-puller choice, and lack of tactical peloton chase cause unrealistic long breakaways. Official sporting checklist remains **49/60; NO GO**, no production/hosted changes.
