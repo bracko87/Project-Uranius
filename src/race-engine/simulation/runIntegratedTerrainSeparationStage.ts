@@ -140,6 +140,8 @@ export interface IntegratedTerrainSeparationOptions {
   readonly experimentalPreserveTrailingAttackGroups?: boolean
   /** OFFLINE COUNTERFACTUAL ONLY; default OFF. */
   readonly experimentalPreserveSeparatingBreakaways?: boolean
+  /** OFFLINE only: require peloton to physically reach breakaway before catch. */
+  readonly experimentalRequirePhysicalBreakawayCatch?: boolean
   /** OFFLINE POC ONLY: apply actual initial attack speed for one movement tick. */
   readonly experimentalPhysicalAttackLaunch?: boolean
   /** OFFLINE POC ONLY: executed final sprint and lead-out affect finish rank/energy. */
@@ -1471,6 +1473,8 @@ export function simulateIntegratedTerrainSeparationTick(
               options.experimentalPreserveTrailingAttackGroups === true,
             experimentalPreserveSeparatingBreakaways:
               options.experimentalPreserveSeparatingBreakaways === true,
+            experimentalRequirePhysicalBreakawayCatch:
+              options.experimentalRequirePhysicalBreakawayCatch === true,
             protectedNewDroppedGroupIds: transitionApplication.transitions
               .filter(transition => transition.transitionKind === 'created')
               .map(transition => transition.targetGroupId),
