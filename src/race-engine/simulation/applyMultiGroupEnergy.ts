@@ -11,6 +11,7 @@
  * production execution.
  */
 
+import {calculateAbsoluteSpeedEffort} from './absoluteSpeedEffort'
 import type { RiderState } from '../domain/RiderState'
 import type { SimulationState } from '../domain/SimulationState'
 import {
@@ -71,6 +72,8 @@ export interface MultiGroupRiderEnergyApplication {
   readonly shelterResult?: GroupShelterResult
   /** Additional rider-specific pursuit charge (offline opt-in only). */
   readonly experimentalPullerEnergySurcharge?: number
+  /** Present only for state-enabled offline absolute-speed effort. */
+  readonly experimentalAbsoluteSpeedEnergySurcharge?: number
 
   /**
    * Present only when calibrated weather creates runtime fatigue.
@@ -439,6 +442,25 @@ export function applyMultiGroupEnergy(
                nextEnergy:roundEnergy(Math.max(0,result.nextEnergy-paidPullerSurcharge))}
             :result
 
+          const absoluteSpeedCandidate=state.experimentalAbsoluteSpeedEffortEnabled===true
+            ?calculateAbsoluteSpeedEffort({
+               speedKmh:proposal.appliedSpeedKmh,
+               gradientPercent:proposal.gradientPercent,
+               tickSeconds:movement.tickSeconds,
+               groupType:proposal.groupType,
+               groupSize:proposal.riderIds.length,
+             }):null
+          const paidAbsoluteSurcharge=absoluteSpeedCandidate
+            ?roundEnergy(Math.min(
+               absoluteSpeedCandidate.addedEnergyCost,
+               Math.max(0,finalResult.nextEnergy),
+             )):0
+          const energyWithAbsoluteEffort:RiderEnergyCostResult=paidAbsoluteSurcharge>0
+            ?{...finalResult,
+               energyCost:finalResult.energyCost+paidAbsoluteSurcharge,
+               nextEnergy:roundEnergy(Math.max(0,finalResult.nextEnergy-paidAbsoluteSurcharge))}
+            :finalResult
+
           const runtimeFatigueResult =
             runtimeWeatherFatigueEnabled
               ? calculateRuntimeWeatherFatigue({
@@ -467,9 +489,9 @@ export function applyMultiGroupEnergy(
             previousEnergy:
               rider.energy,
             nextEnergy:
-              finalResult.nextEnergy,
+              energyWithAbsoluteEffort.nextEnergy,
             energyCost:
-              finalResult.energyCost,
+              energyWithAbsoluteEffort.energyCost,
             baseSpeedKmh:
               proposal.baseSpeedKmh,
             appliedSpeedKmh:
@@ -478,7 +500,8 @@ export function applyMultiGroupEnergy(
             gradientPercent:
               proposal
                 .gradientPercent,
-            result:finalResult,
+            result:energyWithAbsoluteEffort,
+            ...(absoluteSpeedCandidate?{experimentalAbsoluteSpeedEnergySurcharge:paidAbsoluteSurcharge}:{}),
             ...(paidPullerSurcharge>0?{experimentalPullerEnergySurcharge:paidPullerSurcharge}:{}),
             ...(shelterResult
               ? {
@@ -519,7 +542,7 @@ export function applyMultiGroupEnergy(
             {
               ...rider,
               energy:
-                finalResult.nextEnergy,
+                energyWithAbsoluteEffort.nextEnergy,
               ...(runtimeFatigueResult
                 ? {
                     runtimeFatigue:
