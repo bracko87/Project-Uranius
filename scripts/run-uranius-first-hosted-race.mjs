@@ -35,8 +35,10 @@ function verify(approved){
  assert.equal(m.operation,'one_shot_competitive_synthetic_archive')
  assert.deepEqual(m.files.map(f=>f.path),[source,base+'023_first_competitive_race_postflight_REVIEW_ONLY.sql',
  'scripts/run-uranius-first-hosted-race.mjs','scripts/uranius-startlist-engine-review.ts','scripts/assert-sandbox-target.mjs',
- 'scripts/run-uranius-psql-batch.mjs',base+'022_install_manifest_REVIEW_ONLY.json'])
+ 'scripts/run-uranius-psql-batch.mjs',base+'022_install_manifest_REVIEW_ONLY.json','scripts/run-approved-first-hosted-race-023-windows.ps1'])
  for(const f of m.files)assert.equal(hash(read(f.path)),f.sha256,'Frozen file mismatch: '+f.path)
+ const check=spawnSync('git',['diff','--exit-code','536259932b85992924bda6ee693c3db198d7fb17','--','src/race-engine','package.json','package-lock.json'],{cwd:fileURLToPath(root),encoding:'utf8',timeout:30000,windowsHide:true})
+ assert.ok(!check.error&&check.status===0,'Previously validated engine source/dependencies changed; no connection')
  return read(source).toString('utf8')
 }
 async function execute(prefix){
