@@ -1265,3 +1265,23 @@ Owner ran 18/18 Node leadership/budget/integration/e2e boundary tests: **ALL PAS
 The fix therefore **increases funded chase continuity by 160 ticks** and cuts the finishing spread **280.190958391 s / 43.3%** vs original control, compared with the prior leadership model's 138.486222592 s improvement. It also charges **~3× more total extra energy**, so improved finishing spread must **not** be described as cost-free or yet sustainably calibrated. The observed finish spread in this single solo escape scenario is not evidence of credible race tactics, general field ranking or full sporting readiness. Do **not** force a catch or increase the 3% cap blindly.
 
 **Next priority:** investigate the persistent ~6m07 solo lead and unresolved no-attack 0-time-spread/strength-vs-rank anomaly via targeted trace review rather than additional redundant full-race runs. Evaluate whether leadership rotation every 30-second tick, selectivity and exhaustion are physiologically plausible, and whether leader abilities are reflected in their individual race results as opposed to only shared group speed. Then define evidence-based sporting acceptance criteria. Both new options remain default OFF; official **49/60 — sporting NO GO**; no production changes.
+
+
+## 2026-11-25 — No-order finish rank and bunch-time mechanics audit added (pending owner run)
+
+Investigation of the active offline integrated finish path shows **two distinct, intentional rules**:
+
+1. `multiGroupFinishCandidates.ts` uses `interpolatedTiming()` to calculate **one exact crossing time per physical group**, not per rider. In a peloton remaining together, identical recorded finish times are therefore the expected bunch-arrival result rather than proof of a race bug. The group-computed speed derives from the entire group, so this also highlights a real limitation: individual riders cannot independently vary distance while still assigned to that group.
+2. Within the same interpolated group crossing, the candidate comparator assigns rank primarily by **sprint**, secondarily acceleration, then remaining energy, then lexical rider ID. `applyMultiGroupFinish.ts` deliberately assigns **distinct sequential finish positions** but copies the same group crossing time into riders/results. The synthetic strength gradient `buildInput()` modifies the chosen rider's **flat, climbing, acceleration, stamina, resistance, recovery** to 76/82/86/90/94, but **does not modify sprint**. Thus the earlier "rider 126th with high strength" needs investigation as a **sprint-score mismatch** rather than assuming finishing rank is broken.
+
+Added exact fixed-seed offline audit `scripts/uranius-finish-rank-audit.ts` with fail-closed `scripts/run-uranius-finish-rank-audit.mjs`, plus static/transpile guard `tests/uraniusFinishRankAuditBoundary.test.mjs`. It runs only **two complete 120 km, 128-rider no-order controls**, strength 76 and strength 94, using the existing genuine stage creation and calibrated runner. It reports selected rider's full sprint/acceleration/energy rank, rank by actual finish, group shared times, classification comparator and top/bottom five. It fails if grouped time-sharing or actual ranked finishing contradicts its established comparator. It deliberately **does not generate artificial rider time differences, force finishing winners, change sprint ability, or alter canonical race rules**.
+
+Test and audit owner run (not yet executed):
+
+```bat
+git pull origin main
+node --test tests\\uraniusFinishRankAuditBoundary.test.mjs
+node scripts\\run-uranius-finish-rank-audit.mjs --out finish-rank-audit-local.json
+```
+
+If exact group ranking comparator is not satisfied, **inspect and explain** actual state/finish order rather than treating the audit's assumption as proven. Once verified, separate *physical group crossing* from *rank order* in sporting requirements. Do not invent staggered rider times solely to avoid ties. Original 18/18 funded-leadership tests and rotation E2E remain verified. No production changes, official **49/60 sporting NO GO**.
