@@ -1750,3 +1750,19 @@ node scripts\run-uranius-physical-catch-matrix.mjs --boundary-only
 node scripts\run-uranius-physical-catch-matrix.mjs --out physical-catch-matrix-local.json
 ```
 Expected report contains 5 boundary cases / 4 boundary gates, and full matrix 8 races / 13 gates. No execution evidence yet; do not claim PASS until results arrive. **49/60 sporting NO GO**, experimental rule default OFF.
+
+
+## 2026-11-25 — Physical-only catch matrix OWNER VERIFIED: 4/4 boundary gates and 13/13 full gates
+
+Owner pulled `2a031a2`, ran both documented commands, and supplied complete console evidence. All five controlled fixtures passed: +30m and +1mm remain separate in physical-only mode; exact equality and -30m correctly rejoin; legacy +30m reabsorbs; membership, input immutability, energy, clock and idempotence checks all TRUE. All eight authentic 128-rider 120km races completed with valid ranks, attack launch and paid authorized chase. The local JSON was saved by the owner; this report records the supplied console evidence, not an independently retrieved local file.
+
+| Matched scenario | Proximity rank | Physical rank | Catch evidence |
+|---|---:|---:|---|
+| Flat, weak early, 24 chasers | 126 | 126 | Legacy 510s +24.532954m; physical 660s -9.533713m, previous +2.599621m, km 7.618705, valid membership |
+| Rolling, strong late, 8 chasers | 1 | 1 | No catch, identical 10154.087813322s finish |
+| Mountain, medium early, 24 chasers | 123 | 1 | Legacy 660s +58.353021m; physical no catch, 343 ahead-preserved ticks |
+| Mountain, strong late, 8 chasers | 1 | 1 | No catch, identical 10882.184752295s finish |
+
+All four physical cases: zero premature catches, zero stranded crossed groups, zero unauthorized charges. Maximum observed leader ledger residual across all eight runs 0.000006217054, below 0.0001 threshold. Genuine non-finish crossing observed in flat weak early scenario. Mountain medium physical chase paid 304.780992 energy vs 3.214549 with proximity; outcome is materially changed, not evidence of universal sporting calibration. The physical-only catch candidate has passed its scoped validation matrix; no rerun required.
+
+Next: make the experimental physical-catch option independently forwarded by the integrated runner without requiring birth-tick dropped-group protection, and test explicit true/false/omitted flag behavior with default regression fingerprints. Then validate interactions with multiple attacking groups, trailing attacks and finish-line crossing order before deciding canonical behavior. No default promotion, no production change, no paid resources. Official checklist remains **49/60 sporting NO GO**; broader integration and acceptance remain pending.
