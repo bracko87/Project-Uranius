@@ -77,6 +77,8 @@ export interface TerrainAwareMultiGroupMovementOptions {
   readonly experimentalBudgetedPelotonChaseEnabled?: boolean
   /** OFFLINE only: authorized pace leadership with rider-specific energy. */
   readonly experimentalFundedPelotonLeadershipEnabled?: boolean
+  /** OFFLINE: alternative to 3% funded leader model, defaults OFF. */
+  readonly experimentalCapabilityBasedLeadershipEnabled?: boolean
   readonly steepGradientSeverityEnabled?: boolean
   readonly steepGradientSeverityModel?:
     SteepGradientSeverityModel
@@ -307,13 +309,16 @@ export function calculateTerrainAwareMultiGroupMovement(
              state.currentKm<o.eligibleUntilKm&&
              riders.some(r=>r.riderId===o.riderId&&r.teamId===o.teamId)
            ).map(o=>o.riderId):[]
-        const leaderPace=options.experimentalFundedPelotonLeadershipEnabled===true&&
+        const leaderPace=(options.experimentalFundedPelotonLeadershipEnabled===true||
+          options.experimentalCapabilityBasedLeadershipEnabled===true)&&
           group.groupType==='peloton'&&aheadBreakawayDistances.length>0
           ?calculateFundedPelotonLeadership({
              riders,minimumSpeedKmh:state.input.settings.minimumSpeedKmh,
              maximumSpeedKmh:state.input.settings.maximumSpeedKmh,
              raceSecond:state.raceSecond,tickSeconds,
              eligibleOrderedRiderIds:authorizedLeaderIds,
+             experimentalCapabilityBasedFunding:
+              options.experimentalCapabilityBasedLeadershipEnabled===true,
            }):null
         const leadershipSpeedKmh=leaderPace?
           Math.min(state.input.settings.maximumSpeedKmh,
@@ -543,7 +548,8 @@ export function calculateTerrainAwareMultiGroupMovement(
       proposals,
     },
     ...((options.experimentalBudgetedPelotonChaseEnabled||
-          options.experimentalFundedPelotonLeadershipEnabled)
+          options.experimentalFundedPelotonLeadershipEnabled||
+          options.experimentalCapabilityBasedLeadershipEnabled)
       ? {experimentalPullerEnergyCosts:Object.fromEntries(
            preliminary.flatMap(entry=>entry.leaderPace?
              Object.entries(entry.leaderPace.surchargeByRiderId):
