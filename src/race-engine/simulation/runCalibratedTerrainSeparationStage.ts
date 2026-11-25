@@ -43,6 +43,8 @@ export interface RunCalibratedTerrainSeparationStageOptions {
   readonly experimentalFinishTacticsEnabled?: boolean
   /** OFFLINE POC: default-off chase speed. */
   readonly experimentalChaseOrdersEnabled?: boolean
+  /** OFFLINE only: funded selected-rider peloton chase, default OFF. */
+  readonly experimentalBudgetedPelotonChaseEnabled?: boolean
 }
 
 export interface RunCalibratedTerrainSeparationStageResult
@@ -159,6 +161,8 @@ export function runCalibratedTerrainSeparationStage(
           options.experimentalFinishTacticsEnabled ?? false,
         experimentalChaseOrdersEnabled:
           options.experimentalChaseOrdersEnabled ?? false,
+        experimentalBudgetedPelotonChaseEnabled:
+          options.experimentalBudgetedPelotonChaseEnabled ?? false,
       },
     )
 
