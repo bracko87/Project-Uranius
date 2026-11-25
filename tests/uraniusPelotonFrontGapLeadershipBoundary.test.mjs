@@ -25,6 +25,11 @@ test('compare authentic group average to authorized leadership and funded energy
 test('type syntax and offline fail closed executable',()=>{
  assert.doesNotThrow(()=>transformSync(source,{loader:'ts',format:'esm',target:'node20'}))
  assert.match(runner,/Object.values\(report.checks\).some\(x=>x!==true\)/)
+ assert.match(source,/checks,cases,note:/)
+ assert.match(runner,/Array.isArray\(report.cases\)/)
+ assert.match(runner,/report.cases.length!==3/)
+ assert.match(runner,/for\(const r of report.cases\)/)
+ assert.doesNotMatch(runner,/report.races/)
  assert.match(runner,/URANIUS REAL SOLO-TO-PELOTON GAP/)
  assert.doesNotMatch(source+runner,/@supabase|service_role|createClient\(|fetch\(|https?:\/\//i)
 })
