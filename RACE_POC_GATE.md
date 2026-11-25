@@ -1234,3 +1234,21 @@ Owner pulled `680be86`; **16/16** leadership unit, integration-boundary and E2E-
 Comparison with previous `experimentalBudgetedPelotonChaseEnabled` trial should NOT be described as a controlled head-to-head: that earlier two-rider funded chase produced **493.844570594 s** final spread with **314** paid ticks and **28.658084** extra energy; the leadership trial allowed **24 orders** with different selection and gating, 156 paid ticks and 25.864 extra energy. A plausible *hypothesis*, requiring validation, is that the leadership candidate rotates over the full set of qualifying riders before filtering to authorized chase riders; this leaves many ticks with no funded chosen leader even when 24 other nominated riders are eligible, making its chase intermittent. Do not infer this is the only issue or immediately raise the 3% ceiling. Inspect selection order and interval, and protect physiological energy budget/rotation fairness. Consider selecting eligible authorized riders **before** rotating, provided it does not turn the candidate into permanent free collective speed; test on/off hashes and energy charges. Maintain both paid policies mutually exclusive and disabled by default.
 
 Sporting gate **49/60 NO GO**; production/default race engine unchanged. No further reproduction of the verified 3-run fixture required unless candidate policy changes.
+
+
+## 2026-11-25 — Correct authorized leader rotation order (candidate policy, pending E2E)
+
+Owner previously verified **16/16** integration/leadership boundary tests and **3/3** matched full 128-rider runs, but the initial funded-leadership policy had **156 paid ticks**, 23 of 24 ordered riders charged, and still a **508.622 s** solo victory margin; default-off reference is **647.108 s**. Inspection of `pelotonLeadershipBudget.ts` proved the previously suspected selection-order issue: `calculatePelotonPaceLeadership` used the **entire group-qualified pool** to choose cyclic leaders, then `calculateFundedPelotonLeadership` removed those who lacked executed chase orders. Hence many ticks had no one left to fund even when several nominated eligible leaders existed.
+
+**Fix:** `calculatePelotonPaceLeadership` now optionally accepts `eligibleOrderedRiderIds`; when supplied, it builds the candidate pool only from riders both (a) above the entire peloton's mean capability with energy >5 and (b) explicitly authorized by real executed chase orders before rotating. An empty/weak authorized pool returns the original group mean, zero gain and no selected leader, rather than falling back to unauthorized riders. The pure legacy call without this option preserves its prior ranking/rotation. `pelotonLeadershipBudget.ts` passes authorized IDs directly through; runtime movement/energy remain the same default-OFF single-flag integration already owner tested. Added 60-tick regression that keeps authorized strong leaders nominated and charged, plus an authorized-only rotation and no-fallback test.
+
+**Important:** This change may make funded effort much more *continuous* and raise cumulative leader fatigue/energy spending. It is **not** an approved sporting tuning change. The prior 156-tick and 508.622 s results must be compared against fresh on/off runs to see what changed, including charged rider count, group speed and energy ledger conservation. The 3% speed cap and rider 5-energy reserve remain unchanged; don't raise bonus or activate production. New tests and new E2E result still **unverified as of commit**.
+
+Owner CMD:
+```bat
+git pull origin main
+node --test tests\\uraniusPelotonPaceLeadership.test.mjs tests\\uraniusPelotonLeadershipBudget.test.mjs tests\\uraniusFundedLeadershipIntegrationBoundary.test.mjs tests\\uraniusFundedLeadershipE2EBoundary.test.mjs
+node scripts\\run-uranius-funded-leadership-e2e.mjs --out funded-leadership-rotation-local.json
+```
+
+Official **49/60 sporting NO GO**; both funded pace policy options remain default OFF. No production mutation.
