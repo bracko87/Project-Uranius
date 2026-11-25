@@ -70,4 +70,7 @@ assert.deepEqual(first.finalRiderStates.map(r=>r.riderId).sort(),input.riders.ma
 assert.deepEqual(first.finalRiderStates.map(r=>r.finishPosition).sort((a,b)=>Number(a)-Number(b)),[1,2,3,4,5,6,7,8,9,10])
 assert.ok(first.finalRiderStates.every(r=>r.finished&&r.stageStatus==='finished'&&typeof r.finishTimeSeconds==='number'&&r.finishTimeSeconds>0))
 assert.equal(JSON.stringify(packet),before)
-console.log(JSON.stringify({finishers:10,teams:2,outputSha256:digest(first),frames:first.snapshots.length,events:first.events.length,deterministic:true,negativePacketsRejected:6,fixtureUnchanged:true,mode:'existing_v1',syntheticCourse:true,syntheticEngineDefaults:true}))
+const report={finishers:10,teams:2,outputSha256:digest(first),frames:first.snapshots.length,events:first.events.length,deterministic:true,negativePacketsRejected:6,fixtureUnchanged:true,mode:'existing_v1',syntheticCourse:true,syntheticEngineDefaults:true}
+const args=process.argv.slice(2)
+assert.ok(args.length===0||(args.length===1&&args[0]==='--emit-private-review-artifact'))
+console.log(JSON.stringify(args.length?{...report,artifact:{inputText:JSON.stringify(input),outputText:JSON.stringify(first),inputSha256:digest(input),outputSha256:digest(first)}}:report))
