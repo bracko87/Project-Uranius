@@ -1085,3 +1085,22 @@ node scripts\\run-uranius-strength-gradient.mjs --out strength-gradient-local.js
 ```
 
 **Status:** Historical 15-race baseline VERIFIED; counterfactual runtime pending. Sporting release gate **49/60 NO GO**. Do not change canonical/default behavior.
+
+
+## 2026-11-25 — Owner validates six separating-catch counterfactuals; reject as standalone fix
+
+Owner pulled `ec1d8f6`. All **7/7** static/transpile tests passed. The original **15/15** strength races and additional **6/6** default-off separating-breakaway counterfactuals completed, with all 12 runtime technical checks TRUE. Crucially, all verified 15 original results/hashes remained unchanged.
+
+Matched comparisons:
+- Strength **76 early**: baseline caught, rank 126, 0s spread; counterfactual not caught, rank 1, **150.571s** finishing spread, 333 positive-gap ticks.
+- Strength **82 early**: baseline caught, rank 126; counterfactual rank 1 with **455.446s** spread, 323 positive-gap ticks.
+- Strength **86 early**: baseline caught, rank 126; counterfactual rank 1 with **647.108s** spread, 317 positive-gap ticks.
+- Strength **90 early**: both policies unchanged, rank 1, **831.439s** spread.
+- Strength **76 late**: baseline caught, rank 126; counterfactual rank 1 with **62.305s** spread, 143 positive-gap ticks.
+- Strength **82 late**: both policies unchanged, rank 1, **191.371s** spread.
+
+**Decision:** The opt-in `experimentalPreserveSeparatingBreakaways` is **not accepted for canonical release or default enablement**. It corrects the unphysical capture of a rider moving away from the peloton, but unmasking that movement exposes a severe independent solo-vs-peloton pace imbalance. Simply disabling the proximity catch turns even moderate attacks into winning solo runs. Any sporting solution must address realistic peloton tactical response and leader selection/organized effort, not merely turn a catch switch ON.
+
+Source reviewed: `pelotonPace.ts` uses group-wide mean attributes for group pace (flat 45%, stamina 25%, resistance 20%, teamwork 10%), meaning 127 mixed athletes set peloton effort despite potential stronger designated pullers. `experimentalChasePace.ts` exists but **requires an actually executed valid chase order** and increases peloton speed only while an ahead breakaway has at least 5s gap; caps additional pace at **1.5%** for at least two chase instructions. `groupCooperationPace.ts` is an independent helper with **3%** theoretical cap but it is not automatically wired to the calibrated stage. `finalStagePelotonEffort.ts` exists as a separate pure helper, ramping only after 70% distance with at most **3%**, and is not wired to the integrated runner. Neither current static chase-cap experiment nor uncommanded automatic peloton speedup should be treated as verified historical realism. Before adding a new simulation matrix, design a plausible pace-driving and tactical chase mechanism and define expected energy/effort budget and comparison controls, or audit the support already provided for group leadership.
+
+**Verified technical correctness != sporting calibration**. Official release status remains **49/60 NO GO**; no production changes. The next development step should focus on *rider-contributed peloton chase effort and physically grounded coordination* with separate energy charge, while preserving all existing hashes when default-off. Do not repeatedly rerun the same 15+6 scenario without a new tested mechanism.
