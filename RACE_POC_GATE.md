@@ -1787,3 +1787,8 @@ git pull origin main
 node scripts\run-uranius-physical-catch-integration.mjs --out physical-catch-integration-local.json
 ```
 Expect 11/11 gates, pending execution. The test saves and displays failed gate evidence before exiting nonzero; do not interpret missing observations as a PASS. The previously verified eight-race physical catch matrix remains recorded; no immediate repeat is required for this focused check. Final candidate promotion requires broader regression against prior canonical golden hashes and sporting acceptance. **49/60 sporting NO GO; no production/database changes or paid resources.**
+
+
+### Owner execution correction — 2026-11-25
+
+Owner pulled `f660e07`; esbuild succeeded, but the integrated runtime stopped at `calculateRiderTerrainCapability` because the historical ten-rider fixture lacks `timeTrial` and `raceIq` (both required by this engine path). No integration gate results were produced. Commit `bd8c4ea` enriches only this new test's local input with neutral 75 for both missing attributes, including the two default-stage comparisons; existing shared fixture, physics, and prior golden baselines are untouched. Re-run the same integration command after pulling main. Verification remains pending; 49/60 sporting NO GO.
