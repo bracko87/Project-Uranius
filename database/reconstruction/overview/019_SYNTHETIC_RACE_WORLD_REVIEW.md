@@ -26,3 +26,14 @@ node tests\uraniusRider018FullHistoryNativePg17.mjs --race-world-seed-review --d
 ```
 
 Expected new gate result: 6/6, not yet executed. Existing historical replay is a prerequisite in the same run, not a request to repeat separate old tests. Following success, freeze exact candidate bytes, independently verify hosted baseline and request explicit scope approval before any data insert into hosted Uranius. Separate guarded installation and read-back must preserve existing grants and paused state. Calendar full page, startlists, actual race simulation and accounting remain open. **49/60 unchanged. No paid infrastructure or production modifications.**
+
+
+## 2026-11-25 — Owner native verification PASS, exact frozen release staged
+
+Owner pulled `614825d` and executed the documented disposable PG17 command. All 57 historical checks and six new seed checks passed (63/63 total); scratch PGDATA cleaned up. Exact candidate rejected non-TLS/wrong role, full rollback removed temporary policies and rows, success produced 3 races / 4 stages / 2 accepted entries / 2 preparations with FORCE RLS and identical reader policy definitions. Real JWT A/B reads each returned only own upcoming card and both shared today's event; unknown owners had no private rows, anon and restricted writes denied, repeat rejected, 14 ledger entries/paused clock/200 riders preserved. The previous "not executed" note is superseded for the native test only.
+
+Frozen candidate SHA-256: `7e5f8a727dfc44784c0a8abf48c51b8ddfb19766a2cc319b7ff31686a068283b`.
+Frozen `019_install_manifest_REVIEW_ONLY.json` SHA-256: `98eb06ca99761f229caf680ff36e4ded9bc44d241d6a2ee274811f912d815cdf`.
+Hash calculation independently cross-checked against the known pinned 018 manifest digest. Candidate SQL unchanged (Git blob 9b846c4133b3be2ccc85ced9bf57afa588de3cd6).
+
+Dormant `scripts/apply-uranius-race-world-019.mjs` and `scripts/run-approved-race-world-019-windows.ps1` use the previously accepted dedicated migrator/direct verify-full TLS pattern. They require exact approved manifest digest, local typed confirmation and private local password; run hash review before connecting; candidate plus ledger insert and postflight are one transaction. The new installer wrapper has not itself been run; candidate native verification does not prove wrapper execution. Do not run installer before separately explicit target- and hash-scoped owner approval and fresh read-only preflight. No automatic retry. On success independently verify 15 exact ledger pairs, 3/4/2/2 records, all four FORCE RLS policies, no new public/reader write privileges, paused clock and existing roster. Then exercise populated A/B Overview and build Calendar page. No production or paid infrastructure changes. **49/60 unchanged.**
