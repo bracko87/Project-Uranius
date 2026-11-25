@@ -1462,12 +1462,38 @@ export function simulateIntegratedTerrainSeparationTick(
         .pressureDurationByRiderId,
   }
 
+  // Use the same linear crossing model as sub-tick finish detection,
+  // before reconciliation can erase the original group identity.
+  const experimentalFinishCrossingSecondsByGroupId: Record<string, number> = {}
+  if (options.experimentalRequirePhysicalBreakawayCatch === true &&
+      subTickFinishInterpolationEnabled) {
+    const stageDistance = stateBeforeBreakawayReconciliation.stageDistanceKm
+    const tickSeconds = movement.movement.tickSeconds
+    for (const proposal of movement.movement.proposals) {
+      const group = stateBeforeBreakawayReconciliation.groups[proposal.groupId]
+      if (!group?.active || group.distanceKm < stageDistance) continue
+      const remainingKm = stageDistance - proposal.previousDistanceKm
+      if (remainingKm <= 0) {
+        experimentalFinishCrossingSecondsByGroupId[proposal.groupId] = 0
+      } else if (proposal.appliedSpeedKmh > 0) {
+        const crossingSeconds = remainingKm * 3600 / proposal.appliedSpeedKmh
+        if (crossingSeconds <= tickSeconds + 1e-6)
+          experimentalFinishCrossingSecondsByGroupId[proposal.groupId] =
+            Math.min(tickSeconds, crossingSeconds)
+      }
+    }
+  }
+
   const reconciledBreakaways =
     reconcileBreakawayGroups(
       stateBeforeBreakawayReconciliation,
       {
         experimentalRequirePhysicalBreakawayCatch:
           options.experimentalRequirePhysicalBreakawayCatch === true,
+        ...(options.experimentalRequirePhysicalBreakawayCatch === true &&
+            subTickFinishInterpolationEnabled
+          ? { experimentalFinishCrossingSecondsByGroupId }
+          : {}),
         ...(options.experimentalPreserveBirthTickDroppedGroups
         ? {
             experimentalPreserveRecedingDroppedGroups:
