@@ -1,0 +1,23 @@
+{
+  "scope": "isolated_read_only_snapshot",
+  "projectRef": "sdtsivgtcaoaeoihcwzd",
+  "date": "2026-11-26",
+  "checks": {
+    "project_identity": true,
+    "pg17": true,
+    "exact_ledger": true,
+    "exact_completed_jobs": true,
+    "archive_exact": true,
+    "replay_count": true,
+    "clock_paused": true,
+    "worker_dormant": true,
+    "no_worker_delegation": true,
+    "scheduler_absent": true,
+    "zero_cost_preparation": true,
+    "local_fixtures_absent": true,
+    "force_rls": true,
+    "job_policy_scope": true,
+    "no_client_raw_access": true,
+    "worker_narrow_access": true
+  }
+}
