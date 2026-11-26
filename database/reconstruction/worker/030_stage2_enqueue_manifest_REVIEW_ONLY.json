@@ -1,0 +1,83 @@
+{
+  "projectRef": "sdtsivgtcaoaeoihcwzd",
+  "operation": "single_stage2_enqueue",
+  "status": "REVIEW_ONLY_REQUIRES_EXPLICIT_APPROVAL",
+  "expectedLedgerEntries": 20,
+  "stageId": "263edaea-28a2-438a-81b8-f7ca1fcd6d9f",
+  "sourceJobId": "e3fe3c1e-7eb3-40c1-9f44-d8e38ce359f0",
+  "sourceInputSha256": "f10fdaf48b87a4b3fcef2f075d50e6ab44b2f0f846a550819ecb7fee4337182a",
+  "sourceOutputSha256": "6ca7d849e4aa4c2ac3257380f4a0a2a841223ebe8ff0775df592cc76a40dd150",
+  "stage2InputSha256": "d260f02b7447fa9caf40d41bd563197735ebf9dee05ae2bb553d4d89a70510f7",
+  "files": [
+    {
+      "path": "database/reconstruction/worker/030_stage2_enqueue_guard_REVIEW_ONLY.sql",
+      "sha256": "38bfd2baa512f4240cef29844f125aa935d97304e8c698ccb067bdd30973e81b"
+    },
+    {
+      "path": "database/reconstruction/worker/030_stage2_enqueue_postflight_REVIEW_ONLY.sql",
+      "sha256": "4aebd271a9ebb210b4cc339ec52fbda10d6870c5003f4b8126d9fab2107f025c"
+    },
+    {
+      "path": "database/reconstruction/worker/027_calendar_snapshot_REVIEW_ONLY.sql",
+      "sha256": "c326031012b08b5fcb19d09308cc49b09c6f3c13fda1aeac2a40869d377e98d3"
+    },
+    {
+      "path": "database/reconstruction/worker/030_stage2_preview_REVIEW_ONLY.json",
+      "sha256": "ac6c73355784cf51f49e13809b5d418f3915cdc8e87ad170fa4bd6242a6f40e1"
+    },
+    {
+      "path": "scripts/uranius-stage-carryover.mjs",
+      "sha256": "b17aeb94dd51e8263e4928cfc227e1ec65e4c1de7a0893c55543853ddb5c8d80"
+    },
+    {
+      "path": "scripts/uranius-calendar-dispatch.mjs",
+      "sha256": "6bf1a2627f9b78f237f16c7d2c2547fb1f009fd773c1cb8a86365842295bf811"
+    },
+    {
+      "path": "scripts/uranius-calendar-job-worker.mjs",
+      "sha256": "267fc18332d9c888c85cc478ae3b9557ecab12940782aa4b9c477da4ce12bcdf"
+    },
+    {
+      "path": "scripts/uranius-race-job-worker.mjs",
+      "sha256": "e8c0c3bec272b076f0649ae53efd7a6773dec6107fdb2e24ceb3eaf8476309cd"
+    },
+    {
+      "path": "scripts/apply-uranius-stage2-030.mjs",
+      "sha256": "6bb5c1646533fdb609d261be0e23607961755d064749cb02e7a39c9b3cfaf0fa"
+    },
+    {
+      "path": "scripts/run-approved-stage2-030-windows.ps1",
+      "sha256": "d5d6b77e2709efa3a4c467209d42d33ebda644db62767bcc382d6d82a692018a"
+    },
+    {
+      "path": "scripts/assert-sandbox-target.mjs",
+      "sha256": "f129ef146ff4bd549b74af83ae774047f4f5055a42c851a4c0b95196130b24b6"
+    },
+    {
+      "path": "scripts/run-uranius-psql-batch.mjs",
+      "sha256": "4a0c0b81f2ba59cb1f9fa542d838348e1b1c2f777a27fd526b19b1950933d712"
+    },
+    {
+      "path": "database/reconstruction/worker/027_install_manifest_REVIEW_ONLY.json",
+      "sha256": "ad130138dab518b5ab832b8fb4ed8667e7334d3ed555b3951f6f2ee8e0b0e2dd"
+    },
+    {
+      "path": "database/reconstruction/worker/028_one_job_execution_manifest_REVIEW_ONLY.json",
+      "sha256": "02f3ff3c6f5150c6478be0c1e317d4f3ccf78ee516c525cb01ee41ed62acbc57"
+    }
+  ],
+  "scope": {
+    "enqueueExactlyOneStage2Job": true,
+    "carryoverRule": "uranius_stage_carryover_review_v1",
+    "preserveBothCompletedJobs": true,
+    "noSchemaChange": true,
+    "noLedgerChange": true,
+    "noWorkerLogin": true,
+    "noExecution": true,
+    "noScheduler": true,
+    "noClockAdvance": true,
+    "noOfficialResults": true,
+    "noFinance": true,
+    "noProduction": true
+  }
+}
