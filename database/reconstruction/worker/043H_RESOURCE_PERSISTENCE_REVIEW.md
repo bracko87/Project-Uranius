@@ -17,3 +17,7 @@ git pull origin main
 node tests\uraniusResourcePersistenceNativePg17.mjs --disposable-native-pg17 --postgres-bin "C:\Users\Aleks\Desktop\Project-Uranius\.uranius-pin-review\postgresql-17.12-portable\bin"
 ```
 Expected PASS 7/7 resource persistence checks; no hosted connection; disposable cluster cleaned up. No private catalogue or policy file required for this resource-only test. Next integrate actual private catalogue-backed health persistence and independently validated manifest/authority, including incident mapping activation (still unverified, do not guess). Overall 49/60; hosted activation BLOCKED.
+
+## Owner native acceptance
+
+Owner pulled 9e4f61c..6c86c0a and ran the prescribed disposable PG17 harness. All 7/7 groups PASS, including concurrent shared stock, wear and same-run retries, shortages, atomic rollback and immutable effects. Cleanup confirmed. Scoped 043H acceptance CLOSED, 043A–H 66/66 native groups. No hosted connection. Overall 49/60; proceed to 043I catalogue-bound health persistence.
