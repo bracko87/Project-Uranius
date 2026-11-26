@@ -20,3 +20,8 @@ Verified two immutable tour output digests again in SQL. Two stages and 20 finis
 
 ## Next implementation gate
 Recover original writer definitions and exact latest dependencies for `race_engine_write_cumulative_classifications_v1`, `race_engine_apply_international_points_after_stage_v1`, `generate_race_prize_awards_v1`, `race_engine_pay_prize_awards_v1`, `race_engine_apply_stage_fatigue_v1`, stage publication lifecycle/authority, and relation constraints/ACLs. Sanitized schema inventory lacks verified writer definitions; original GitHub history yielded core finalizer and fatigue fixes, but current exact awarding/payment body and data contracts not established. Use source-only repository evidence first; if unavailable obtain separately authorized metadata-only inspection of the original database catalog (no rows, no calls to functions, no writes). Build isolated transaction/idempotency contract then apply separately approved native-tested migration; never treat a completed private simulation as authorization to pay or publish. Maintain 49/60; U5.02 remains blocked on original backend parity, U5.04/U5.09 in progress. No additional infrastructure cost.
+
+
+## 2026-11-26 — owner runtime acceptance
+
+Owner pulled 404e0bb and ran the final Node suite together with 033: all 20 tests PASS, including all nine classification cases and cancellation refusal. Scoped offline classification preview accepted; V1 integration separately validated in 035. No hosted connection.
