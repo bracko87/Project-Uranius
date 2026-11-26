@@ -1,0 +1,23 @@
+# 040 — original overnight recovery and post-stage breakaway fatigue review
+
+2026-11-26. Owner requested continued development. 039 owner native output confirms first four boundary groups PASS, but the final two actual-engine groups and final 6/6 line were not supplied. Keep 039 open, do not assume acceptance. 040 independent of 039. No hosted DB access, production changes, financial effects, infrastructure changes or clock progression.
+
+## Source evidence
+
+- Original ProPeloton-Manager commit 477d3748c2f90af2a71c811180b31a5b82b9a21c, scripts/operations/align_authoritative_race_day_recovery_v2.sql: ordinary official-race night does not reapply fatigue load or consecutive-heavy-day fatigue charge already covered by the stage writer. Raw activity load still drives heavy-day and health-risk signals. Intrinsic recovery max(3, round(4 + clamped recovery*0.07 + morale adjustment)); morale +1 at >=80, -1 below 40; activity/doctor bonuses added, developing active campus 5% rounded uplift; clamp fatigue after recovery BEFORE adding positive travel, clamp again. Health outcomes not implemented.
+- Preserved reference/database/20261109165900_handle_later_ticked_stage_seed_v1.sql.txt (blob c39f9b5ead4f8e6fc7d460d7454705d1c6a968a1): delayed-stage reconstruction uses prior official completed/noncancelled stage, nightly receipt, prior publication/completion and later daily receipt coverage. Same-day no overnight. Correctly ordered receipt with no later receipt unchanged. Delayed reconstruction only for one-night gap. Previous end rounded to integer minus recovery plus positive travel THEN clamp; current stamina + (current fatigue - corrected fatigue)*0.45 bounded 1–100. Distinct clamp order preserved. No missing-row fallback in review; require explicit complete synthetic inputs.
+- Preserved reference/database/20261109092000_gate_future_stages_on_daily_recovery_v1.sql.txt (blob b0b99a557ef8e81f0b16bf8e527f42da47c28f72): daily recovery receipt and freshness gate. Review flags are synthetic declarations, not official DB receipts.
+- Original ProPeloton-Manager commit b2a763a6b62b001b63ebbdd68d9a4e3454dce5e2, src/universal-race-engine/applyUniversalBreakawayRecoveryV2.mjs (blob 38cba4239e5ce88c63bcca87916f10466310ba4f): union physical escape intervals, 20/50/100km progressive debt (0.15/0.28/0.45 per km beyond each threshold), replace prior debt rather than accumulate twice, gross*multiplier minus recovery bonus floor zero, fatigue cap100, intrinsic recovery estimates. Original commit a0d18a7937540ce8589c73b13891061aae2fde92 diff corroborates tier math. Original base stage workload calculator is large and full contents were not returned by connector; no claim of full base-fatigue parity. No raw original production definitions copied.
+
+## Implementation and evidence
+
+scripts/uranius-original-fatigue-review.mjs (c67962ff1004bf2cec8f90db7d766cc790cc30a0): pure review of explicitly provided recovery inputs, ordinary race night, delayed stage correction, physical exposure union and debt replacement, capped stage adjustment and recovery-day estimates. DNS excluded, finished/DNF/OTL eligible under synthetic evidence only. All outputs unofficial; no fatigue inferred from remaining energy. Gross base fatigue, multiplier, recovery bonus and exposure/receipt evidence must be supplied explicitly. Existing engine and 029/031 frozen carryover jobs unchanged. No actual race state, official fatigue write or health evaluation.
+
+tests/uraniusOriginalFatigueReview.test.mjs (38e8e0f34171c856a723e4c1dfa21c927312c282): exact re-fetched committed logic and all nine test functions evaluated in development JS with assertion shim; 9/9 PASS. Native Node module/import verification pending. Includes morale/doctor/campus, race load double-charge prevention, differing clamp order, same-day/no double night, delayed later-tick correction, missing/multi-day/duplicate refusals, 20/50/100/120km debt and overlap union, existing debt replacement and cap, DNS refusal. Example prior end60, recovery skill75, morale75, no staff/activity modifiers, travel2 => recovery9, fatigue53; late correction stamina91 at current fatigue20 => 76.15. Example 100km physical breakaway contributes18.5 additional load. These are synthetic calculations, not actual rider data.
+
+Run only new test:
+```bat
+git pull origin main
+node --test tests\uraniusOriginalFatigueReview.test.mjs
+```
+Expected 9/9. If 039 finished later, provide its final two PASS lines or error rather than repeat accepted tests. Next recover full original base stage fatigue formula and adapt actual engine motion/effects receipt evidence; then equipment/supplies/health and integrated authoritative finalization. No production or hosted install authorized. Overall 49/60 verified.
