@@ -13,3 +13,20 @@ node --test tests\uraniusMultistageCarryoverReview.test.mjs
 Expected 7/7. No private policy file, DB or credentials required for this slice.
 
 Next: bind these receipts to actual synthetic scoring/classification and exact private policy adapter, prove immutable paid prior awards and second-stage transaction rollback/concurrent retry in a disposable PG17 harness. Injury case handover, shared resource owner and actual authority/writers remain pending. Do not install review fixtures hosted. 043C remains IN_PROGRESS; overall 49/60.
+
+## Owner native acceptance and second slice — 2026-11-26
+
+Owner fast-forwarded be61fa6..e4c836f and ran the prescribed native Node suite: 7/7 PASS, no failures/skips/cancellations, 222.3422ms. First slice scoped acceptance CLOSED.
+
+Second slice: scripts/uranius-tour-settlement-review.mjs (2ecbace39c8281a00c7fe636c5fbf811947bd7a7) composes exact 038 private policy loader, synthetic engine-output scoring, original 043B workload/Phase9 carryover and original V1 classification/awards. Exactly two ordinary stages, complete finisher fields only (withdrawal behavior separately accepted in carryover). Validates source IDs, distance, start fatigue/energy, final energy, penalty coverage, category roster, immutable policy/club/youth/previous receipt and prior award regeneration. Final stage builds cumulative classifications and prior/current prize schedules with original per-award tax. Full previous packet included for comparison; expected hash requires trusted fixture caller, not authentication. No official results or payment authority.
+
+043C_tour_settlement_native_REVIEW_ONLY.sql (28f253a78b24f906187b52e4ceecfaba441b14d7, resource key precedence correction 308c8131b49e65721c7ca241604ebefce78c8cb2): separate local-only wrapper around unchanged 035. Same race advisory lock, prior exact packet/authority and full award/gross/tax/entry snapshot guard, resource compare-and-set and previous effect match, one receipt per stage, injected failure after all postings, exact retries and revoked public access. Trusted fixture admin only; does not authorize arbitrary direct DML or verify production authority. No hosted installation.
+
+tests/uraniusTourSettlementNativePg17.mjs (b731117a10a1d2468776a9ef3edb253d31d3f066): exact private snapshot required at runtime; category 2.2 minimum team/roster constraints derived from file, two 100km synthetic races with changed finish order and explicit sprint/KOM/bonus scoring. Re-fetched exact source files and exercised first two harness groups in development JS using synthetic substitute policy (not the actual private policy), canonical string equality substituted for hashing, assertion and structured clone shims. Both groups passed this limited preflight; native Node with actual policy and PostgreSQL SQL execution are pending. Five database checks: prior-stage gate, atomic rollback, tampered prior award refusal, concurrent exactly-once final stage with balanced ledger and prior immutability, both-stage exact retries and outsider denial.
+
+Run only new harness from existing isolated checkout (same approved private snapshot already used in 042):
+```bat
+git pull origin main
+node tests\uraniusTourSettlementNativePg17.mjs --disposable-native-pg17 --postgres-bin "C:\Users\Aleks\Desktop\Project-Uranius\.uranius-pin-review\postgresql-17.12-portable\bin" --policy-file "%USERPROFILE%\Downloads\uranius-037-policy-review.json"
+```
+Expected 7/7. Disposable localhost cluster only; no hosted connection. Actual authoritative input/health catalogue/shared owner/writers, general multi-stage withdrawals and activation gate remain outstanding. Overall 49/60 verified; U5.09 IN_PROGRESS. No production or hosted changes.
