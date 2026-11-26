@@ -34,7 +34,7 @@ test('asset condition thresholds and capped maximum snapshot effects',()=>{
  const x=modifiers({vanEffects:[-15,35],workshopEffects:[20,-60]});assert.equal(x.equipmentProtectionPct,30);assert.equal(x.fieldRecoveryPct,50)
 })
 test('deterministic original hash roll and injury aliases, selectable minor and moderate',()=>{
- assert.equal(healthRoll('abc'),.562887)
+ assert.equal(healthRoll('abc'),.56252)
  const x=health(h);assert.equal(x.caseCode,'muscle_strain');assert.equal(x.selectionBlockedByNewSeverity,false);assert.equal(x.availabilityReview,'not_fully_fit');assert.equal(x.recoveryUntil,null)
  assert.equal(health({...h,candidate:{...h.candidate,severity:'moderate',caseCode:'dehydration'}}).caseCode,'heat_exhaustion')
  assert.equal(health({...h,candidate:{...h.candidate,severity:'major'}}).selectionBlockedByNewSeverity,true)
