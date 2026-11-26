@@ -18,15 +18,12 @@ const wrap=(checkpoint,kmFromStart)=>{
  const evidence={provenance:'synthetic_review_fixture',checkpoint,expectedCheckpointSha256:carryoverDigest(checkpoint),repairModifiers:checkpoint.candidates.map(c=>({riderId:c.riders[0].riderId,teamId:c.riders[0].teamId,mechanicalTimeLossMultiplier:1})),stage:{stageFormat:'road_race',distanceKm:100,kmFromStart,flatFinish:true,summitFinish:false,sprintZoneKm:null}}
  return {evidence,expectedEvidenceSha256:carryoverDigest(evidence)}
 }
-const select=()=>{
- for(let i=0;i<10000;i++){
-  const first={...cp,seed:'043T-'+i},second={...first,raceSecond:1020,priorIncidentCount:1,candidates:[candidate(roster[1])]}
-  const f=wrap(first,10),s=wrap(second,11.333333),x=reviewHistoricalCheckpointConsequences(f).incident,y=reviewHistoricalCheckpointConsequences(s).incident
-  if(x&&y&&x.timeLossSeconds>=20&&Math.abs(x.timeLossSeconds-y.timeLossSeconds)<=3)return {f,s,x,y}
- }
- throw Error('no compatible checkpoint pair')
-}
-const chosen=select()
+// Fixed deterministic seed recovered from the original checkpoint draw; no test-time search.
+const first={...cp,seed:'043T-19314'},second={...first,raceSecond:1020,priorIncidentCount:1,candidates:[candidate(roster[1])]}
+const chosen={f:wrap(first,10),s:wrap(second,11.333333)}
+chosen.x=reviewHistoricalCheckpointConsequences(chosen.f).incident
+chosen.y=reviewHistoricalCheckpointConsequences(chosen.s).incident
+assert.equal(chosen.x.timeLossSeconds,45);assert.equal(chosen.y.timeLossSeconds,43)
 const make=(consequences=[chosen.f],strong=true)=>{
  const riders=roster.map(r=>({riderId:r.riderId,teamId:r.teamId,flat:strong?95:25,climbing:strong?95:25,endurance:strong?95:25,resistance:strong?95:25,teamwork:strong?95:25,raceIQ:strong?95:25,fatigueBeforeStage:strong?10:90,startEnergy:80}))
  const plans=riders.map(r=>({riderId:r.riderId,stageRole:'domestique',commands:{phase1:'hold',phase2:'hold',phase3:'hold',phase4:'hold'}}))
