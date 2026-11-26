@@ -74,7 +74,7 @@ export function reviewEquipmentWear({provenance,runId,stageId,distanceKm,complet
 }
 const aliases={minor_strain:'muscle_strain',viral_illness:'respiratory_infection',viral_infection:'respiratory_infection',illness:'flu',dehydration:'heat_exhaustion'}
 const severity={minor:1,moderate:2,major:3}
-const normalize=x=>{req(typeof x==='string'&&x.trim().length>0,'case code missing');const k=x.trim().toLowerCase();return aliases[k]??k}
+const normalize=x=>{req(typeof x==='string'&&x.trim().length>0,'case code missing');const k=x.trim().toLowerCase();return Object.hasOwn(aliases,k)?aliases[k]:k}
 export function healthRoll(seed){
  req(typeof seed==='string'&&seed.length>0,'seed required')
  const i=parseInt(createHash('md5').update(seed,'utf8').digest('hex').slice(0,12),16)
