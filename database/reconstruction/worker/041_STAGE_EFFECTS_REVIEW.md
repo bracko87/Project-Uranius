@@ -19,3 +19,7 @@ node --test tests\uraniusStageEffectsReview.test.mjs
 ```
 
 Next recover base stage workload and canonical effects writer contracts, authoritative roster/point/supply/equipment/health receipts, and resolve 039 full-engine acceptance. Then integrated finalization with transactional effect rollback and dedup in disposable native database. No hosted integration authorized. 49/60 verified; U5.09 still in progress.
+
+## 2026-11-26 — owner native acceptance
+
+Owner pulled 3f2a466 and ran node --test tests\uraniusStageEffectsReview.test.mjs: 8/8 PASS, zero failures, cancellations or skips. Native Node crypto and module execution confirmed. Scoped 041 offline acceptance CLOSED. Canonical consumption/wear writers, health catalogue and actual incident generation remain unresolved; no authoritative integration or hosted effects. No repetition of accepted tests unless relevant code changes. 039 remains four of six confirmed. Next 042 integrated synthetic transaction review, with original-source gaps remaining explicit release blockers.
