@@ -1,0 +1,12 @@
+# Operation 028 — first hosted novel calendar race, REVIEW ONLY
+
+027 is accepted. Read-only fresh preflight: 20 exact ledger pairs, two jobs, one exact queued Mountain Tour Stage 1 job e3fe3c1e-7eb3-40c1-9f44-d8e38ce359f0, original Flat Classic completed job preserved, zero Stage 2 jobs, dormant worker, zero sessions, no scheduler, paused S1D1. No database changes.
+
+Frozen execution manifest SHA-256 02f3ff3c6f5150c6478be0c1e317d4f3ccf78ee516c525cb01ee41ed62acbc57 pins eight files including unchanged native-tested calendar worker, original claim/fencing code, pure engine and accepted 027 manifest. New runner scripts/run-uranius-calendar-stage-028.mjs adapts accepted 026 bounded direct-TLS procedure. Exact 20 ledger pairs and both job identities checked before activation, one due queued job, no expected result, exact input SHA-256 f10fdaf48b87a4b3fcef2f075d50e6ab44b2f0f846a550819ecb7fee4337182a. Admin local credential only for bounded temporary worker login and restore; random credential generated in memory, maximum five-minute password validity, advisory lock shared with 026, cleanup finally restores NOLOGIN and removes password. Restricted worker claims job, executes unchanged pure engine twice (60s maximum per child, 180s lease), validates output identity and equal bytes, persists one result digest, second claim idle, restores NOLOGIN. Independent hosted postflight required. No scheduler, Stage 2, official results, game clock advance, financial effects, original production or additional infrastructure. No new archive/replay publication in this operation. New wrapper source-reviewed, not runtime-tested here; prior 7/7 native and 026 hosted acceptance retained. If interrupted, expiry prevents new password connections after five minutes but does not terminate existing sessions; independently confirm NOLOGIN/cleanup before retry.
+
+After separate exact approval, owner-local launcher:
+```bat
+git pull origin main
+powershell -NoProfile -File scripts\run-approved-calendar-stage-028-windows.ps1 -CaFile "%USERPROFILE%\Downloads\prod-ca-2021.crt" -PostgresBin "C:\Users\Aleks\Desktop\Project-Uranius\.uranius-pin-review\postgresql-17.12-portable\bin" -ApprovedManifestSha256 "02f3ff3c6f5150c6478be0c1e317d4f3ccf78ee516c525cb01ee41ed62acbc57"
+```
+Confirm RUN URANIUS JOB 028; isolated postgres administrator password entered locally, not migrator. Do not repeat old tests. Next after verified completion: stage carryover and actual calendar dispatch/clock reconstruction, plus hosted live commands and official finalization.
