@@ -1,4 +1,4 @@
-/** Read-only source-aligned review projection of original ProPeloton canonical point totals and cumulative classifications. Not an official writer. Source: reference/database/20260929184629_baseline_04_sql_dump_121_240.sql.txt, lines 7732–7882, 7975–8484. */
+/** Read-only source-aligned review projection of original ProPeloton canonical point totals and cumulative classifications. Non-cancelled completed stage prefix only; weather-cancelled stages are refused pending reconstruction of cancellation authority. Not an official writer. Latest reference: reference/database/20261110171600_classification_preview_skip_weather_cancelled_stages.sql.txt. Source: reference/database/20260929184629_baseline_04_sql_dump_121_240.sql.txt, lines 7732–7882, 7975–8484. */
 export function projectOriginalClassifications({raceId,stages,results,pointRows,youngRiderIds,coverage}){
  const require=(ok,message)=>{if(!ok)throw Error(message)}
  const uuid=x=>typeof x==='string'&&/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(x)
@@ -9,6 +9,7 @@ export function projectOriginalClassifications({raceId,stages,results,pointRows,
  require(coverage&&['complete','missing'].includes(coverage.points)&&['complete','missing'].includes(coverage.penalties)&&['complete','missing'].includes(coverage.young),'Explicit coverage required')
  const ordered=[...stages].sort((a,b)=>a.stageNumber-b.stageNumber)
  require(ordered.every((s,i)=>uuid(s.stageId)&&s.stageNumber===i+1&&s.raceId===raceId)&&new Set(ordered.map(s=>s.stageId)).size===ordered.length,'Stages must be unique contiguous completed prefix')
+ require(ordered.every(s=>s.weatherCancelled===false),'Weather cancellation status must be explicit and false for this scoped review')
  const scope=new Map(ordered.map(s=>[s.stageId,s.stageNumber]))
  const rows=new Map(),byRider=new Map(),byStage=new Map(ordered.map(s=>[s.stageId,[]]))
  for(const x of results){
