@@ -25,3 +25,7 @@ git pull origin main
 node --test tests\uraniusOriginalEngineEffectsReview.test.mjs tests\uraniusOriginalResourceHealthReview.test.mjs
 ```
 Expected 15/15. Native Node acceptance not yet performed here. Original engine arithmetic recovered for base workload and Phase9 resources; official source binding, latest deployed canonical DB writers and original health catalogue still pending. No need to repeat accepted prior suites. Next 043C extend integrated synthetic transaction across multiple stages with actual recovered formula reviews and immutable prior receipts; exact live metadata/configuration inspection requires separate bounded owner authorization if needed, no actual player records. Hosted activation remains blocked, overall 49/60.
+
+## 2026-11-26 — owner native acceptance
+
+Owner fast-forwarded a47175d..be61fa6 and ran both prescribed native Node suites. All 15/15 passed, zero failures, skips or cancellations (204.3953 ms). Scoped 043B offline acceptance CLOSED. Original canonical DB writers, authoritative workload/marker/health catalogue inputs and official publication remain unverified. No hosted activation authorized. Proceed to 043C synthetic multi-stage carryover and integrated settlement review.
