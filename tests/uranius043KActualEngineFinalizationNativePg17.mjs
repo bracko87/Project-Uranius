@@ -7,6 +7,7 @@ import {createServer} from 'node:net'
 import {spawnSync,spawn} from 'node:child_process'
 import {fileURLToPath} from 'node:url'
 import {buildEngineTourSettlement} from '../scripts/uranius-engine-tour-settlement-review.mjs'
+import {matchTourWorkloadEnergy} from '../scripts/uranius-tour-settlement-review.mjs'
 import {carryoverDigest} from '../scripts/uranius-multistage-carryover-review.mjs'
 import {reviewOfficialRaceNight} from '../scripts/uranius-original-fatigue-review.mjs'
 import {build} from 'esbuild'
@@ -133,6 +134,19 @@ try{
   assert.ok(output.snapshots.length>2);assert.ok(output.events.length>0)
   for(const row of result.packet.stageResults){const state=output.finalRiderStates.find(x=>x.riderId===row.riderId);assert.equal(row.elapsedSeconds,state.finishTimeSeconds);assert.equal(row.remainingEnergy,state.energy);assert.equal(row.rank,state.finishPosition)}
   assert.deepEqual(buildEngineTourSettlement(z.p),result)
+ }
+ // Legacy output remains exact; original arithmetic alone is normalized.
+ const fractional=87.654321234567
+ const w={startEnergy:100,rawFinishEnergy:fractional,incidentEnergyLoss:0,additionalPointEnergyCost:0}
+ const ef={startEnergy:100,finishEnergy:87.654321}
+ assert.equal(matchTourWorkloadEnergy(w,ef,100,fractional),true)
+ assert.equal(matchTourWorkloadEnergy({...w,rawFinishEnergy:fractional+1e-9},ef,100,fractional),false)
+ assert.equal(matchTourWorkloadEnergy(w,{...ef,finishEnergy:87.654322},100,fractional),false)
+ assert.equal(matchTourWorkloadEnergy({...w,incidentEnergyLoss:1},ef,100,fractional),false)
+ assert.equal(matchTourWorkloadEnergy(w,ef,99,fractional),false)
+ for(const z of [first,second])for(const row of z.result.packet.stageResults){
+  const effect=z.result.packet.carryover.riders.find(x=>x.riderId===row.riderId).effect
+  assert.equal(effect.finishEnergy,Math.round((row.remainingEnergy+Number.EPSILON)*1e6)/1e6)
  }
  assert.ok(q.carryover.riders.every(r=>r.night&&r.seedFatigue===r.night.fatigue))
  assert.deepEqual(q.settlements.filter(x=>x.stageId===p.stageId),p.settlements)
