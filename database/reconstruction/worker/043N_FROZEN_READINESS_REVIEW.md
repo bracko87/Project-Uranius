@@ -13,3 +13,7 @@ git pull origin main
 node tests\uraniusFrozenReadinessAcceptance.mjs --offline-only
 ```
 Expected PASS 6/6 frozen readiness checks; no hosted connection and offline bundle cleanup. No private snapshots or PostgreSQL required for this test. Overall 49/60. Next source-owned input bundle extraction and authenticated admission; do not deploy these review helpers.
+
+## Owner native acceptance — 2026-11-26
+
+Owner pulled 68c50fd..96dac0d and ran prescribed offline-only harness. All six groups PASS, including actual ten-rider legacy engine, exact starting conditions, original fatigue carryover, same-day and overnight recovery, stale/DNF refusal. Offline bundle cleaned up; no hosted connection. Scoped 043N CLOSED; 95/95 owner-accepted native groups through 043N, 49/60 overall. No actual database-sourced readiness or general non-neutral legacy execution established.
