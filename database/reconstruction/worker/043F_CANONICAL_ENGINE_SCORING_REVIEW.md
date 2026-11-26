@@ -14,3 +14,7 @@ node tests\uraniusCanonicalEngineScoringAcceptance.mjs --offline-only
 Expected 5/5 with offline bundle cleanup. No PostgreSQL, private policy file or credentials needed. Existing dependencies required (esbuild).
 
 Remaining: actual server-owned canonical point/profile rows, semantic source authority, original health catalogue/canonical resource and health DB writers, authoritative workload/recovery/penalty/youth, general withdrawals, live manager and sporting tie dynamics. 039 simultaneous tie policy stays review-only, no within-group individual sprint physics claim. Next source recovery for missing persistence contracts and separately approved bounded metadata/configuration inspection if repository sources insufficient. Hosted activation BLOCKED; overall 49/60.
+
+## Owner native acceptance — 2026-11-26
+
+Owner fast-forwarded deb0e9d..11eaffb and executed prescribed offline harness. All 5/5 grouped checks PASS: 40 physical crossings and independent legacy bytes, independent score sums/bonus suppression, exact repeated evidence, finish-only route, five expected invalid-packet failures. Four successful child simulations took 2.27/2.40/2.29/2.14 s (9.10 s total). Expected negative subprocess stack traces are not failed test groups. Offline bundle cleanup confirmed. Scoped 043F native acceptance CLOSED; no hosted or official authorization. Overall 49/60. Next recover original resource/health persistence definitions and catalogue provenance.
