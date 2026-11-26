@@ -19,3 +19,48 @@ Original ProPeloton Manager project only, independently confirm project identity
 3. All inspection bounded BEGIN READ ONLY / statement timeout / ROLLBACK; no DDL/DML, scheduler/worker/clock changes, deployments or migration. Stop on mismatch, ambiguity or unexpected content. No approval inferred from earlier tests.
 
 Next after explicit approval: recover exact writer and catalogue contracts, then implement isolated source-bound resource/health writer and atomic tests, with separate hosted deployment approval only after native acceptance. If approval is withheld, continue repository-only work but do not invent missing rules. 043G source audit prepared, inspection BLOCKED on owner approval. Overall 49/60; hosted activation BLOCKED.
+
+## Owner-approved inspection results — 2026-11-26
+
+Owner approved proceeding with proposed scope. Connected project inventory verified original ProPeloton Manager okuravitxocyevkexfgi (PG17) separately from Uranius sdtsivgtcaoaeoihcwzd. Executed bounded READ ONLY catalog statements and one static configuration read only. No original application/game row reads, actual injury records, inventory rows, staff, credentials, functions invoked, DDL/DML, or changes to either project. 35 function identities/fingerprints returned; 15 initially allowlisted relations, 275 column records, 115 constraints, 25 unique indexes; nine further directly referenced effect relations inspected by schema metadata only. Relevant definition bodies/sections inspected; not all 35 bodies exhaustively audited. Raw deployed definitions not committed.
+
+Key current definition SHA-256:
+- race_engine_apply_stage_equipment_asset_wear_v1: 96d30f9cf22ce22c88dfe293c4de44c58f40fb343f9d717a61f7f0f2876fe6ef
+- race_engine_apply_missing_stage_equipment_wear_v2: 6027533f826e8268915e559da066b1b3282c3f79ec2f4d290be67258f64b2b24
+- universal_race_stage_apply_phase9_supplies_exact_v1: e7cbd42a34e3b180a87349339ec87cef47c21ab87edc35f5d2f7d20764d5cc7d
+- universal_race_stage_apply_phase9_supplies_v1: be82009f4b39899b147399f4c7a03d8be9d91e126d681d074569c440c9f255d0
+- race_engine_apply_stage_supply_consumption_v1 (legacy): 07f461b1b728ac2161af333eb8a482d2b7f9560b263cdaf325be30211d9f2a31
+- universal_race_stage_apply_health_candidates_v1: 9e235580a3c20a9acf080b0989aaaab0555d61dbf1822772e7e85af0d03e764f
+- health_create_rider_case_v1: 254b673ce83a1dc93dc8e9dbf4fb12082011dcfc5eb5c6dfee2837c0f98d5d3e
+- health_calculate_case_recovery_v1: 55a9c3139ae20d76fed4534fb5dbab751eda100a65874757361f650a0e62fd14
+- health_normalize_case_code_v1: 914b25b118bcdb73a73fbab50e5191277dc371fe07486f51bc0fdbd16cd71684
+- race_engine_hash_roll_v1: c3435a4dd19df6df70af1cd72d4b97c694bf748dc8a6772184af9d4d843949b2
+- race_engine_resolve_incident_health_mapping_v1: 537a1c05157af87ec9ebb9b07fd50eac425d3bf2d4ffcf8767e31f54e042072b
+- race_engine_get_stage_phase9_inputs_v1: 6521a1183a4ed7c353e05ba7c57fa9bce2adecd11aca5628592b8238faaf8d0c
+- race_engine_get_stage_rider_preparation_modifiers_v2: ac21aa6f709e633a252bf298f8696b359341bb4e0db296eb66fa5b0c3faed26a
+- universal_race_stage_effective_supply_available_v1: 074f1e3183bf5e9d2fcd404183406d67826878e8d2dda91aa9b883c66e1b5230
+- universal_race_stage_other_supply_reservations_v1: 1790fe331b0f963c1e25418631e9ffc9dea115cb734cef7ce492c4553e86c2b2
+- universal_race_resource_owner_club_v1: 8d0fb65fc7a44ba5a409599a6a396f75ee898f556f885394378e99c4339ccfbc
+- _race_supply_unit_max_uses: ccdfc1b938f53c9cd0ca87bfa76714c79ee7e1ef175cfa8d9137e6012bcfc258
+- universal_race_stage_finalize_core_survival_v1: f8ee56ff7531b97c3339c1b0c7ef631f569562333963d214137a68647a984359 (unchanged since 034).
+
+### Corrected persistence requirements
+
+Core finalizer calls fatigue, universal supply wrapper, canonical equipment/asset wear, historical missing-equipment fallback, then health candidates; authority row created later. Source-backed universal wear applies immutable manifest conditionUsed delta against CURRENT locked condition (clamped 0..100), not stale snapshot conditionAfter. Persist stage game date and increment distance/race-day counters once; exact ledger unique (run,target_type,target_id) and additional table-aware index. Assets map via frozen input assetKey to five allowlisted tables (car, bus, van, workshop, medical van); all five deployed relations have condition, distance, race days, use date, updated timestamp. Equipment numeric condition 2 decimals; cars/buses 2 decimals, other assets numeric. Source writer post-read tolerance .02. Owner ID sourced in Phase9 preparation resource payload; sporting team distinct. Do not copy dynamic legacy branches or infer current stock from manifest.
+
+Universal exact supply applies positive quantityUsed against current locked owner/key stock, shortage is failure, updates total_used/use date; durable exact physical unit id, remaining uses and same-game-day guard, decrements immutable uses, increments total_stage_uses, worn_out/retired date at zero, otherwise ready. Recompute owner/key summary of usable physical units, total_used and date; one resource ledger (run,resource_id), usage event (owner,idempotency_key). Actual current wrapper before authority can rebind missing, same-day-used or insufficient durable unit to alternate eligible unit ordered by remaining uses, creation time, ID; excludes manifest selected units, previously applied and chosen alternatives, requires alternate last use before stage date. No substitute -> explicit physical shortage skip, zero uses, sporting output unchanged. Already authoritative run uses exact path. Original wrapper temporarily modifies input/result JSON for exact writer then restores; new isolation design should preserve immutable packet permanently and use explicit remap/skip receipt instead. Do not silently convert consumable shortage to skip or claim all original concurrent behavior safe. Current 043C strict compare-and-set fixture is NOT equivalent to this recovered delta/rebound behavior. New native tests needed, including concurrent shared-owner inventory, fixed ledger keys, lock order, rollback and immutable retry.
+
+Health writer current source supports stronger case merge, otherwise resolve/reopen and preserve maximum deadlines/OR restrictions; one open case per rider enforced by partial unique index, context case-code FK. Minor/moderate remain selectable except prior selection flag, minor training/development unblocked, unavailable_until cleared; major injured/sick via case creation. Original hash roll 48-bit MD5 prefix rounded numeric(10,6), risk floor .78 cap1; current aliases as 041. Source creates case/context, updates rider, tries status notification. Incident resolver depends on separate approved/active mapping and activation flags. Mapping and activation **rows not read**, outside approved static catalogue-only configuration scope; genuine incident generation authority remains unresolved. Original canonical race_stage_points permits only START, INTERMEDIATE_SPRINT, KOM, BONUS_SPRINT, FINISH, not timing checkpoints; timings stay profile-only for real canonical rows. Existing 043E accepts explicit review-only timing rows, must not promote those to canonical DB.
+
+### Exact static health catalogue and new local adapter
+
+Verified table is a real static configuration table and description explicitly identifies canonical injury/sickness rule source. 15 unique cases: 9 injuries, 6 sicknesses, 10 race-eligible; all severity ranges positive and ordered. Ordered JSONB array text SHA-256 2a93157617cf471ca3e6c448b21c01059ddd644eed3cb6b72440de7f31d9565b (6456 UTF-8 bytes). Private download reconstructed from exact selected values in PostgreSQL JSONB key order; local SHA-256 equals database fingerprint. No raw catalogue values committed. Owner should save exact file in Downloads without editing, never commit it.
+
+scripts/uranius-original-health-catalogue-review.mjs (ef2981530c29302613720fcbf28aae609430ec9e) pins exact file size/hash and validates 15 rows, maps to accepted 043B formulas, only explicit synthetic recovery/handover; rejects caller overrides, unknown/nonrace code and missing body part, normalizes original aliases (strict creation adaptation), keeps authority/hosted/accounting false. Underlying 043B result still labels catalogueVerified false because it is unchanged synthetic formula function; outer configurationVerified true refers only to exact private static rows. No actual injury or rider data.
+tests/uraniusOriginalHealthCatalogueAcceptance.mjs (5e47bc89c1110a194e8335ecd62a2b6cbb7f1cb0) checks exact digest, 60 severity/centre combinations, aliases/restrictions, handover and tampered file refusal. Re-fetched exact committed JS, syntax preflight PASS after stripping import/export. Native runtime pending.
+Run:
+```bat
+git pull origin main
+node tests\uraniusOriginalHealthCatalogueAcceptance.mjs --offline-only --catalogue-file "%USERPROFILE%\Downloads\uranius-043g-health-catalogue-review.json"
+```
+Expected 5/5. No database or credentials. 043G scoped approved source inspection complete; exact catalogue runtime and new delta/rebound writer implementation pending. No new hosted deployment, no production modification. Overall 49/60.
