@@ -64,3 +64,7 @@ git pull origin main
 node tests\uraniusOriginalHealthCatalogueAcceptance.mjs --offline-only --catalogue-file "%USERPROFILE%\Downloads\uranius-043g-health-catalogue-review.json"
 ```
 Expected 5/5. No database or credentials. 043G scoped approved source inspection complete; exact catalogue runtime and new delta/rebound writer implementation pending. No new hosted deployment, no production modification. Overall 49/60.
+
+## Owner native acceptance
+
+Owner pulled 11eaffb..9e4f61c and ran the exact private catalogue harness. All 5/5 groups PASS including 60 severity/centre combinations, exact hash, aliases, eligibility, prior-case handover and altered file rejection. 043G scoped source/catalogue acceptance CLOSED; 043A–G 59/59 native groups. No hosted connection. Next 043H isolated resource delta and durable remap persistence. Overall 49/60.
