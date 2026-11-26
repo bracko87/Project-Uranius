@@ -22,3 +22,7 @@ git pull origin main
 node tests\uraniusHistoricalPhase10HandoffAcceptance.mjs --offline-only
 ```
 Expected PASS 4/4 historical Phase10 handoff checks; no hosted connection. No PostgreSQL or private snapshots required. Hosted activation remains BLOCKED.
+
+## Owner native acceptance — 2026-11-26
+
+Owner pulled 96dac0d..6c151dd and ran prescribed offline harness. All four groups PASS, including 1200 exact historical outcomes, subtype/body/penalty/energy/continuation, nonmedical exhaustion/technical withdrawals and provenance refusal. No hosted connection. Scoped 043O CLOSED, 99/99 owner-accepted native groups through 043O; 49/60 overall. No live occurrence, source authentication or health writes authorized.
