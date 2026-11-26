@@ -16,3 +16,7 @@ git pull origin main
 node tests\uraniusHistoricalIncidentConsequencesAcceptance.mjs --offline-only
 ```
 Expected PASS 5/5 historical incident consequence checks; no hosted connection. No private configuration downloads or PostgreSQL required. Hosted activation BLOCKED.
+
+## Owner native acceptance — 2026-11-26
+
+Owner pulled d4262dc..511d834 and ran prescribed offline harness. All five groups PASS, including 1200 initial loss cases, five technical types, checkpoint handoff/separation, sprint eligibility and tamper refusal. No hosted connection. Scoped 043R CLOSED; 114/114 owner-accepted native groups, 49/60 overall. Physical chase and final time authority remain unverified.
