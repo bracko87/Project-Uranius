@@ -8,6 +8,21 @@ const unique=(a,k)=>Array.isArray(a)&&new Set(a.map(k)).size===a.length
 const eq=(a,b)=>carryoverDigest(a)===carryoverDigest(b)
 const int=x=>Number.isSafeInteger(x)&&x>=0
 const cmp=(a,b)=>a<b?-1:a>b?1:0
+// Original 043B workload math rounds energy to six decimal places, while
+// existing_v1 legacy engine retains full precision. Keep raw engine identity
+// exact for net-energy workloads; compare only the formula's derived values
+// at its own precision. No epsilon/tolerance and no changes to scoring rows.
+const roundEnergy=x=>Math.round((x+Number.EPSILON)*1e6)/1e6
+const boundedEnergy=x=>typeof x==='number'&&Number.isFinite(x)&&x>=0&&x<=100
+export function matchTourWorkloadEnergy(workload,effect,startingEnergy,remainingEnergy){
+ if(!workload||!effect||![startingEnergy,remainingEnergy].every(boundedEnergy))return false
+ if(workload.startEnergy!==startingEnergy||effect.startEnergy!==roundEnergy(startingEnergy))return false
+ if(workload.incidentEnergyLoss===0&&workload.additionalPointEnergyCost===0){
+  return workload.rawFinishEnergy===remainingEnergy&&remainingEnergy<=startingEnergy&&effect.finishEnergy===roundEnergy(remainingEnergy)
+ }
+ // Preserve previous strict behavior for explicitly adjusted workload evidence.
+ return effect.finishEnergy===remainingEnergy
+}
 export function buildTourSettlement(p){
  req(p?.provenance===P&&p.completeSyntheticEvidence===true,'explicit fixture required')
  const {policyText,category,carryover,job,scoringReceipt,clubs,youngRiderIds,penalties,prizeFundCash,lifecycle,previousPacket,expectedPreviousPacketDigest}=p
@@ -23,7 +38,9 @@ export function buildTourSettlement(p){
  req(unique(clubs,x=>x.clubId)&&teams.every(t=>clubs.some(x=>x.clubId===t))&&unique(youngRiderIds,x=>x)&&youngRiderIds.every(id=>receipt.riders.some(r=>r.riderId===id)),'club or youth roster')
  const stageResults=scoring.resultRows.map(row=>{
   const r=receipt.riders.find(x=>x.riderId===row.riderId),penalty=penalties.find(x=>x.riderId===row.riderId)
-  req(r&&r.teamId===row.teamId&&r.status===row.status&&r.seedFatigue===row.startingCondition?.fatigueBeforeStage&&r.effect.startEnergy===row.startingCondition?.startingEnergy&&r.effect.finishEnergy===row.remainingEnergy&&penalty&&int(penalty.seconds),'scoring and workload receipt mismatch')
+  const w=carryover.workloads.find(x=>x.riderId===row.riderId)
+  req(r&&r.teamId===row.teamId&&r.status===row.status&&r.seedFatigue===row.startingCondition?.fatigueBeforeStage&&penalty&&int(penalty.seconds),'scoring and workload receipt mismatch: identity, fatigue or penalty for '+row.riderId)
+  req(matchTourWorkloadEnergy(w,r.effect,row.startingCondition?.startingEnergy,row.remainingEnergy),'scoring and workload receipt mismatch: energy for '+row.riderId+' (engine start '+row.startingCondition?.startingEnergy+', formula start '+r.effect.startEnergy+', engine finish '+row.remainingEnergy+', formula finish '+r.effect.finishEnergy+')')
   return {...row,penaltySeconds:penalty.seconds,fatigueAfterStage:r.effect.fatigueAfterStage}
  }).sort((a,b)=>a.rank-b.rank)
  let priorResults=[]
