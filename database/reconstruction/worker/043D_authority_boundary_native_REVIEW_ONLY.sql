@@ -39,7 +39,7 @@ CREATE TABLE uranius_043d_fixture.receipts(
  accounting_allowed boolean NOT NULL CHECK(NOT accounting_allowed)
 );
 CREATE FUNCTION uranius_043d_fixture.attest(p_job uuid,p_kind text,p_sha text)
-RETURNS text LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,pg_temp AS $$
+RETURNS text LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,pg_temp SET timezone='UTC' AS $
 DECLARE s uranius_043d_fixture.source%ROWTYPE; old_sha text;
 BEGIN
  SELECT * INTO STRICT s FROM uranius_043d_fixture.source WHERE job_id=p_job;
@@ -58,7 +58,7 @@ BEGIN
  RETURN 'attested';
 END $$;
 CREATE FUNCTION uranius_043d_fixture.admit(p_job uuid)
-RETURNS text LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,pg_temp AS $$
+RETURNS text LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,pg_temp SET timezone='UTC' AS $
 DECLARE s uranius_043d_fixture.source%ROWTYPE; prev uranius_043d_fixture.source%ROWTYPE; r uranius_043d_fixture.receipts%ROWTYPE; sh text; eh text; prior_sh text; prior_eh text;
 BEGIN
  SELECT * INTO STRICT s FROM uranius_043d_fixture.source WHERE job_id=p_job;
