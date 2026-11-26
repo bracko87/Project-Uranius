@@ -19,3 +19,7 @@ git pull origin main
 node tests\uraniusHistoricalIncidentProbabilityAcceptance.mjs --offline-only
 ```
 Expected PASS 4/4 historical incident probability checks; no hosted connection. No PostgreSQL or private files required. Next derive complete physical eligibility and cooldown/cap state from actual engine checkpoints, verify against pinned original, then independent source admission. Hosted activation BLOCKED.
+
+## Owner native acceptance — 2026-11-26
+
+Owner pulled 6c151dd..fa36b7f and ran the prescribed offline test. All four groups PASS, including 400 probability breakdowns, equipment/cap boundaries, 2000 checkpoint draws and tamper refusal. No hosted connection. Scoped 043P CLOSED; 103/103 owner-accepted native groups, overall 49/60. Full physical eligibility and occurrence authority remain outstanding.
