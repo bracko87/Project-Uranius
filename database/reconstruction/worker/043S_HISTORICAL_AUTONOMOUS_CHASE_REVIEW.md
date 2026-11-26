@@ -16,3 +16,7 @@ git pull origin main
 node tests\uraniusHistoricalAutonomousChaseAcceptance.mjs --offline-only
 ```
 Expected PASS 4/4 historical autonomous chase checks; no hosted connection. No additional private files or PostgreSQL required.
+
+## Owner native acceptance — 2026-11-26
+
+Owner pulled 511d834..381a0a3 and ran prescribed offline harness. All four groups PASS, including 400 reference calculations, successful/failed chase, shared group and energy, and evidence protection. No hosted connection. Scoped 043S CLOSED; 118/118 owner-accepted native groups through 043S; overall 49/60. Actual physical source and multi-incident/rescue authority remain unverified.
