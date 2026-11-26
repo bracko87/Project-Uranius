@@ -16,3 +16,8 @@ node tests\uraniusSyntheticFinalizationNativePg17.mjs --disposable-native-pg17 -
 ```
 
 First two Node suites expected 20 tests (9+11), then 8 focused PG17 groups. Native wrapper makes fresh loopback-only disposable PG cluster, stripped environment, no hosted connection/passwords. Next close 032/033/035 acceptance from actual runtime, recover exact configuration scales from repository seeds or separately authorized config-only read, reconstruct real authoritative result adapters and missing effects, then separate hosted review/approval. 49/60 verified, no milestone inflation, no new infrastructure.
+
+
+## 2026-11-26 — owner runtime acceptance
+
+Owner pulled 404e0bb and ran both exact Node suites (20/20 PASS, zero failures/skips) and disposable native PG17 harness (8/8 PASS). Original V1 per-stage clamp, synthetic category award/ranking arithmetic, parent-club routing, one-day/WRC, incomplete/cancelled/early gate refusals, stage order and reveal gate, injected rollback, first-stage retry, changed paid-award refusal and final-stage rollback, concurrent finalization exactly once, 100000 gross/15000 tax/85000 net balanced ledger, NULL-safe team award uniqueness, outsider denial and immutable final retry all passed. Disposable cluster cleaned up. **Scoped operations 032/033/035 offline/native acceptance CLOSED.** No hosted connection or production effects. Preserve fixture limitations: trusted fixture input, synthetic policy, no real replay authority or engine-to-official adapter, no supply/equipment/health effects. Next authoritative configuration and engine-output mapping, then separate guarded hosted integration. No repetition of accepted tests unless relevant changes. Overall 49/60 verified, U5.09 remains in progress.
