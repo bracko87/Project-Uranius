@@ -1,0 +1,16 @@
+# 043F — canonical marker to engine scoring integration (offline review only)
+
+2026-11-26. 043E owner native 7/7 accepted. No production or isolated hosted DB access or writes, credentials, official results, financial effects, worker, scheduler or clock changes. Existing accepted engine and scoring modules unchanged.
+
+- scripts/uranius-canonical-scoring-engine-review.ts (5cb884b97435449a5d4e343ce8b8567a4ab67640): new offline child accepts only an explicit synthetic road race input and normalized 043E marker/profile packet with exact input and expected canonical evidence SHA-256; unknown packet fields rejected (including caller-supplied crossings). Checks stage/distance/format, existing input validation, and no-command scope. Calls unchanged 043E reconciliation, 039 actual motion collector for nonempty intermediate markers, or unchanged existing_v1 road race runner for finish-only stage. Calls unchanged 038 scoring adapter for stage-race and one-day scoring using identical job and physical crossing receipt. Binds race/stage/job and input/output, marker evidence/reconciled receipt, crossings and both scoring digests in review envelope. All authority/official/hosted/accounting flags false. Expected digests supplied by trusted local fixture runner, not authentication. No actual source database rows or independent server-owned attestation producer; no promotion path to official results.
+- tests/uraniusCanonicalEngineScoringAcceptance.mjs (4c7aa6e831cb9f99a5ef43e721a6d344182e7b34): existing 043A ten-rider 120km hilly fixture with deliberately different canonical versus physical marker km, explicit timing checkpoint and scoring schemes. Native bundle harness builds fresh offline children with stripped environment and timeout, compares independent frozen legacy output bytes, independently sums points/bonuses, verifies 40 actual intermediate crossings and complete digests, checks identical repeat and finish-only result, refuses stale input/marker digest, foreign stage, missing geometry and supplied crossings. Five grouped checks, four successful engine executions (canonical, independent, repeat, finish-only) plus negative subprocesses. Cleanup in finally.
+- Re-fetched exact committed entry and harness; syntax preflight PASS for both (entry TS type annotations/imports stripped; harness import statements and import.meta.url substituted for syntax parsing). No native esbuild or engine execution in this environment; full native acceptance pending. No need to repeat 043A/043E suites absent relevant changes.
+
+Run:
+```bat
+git pull origin main
+node tests\uraniusCanonicalEngineScoringAcceptance.mjs --offline-only
+```
+Expected 5/5 with offline bundle cleanup. No PostgreSQL, private policy file or credentials needed. Existing dependencies required (esbuild).
+
+Remaining: actual server-owned canonical point/profile rows, semantic source authority, original health catalogue/canonical resource and health DB writers, authoritative workload/recovery/penalty/youth, general withdrawals, live manager and sporting tie dynamics. 039 simultaneous tie policy stays review-only, no within-group individual sprint physics claim. Next source recovery for missing persistence contracts and separately approved bounded metadata/configuration inspection if repository sources insufficient. Hosted activation BLOCKED; overall 49/60.
