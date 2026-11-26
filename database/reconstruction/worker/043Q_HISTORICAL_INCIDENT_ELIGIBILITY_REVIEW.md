@@ -15,3 +15,7 @@ git pull origin main
 node tests\uraniusHistoricalIncidentEligibilityAcceptance.mjs --offline-only
 ```
 Expected PASS 6/6 historical incident eligibility checks; no hosted connection. No private files or PostgreSQL required. Next technical subtype/time loss and actual physical chase/evidence bridge; do not count synthetic trace as authoritative race execution. Hosted activation BLOCKED.
+
+## Owner native acceptance — 2026-11-26
+
+Owner pulled fa36b7f..d4262dc and ran the prescribed offline harness. All six groups PASS, including stage/weather/crash caps, boundary and cooldown rules, sustained depletion, 480 synthetic checkpoints with 16 riders, rejoin scope and tamper refusal. No hosted connection. Scoped 043Q CLOSED; 109/109 owner-accepted native groups through 043Q, 49/60 overall. Actual physical checkpoint/rejoin authority remains unverified.
