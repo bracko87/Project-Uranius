@@ -1,0 +1,14 @@
+# Operation 031 — complete hosted Mountain Tour Stage 2 (REVIEW ONLY)
+
+030 accepted. Fresh independent read-only preflight: 20 exact ledger pairs, no missing/extra; three jobs, exactly one queued Stage 2 with pinned input digest, both completed earlier jobs preserved; dormant worker, no memberships/sessions/scheduler; paused S1D1; FORCE RLS and two job policies.
+
+Frozen execution manifest SHA-256 0b4b94bc923a7233c8addeb6d6ed51486898b4ca8ef8ada345a9e7dd2030e262 pins nine source files and both accepted 027 and 030 manifests. Stage 2 job ffd45277-daf4-46eb-b231-1cf4ce6cfe5b, stage 263edaea-28a2-438a-81b8-f7ca1fcd6d9f, Jan 4, 120 km, input SHA-256 d260f02b7447fa9caf40d41bd563197735ebf9dee05ae2bb553d4d89a70510f7. Ten carried conditions previously independently verified. Adapted exact successful 028 owner-local direct TLS runner with unchanged worker and engine, shared advisory lock, exact prior ledger, both completed jobs, only one queued job, no existing output/lease, temporary SCRAM credential maximum 300 seconds password validity, 180-second job lease, two independent simulations (60s child timeout each), exact byte comparison and one persisted digest, duplicate claim idle, restore NOLOGIN PASSWORD NULL in finally. No permanent worker or scheduler. If interrupted, password expiry prevents new connections but does not terminate existing sessions; independent cleanup check required before retry.
+
+New wrapper source-reviewed against 028 and launcher read back; not runtime-tested here. After successful execution independently verify stored input/output bytes, actual starting conditions, final states, both previous outputs unchanged, ledger and permissions, worker dormant. Compute read-only provisional cumulative classification using the accepted 029 rank-sum/latest-rank/ID tie-break and actual stage times; verify against both outputs. No official GC, points, bonuses, publication, schema or ledger changes, clock advance, finance, production or new infrastructure. Legacy engine retained; synthetic recovery and sporting separation remain provisional.
+
+After exact separate approval:
+```bat
+git pull origin main
+powershell -NoProfile -File scripts\run-approved-calendar-stage-031-windows.ps1 -CaFile "%USERPROFILE%\Downloads\prod-ca-2021.crt" -PostgresBin "C:\Users\Aleks\Desktop\Project-Uranius\.uranius-pin-review\postgresql-17.12-portable\bin" -ApprovedManifestSha256 "0b4b94bc923a7233c8addeb6d6ed51486898b4ca8ef8ada345a9e7dd2030e262"
+```
+Confirm RUN URANIUS JOB 031 and enter isolated postgres administrator password locally. Do not rerun prior tests. 49/60 overall; 031 execution and GC verification pending.
