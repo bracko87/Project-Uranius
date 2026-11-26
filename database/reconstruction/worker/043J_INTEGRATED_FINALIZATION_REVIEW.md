@@ -18,3 +18,7 @@ node tests\uranius043JIntegratedFinalizationNativePg17.mjs --disposable-native-p
 ```
 
 Expected PASS 6/6 integrated finalization checks; no hosted connection; cleanup. Both previously verified exact private files required; never commit or upload them. Overall 49/60 pending actual authority and source integration. Hosted activation BLOCKED.
+
+## Owner native acceptance — 2026-11-26
+
+Owner fast-forwarded 7bf623d..be78478 and executed prescribed exact policy/catalogue disposable PG17 harness. All 6/6 groups PASS: full rollback, complete first stage, missing evidence/stock/health failure, prior award/scope tamper, concurrent final-stage settlement and balanced tax/cash, immutable retry and outsider refusal. Cleanup confirmed; no hosted connection. Scoped 043J acceptance CLOSED, 043A–J 79/79 native groups. Overall 49/60, official source and deployment gates remain blocked.
