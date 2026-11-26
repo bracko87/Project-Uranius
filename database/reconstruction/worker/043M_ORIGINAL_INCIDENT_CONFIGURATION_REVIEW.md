@@ -14,3 +14,7 @@ node tests\uraniusOriginalIncidentConfigAcceptance.mjs --offline-only --config-f
 ```
 
 Expected PASS 6/6 original incident configuration checks; no hosted connection. No PostgreSQL needed. Keep both private snapshots local. 83/83 previously owner-accepted native groups, 043M development 6/6; 49/60 overall until actual source and official integration. Hosted activation remains BLOCKED. Next prioritize source-owned roster/readiness and frozen preparation input, then recover candidate provenance before real health generation.
+
+## Owner native acceptance — 2026-11-26
+
+Owner pulled through 68c50fd, downloaded exact 6778-byte private configuration after missing-file error, and ran Node 20.20.0 with both private snapshots. All 6/6 groups PASS, no hosted connection. Scoped 043M CLOSED; 89/89 owner-accepted native groups 043A–M (043L source audit only), overall 49/60. No runtime activation or actual candidate-generation authority established.
