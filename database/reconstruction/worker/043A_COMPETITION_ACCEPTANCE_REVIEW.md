@@ -1,0 +1,14 @@
+# 043A — focused completion of 039 full-engine acceptance (offline only)
+
+2026-11-26. Four of six native 039 groups already confirmed. Final two full-engine groups not confirmed; no error or final result was supplied. Do not assume failure, timeout or success. Source review: previous harness calls three children, each executes crossing review and independent legacy runner, six full simulations total; no progress output inside spawnSync. New standalone diagnostic harness executes three full simulations, prints per-child start/end, stderr progress, ten-second heartbeat, bounded 180-second per-child deadline and size-limited output. No changes to original 039 source, default engine, prior tests or hosted execution.
+
+- scripts/uranius-competition-crossing-acceptance.ts (c346e1c4bfc2292d1d72f4a070d473db5671a1db): one complete unchanged review simulation, generate exact job and physical crossing receipt, project both formats through unchanged 038 adapter, return exact legacy output text and receipt envelope. No synthetic defaults for missing authoritative fields. Explicit offline synthetic provenance.
+- tests/uraniusCompetitionCrossingAcceptance.mjs (1a4deb4f4b34aad4aaaf02378d3e310570e8e9d9): exact original 039 fixture (120km hilly, ten riders, four intermediate competition markers). Two independent crossing simulations and one independent legacy worker child. Full output byte equality, repeat envelope equality, actual 40 crossings, identities/timing/rank coverage, independent score sums from explicit schemes, stage bonuses and one-day suppression using the same physical receipt, unchanged non-authoritative flags. Does not rerun accepted four boundary checks. Progress and failures visible, stripped environment, local esbuild bundles cleaned up. Native execution pending.
+- Development verification: exact refetched fixture declaration equality; JS harness syntax compiled with imports removed, TS child syntax compiled after type syntax removed. No native esbuild/actual race execution in this environment, no claim of 2/2 PASS yet.
+
+Run:
+```bat
+git pull origin main
+node tests\uraniusCompetitionCrossingAcceptance.mjs --offline-only
+```
+Expected final line PASS 2/2 outstanding 039 full-engine checks; no hosted connection, plus cleanup. If successful, combine with prior four accepted boundary groups to close scoped 039. If failed, capture exact diagnostic error rather than retrying all tests. Shared-group tie heuristic, withdrawals, active-manager racing and authoritative marker definitions remain release blockers even after scoped acceptance. 043 baseline remains passed at review time; 49/60 overall, hosted activation blocked. No hosted/production connections or changes, finance, scheduling or costs.
