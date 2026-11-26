@@ -8,7 +8,7 @@ CREATE TABLE uranius_043c_fixture.packets(
 );
 CREATE TABLE uranius_043c_fixture.resources(
  resource_key text PRIMARY KEY, state jsonb NOT NULL CHECK(jsonb_typeof(state)='object'),
- CHECK(resource_key=state->>'resourceType'||':'||state->>'resourceId')
+ CHECK(resource_key=(state->>'resourceType')||':'||(state->>'resourceId'))
 );
 CREATE TABLE uranius_043c_fixture.effects(
  stage_id uuid REFERENCES uranius_043c_fixture.packets(stage_id),
