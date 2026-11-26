@@ -15,3 +15,7 @@ node tests\uraniusCompetitionCrossingReview.mjs --offline-only
 ```
 
 Next: once native acceptance recorded, implement source-aligned fatigue and effect receipts in new opt-in path, improve sporting sprint/terrain dynamics and withdrawal handling, integrate authoritative marker scheme and lifecycle. Actual sprint/KOM ranks in shared group still review heuristic, not yet eligible for official promotion. Existing private jobs untouched. Full authoritative race publication, finance, clock/scheduler and live manager remain pending. 49/60 verified.
+
+## 2026-11-26 — owner native acceptance
+
+Owner pulled a47175d and ran node tests\uraniusCompetitionCrossingAcceptance.mjs --offline-only. Both outstanding full-engine checks PASS: 40 actual intermediate crossings, repeatable envelope, exact independent legacy output bytes, generated scoring receipt, one-day bonus suppression from the same physical crossing receipt. Engine child durations 2.42s, 2.16s, 2.20s (6.78s total); output SHA-256 0e145f010bea41a5620c479dc5f830714b095befa88bfda772f5ef0303ac4e29. Combined with four earlier native boundary groups, scoped 039/043A acceptance CLOSED (6/6). Bundle cleanup confirmed; no hosted connection. Earlier incomplete output cause remains unknown; no repeat of accepted tests needed absent relevant changes. Shared-group tie policy, authoritative marker definitions, withdrawals and active-manager scoring remain release blockers. Next 043B original formulas; hosted activation remains blocked.
