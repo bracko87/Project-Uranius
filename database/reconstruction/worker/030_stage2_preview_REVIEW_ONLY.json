@@ -1,0 +1,113 @@
+{
+  "stageId": "263edaea-28a2-438a-81b8-f7ca1fcd6d9f",
+  "calendarDate": "2000-01-04",
+  "sourceJobId": "e3fe3c1e-7eb3-40c1-9f44-d8e38ce359f0",
+  "sourceInputSha256": "f10fdaf48b87a4b3fcef2f075d50e6ab44b2f0f846a550819ecb7fee4337182a",
+  "sourceOutputSha256": "6ca7d849e4aa4c2ac3257380f4a0a2a841223ebe8ff0775df592cc76a40dd150",
+  "stage2InputSha256": "d260f02b7447fa9caf40d41bd563197735ebf9dee05ae2bb553d4d89a70510f7",
+  "teamCount": 2,
+  "riderCount": 10,
+  "startingConditions": [
+    {
+      "riderId": "ea97ce13-5606-4a75-9964-4d3c38571bfd",
+      "teamId": "00000000-0000-4000-8000-000000000011",
+      "condition": {
+        "startingEnergy": 87.94202,
+        "fatigueBeforeStage": 12.05798,
+        "morale": 75,
+        "availabilityStatus": "available"
+      }
+    },
+    {
+      "riderId": "c04abd74-a9ac-4130-afe9-8aa1347f7b82",
+      "teamId": "00000000-0000-4000-8000-000000000011",
+      "condition": {
+        "startingEnergy": 88.016703,
+        "fatigueBeforeStage": 11.983297,
+        "morale": 75,
+        "availabilityStatus": "available"
+      }
+    },
+    {
+      "riderId": "6249df3e-a53d-4c45-958d-27f95237e08d",
+      "teamId": "00000000-0000-4000-8000-000000000011",
+      "condition": {
+        "startingEnergy": 88.926483,
+        "fatigueBeforeStage": 11.073517,
+        "morale": 75,
+        "availabilityStatus": "available"
+      }
+    },
+    {
+      "riderId": "6d119cbd-f419-4a83-b4d6-5688c0f102bb",
+      "teamId": "00000000-0000-4000-8000-000000000011",
+      "condition": {
+        "startingEnergy": 87.609339,
+        "fatigueBeforeStage": 12.390661,
+        "morale": 75,
+        "availabilityStatus": "available"
+      }
+    },
+    {
+      "riderId": "e51cf6f1-39af-4809-a6bb-e3a8eaea25f1",
+      "teamId": "00000000-0000-4000-8000-000000000011",
+      "condition": {
+        "startingEnergy": 88.519119,
+        "fatigueBeforeStage": 11.480881,
+        "morale": 75,
+        "availabilityStatus": "available"
+      }
+    },
+    {
+      "riderId": "cd0cdafe-4572-4f78-9351-4671fac027bf",
+      "teamId": "00000000-0000-4000-8000-000000000012",
+      "condition": {
+        "startingEnergy": 87.853757,
+        "fatigueBeforeStage": 12.146243,
+        "morale": 75,
+        "availabilityStatus": "available"
+      }
+    },
+    {
+      "riderId": "b65499ab-780b-45c5-8727-1130b4f5bea4",
+      "teamId": "00000000-0000-4000-8000-000000000012",
+      "condition": {
+        "startingEnergy": 88.763537,
+        "fatigueBeforeStage": 11.236463,
+        "morale": 75,
+        "availabilityStatus": "available"
+      }
+    },
+    {
+      "riderId": "dd58a0d2-814b-49ec-ba96-bece4951e024",
+      "teamId": "00000000-0000-4000-8000-000000000012",
+      "condition": {
+        "startingEnergy": 87.446393,
+        "fatigueBeforeStage": 12.553607,
+        "morale": 75,
+        "availabilityStatus": "available"
+      }
+    },
+    {
+      "riderId": "93b025b1-e166-4f66-b76a-95b569766aef",
+      "teamId": "00000000-0000-4000-8000-000000000012",
+      "condition": {
+        "startingEnergy": 88.356173,
+        "fatigueBeforeStage": 11.643827,
+        "morale": 75,
+        "availabilityStatus": "available"
+      }
+    },
+    {
+      "riderId": "970a0f48-6530-4e46-8213-eea8b94ca70e",
+      "teamId": "00000000-0000-4000-8000-000000000012",
+      "condition": {
+        "startingEnergy": 88.430857,
+        "fatigueBeforeStage": 11.569143,
+        "morale": 75,
+        "availabilityStatus": "available"
+      }
+    }
+  ],
+  "method": "Independent read-only reconstruction of accepted synthetic recovery rule; owner-local validated module must reproduce exact input digest."
+}
