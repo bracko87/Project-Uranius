@@ -15,3 +15,7 @@ node tests\uraniusIntegratedFinalizationNativePg17.mjs --disposable-native-pg17 
 ```
 
 Release blockers: 039 full-engine groups unconfirmed, actual canonical point/motion authority, original base workload formula, canonical consumption/wear writers, health catalogue and incident generation, actual lifecycle/authority and multi-stage integrated effect carryover still missing. This is one-day atomic fixture proof, not full production parity. No hosted installation or promotion authorized. Overall 49/60; U5.09 remains in progress.
+
+## 2026-11-26 — owner native acceptance
+
+Owner pulled a464b48 and ran the prescribed disposable native PG17 harness with the exact private policy snapshot. All 7/7 checks PASS: integrated packet, invalid/early input rejection, database reveal gate, stale resource rollback, injected late failure rollback, concurrent exactly-once balanced settlement and all resource changes, immutable retry/changed packet/outsider refusal. Disposable cluster cleanup confirmed; no hosted connection. Scoped 042 one-day synthetic acceptance CLOSED. Remaining release blockers listed above are unchanged, including multi-stage effects carryover and actual authoritative inputs. No prior accepted tests need repeating absent relevant changes. Next prepare an explicit hosted readiness contract (043), not install the disposable fixture or activate a scheduler.
