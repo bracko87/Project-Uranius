@@ -1,6 +1,7 @@
 // 043T bounded historical multi-incident chase and team rescue. Original pinned blob 39e35c6ed69563ce82cb663d6c3f9088c61df886.
 // Original functions below are TS-to-JS transcriptions; adapter validates synthetic inputs separately.
 import {carryoverDigest} from './uranius-multistage-carryover-review.mjs'
+import {reviewHistoricalCheckpoint} from './uranius-historical-incident-probability-review.mjs'
 import {reviewHistoricalCheckpointConsequences} from './uranius-historical-incident-consequences-review.mjs'
 function clamp(value, minimum, maximum) {
   return Math.min(maximum, Math.max(minimum, value))
@@ -854,7 +855,9 @@ export function reviewHistoricalTeamRescue({evidence,expectedEvidenceSha256}){
   const result=reviewHistoricalCheckpointConsequences(c),inc=result.incident
   req(inc,'selected incident required')
   for(const candidate of cp.candidates)for(const r of candidate.riders)req(roster.get(r.riderId)?.teamId===r.teamId,'candidate roster mismatch')
-  const selected=cp.candidates.find(x=>x.entityId===cp.candidates.find(z=>z.probabilityInput.incidentKind===inc.kind&&inc.affectedRiderIds.every(id=>z.riders.some(r=>r.riderId===id)))?.entityId&&x.probabilityInput.incidentKind===inc.kind)
+  const chosen=reviewHistoricalCheckpoint({evidence:cp,expectedEvidenceSha256:e.expectedCheckpointSha256}).incident
+  req(chosen?.incidentId===inc.incidentId&&chosen.hash===inc.hash,'selection mismatch')
+  const selected=cp.candidates.find(x=>x.entityId===chosen.entityId&&x.probabilityInput.incidentKind===chosen.kind)
   req(selected,'selected source group missing')
   for(const r of inc.riderConsequences){
    req(!affected.has(r.riderId),'repeat incident rider outside bounded review')
