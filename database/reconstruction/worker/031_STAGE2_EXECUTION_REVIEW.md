@@ -12,3 +12,8 @@ git pull origin main
 powershell -NoProfile -File scripts\run-approved-calendar-stage-031-windows.ps1 -CaFile "%USERPROFILE%\Downloads\prod-ca-2021.crt" -PostgresBin "C:\Users\Aleks\Desktop\Project-Uranius\.uranius-pin-review\postgresql-17.12-portable\bin" -ApprovedManifestSha256 "0b4b94bc923a7233c8addeb6d6ed51486898b4ca8ef8ada345a9e7dd2030e262"
 ```
 Confirm RUN URANIUS JOB 031 and enter isolated postgres administrator password locally. Do not rerun prior tests. 49/60 overall; 031 execution and GC verification pending.
+
+
+## 2026-11-26 — exact owner approval and fresh hosted preflight
+
+Owner explicitly approved Operation 031, isolated project sdtsivgtcaoaeoihcwzd, manifest SHA-256 0b4b94bc923a7233c8addeb6d6ed51486898b4ca8ef8ada345a9e7dd2030e262. Maximum five-minute temporary worker credential window, exactly one Stage 2 job with two independent simulations, one verified persisted result, duplicate prevention, restore NOLOGIN, read-only provisional GC, preserve both previous completed jobs. No schema/ledger changes, scheduler, official results, clock advance, finance or production changes. Fresh independent read-only preflight recomputed exact approved manifest digest, matched project identity and 20 exact ledger pairs (zero missing/extra), three total jobs with sole queued Stage 2 input digest recomputed equal, attempt 0/no output/no lease, Stage 1 input/output digests recomputed equal, Flat Classic original archive byte equality, worker dormant with zero sessions/memberships, no scheduler, paused S1D1 and FORCE RLS/two job policies. No hosted mutations. Owner-local postgres administrator credential and guarded runtime execution remain required, followed by independent postflight and provisional GC. Do not repeat old tests.
