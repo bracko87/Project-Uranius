@@ -30,3 +30,7 @@ git pull origin main
 node tests\uraniusTourSettlementNativePg17.mjs --disposable-native-pg17 --postgres-bin "C:\Users\Aleks\Desktop\Project-Uranius\.uranius-pin-review\postgresql-17.12-portable\bin" --policy-file "%USERPROFILE%\Downloads\uranius-037-policy-review.json"
 ```
 Expected 7/7. Disposable localhost cluster only; no hosted connection. Actual authoritative input/health catalogue/shared owner/writers, general multi-stage withdrawals and activation gate remain outstanding. Overall 49/60 verified; U5.09 IN_PROGRESS. No production or hosted changes.
+
+## Owner native acceptance — integrated settlement
+
+Owner fast-forwarded e4c836f..5f62325 and ran the prescribed native PG17 harness with exact private policy. All 7/7 PASS: exact policy/scoring/cumulative GC, invalid receipts and early reveal, prior-stage gate and first settlement, stale resource and late rollback, changed prior paid award refusal, concurrent final exactly once with balanced tax and cash and prior ledger unchanged, immutable retries/outsider denial. Disposable cluster cleanup confirmed. Combined 043C native 14/14. Scoped ordinary two-stage all-finisher integration CLOSED. General withdrawal scoring, health/shared-owner effects and actual authority/writers remain pending; no official accounting or hosted authorization. Next 043D independent private authority boundary rehearsal, not production deployment. Overall 49/60.
