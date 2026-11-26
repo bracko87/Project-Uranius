@@ -1,0 +1,71 @@
+import assert from 'node:assert/strict'
+import {carryoverDigest} from '../scripts/uranius-multistage-carryover-review.mjs'
+import {historicalIncidentLimits,historicalPhase,historicalTickGate,historicalRiderGate,historicalDepletionStep,reviewHistoricalEligibilityTrace} from '../scripts/uranius-historical-incident-eligibility-review.mjs'
+assert.deepEqual(process.argv.slice(2),['--offline-only'])
+let checks=0;const pass=x=>{checks++;console.log('PASS '+x)}
+const stage=(distanceKm=100,terrainType='flat',precipitationMm=0,rainProbabilityPct=0,weatherCondition='clear')=>({distanceKm,terrainType,weatherCondition,precipitationMm,rainProbabilityPct})
+const allocations={3:[1,1,0,1],4:[1,1,1,1],5:[1,1,1,2],6:[1,2,1,2],7:[2,2,1,2]}
+for(const [s,n,c] of [[stage(),3,2],[stage(139.99),3,2],[stage(140),4,2],[stage(189.99),4,2],[stage(190),4,3],[stage(200),5,3],[stage(100,'hilly'),4,2],[stage(100,'mountain'),4,3],[stage(100,'cobbled'),4,3],[stage(200,'mountain',.11),7,3],[stage(100,'flat',.1),3,2],[stage(100,'flat',.100001),4,3],[stage(100,'flat',0,50),4,3],[stage(100,'flat',0,0,' RAIN '),4,3]]){
+ const a=historicalIncidentLimits(s);assert.equal(a.maximumIncidents,n);assert.equal(a.maximumCrashes,c);assert.deepEqual(a.perPhase,allocations[n])
+}
+assert.equal(historicalIncidentLimits(stage(100,'flat',.05)).wetWeather,false)
+assert.equal(historicalIncidentLimits(stage(100,'flat',.050001)).wetWeather,true)
+assert.deepEqual([0,.25,.250001,.5,.500001,.7,.700001,1].map(historicalPhase),[1,1,2,2,3,3,4,4])
+pass('043Q original 3–7 stage budgets, phase allocations, weather and 2/3 crash caps')
+const limits=historicalIncidentLimits(stage())
+const gate=(over={})=>historicalTickGate({raceSecond:300,progressFraction:.2,distanceKm:100,incidentCount:0,phaseCounts:[0,0,0,0],nextGlobalEligibleSecond:0,limits,...over})
+assert.equal(gate().eligible,true)
+for(const over of [{raceSecond:60},{progressFraction:.01},{progressFraction:.995},{progressFraction:1}])assert.equal(gate(over).reason,'stage_boundary')
+assert.equal(gate({progressFraction:.010001}).eligible,true)
+assert.equal(gate({progressFraction:.994999}).eligible,true)
+assert.equal(gate({nextGlobalEligibleSecond:301}).reason,'global_cooldown')
+assert.equal(gate({nextGlobalEligibleSecond:300}).eligible,true)
+assert.equal(gate({incidentCount:1,phaseCounts:[1,0,0,0]}).reason,'phase_cap')
+assert.equal(gate({progressFraction:.6}).reason,'phase_cap')
+assert.equal(gate({incidentCount:3,phaseCounts:[1,1,0,1]}).reason,'stage_cap')
+pass('043Q stage boundaries and exact global cooldown/phase quota gates')
+const rider=(over={})=>historicalRiderGate({raceSecond:1200,kmFromStart:20,nextEligibleSecond:1200,rejoinKm:20,withdrawn:false,...over})
+assert.equal(rider(),true);assert.equal(rider({raceSecond:1199}),false);assert.equal(rider({rejoinKm:null}),false)
+assert.equal(rider({rejoinKm:20.000002}),false);assert.equal(rider({rejoinKm:20.0000005}),true);assert.equal(rider({withdrawn:true}),false)
+pass('043Q individual cooldown, physical rejoin and permanent withdrawal boundaries')
+const dep=(over={})=>historicalDepletionStep({distanceKm:60,progressFraction:.35,energy:15,runtimeFatigue:83,raceSecond:1000,lowSinceSecond:760,...over})
+assert.equal(dep().eligible,true);assert.equal(dep({lowSinceSecond:761}).eligible,false)
+for(const over of [{distanceKm:59.99},{progressFraction:.349999},{progressFraction:.99},{energy:15.000001},{runtimeFatigue:82.999999}])assert.deepEqual(dep(over),{eligible:false,lowSinceSecond:null})
+assert.deepEqual(dep({lowSinceSecond:null}),{eligible:false,lowSinceSecond:1000})
+assert.equal(dep({raceSecond:1240,lowSinceSecond:1000,progressFraction:.989999}).eligible,true)
+pass('043Q sustained 240-second exhaustion, recovery reset and distance/progress boundaries')
+const id=n=>'00000000-0000-4000-8000-'+String(n).padStart(12,'0')
+const roster=Array.from({length:16},(_,i)=>({riderId:id(100+i),teamId:id(10+i%4),eligibleToStart:true,startingEnergy:80,effectiveFatigue:65,resistance:10,raceIq:10,riderSupport:1.4,teamSupport:1.4,equipmentConditionPercent:20,mechanicalRisk:1.5}))
+const make=()=>({provenance:'synthetic_review_fixture',raceId:id(1),stageId:id(2),runId:id(3),seed:'043Q-frozen',stage:stage(200,'mountain',1),winnerTimeSeconds:14400,weatherMultiplier:2.5,severeWeather:true,flatSprint:false,roster,ticks:Array.from({length:480},(_,i)=>({raceSecond:(i+1)*30,gradientPercent:i%2===0?-8:4,riders:roster.map(r=>({riderId:r.riderId,status:'racing',energy:i<168?60:10,commandIntensity:1.45})),groups:[{displayCode:'P',aheadOfPeloton:false,riderIds:roster.map(r=>r.riderId)}],rejoins:[]}))})
+const review=e=>reviewHistoricalEligibilityTrace({evidence:e,expectedEvidenceSha256:carryoverDigest(e)})
+const e=make(),out=review(e)
+assert.deepEqual(review(e),out);assert.ok(out.incidents.length>=3&&out.incidents.length<=7)
+assert.ok(out.crashCount<=3);assert.equal(out.phaseCounts.reduce((a,b)=>a+b,0),out.incidents.length)
+out.phaseCounts.forEach((n,i)=>assert.ok(n<=out.limits.perPhase[i]))
+const seen=new Set()
+for(let i=0;i<out.incidents.length;i++){
+ const ev=out.incidents[i]
+ if(i)assert.ok(ev.raceSecond-out.incidents[i-1].raceSecond>=120)
+ assert.ok(ev.raceSecond>60&&ev.kmFromStart>1&&200-ev.kmFromStart>.5)
+ for(const id of ev.incident.affectedRiderIds){assert.ok(!seen.has(id));seen.add(id)}
+ const a=out.audit.find(x=>x.raceSecond===ev.raceSecond)
+ assert.ok(ev.incident.affectedRiderIds.every(id=>a.eligibleRiderIds.includes(id)))
+ if(ev.incident.kind==='exhaustion')assert.ok(a.exhaustionEligible.includes(ev.incident.affectedRiderIds[0]))
+}
+assert.ok(out.audit.some(a=>a.reason==='global_cooldown'));assert.ok(out.audit.some(a=>a.reason==='phase_cap'||a.reason==='stage_cap'))
+assert.ok(out.terminalEligibility.filter(x=>seen.has(x.riderId)).every(x=>x.rejoinKm===null))
+pass('043Q full synthetic checkpoint grid to 043P/043O selection with limits and no assumed rejoin')
+const survivor=out.incidents.flatMap(ev=>ev.incident.handoffs.filter(h=>h.statusImpact==='finished').map(h=>({ev,h}))).find(x=>x.ev.raceSecond+900<14400)
+assert.ok(survivor)
+const rejoined=structuredClone(e),at=survivor.ev.raceSecond+30
+rejoined.ticks[at/30-1].rejoins=[{riderId:survivor.h.riderId,incidentId:survivor.ev.incident.incidentId,rejoinKm:survivor.ev.kmFromStart,provenance:'synthetic_rejoin_witness'}]
+const joined=review(rejoined)
+assert.deepEqual(joined.incidents.filter(x=>x.raceSecond<=survivor.ev.raceSecond),out.incidents.filter(x=>x.raceSecond<=survivor.ev.raceSecond))
+assert.ok(joined.audit.filter(a=>a.raceSecond>survivor.ev.raceSecond&&a.raceSecond<survivor.ev.raceSecond+900).every(a=>!(a.eligibleRiderIds??[]).includes(survivor.h.riderId)))
+const invalid=structuredClone(rejoined);invalid.ticks[at/30-1].rejoins[0].incidentId='fabricated';assert.throws(()=>review(invalid),/rejoin scope/)
+const missing=structuredClone(e);missing.ticks.pop();assert.throws(()=>review(missing),/complete 30-second/)
+const duplicate=structuredClone(e);duplicate.ticks[0].groups.push({...duplicate.ticks[0].groups[0],displayCode:'B'});assert.throws(()=>review(duplicate),/group coverage/)
+assert.throws(()=>reviewHistoricalEligibilityTrace({evidence:{...e,seed:'altered'},expectedEvidenceSha256:out.evidenceSha256}),/frozen synthetic/)
+for(const k of ['physicalCheckpointVerified','completeOccurrenceVerified','authoritativeSourceVerified','official','hostedWriteAllowed','accountingAllowed'])assert.equal(out[k],false)
+pass('043Q synthetic rejoin cannot bypass time gate; bad trace, missing ticks and fabricated evidence refused')
+assert.equal(checks,6);console.log('PASS 6/6 historical incident eligibility checks; no hosted connection')
