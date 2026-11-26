@@ -21,3 +21,7 @@ git pull origin main
 node --test tests\uraniusOriginalFatigueReview.test.mjs
 ```
 Expected 9/9. If 039 finished later, provide its final two PASS lines or error rather than repeat accepted tests. Next recover full original base stage fatigue formula and adapt actual engine motion/effects receipt evidence; then equipment/supplies/health and integrated authoritative finalization. No production or hosted install authorized. Overall 49/60 verified.
+
+## 2026-11-26 — owner native acceptance
+
+Owner pulled e8cb60b and executed node --test tests\uraniusOriginalFatigueReview.test.mjs: 9/9 PASS, zero failures, cancellations or skips. Scoped 040 offline acceptance CLOSED. Base stage workload formula and authoritative evidence integration remain outstanding; no inferred fatigue, hosted writes or official effects. 039 remains four of six confirmed. No repetition of accepted tests unless relevant implementation changes.
