@@ -18,3 +18,7 @@ Expected 7/7 and disposable cluster cleanup. Only local loopback and stripped en
 
 ## Remaining activation gates
 Original marker definitions, authoritative engine/readiness/effects, health catalogue, canonical resource/health persistence writers and source of recovery/penalty/youth evidence remain outstanding. General withdrawal scoring/shared owner handling also not covered by 043C. No production metadata inspection authorization inferred. Next after native 043D acceptance: reconcile actual source/writer contracts and prepare isolated-only design with real source binding and no synthetic promotion, before any separately approved pinned migration. Overall 49/60, U5.04/U5.09 IN_PROGRESS, hosted activation BLOCKED.
+
+## Native first attempt — syntax correction
+
+Owner pulled a56c9c9; native PG17 rejected SQL at line 43 before checks ran because both opening function delimiters were reduced to a single dollar sign during the UTC correction. Disposable cluster cleanup confirmed. Fixed both delimiters in 02ead9350d9c6eaa4bfc8c74e04180b06ddb5eb5 and re-fetched exact committed SQL to verify two matching opening/closing dollar-quote pairs. No change to authority logic, roles or scope. Native rerun still required; no checks accepted from failed attempt.
