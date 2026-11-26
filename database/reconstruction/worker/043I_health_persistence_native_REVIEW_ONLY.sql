@@ -77,8 +77,9 @@ BEGIN
   SELECT value INTO cat FROM jsonb_array_elements(cfg) WHERE value->>'case_code'=code;
   IF cat IS NULL OR NOT (cat->'source_contexts' ? 'race') OR sev IS NULL OR sev NOT IN ('minor','moderate','major') THEN RAISE EXCEPTION 'Invalid race catalogue case or severity'; END IF;
   IF (cat->>'body_part_required')::boolean AND body IS NULL THEN RAISE EXCEPTION 'Body part required'; END IF;
+  IF jsonb_typeof(x->'riskMultiplier') IS DISTINCT FROM 'number' OR jsonb_typeof(x->'staffReductionPct') IS DISTINCT FROM 'number' OR jsonb_typeof(x->'medicalCenterLevel') IS DISTINCT FROM 'number' THEN RAISE EXCEPTION 'Invalid medical evidence'; END IF;
   risk:=(x->>'riskMultiplier')::numeric; staff:=(x->>'staffReductionPct')::numeric; center:=(x->>'medicalCenterLevel')::integer;
-  IF risk IS NULL OR risk<0 OR risk::text='NaN' OR staff IS NULL OR staff<0 OR staff>25 OR staff::text='NaN' OR center IS NULL OR center NOT BETWEEN 0 AND 5
+  IF risk IS NULL OR risk<0 OR risk::text='NaN' OR staff IS NULL OR staff<0 OR staff>25 OR staff<>round(staff,2) OR staff::text='NaN' OR center IS NULL OR center NOT BETWEEN 0 AND 5
    OR coalesce(x->>'medicalCenterLevel','') !~ '^[0-5]$' THEN RAISE EXCEPTION 'Invalid medical evidence'; END IF;
   risk:=greatest(.78,least(1,risk));
   roll:=round((('x'||substr(md5(p_run::text||':'||rid::text||':'||incident||':health_consequence'),1,12))::bit(48)::bigint)::numeric/281474976710655,6);
