@@ -31,3 +31,11 @@
 5. Only then prepare exact SQL and manifest hashes for separate owner approval, with fresh baseline, backup/rollback or forward-fix plan, no automatic scheduler and no production access. Keep existing worker dormant. Review externally configured scheduling separately before any activation.
 
 Do not install 035 or 042 REVIEW_ONLY fixtures on a hosted project. Do not promote their synthetic inputs into official game records. A passed baseline does not make the official publication gate ready. No repeat of accepted 035–038 or 040–042 tests needed absent relevant changes. Overall master checklist remains 49/60 verified, U5.09 in progress; 043 read-only baseline scoped review accepted, hosted activation blocked.
+
+## 2026-11-26 — superseding scoped acceptance (activation still BLOCKED)
+
+- 039/043A native combined 6/6 accepted, including actual engine crossing parity and repeatability. Canonical markers and sporting tie policy remain review-only.
+- 043B native 15/15 accepted, original base workload and Phase9 resource arithmetic recovered, medical and reservation formulas reviewed. Actual authoritative inputs, canonical DB writers and health catalogue not verified.
+- 043C native combined 14/14 accepted, including integrated ordinary two-stage all-finisher exact-policy settlement, prior paid awards, resource carryover and atomic rollback/concurrent retry. General multi-stage withdrawals, shared owners and health persistence remain out of scope.
+- 043D local authority boundary rehearsal committed with native PG17 pending; independent evidence and admission role separation, rejection of existing review job kinds and hard false receipt flags. No real publication writer or migration drafted.
+- The three earlier readiness rows for scoring/base fatigue/multi-stage now have scoped offline acceptance; they are not approval for official publication. Hosted activation remains BLOCKED on source authority, actual writers/effects, deployment contract and separate explicit approval. Do not install any REVIEW_ONLY fixture hosted. No new hosted baseline inspection or mutations in 043D.
