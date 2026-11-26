@@ -22,3 +22,7 @@ Original marker definitions, authoritative engine/readiness/effects, health cata
 ## Native first attempt — syntax correction
 
 Owner pulled a56c9c9; native PG17 rejected SQL at line 43 before checks ran because both opening function delimiters were reduced to a single dollar sign during the UTC correction. Disposable cluster cleanup confirmed. Fixed both delimiters in 02ead9350d9c6eaa4bfc8c74e04180b06ddb5eb5 and re-fetched exact committed SQL to verify two matching opening/closing dollar-quote pairs. No change to authority logic, roles or scope. Native rerun still required; no checks accepted from failed attempt.
+
+## Owner native acceptance — corrected 043D
+
+Owner fast-forwarded a56c9c9..1251638 and ran the exact disposable PG17 harness. All 7/7 groups PASS, including independent role denials, rejection of review and running jobs, complete evidence gates, digest/reveal/prior-stage checks, rollback/concurrent receipt, immutable prior evidence/timezone-independent retries and hard-false official flags. Cleanup confirmed. Scoped 043D local authority boundary acceptance CLOSED. No actual authority producer or official writer approved. Overall 49/60; no hosted or production changes.
