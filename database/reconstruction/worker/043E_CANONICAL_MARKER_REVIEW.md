@@ -21,3 +21,7 @@ node --test tests\uraniusCanonicalMarkerReview.test.mjs
 ```
 
 Expected 7/7. No database, policy snapshot or credentials needed. Next bind actual isolated server-owned profile and scoring rows to engine-generated trace and independent receipt; canonical marker writer/health catalogue and resource persistence contracts still require source reconciliation. Any original production metadata/configuration inspection must be separately explicitly authorized, not inferred from earlier bounded approvals. Hosted activation BLOCKED, overall 49/60.
+
+## Owner native acceptance — 2026-11-26
+
+Owner fast-forwarded 1251638..deb0e9d and ran the exact Node test suite. All 7/7 passed, no failures/skips/cancellations, 181.4076 ms. Scoped 043E offline source adapter acceptance CLOSED. Next 043F bind the accepted adapter to actual engine trace and scoring with a separate finish-only path; no hosted or official authorization. Overall 49/60.
