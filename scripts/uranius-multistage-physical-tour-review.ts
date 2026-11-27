@@ -110,6 +110,7 @@ export function reviewMultistagePhysicalTour({packet,expectedPacketSha256}:any){
    for(const k of ['selectedQuantity','selectedStageUses','conditionLossPerRaceDay'])req(typeof request[k]==='number'&&Number.isFinite(request[k])&&request[k]>=0,'explicit resource request values required')
    req(before.quantity!==null||request.selectedQuantity===0,'quantity request without stock')
    req(before.stageUsesRemaining!==null||request.selectedStageUses===0,'durable request without stock')
+   req(before.lastUsedDate===null||day(before.lastUsedDate)<=day(date),'future durable use date')
    req(before.lastUsedDate!==date||request.selectedStageUses===0,'duplicate daily durable use')
    if(!activeTeams.has(before.teamId)){req(request.selectedQuantity===0&&request.selectedStageUses===0,'inactive team cannot consume resources');return {before,after:before,effect:null}}
    const engine={resourceType:before.resourceType,resourceId:before.resourceId,teamId:before.teamId,selectedQuantity:request.selectedQuantity,selectedStageUses:request.selectedStageUses,conditionLossPerRaceDay:request.conditionLossPerRaceDay}
