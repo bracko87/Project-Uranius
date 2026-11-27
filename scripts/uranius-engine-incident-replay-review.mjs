@@ -32,7 +32,7 @@ export function projectEngineIncidentReplay({input,readinessReceipt,runId,contex
    if(i===0)req(r.energy===s.condition.startingEnergy&&r.distanceKm===0,'initial energy/position mismatch')
    return {riderId:r.riderId,energy:r.energy,status:r.status,displayCode:'P'}
   })
-  const racing=states.filter(r=>r.status==='racing').map(r=>r.riderId).sort(),active=f.groups.filter(g=>g.groupType==='peloton')
+  const racing=states.filter(r=>r.status==='racing').map(r=>r.riderId).sort(),active=f.groups.filter(g=>g.groupType==='peloton'&&g.active===true)
   req(f.groups.every(g=>['peloton','finished'].includes(g.groupType))&&active.length<2&&(!racing.length||active.length===1)&&carryoverDigest((active[0]?.riderIds??[]).slice().sort())===carryoverDigest(racing),'only measured single-peloton base trace supported')
   const gaps=[{displayCode:'P',gapSeconds:active[0]?.gapFromLeaderSeconds??0}]
   req(gaps[0].gapSeconds===0,'unsupported nonleader peloton gap')
