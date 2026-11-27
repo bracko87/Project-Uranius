@@ -17,3 +17,7 @@ git pull origin main
 node tests\uraniusChronologicalIncidentFeedbackAcceptance.mjs --offline-only
 ```
 Expected PASS 4/4 chronological incident feedback checks; no hosted connection, then cleanup. Existing Node/esbuild only; no PostgreSQL or private files. Next expand repeated incident and helper episodes with chronological state ownership, then physically apply incident consequences in isolated movement simulation and reconcile adjusted finish scoring. Hosted activation BLOCKED.
+
+## Owner native acceptance — 2026-11-27
+
+Owner confirmed main up to date and ran prescribed offline harness. All four groups PASS; actual base-engine observations, causal feedback and immutable prior decisions, no hosted connection, cleanup completed. Scoped 043W CLOSED; 136/136 owner-accepted native groups through 043W, overall 49/60. Physical engine feedback, repeated incident and rescue integration remain outstanding.
