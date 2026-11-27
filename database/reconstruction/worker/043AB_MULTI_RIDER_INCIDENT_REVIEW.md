@@ -14,3 +14,6 @@ del "%TEMP%\uranius-043ab-test.cjs"
 ```
 
 Expected PASS 4/4 multi-rider incident checks; no hosted connection. Acceptance requires controlled mixed recovery/DNF, deterministic recovery, a naturally selected applied group crash using physical state and later candidate exclusion, and deterministic automatic replay/authority guards. Full-stage classification and overlapping independent incidents remain pending. Hosted activation BLOCKED.
+
+## Owner acceptance — 2026-11-27
+Owner pulled 1f2575b; esbuild bundle 287.2kb succeeded in 106ms. Native acceptance PASS 4/4: atomic multi-rider loss, distinct repair durations, helper pickup and permanent DNF; deterministic independent recovery and contact rejoin; automatically selected group crash and physical candidate exclusion; deterministic automatic batch and authority boundary. Seed 043Y-engine-4 selected four incidents, six rider-level applications, group crash witnessed, stopped at intentional pre_finish_boundary. No hosted connection; temporary bundle deleted. Scoped 043AB accepted; cumulative 152/152 native groups. Independent overlapping incidents, general tactical interactions and full-stage classification remain pending. Hosted activation BLOCKED.
