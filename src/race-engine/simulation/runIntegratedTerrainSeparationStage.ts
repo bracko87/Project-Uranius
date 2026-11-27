@@ -137,6 +137,9 @@ export interface IntegratedTerrainSeparationOptions {
   /** OFFLINE POC: a slower dropped group already behind the peloton cannot be caught from ahead. */
   readonly experimentalPreserveRecedingDroppedGroups?: boolean
   readonly experimentalRequirePhysicalDroppedCatch?: boolean
+  /** Offline single-tick adapter; caller owns frozen incident evidence and replay. */
+  readonly experimentalRepairMotion?: (state:SimulationState, movement:TerrainAwareMultiGroupMovementResult)=>TerrainAwareMultiGroupMovementResult
+  readonly experimentalIndependentRepairGroupIds?: readonly string[]
   /** OFFLINE OPT-IN: no physical peloton teleport from a trailing attack. */
   readonly experimentalPreserveTrailingAttackGroups?: boolean
   /** OFFLINE COUNTERFACTUAL ONLY; default OFF. */
@@ -1302,7 +1305,7 @@ export function simulateIntegratedTerrainSeparationTick(
   if(selectedPursuitModels>1)
     throw Error('runIntegratedTerrainSeparationStage: funded pursuit experiments are mutually exclusive')
 
-  const movement =
+  const naturalMovement =
     calculateTerrainAwareMultiGroupMovement(
       appliedOrderEffects.state,
       terrainCapabilityInfluence,
@@ -1334,6 +1337,7 @@ export function simulateIntegratedTerrainSeparationTick(
       },
     )
 
+  const movement = options.experimentalRepairMotion ? options.experimentalRepairMotion(appliedOrderEffects.state,naturalMovement) : naturalMovement
   const appliedMovement =
     applyMultiGroupMovement({
       state:
@@ -1354,6 +1358,7 @@ export function simulateIntegratedTerrainSeparationTick(
         ?{experimentalPullerEnergyCosts:movement.experimentalPullerEnergyCosts}:{}),
     })
 
+  if(options.experimentalRepairMotion && (options.individualCrashIntegration || options.crashIncidentIntegration || options.raceIncidentIntegration)) throw Error('external repair motion cannot coexist with native incidents')
   const enabledIncidentIntegrationCount =
     Number(
       Boolean(
@@ -1492,6 +1497,7 @@ export function simulateIntegratedTerrainSeparationTick(
         experimentalRequirePhysicalBreakawayCatch:
           options.experimentalRequirePhysicalBreakawayCatch === true,
         ...(options.experimentalRequirePhysicalDroppedCatch === true ? {experimentalRequirePhysicalDroppedCatch:true} : {}),
+        ...(options.experimentalIndependentRepairGroupIds ? {experimentalIndependentRepairGroupIds:options.experimentalIndependentRepairGroupIds} : {}),
         ...(options.experimentalRequirePhysicalBreakawayCatch === true &&
             subTickFinishInterpolationEnabled
           ? { experimentalFinishCrossingSecondsByGroupId }
