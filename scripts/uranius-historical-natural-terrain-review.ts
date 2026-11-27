@@ -1,4 +1,6 @@
 // Offline isolated adapter: historical selection, calibrated terrain pressure.
+import {resolvePreparedPhysicalWeather,applyPreparedWeatherEnergy} from './uranius-prepared-physical-weather-review'
+import {calculateWeatherPerformanceEffects} from '../src/race-engine/simulation/weatherPerformanceEffects'
 import {carryoverDigest} from './uranius-multistage-carryover-review.mjs'
 import {bindLegacyReadiness,bindTourStageReadiness} from './uranius-frozen-readiness-review.mjs'
 import {resolveResourceMechanicalReview} from './uranius-resource-mechanical-review.mjs'
@@ -48,7 +50,7 @@ export function historicalRepairMovement(state:SimulationState,base:TerrainAware
   const e=tracked.find(e=>e.groupId===p.groupId)
   if(!e)return p
   const repair=state.raceSecond<e.repairUntil,target=base.movement.proposals.find(x=>x.groupId===e.targetId)
-  const speed=repair?0:target?Math.min(state.input.settings.maximumSpeedKmh,p.appliedSpeedKmh+8*p.terrainMultiplier):p.appliedSpeedKmh
+  const speed=repair?0:target?Math.min(state.input.settings.maximumSpeedKmh,p.appliedSpeedKmh+8*p.terrainMultiplier*(state.weatherPerformanceEffectsEnabled?calculateWeatherPerformanceEffects(state.input.weather).speedMultiplier:1)):p.appliedSpeedKmh
   let next=Math.min(limit,p.previousDistanceKm+speed*dt)
   if(!repair&&target&&target.previousDistanceKm>=p.previousDistanceKm&&target.nextDistanceKm<limit)next=Math.min(next,target.nextDistanceKm)
   req(next>=p.previousDistanceKm,'backward repair motion')
@@ -69,6 +71,9 @@ export function reviewHistoricalNaturalTerrain({packet,expectedPacketSha256}:any
  req(baseline.profile.category===context.terrainType,'terrain context mismatch')
  let state=baseline.stage.initialState,episodes:Episode[]=[],handled=0
  const preparation=packet.preparation
+ const weather=packet.physicalWeather===undefined?null:resolvePreparedPhysicalWeather(input,context,packet.physicalWeather)
+ req(!weather||preparation,'physical weather requires complete preparation')
+ if(weather&&!weather.neutral){state={...state,input:{...state.input,weather:weather.weather},weatherPerformanceEffectsEnabled:true};validateSimulationState(state)}
  const bound=preparation?(source.stageNumber>1?bindTourStageReadiness:bindLegacyReadiness)({source,expectedSourceSha256:carryoverDigest(source),input}):null
  const mechanical=preparation?resolveResourceMechanicalReview({evidence:preparation.mechanical,expectedEvidenceSha256:carryoverDigest(preparation.mechanical),ready:bound!.receipt}):null
  if(preparation){req(preparation.performance.terrainProfile===context.terrainType,'terrain equipment profile mismatch');req(carryoverDigest(preparation.energy.resources)===carryoverDigest(preparation.mechanical.resources)&&carryoverDigest(preparation.energy.requests)===carryoverDigest(preparation.mechanical.requests),'preparation ledger mismatch')}
@@ -94,7 +99,7 @@ export function reviewHistoricalNaturalTerrain({packet,expectedPacketSha256}:any
    subTickFinishInterpolationEnabled:true,experimentalRequirePhysicalDroppedCatch:true,experimentalIndependentRepairGroupIds:tracked.map(e=>e.groupId),
    experimentalRepairMotion:(s,m)=>historicalRepairMovement(s,m,tracked),
    ...(equipment?{experimentalEquipmentCapabilityAdjustments:equipment.adjustments}:{}),
-   ...(supply?{experimentalPreparationEnergy:e=>applyReviewEnergyMultiplier(e,multipliers)}:{})
+   ...(supply?{experimentalPreparationEnergy:e=>weather&&!weather.neutral?applyPreparedWeatherEnergy(e,multipliers!,weather):applyReviewEnergyMultiplier(e,multipliers)}:{})
   })
   state=t.state;results.push(...(t.appliedFinish?.newResults??[]))
   const contacts=[],rejoins=[]
@@ -142,5 +147,5 @@ export function reviewHistoricalNaturalTerrain({packet,expectedPacketSha256}:any
  while(!state.completed){req(observations.length<1440,'terminal horizon exceeded');advance()}
  const classification=[...results,...Object.values(state.riders).filter(r=>r.stageStatus==='dnf').sort((a,b)=>a.riderId.localeCompare(b.riderId)).map(r=>({riderId:r.riderId,teamId:r.teamId,status:'dnf',rank:null,elapsedSeconds:null,gapSeconds:null}))]
  req(classification.length===roster.length&&new Set(classification.map(r=>r.riderId)).size===roster.length&&results.length>0,'terminal coverage')
- return {version:'043AU_historical_natural_terrain_v1',packetSha256:expectedPacketSha256,trace:historical.trace,selectedCheckpoints:historical.selectedCheckpoints,applications,observations,observationsSha256:carryoverDigest(observations),prefixTicks,classification,classificationSha256:carryoverDigest(classification),finalState:state,episodes,ticks,...(preparation?{preparation:{ready:bound!.receipt,mechanical,equipment,supply}}:{}),...flags()}
+ return {version:'043AU_historical_natural_terrain_v1',packetSha256:expectedPacketSha256,trace:historical.trace,selectedCheckpoints:historical.selectedCheckpoints,applications,observations,observationsSha256:carryoverDigest(observations),prefixTicks,classification,classificationSha256:carryoverDigest(classification),finalState:state,episodes,ticks,...(weather?{physicalWeather:weather}:{}),...(preparation?{preparation:{ready:bound!.receipt,mechanical,equipment,supply}}:{}),...flags()}
 }
