@@ -16,3 +16,6 @@ del "%TEMP%\uranius-043ag-test.cjs"
 ```
 
 Expected PASS 4/4 two-stage physical checks; no hosted connection. Hosted activation BLOCKED.
+
+## Initial native run and correction — 2026-11-27
+Owner pulled 87f38b5, bundle 338.5kb built in 121ms; actual two-stage review returned, then failed first assertion `mixed roster witness required`. No acceptance group credited. Prior 168/168 unchanged. Exact initial starter/exclusion counts not printed. Acceptance-only correction 915ac2f uses same 200km wet seed 4 with 40–40km/h speed envelope (no chase headroom), 0.001s grouping threshold, zero-percent OTL and disabled sprint-zone protection to expose unresolved physical gaps in the synthetic test. No production sporting policy or engine rules altered. Explicit preview reports first-stage physical and sporting status counts, starter/exclusion counts, requires mixed roster before actual second-stage execution. Bounded eight deterministic Stage 2 seeds require actual new automatic incident witness; unexpected engine errors still fail closed. Native rerun pending; targeted witness not guaranteed. Hosted activation BLOCKED.
