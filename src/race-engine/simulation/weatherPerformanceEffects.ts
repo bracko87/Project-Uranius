@@ -12,6 +12,8 @@ import type {
   StageWeatherInput,
 } from '../domain/StageInput'
 
+import {calculateDirectionalWindEffects} from './directionalWindEffects'
+
 export type RainIntensity =
   | 'none'
   | 'drizzle'
@@ -43,6 +45,7 @@ export interface WeatherPerformanceEffects {
   readonly precipitationContribution:
     WeatherEffectContribution
 
+  readonly directionalWind?: ReturnType<typeof calculateDirectionalWindEffects>
   readonly reasons:
     readonly string[]
 }
@@ -403,6 +406,7 @@ function multiplyContributions(
     WeatherEffectContribution,
   precipitation:
     WeatherEffectContribution,
+  directional = false,
 ): WeatherEffectContribution {
   return {
     speedMultiplier:
@@ -414,7 +418,7 @@ function multiplyContributions(
             precipitation
               .speedMultiplier,
           0.75,
-          1,
+          directional ? 1.07 : 1,
         ),
       ),
     energyConsumptionMultiplier:
@@ -426,7 +430,7 @@ function multiplyContributions(
               .energyConsumptionMultiplier *
             precipitation
               .energyConsumptionMultiplier,
-          1,
+          directional ? .895 : 1,
           1.75,
         ),
       ),
@@ -439,7 +443,7 @@ function multiplyContributions(
               .staminaConsumptionMultiplier *
             precipitation
               .staminaConsumptionMultiplier,
-          1,
+          directional ? .895 : 1,
           1.75,
         ),
       ),
@@ -552,7 +556,8 @@ export function calculateWeatherPerformanceEffects(
       weather,
     )
 
-  const windContribution =
+  const directionalWind = weather.directionalWind===undefined ? undefined : calculateDirectionalWindEffects(weather)
+  const windContribution = directionalWind?.contribution ??
     calculateWindContribution(
       weather.windSpeedKmh,
     )
@@ -573,10 +578,12 @@ export function calculateWeatherPerformanceEffects(
       windContribution,
       temperatureContribution,
       precipitationContribution,
+      directionalWind!==undefined,
     )
 
   return {
     ...combined,
+    ...(directionalWind?{directionalWind}:{}),
     rainIntensity,
     windContribution,
     temperatureContribution,
