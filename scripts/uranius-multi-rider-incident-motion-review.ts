@@ -6,6 +6,7 @@ import {calculateMultiGroupMovement} from '../src/race-engine/simulation/multiGr
 import {applyMultiGroupMovement} from '../src/race-engine/simulation/applyMultiGroupMovement'
 import {applyMultiGroupEnergy} from '../src/race-engine/simulation/applyMultiGroupEnergy'
 import {validateSimulationState} from '../src/race-engine/validation/validateSimulationState'
+import {applyReviewEnergyMultiplier,type EnergyMultipliers} from './uranius-resource-energy-review'
 type Row={riderId:string,helper:string|null,statusImpact:'finished'|'dnf',repairSeconds:number,energyLossPoints:number}
 type Episode={affected:string,helper:string|null,groupId:string,helperGroupId:string|null,targetId:string,repairUntil:number,phase:'repair'|'chase'|'joined'}
 const req=(x:unknown,m:string)=>{if(!x)throw Error('043AB: '+m)}
@@ -61,7 +62,7 @@ function startBatch(state:SimulationState,rows:readonly Row[],prior:readonly Epi
  validateSimulationState(next)
  return {state:next,episodes,targetId:target.groupId}
 }
-export function multiRiderIncidentTick(state:SimulationState,episodes:readonly Episode[],targetId:string){
+export function multiRiderIncidentTick(state:SimulationState,episodes:readonly Episode[],targetId:string,multipliers?:EnergyMultipliers){
  req(!state.completed&&state.currentKm<state.stageDistanceKm,'pre-finish scope')
  const base=calculateMultiGroupMovement(state),dt=base.tickSeconds/3600
  const target=base.proposals.find(p=>p.groupId===targetId)
@@ -84,7 +85,7 @@ export function multiRiderIncidentTick(state:SimulationState,episodes:readonly E
  req(proposals.every(p=>p.nextDistanceKm<state.stageDistanceKm),'finish outside bounded experiment')
  const movement={...base,leaderGroupId:targetId,leaderDistanceKm:target!.nextDistanceKm,proposals}
  const moved=applyMultiGroupMovement({state,movement}).state
- const energy=applyMultiGroupEnergy({state:moved,movement})
+ const energy=applyReviewEnergyMultiplier(applyMultiGroupEnergy({state:moved,movement}),multipliers)
  let next=energy.state
  const pickups:string[]=[],rejoins:string[]=[]
  const merge=(fromId:string,toId:string)=>{
