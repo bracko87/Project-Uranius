@@ -18,3 +18,6 @@ del "%TEMP%\uranius-043av-test.cjs"
 ```
 
 Expected PASS 4/4 prepared natural terrain checks; no hosted connection.
+
+## Owner acceptance — 2026-11-27
+Owner pulled 4637c25; esbuild bundle 535.8kb succeeded in 203ms. Native PASS 4/4: calibrated prepared movement and pressure, natural separation and actual tick energy (pressureRows=6789, savedTicks=4848); mechanical candidates, one shared asset debit, partial consumables, individual wear and clothing allocation (measured=119, protectedWear=72); fractional finishing workload, original fatigue and recovery, no duplicate incident energy debit; deterministic prepared replay, ledger mismatch and authority guards. Temporary bundle deleted; no hosted connection. Scoped 043AV accepted; cumulative 232/232 distinct native acceptance groups. Single-stage synthetic review only. Weather movement/energy stacking intentionally disabled, full-tick physical terminal energy retained with corrected fractional energy in workload receipt, historical preparation percentages explicit synthetic values, illness candidates not health writes. Mixed-terrain persistence, physical weather effects, helper integration, DNF-specific combined regression, cobbles, TT, original catalogue/jersey rules, health writer and TypeScript checks remain pending. Hosted activation BLOCKED.
