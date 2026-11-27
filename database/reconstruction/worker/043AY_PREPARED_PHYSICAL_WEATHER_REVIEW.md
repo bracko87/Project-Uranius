@@ -18,3 +18,6 @@ del "%TEMP%\uranius-043ay-test.cjs"
 ```
 
 Expected PASS 4/4 prepared physical weather checks; no hosted connection.
+
+## Owner acceptance — 2026-11-27
+Owner pulled 4f87dc3; esbuild bundle 547.8kb succeeded in 184ms. Native PASS 4/4: canonical rain, strong-wind, cold and heat coefficients, exact dry physical parity; actual prepared weather motion, capped energy and nutrition (ticks=15612, savedTicks=8052, capTicks=0, weatherFatigueTicks=15612, descentProposals=384); one historical weather risk factor, fractional finish workload, fatigue and single resource accounting (measuredCandidates=250); deterministic replay, inconsistent weather evidence and authority guards. Rain speed/energy/fatigue factors .97/1.05/1.03, incidents=1, finishers=24; severe .876973/1.28184/1.0865, incidents=5, finishers=24; heat .98/1.2/1.3, incidents=0, finishers=24. No naturally observed exhaustion-cap ticks; controlled boundary passed. Temporary bundle deleted; no hosted connection. Scoped 043AY accepted; cumulative 244/244 distinct native acceptance groups. Hilly/mountain single-stage synthetic acceptance only; flat and mixed-tour weather integration, directional wind, wet-descent-specific effects, cobbles, TT, natural-group helper assistance, catalogue/jersey rules, health writer and TypeScript checks remain pending. Hosted activation BLOCKED.
