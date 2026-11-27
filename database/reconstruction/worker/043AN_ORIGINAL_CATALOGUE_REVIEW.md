@@ -1,0 +1,18 @@
+# 043AN — archived equipment preview and consumable fallback (offline only)
+
+043AM native 4/4 accepted twice, cumulative 196/196 distinct native groups. b5df32c ports archived `equipment_calculate_catalog_setup_bonus_preview` and consumable fallback arithmetic; 014a4cc/04bbfc6 bind optional archived consumable mode to actual physical tour energy/fatigue; cb18551 adds native acceptance. Source: `reference/database/20260929184613_baseline_04_sql_dump_001_120.sql.txt` lines 4173–4359; `reference/database/20260929184654_baseline_04_sql_dump_241_360.sql.txt` lines 8870–9007. Source establishes six starter definitions (names/brands and count 10 each), not underlying active catalogue item IDs, effects, category weight or wear-rate rows. Weighted preview sums category weight × item bonus, rounds to 2 decimals and caps ±4. Complete six matching active durable items and explicit weight/key snapshots required in this review. Test catalogue and weights are synthetic, not real original data. Preview selects flat/hilly/mountain/cobbled/time_trial keys; no actual non-flat simulation. No new equipment pace binding from preview: the archived standardized team generic bonus path caps ×5 at ±5, whereas the current engine percentage path documents ±20; the archived TT average condition calculation is not evidence of current road scaling. Do not conflate these or apply both. Actual condition-scaled road performance, component-specific wear rates, and actual catalogue snapshots remain blocked.
+
+Archived consumable no-bonus-snapshot fallback: usable=min(planned,stock), ratio=usable/planned or 0, divide by team rider count. Bidons energy saving and fatigue reduction .6 × usable/riderCount; gels energy saving 1.5 × usable/riderCount and support points .75 × usable/riderCount; nutrition energy saving 3 × usable/riderCount and recovery 1.5 × usable/riderCount. For each requested consumable in shortage, fatigue penalty 3%; aggregate by MAX, not sum. Savings/recovery sum; existing historical Phase9 caps apply. Use actual starters as team count for isolated tour. Distinct team/supply key and physical resource required; no custom bonuses in archived fallback mode. Partial benefits and exhaustion penalties replace synthetic all-or-none allocation ONLY in explicit archived mode; 043AK default unchanged. Gel generic support points are reported, not applied to speed (separate channel); jersey/jacket, bonus-snapshot overrides, shared parent-club inventory and exact production eligibility not included. No claim of current live production catalogue parity. No hosted query/write performed.
+
+Acceptance: synthetic weighted preview and starter definitions; physical 200/90/20km tour, three consumables each stock 8, no request stage 1, request 16 stage 2 and stage 3; partial consumption and exhausted shortage, exact historical energy/fatigue/recovery multipliers, actual tick savings, deterministic replay, default first-stage parity and authority flags. Native execution and TypeScript checking pending. Hosted activation BLOCKED.
+
+Windows CMD:
+
+```bat
+git pull origin main
+node_modules\.bin\esbuild.cmd tests\uraniusOriginalCatalogueAcceptance.ts --bundle --platform=node --format=cjs --outfile="%TEMP%\uranius-043an-test.cjs"
+node "%TEMP%\uranius-043an-test.cjs" --offline-only
+del "%TEMP%\uranius-043an-test.cjs"
+```
+
+Expected PASS 4/4 original catalogue checks; no hosted connection.
