@@ -34,7 +34,9 @@ export function reviewSportingClassification({finish,policy,incidents,expectedPo
   // Neutral energy formula is duration-linear and uncapped before subtraction.
   // Refuse alternate runtime modifiers instead of scaling a capped ledger.
   req(!t.state.weatherPerformanceEffectsEnabled&&!t.state.groupShelterEnergyEnabled&&!t.state.experimentalAbsoluteSpeedEffortEnabled&&e.runtimeFatigueGain===undefined&&!(e.experimentalPullerEnergySurcharge??0),'unsupported energy modifier')
-  const fullCost=e.result.grossEnergyCost*e.result.efficiencyMultiplier
+  const multiplier=e.preparationEnergyMultiplier??1
+  req(num(multiplier,.9,1),'invalid preparation energy multiplier')
+  const fullCost=e.result.grossEnergyCost*e.result.efficiencyMultiplier*multiplier
   const fraction=c.crossingFraction!
   const corrected=round(Math.max(0,e.previousEnergy-fullCost*fraction))
   energyById.set(c.riderId,{crossingFraction:fraction,previousEnergy:e.previousEnergy,fullTickEnergy:e.nextEnergy,partialTickEnergy:corrected,partialTickCost:round(Math.min(e.previousEnergy,fullCost*fraction))})
