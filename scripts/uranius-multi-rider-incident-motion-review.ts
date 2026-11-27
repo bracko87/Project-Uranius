@@ -62,9 +62,9 @@ function startBatch(state:SimulationState,rows:readonly Row[],prior:readonly Epi
  validateSimulationState(next)
  return {state:next,episodes,targetId:target.groupId}
 }
-export function multiRiderIncidentTick(state:SimulationState,episodes:readonly Episode[],targetId:string,multipliers?:EnergyMultipliers){
+export function multiRiderIncidentTick(state:SimulationState,episodes:readonly Episode[],targetId:string,multipliers?:EnergyMultipliers,capabilityAdjustments?:Readonly<Record<string,number>>){
  req(!state.completed&&state.currentKm<state.stageDistanceKm,'pre-finish scope')
- const base=calculateMultiGroupMovement(state),dt=base.tickSeconds/3600
+ const base=calculateMultiGroupMovement(state,capabilityAdjustments),dt=base.tickSeconds/3600
  const target=base.proposals.find(p=>p.groupId===targetId)
  req(target,'target missing')
  const active=episodes.filter(e=>e.phase!=='joined')
