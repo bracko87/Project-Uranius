@@ -1,0 +1,17 @@
+# 043V — historical incident-adjusted replay and provisional classification (offline only)
+
+2026-11-27. Owner 043U native 5/5 accepted; 128/128 prior owner-accepted native groups, overall 49/60. No hosted access, writes or activation.
+
+## Source and scope
+Pinned original ProPeloton-Manager b2a763a6b62b001b63ebbdd68d9a4e3454dce5e2, runRaceEngine.ts blob 39e35c6ed69563ce82cb663d6c3f9088c61df886: 32012–32102 chase sample and energy interpolation; 32251–32264 road time-limit percentages; 32522–32560 modal source-group finish time, excluding affected riders, earliest modal tie; 33940 onward sprint eligibility and consequence; 34196–34420 consequence aggregation, DNF, OTL, physical versus protected time and sorting; 34518 onward replay energy deduction. Original road time limits flat 18%, hilly 20%, cobbled 22%, mountain 25%. Original sort uses physical finish time then adjusted original finish score then base rank. Legacy runner has no original finish score. Do not fabricate it: diagnostic base rank tie break, flag equal physical-time groups containing injury performance penalties as unresolved, including winner tie. No general original scoring parity claimed.
+
+## Implementation
+- scripts/uranius-incident-adjusted-replay-review.mjs 794ad84d7bea183f9387e7effddec7a4d561c9e9, blob 926da117b8e7642d02fa9f21a1070bbbaabc425b. Validate offline 043U digest, bound input/readiness/context/output, recompute historical incident/chase review, cross-check measured group snapshots and terminal rider energy. Preserve original base bytes; calculate provisional classification and diagnostic replay overlay (incident energy after occurrence, original interpolated chase costs, nonnegative energy, DNF removal from modeled group, successful rejoin no remaining penalty, helper energy/time, provisional source time protection for eligible surviving riders, OTL). Model uses historical time-fraction distance separate from measured base distance. Terminal overlay energy reconciles to aggregate deductions. No chronological feedback into movement/occurrence, no measured post-incident road position, no recomputed finish score, no extra exact-event replay checkpoints, no official results/health writes. DNF energy remains diagnostic overlay of the base trace, not actual post-withdrawal movement or fatigue. Synthetic supplemental plans/weather unchanged from 043U. All authority flags false.
+- tests/uraniusIncidentAdjustedReplayAcceptance.mjs cede9eaa54d4be8f2ed95f996b8d6d95ba368d00, blob b2addf95e9f1796fdb9224c6e5f849ae5c. Four native groups planned: original modal/time-limit and classification boundaries; actual engine base terminal energy/time and adjustment; chronological diagnostic energy, chase/rejoin and withdrawal; tamper/authority refusal. Development preflight re-fetched JS with original MD5 and canonical JSON digest shim, synthetic 271 frames/24 riders/three incidents/two chase episodes/one DNF and standalone boundary assertions PASS. Not actual engine execution or native SHA test; full native 4/4 pending. Existing engine and prior scripts untouched.
+
+## Owner acceptance
+```bat
+git pull origin main
+node tests\uraniusIncidentAdjustedReplayAcceptance.mjs --offline-only
+```
+Expected PASS 4/4 incident adjusted replay checks; no hosted connection, then cleanup. No PostgreSQL or private files required. Next implement actual chronological feedback/rejoin into incident candidate selection and movement, reconcile original finish score and physical results; source authentication and official writers remain blocked.
