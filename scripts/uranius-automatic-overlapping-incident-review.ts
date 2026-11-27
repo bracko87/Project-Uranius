@@ -9,7 +9,10 @@ import {reviewHistoricalCheckpointConsequences} from './uranius-historical-incid
 import {extendMultiRiderIncident,multiRiderIncidentTick} from './uranius-multi-rider-incident-motion-review'
 const req=(x:unknown,m:string)=>{if(!x)throw Error('043AC: '+m)}
 const round=(x:number)=>Math.round((x+Number.EPSILON)*1e6)/1e6
-export function reviewAutomaticOverlappingIncident({input:raw,source,context,expectedSourceSha256,expectedContextSha256}:any){
+export function reviewAutomaticOverlappingIncident(args:any){return review(args,false)}
+// Explicit isolated continuation only; accepted 043AC result shape stays identical.
+export function captureAutomaticOverlappingFinishPrefix(args:any){return review(args,true)}
+function review({input:raw,source,context,expectedSourceSha256,expectedContextSha256}:any,capture:boolean){
  req(carryoverDigest(context)===expectedContextSha256,'context digest mismatch')
  const bound=bindLegacyReadiness({source,expectedSourceSha256,input:raw}),input=bound.input
  req(input.stageFormat==='road_race'&&input.orders.length===0&&input.settings.tickSeconds===30&&context.terrainType==='flat','bounded flat no-command scope')
@@ -84,5 +87,5 @@ export function reviewAutomaticOverlappingIncident({input:raw,source,context,exp
   observations.push({raceSecond:state.raceSecond,measuredKm:state.currentKm,tick,excludedRiderIds,pickups,joined,activeEpisodes:episodes.filter(e=>e.phase!=='joined').map(e=>({...e,incidentId:incidentByGroup.get(e.groupId)})),positions:Object.values(state.riders).map((r:any)=>({riderId:r.riderId,distanceKm:r.distanceKm,energy:r.energy,status:r.stageStatus,groupId:r.currentGroupId}))})
   return {tick,excludedRiderIds,measuredKm:state.currentKm}
  })
- return {version:'043AC_automatic_overlapping_review_v1',trace:result.trace,selectedCheckpoints:result.selectedCheckpoints,applications,admissions,observations,observationSha256:carryoverDigest(observations),finalState:state,baselineWinnerTimeSeconds:winnerTimeSeconds,physicalFeedbackApplied:applications.length>0,official:false,hostedWriteAllowed:false,accountingAllowed:false,authoritativeSourceVerified:false,finalClassificationVerified:false}
+ return {version:'043AC_automatic_overlapping_review_v1',trace:result.trace,selectedCheckpoints:result.selectedCheckpoints,applications,admissions,observations,observationSha256:carryoverDigest(observations),finalState:state,baselineWinnerTimeSeconds:winnerTimeSeconds,physicalFeedbackApplied:applications.length>0,...(capture?{finishPrefix:{episodes,targetId,handled,incidentByGroup:Object.fromEntries(incidentByGroup)}}:{}),official:false,hostedWriteAllowed:false,accountingAllowed:false,authoritativeSourceVerified:false,finalClassificationVerified:false}
 }
