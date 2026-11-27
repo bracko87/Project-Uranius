@@ -103,6 +103,7 @@ export function reviewAutomaticPhysicalFinish(args:any){
  req(prefix.trace.stopReason==='pre_finish_boundary'&&p.handled===prefix.trace.incidents.length,'only fully applied pre-finish selection prefix admitted')
  const targetId=p.targetId??Object.values(prefix.finalState.groups).find((g:any)=>g.active&&g.groupType==='peloton')?.groupId
  req(targetId,'missing finish target')
- const finish=finishPhysicalIncidentStage(prefix.finalState,p.episodes,targetId)
+ const multipliers=prefix.resourceEnergy?Object.fromEntries(prefix.resourceEnergy.rows.map(r=>[r.riderId,r.roadEnergyMultiplier])):undefined
+ const finish=finishPhysicalIncidentStage(prefix.finalState,p.episodes,targetId,1440,multipliers)
  return {prefix,finish,official:false,hostedWriteAllowed:false,accountingAllowed:false,authoritativeSourceVerified:false,finalClassificationVerified:false}
 }
