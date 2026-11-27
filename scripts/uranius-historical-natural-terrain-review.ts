@@ -1,6 +1,6 @@
 // Offline isolated adapter: historical selection, calibrated terrain pressure.
 import {carryoverDigest} from './uranius-multistage-carryover-review.mjs'
-import {bindLegacyReadiness} from './uranius-frozen-readiness-review.mjs'
+import {bindLegacyReadiness,bindTourStageReadiness} from './uranius-frozen-readiness-review.mjs'
 import {resolveResourceMechanicalReview} from './uranius-resource-mechanical-review.mjs'
 import {resolveEquipmentPerformanceReview} from './uranius-equipment-performance-review'
 import {resolveResourceEnergyReview,applyReviewEnergyMultiplier} from './uranius-resource-energy-review'
@@ -69,7 +69,7 @@ export function reviewHistoricalNaturalTerrain({packet,expectedPacketSha256}:any
  req(baseline.profile.category===context.terrainType,'terrain context mismatch')
  let state=baseline.stage.initialState,episodes:Episode[]=[],handled=0
  const preparation=packet.preparation
- const bound=preparation?bindLegacyReadiness({source,expectedSourceSha256:carryoverDigest(source),input}):null
+ const bound=preparation?(source.stageNumber>1?bindTourStageReadiness:bindLegacyReadiness)({source,expectedSourceSha256:carryoverDigest(source),input}):null
  const mechanical=preparation?resolveResourceMechanicalReview({evidence:preparation.mechanical,expectedEvidenceSha256:carryoverDigest(preparation.mechanical),ready:bound!.receipt}):null
  if(preparation){req(preparation.performance.terrainProfile===context.terrainType,'terrain equipment profile mismatch');req(carryoverDigest(preparation.energy.resources)===carryoverDigest(preparation.mechanical.resources)&&carryoverDigest(preparation.energy.requests)===carryoverDigest(preparation.mechanical.requests),'preparation ledger mismatch')}
  const equipment=preparation?resolveEquipmentPerformanceReview({evidence:preparation.performance,expectedEvidenceSha256:carryoverDigest(preparation.performance),ready:bound!.receipt,input:bound!.input,mechanical}):null
