@@ -16,3 +16,6 @@ del "%TEMP%\uranius-043ae-test.cjs"
 ```
 
 Expected PASS 4/4 sporting classification checks; no hosted connection. Native execution and TypeScript type checking not performed in development. Next verify pinned sporting rules and integrate fractional energy into isolated engine state only after acceptance. Hosted activation BLOCKED.
+
+## Owner acceptance — 2026-11-27
+Owner pulled a97717e; esbuild bundle 304.2kb succeeded in 73ms. Native PASS 4/4: explicit sprint-zone protection, exclusion boundaries and OTL without changing physical ranks; shared group times, contiguous sporting ranks and immutable physical classification; fractional crossing energy projection and terminal energy exclusion; automatic physical result sporting projection, determinism and authority guards. Temporary bundle deleted; no hosted connection. Scoped 043AE accepted; cumulative 164/164 native acceptance groups. Exact historical sporting rule parity and fractional energy state integration remain pending; synthetic policy is not approved official regulation. Hosted activation BLOCKED.
