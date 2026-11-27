@@ -64,6 +64,9 @@ for(const t of p.ticks){
 const first=p.ticks[0],group=first.previousState.groups.peloton_main
 const expected=calculatePelotonBasePace({riders:group.riderIds.map(id=>first.previousState.riders[id]),minimumSpeedKmh:packet.input.settings.minimumSpeedKmh,maximumSpeedKmh:packet.input.settings.maximumSpeedKmh,experimentalEquipmentCapabilityAdjustments:prep.equipment.adjustments})
 assert.equal(first.movement.groupDiagnostics[0].pace.currentBaseSpeedKmh,expected.baseSpeedKmh)
+const neutral=calculatePelotonBasePace({riders:group.riderIds.map(id=>first.previousState.riders[id]),minimumSpeedKmh:packet.input.settings.minimumSpeedKmh,maximumSpeedKmh:packet.input.settings.maximumSpeedKmh})
+assert.ok(expected.baseSpeedKmh>neutral.baseSpeedKmh)
+assert.deepEqual(first.previousState.input.riders.map(r=>r.attributes),packet.input.riders.map(r=>r.attributes))
 assert.ok(savedTicks>0&&pressureRows>0)
 console.log('PASS 043AV calibrated prepared movement and pressure, natural separation and actual tick energy; pressureRows='+pressureRows+' savedTicks='+savedTicks)
 for(const cp of p.selectedCheckpoints)for(const c of cp.evidence.candidates.filter(c=>c.probabilityInput.incidentKind==='technical_incident')){
