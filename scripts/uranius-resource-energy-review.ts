@@ -5,6 +5,7 @@
 import type {SimulationState} from '../src/race-engine/domain/SimulationState'
 import type {ApplyMultiGroupEnergyResult} from '../src/race-engine/simulation/applyMultiGroupEnergy'
 import {validateSimulationState} from '../src/race-engine/validation/validateSimulationState'
+import {reviewOriginalConsumableFallback} from './uranius-original-catalogue-review.mjs'
 import {carryoverDigest} from './uranius-multistage-carryover-review.mjs'
 const req=(x:unknown,m:string)=>{if(!x)throw Error('043AK: '+m)}
 const clamp=(x:number,a:number,b:number)=>Math.max(a,Math.min(b,x))
@@ -14,13 +15,23 @@ export type EnergyMultipliers=Readonly<Record<string,number>>
 export function resolveResourceEnergyReview({evidence,expectedEvidenceSha256,ready}:any){
  req(evidence?.provenance==='synthetic_review_fixture'&&carryoverDigest(evidence)===expectedEvidenceSha256&&evidence.stageId===ready.stageId,'frozen supply evidence required')
  const {resources,requests,supplies}=evidence
+ const fallback=evidence.mode==='archived_consumable_fallback_v1'
+ req(evidence.mode===undefined||fallback,'unsupported supply evidence mode')
  const key=x=>x.resourceType+':'+x.resourceId
  req(Array.isArray(resources)&&Array.isArray(requests)&&new Set(resources.map(key)).size===resources.length&&new Set(requests.map(key)).size===requests.length&&resources.length===requests.length&&resources.every(r=>requests.some(q=>key(q)===key(r))),'complete unique stock/request evidence required')
  req(Array.isArray(supplies)&&new Set(supplies.map(s=>s.resourceId)).size===supplies.length,'unique supply evidence required')
+ if(fallback)req(new Set(supplies.map(s=>s.teamId+':'+s.supplyKey)).size===supplies.length,'duplicate team supply key')
  const allocations=supplies.map(s=>{
   const r=resources.find(x=>x.resourceType==='supply'&&x.resourceId===s.resourceId),q=requests.find(x=>x.resourceType==='supply'&&x.resourceId===s.resourceId)
   req(r&&q&&r.teamId===s.teamId&&ready.rows.some(x=>x.teamId===s.teamId)&&['bidons_water_bottles','energy_gels','nutrition_packs'].includes(s.supplyKey),'invalid consumable binding')
   req(Number.isSafeInteger(r.quantity)&&r.quantity>=0&&Number.isSafeInteger(q.selectedQuantity)&&q.selectedQuantity>=0&&q.selectedStageUses===0&&r.stageUsesRemaining===null,'explicit consumable stock required')
+  if(fallback){
+   req(Object.keys(s).sort().join(',')==='resourceId,supplyKey,teamId','explicit fallback identity only; no custom bonuses')
+   const riderCount=ready.rows.filter(x=>x.teamId===s.teamId&&x.startStatus==='starter').length
+   req(riderCount>0||q.selectedQuantity===0,'inactive team supply request')
+   const f=reviewOriginalConsumableFallback({supplyKey:s.supplyKey,planned:q.selectedQuantity,stock:r.quantity,riderCount:Math.max(1,riderCount)})
+   return {resourceId:s.resourceId,teamId:s.teamId,supplyKey:s.supplyKey,available:riderCount>0&&f.usableQuantity>0,openingQuantity:r.quantity,requestedQuantity:q.selectedQuantity,riderCount,...f}
+  }
   req(Number.isSafeInteger(s.requiredQuantity)&&s.requiredQuantity>0&&s.standardized&&fields.every(k=>typeof s.standardized[k]==='number'&&Number.isFinite(s.standardized[k])&&s.standardized[k]>=0&&s.standardized[k]<=100)&&Object.keys(s.standardized).length===fields.length,'explicit normalized supply input required')
   const active=ready.rows.some(x=>x.teamId===s.teamId&&x.startStatus==='starter')
   // Conservative review-only all-or-none allocation: no invented partial bonus.
@@ -30,13 +41,14 @@ export function resolveResourceEnergyReview({evidence,expectedEvidenceSha256,rea
  const rows=ready.rows.map(r=>{
   const p=r.preparation.modifiers
   req(!p||(p.inStageEnergyCostMultiplier===1&&p.postStageFatigueMultiplier===1&&p.postStageRecoveryBonusPoints===0&&p.supplyStagePerformancePct===0),'duplicate or unsupported preparation energy/fatigue source')
-  const a=allocations.filter(a=>a.teamId===r.teamId&&a.available),sum=k=>a.reduce((n,x)=>n+x.standardized[k],0)
+  const a=allocations.filter(a=>a.teamId===r.teamId&&(fallback||a.available)),sum=k=>a.reduce((n,x)=>n+x.standardized[k],0)
+  const fatiguePenalty=fallback?Math.max(0,...a.map(x=>x.standardized.supplyFatiguePenaltyPct)):sum('supplyFatiguePenaltyPct')
   const energyCostMultiplier=round(clamp(1-sum('supplyEnergySavingPct')/100+sum('supplyEnergyPenaltyPct')/100,.88,1.18))
-  const fatigueMultiplier=round(clamp(1-sum('supplyFatigueReductionPct')/100+sum('supplyFatiguePenaltyPct')/100,.9,1.15))
+  const fatigueMultiplier=round(clamp(1-sum('supplyFatigueReductionPct')/100+fatiguePenalty/100,.9,1.15))
   const recoveryBonusPoints=round(clamp(sum('supplyRecoveryBonusPoints'),0,4))
   return {riderId:r.riderId,teamId:r.teamId,energyCostMultiplier,roadEnergyMultiplier:clamp(energyCostMultiplier,.9,1),postStageFatigueMultiplier:fatigueMultiplier,postStageRecoveryBonusPoints:recoveryBonusPoints}
  })
- return {version:'043AK_supply_energy_review_v1',evidenceSha256:expectedEvidenceSha256,allocations,rows,official:false,hostedWriteAllowed:false,accountingAllowed:false,authoritativeSourceVerified:false}
+ return {version:'043AK_supply_energy_review_v1',...(fallback?{mode:'archived_consumable_fallback_v1'}:{}),evidenceSha256:expectedEvidenceSha256,allocations,rows,official:false,hostedWriteAllowed:false,accountingAllowed:false,authoritativeSourceVerified:false}
 }
 // The new engine has a different base energy model. Transfer only the original
 // road preparation multiplier to its neutral duration-linear cost, before cap.
