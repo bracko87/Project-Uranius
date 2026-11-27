@@ -7,6 +7,7 @@ import {captureAutomaticOverlappingFinishPrefix,captureTourStageFinishPrefix} fr
 import {finishPhysicalIncidentStage} from './uranius-physical-incident-finish-review'
 import {reviewSportingClassification} from './uranius-sporting-classification-review'
 import {reviewIndividualEquipmentWear} from './uranius-individual-equipment-wear-review'
+import {resolveClothingAllocation,reviewClothingExposure} from './uranius-weather-clothing-review.mjs'
 import {createInitialState} from '../src/race-engine/simulation/createInitialState'
 const P='synthetic_review_fixture',req=(x:unknown,m:string)=>{if(!x)throw Error('043AH: '+m)}
 const flags=()=>({official:false,hostedWriteAllowed:false,accountingAllowed:false,authoritativeSourceVerified:false,finalClassificationVerified:false})
@@ -26,6 +27,7 @@ const resourceState=(x:any)=>{
 export function reviewMultistagePhysicalTour({packet,expectedPacketSha256}:any){
  req(packet?.provenance===P&&carryoverDigest(packet)===expectedPacketSha256,'frozen tour packet required')
  const {firstSource,stages,initialResources}=packet
+ req(packet.clothingBinding===undefined||packet.clothingBinding&&Array.isArray(packet.clothingBinding.units)&&Array.isArray(packet.clothingBinding.medicalCenters),'explicit clothing binding required')
  req(packet.wearProtectionBinding===undefined||packet.individualEquipmentWear===true&&packet.mechanicalBinding,'wear protection requires individual equipment wear')
  req(packet.individualEquipmentWear===undefined||packet.individualEquipmentWear===true&&packet.mechanicalBinding,'individual wear requires explicit mechanical binding')
  req(Array.isArray(stages)&&stages.length>=3&&stages.length<=21&&uniq(stages,s=>s.input.stageId)&&uniq(stages,s=>s.runId)&&uniq(stages,s=>s.input.seed),'distinct 3–21 stages required')
@@ -67,6 +69,8 @@ export function reviewMultistagePhysicalTour({packet,expectedPacketSha256}:any){
   const bound=(index?bindTourStageReadiness:bindLegacyReadiness)({source,expectedSourceSha256,input})
   const ready=bound.receipt,starters=ready.rows.filter(r=>r.startStatus==='starter'),ids=new Set(starters.map(r=>r.riderId))
   req(starters.length>=2,'fewer than two starters outside review scope')
+  const clothingEvidence=packet.clothingBinding?{provenance:P,stageId,date,resources,requests:stage.resourceRequests,units:packet.clothingBinding.units,medicalCenters:packet.clothingBinding.medicalCenters,plans:stage.clothingPlans,hashWitnesses:stage.clothingHashWitnesses,weather:{temperatureC:stage.clothingTemperatureC,rainChancePct:context.rainProbabilityPct,precipitationMm:context.precipitationMm,condition:context.weatherCondition}}:null
+  const clothingAllocation=clothingEvidence?resolveClothingAllocation({evidence:clothingEvidence,expectedEvidenceSha256:carryoverDigest(clothingEvidence),ready}):null
   const initial=createInitialState(bound.input)
   req(Object.keys(initial.riders).length===ids.size&&starters.every(r=>initial.riders[r.riderId].energy===r.condition.startingEnergy&&carryoverDigest(initial.riders[r.riderId].startingCondition)===carryoverDigest(r.condition)),'initial physical readiness mismatch')
   req(uniq(context.plans,p=>p.riderId)&&context.plans.length===ready.rows.length&&ready.rows.every(r=>context.plans.some(p=>p.riderId===r.riderId)),'complete original plans required')
@@ -90,6 +94,9 @@ export function reviewMultistagePhysicalTour({packet,expectedPacketSha256}:any){
   const sporting=reviewSportingClassification({finish,policy,incidents:evidence,expectedPolicySha256:carryoverDigest(policy),expectedIncidentsSha256:carryoverDigest(evidence)})
   const rows=[...sporting.rows,...ready.rows.filter(r=>!ids.has(r.riderId)).map(r=>({riderId:r.riderId,teamId:r.teamId,status:'dns',physicalRank:null,physicalElapsedSeconds:null,sportingRank:null,sportingElapsedSeconds:null,sportingGapSeconds:null,protectionIncidentId:null,energy:null}))]
   req(uniq(rows,r=>r.riderId)&&rows.length===ready.rows.length&&Object.keys(finish.state.riders).length===ids.size&&prefix.applications.every(a=>ids.has(a.riderId)),'physical roster coverage mismatch')
+  const priorExposures=prior?.clothingExposure?.receipt.history??[]
+  const clothingExposure=clothingEvidence?reviewClothingExposure({evidence:clothingEvidence,expectedEvidenceSha256:carryoverDigest(clothingEvidence),ready,finish,priorExposures,expectedPriorExposuresSha256:carryoverDigest(priorExposures)}):null
+  if(clothingExposure)req(carryoverDigest(clothingExposure.receipt.allocation)===carryoverDigest(clothingAllocation),'clothing allocation changed after start')
   const riders=ready.rows.map(r=>{
    const row=rows.find(x=>x.riderId===r.riderId)!,old=prior?.riders.find(x=>x.riderId===r.riderId)
    const started=ids.has(r.riderId),actual=finish.state.riders[r.riderId]
@@ -127,11 +134,14 @@ export function reviewMultistagePhysicalTour({packet,expectedPacketSha256}:any){
     req(w&&carryoverDigest(w.before)===carryoverDigest(before),'individual wear opening ledger mismatch')
     return {before,after:resourceState(w.after),effect:w.effect}
    }
+   const jacket=clothingAllocation?.units.find(u=>u.resourceId===before.resourceId&&before.resourceType==='supply')
+   if(jacket&&!jacket.used)return {before,after:before,effect:null}
    if(!activeTeams.has(before.teamId)){req(request.selectedQuantity===0&&request.selectedStageUses===0,'inactive team cannot consume resources');return {before,after:before,effect:null}}
    const engine={resourceType:before.resourceType,resourceId:before.resourceId,teamId:before.teamId,selectedQuantity:request.selectedQuantity,selectedStageUses:request.selectedStageUses,conditionLossPerRaceDay:request.conditionLossPerRaceDay}
    for(const k of ['quantity','stageUsesRemaining','maxStageUses','condition'])if(before[k]!==null)engine[k]=before[k]
    const effect=originalPhase9ResourceReview({provenance:P,completeResourceEvidence:true,distanceKm:input.distanceKm,resources:[engine]}).rows[0]
    const after=resourceState({...before,quantity:effect.quantityAfter??before.quantity,stageUsesRemaining:effect.stageUsesAfter??before.stageUsesRemaining,condition:effect.conditionAfter??before.condition,lastUsedDate:(effect.stageUsesUsed??0)>0?date:before.lastUsedDate})
+   if(jacket)req(after.stageUsesRemaining===jacket.closingUses&&after.lastUsedDate===date,'jacket closing ledger mismatch')
    return {before,after,effect}
   })
   resources=resourceRows.map(r=>r.after)
@@ -141,7 +151,7 @@ export function reviewMultistagePhysicalTour({packet,expectedPacketSha256}:any){
    return {riderId:r.riderId,teamId:r.teamId,totalTimeSeconds:(old?.totalTimeSeconds??0)+r.sportingElapsedSeconds!,rankSum:(old?.rankSum??0)+r.sportingRank!}
   }).sort((a,b)=>a.totalTimeSeconds-b.totalTimeSeconds||a.rankSum-b.rankSum||a.riderId.localeCompare(b.riderId)).map((r,i,all)=>({...r,rank:i+1,gapSeconds:r.totalTimeSeconds-all[0].totalTimeSeconds}))
   req(gc.length>0,'no cumulative finishers')
-  const receipt={version:'043AH_tour_stage_receipt_v1',provenance:P,raceId,stageId,stageNumber:index+1,runId,date,scheduleSha256,priorSha256:prior?carryoverDigest(prior):null,runHistory:[...(prior?.runHistory??[]),runId],riders,resources:resourceRows,gc,...(individualWear?{individualEquipmentWear:individualWear}:{}),...flags()}
+  const receipt={version:'043AH_tour_stage_receipt_v1',provenance:P,raceId,stageId,stageNumber:index+1,runId,date,scheduleSha256,priorSha256:prior?carryoverDigest(prior):null,runHistory:[...(prior?.runHistory??[]),runId],riders,resources:resourceRows,gc,...(individualWear?{individualEquipmentWear:individualWear}:{}),...(clothingExposure?{clothingExposure}:{}),...flags()}
   reports.push({stageId,stageNumber:index+1,ready,readinessSha256:bound.readinessSha256,recoveryReceipts:nights,initialRiders:starters.map(r=>({riderId:r.riderId,energy:initial.riders[r.riderId].energy,condition:initial.riders[r.riderId].startingCondition})),initialTeams:initial.input.teams,physicalCompleted:finish.state.completed,physicalClassification:finish.classification,physicalClassificationSha256:finish.classificationSha256,sportingRows:rows,incidentIds:prefix.trace.incidents.map(e=>e.incident.incidentId),applications:prefix.applications,observationSha256:prefix.observationSha256,...(performanceEvidence?{equipmentPerformance:prefix.equipmentPerformance,baselineWinnerTimeSeconds:prefix.baselineWinnerTimeSeconds,openingPhysicalObservation:prefix.observations[0]}:{}),...(mechanicalEvidence?{resourceMechanical:prefix.resourceMechanical,mechanicalCheckpoints:prefix.selectedCheckpoints}:{}),...(energyEvidence?{resourceEnergy:prefix.resourceEnergy,physicalEnergyAudit:[...prefix.energyAudit,...finish.ticks.flatMap(t=>t.energy.map(a=>({raceSecond:t.state.raceSecond,riderId:a.riderId,previousEnergy:a.previousEnergy,nextEnergy:a.nextEnergy,neutralCost:a.result.grossEnergyCost*a.result.efficiencyMultiplier,multiplier:energyMultipliers[a.riderId]})))],finishEnergyWitness:finish.ticks.flatMap(t=>t.crossings.map(c=>({riderId:c.riderId,crossingFraction:c.crossingFraction,energy:t.energy.find(a=>a.riderId===c.riderId)})))}:{}),receipt,receiptSha256:carryoverDigest(receipt)})
   prior=receipt
  }
