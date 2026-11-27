@@ -4,6 +4,7 @@ import {calculateStageProfileCategory} from '../src/race-engine/simulation/stage
 import {createInitialState} from '../src/race-engine/simulation/createInitialState'
 import {simulateMultiGroupTick} from '../src/race-engine/simulation/simulateMultiGroupTick'
 import {runMultiGroupStage} from '../src/race-engine/simulation/runMultiGroupStage'
+import {calculateWeatherPerformanceEffects} from '../src/race-engine/simulation/weatherPerformanceEffects'
 import {resolvePreparedPhysicalWeather,applyOptionalPreparedWeatherEnergy} from './uranius-prepared-physical-weather-review'
 import {resolveResourceEnergyReview} from './uranius-resource-energy-review'
 import {resolveEquipmentPerformanceReview} from './uranius-equipment-performance-review'
@@ -52,7 +53,7 @@ function review({input:raw,source,context,expectedSourceSha256,expectedContextSh
   return {riderId:r.riderId,teamId:r.teamId,eligibleToStart:true,startingEnergy:r.condition.startingEnergy,effectiveFatigue:r.condition.fatigueBeforeStage,resistance:r.attributes.resistance,raceIq:r.attributes.raceIq,riderSupport:p?.incidentRiskMultiplier??1,teamSupport:1,equipmentConditionPercent:m?.equipmentConditionPercent??p?.equipmentConditionPercent??100,mechanicalRisk:m?.mechanicalRisk??p?.mechanicalIncidentRiskMultiplier??1}
  })
  req(context.plans.length===roster.length&&new Set(context.plans.map(p=>p.riderId)).size===roster.length&&roster.every(r=>context.plans.some(p=>p.riderId===r.riderId)),'complete plans required')
- const measuredGroupsOf=s=>Object.values(s.groups).filter((g:any)=>g.active).map((g:any)=>({displayCode:g.groupType==='peloton'?'P':g.groupId,distanceKm:g.distanceKm,speedKmh:g.speedKmh,gradientPercent:getStageTerrainSample(input,g.distanceKm).gradientPercent}))
+ const measuredGroupsOf=s=>Object.values(s.groups).filter((g:any)=>g.active).map((g:any)=>({displayCode:g.groupType==='peloton'?'P':g.groupId,distanceKm:g.distanceKm,speedKmh:g.speedKmh,gradientPercent:getStageTerrainSample(input,g.distanceKm).gradientPercent,...(weather?.weather.courseBearingSegments?{weatherMultiplier:Math.min(2.5,calculateWeatherPerformanceEffects(weather.weather,g.distanceKm).incidentProbabilityMultiplier)}:{})}))
  const tickOf=(s,rejoins=[])=>({raceSecond:s.raceSecond,gradientPercent:measured?(measuredGroupsOf(s).find(g=>g.displayCode==='P')?.gradientPercent??0):0,riders:Object.values(s.riders).map((r:any)=>({riderId:r.riderId,status:r.stageStatus,energy:r.energy,commandIntensity:1})),groups:Object.values(s.groups).filter((g:any)=>g.active).map((g:any)=>({displayCode:g.groupType==='peloton'?'P':g.groupId,aheadOfPeloton:false,riderIds:g.riderIds})),rejoins})
  // Baseline supplies the fixed review horizon and historical average-speed reference only.
  // Every evaluated observation is replaced by the advancing physical state.
@@ -103,7 +104,7 @@ function review({input:raw,source,context,expectedSourceSha256,expectedContextSh
   if(state.currentKm>=input.distanceKm-input.settings.maximumSpeedKmh*30/3600-.01)return {stopReason:'pre_finish_boundary'}
   let pickups=[],joined=[],rejoins=[],movementProposals=[]
   if(targetId){
-   const moved=multiRiderIncidentTick(state,episodes,targetId,multipliers,capabilityAdjustments,terrainCapability,weather);movementProposals=moved.movement.proposals;if(supply)energyAudit.push(...moved.energy.map(a=>({raceSecond:moved.state.raceSecond,riderId:a.riderId,previousEnergy:a.previousEnergy,nextEnergy:a.nextEnergy,neutralCost:a.result.grossEnergyCost*a.result.efficiencyMultiplier,multiplier:multipliers[a.riderId],...(weather&&!weather.neutral?{weatherMultiplier:weather.energyMultiplier,runtimeFatigueGain:a.runtimeFatigueGain??0}:{})})));state=moved.state;episodes=moved.episodes;pickups=moved.pickups;joined=moved.rejoins
+   const moved=multiRiderIncidentTick(state,episodes,targetId,multipliers,capabilityAdjustments,terrainCapability,weather);movementProposals=moved.movement.proposals;if(supply)energyAudit.push(...moved.energy.map(a=>({raceSecond:moved.state.raceSecond,riderId:a.riderId,previousEnergy:a.previousEnergy,nextEnergy:a.nextEnergy,neutralCost:a.result.grossEnergyCost*a.result.efficiencyMultiplier,multiplier:multipliers[a.riderId],...(weather&&!weather.neutral?{weatherMultiplier:a.experimentalWeatherEnergyMultiplier??weather.energyMultiplier,runtimeFatigueGain:a.runtimeFatigueGain??0,...(a.experimentalWeatherStartKm!==undefined?{weatherStartKm:a.experimentalWeatherStartKm}:{})}:{})})));state=moved.state;episodes=moved.episodes;pickups=moved.pickups;joined=moved.rejoins
    rejoins=joined.map(riderId=>{
     const ep=episodes.find(e=>e.affected===riderId&&e.phase==='joined'&&moved.movement.proposals.some(p=>p.groupId===e.groupId))
     req(ep&&incidentByGroup.has(ep.groupId),'missing rejoin identity')
@@ -115,7 +116,7 @@ function review({input:raw,source,context,expectedSourceSha256,expectedContextSh
    if(supply){
     req(!tick.state.completed&&Object.values(tick.state.groups).filter(g=>g.active).length===1,'supply tick outside single peloton prefix')
     const adjusted=applyOptionalPreparedWeatherEnergy(tick.appliedEnergy,multipliers,weather,tick.state)
-    energyAudit.push(...adjusted.applications.map(a=>({raceSecond:adjusted.state.raceSecond,riderId:a.riderId,previousEnergy:a.previousEnergy,nextEnergy:a.nextEnergy,neutralCost:a.result.grossEnergyCost*a.result.efficiencyMultiplier,multiplier:multipliers[a.riderId],...(weather&&!weather.neutral?{weatherMultiplier:weather.energyMultiplier,runtimeFatigueGain:a.runtimeFatigueGain??0}:{})})))
+    energyAudit.push(...adjusted.applications.map(a=>({raceSecond:adjusted.state.raceSecond,riderId:a.riderId,previousEnergy:a.previousEnergy,nextEnergy:a.nextEnergy,neutralCost:a.result.grossEnergyCost*a.result.efficiencyMultiplier,multiplier:multipliers[a.riderId],...(weather&&!weather.neutral?{weatherMultiplier:a.experimentalWeatherEnergyMultiplier??weather.energyMultiplier,runtimeFatigueGain:a.runtimeFatigueGain??0,...(a.experimentalWeatherStartKm!==undefined?{weatherStartKm:a.experimentalWeatherStartKm}:{})}:{})})))
     state=adjusted.state
    }else state=tick.state
   }
