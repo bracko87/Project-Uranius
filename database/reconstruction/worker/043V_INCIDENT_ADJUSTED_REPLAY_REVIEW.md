@@ -15,3 +15,7 @@ git pull origin main
 node tests\uraniusIncidentAdjustedReplayAcceptance.mjs --offline-only
 ```
 Expected PASS 4/4 incident adjusted replay checks; no hosted connection, then cleanup. No PostgreSQL or private files required. Next implement actual chronological feedback/rejoin into incident candidate selection and movement, reconcile original finish score and physical results; source authentication and official writers remain blocked.
+
+## Owner native acceptance — 2026-11-27
+
+Owner pulled e85f1c8..5b3870a and ran prescribed offline harness. All four groups PASS, including actual base engine energy/time, diagnostic replay and DNF, classification boundaries and authority rejection. Cleanup completed; no hosted connection. Scoped 043V CLOSED; 132/132 owner-accepted native groups through 043V, overall 49/60. Chronological feedback and authenticated final classification remain outstanding.
