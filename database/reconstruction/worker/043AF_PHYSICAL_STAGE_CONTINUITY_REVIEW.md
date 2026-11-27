@@ -14,3 +14,6 @@ del "%TEMP%\uranius-043af-test.cjs"
 ```
 
 Expected PASS 4/4 physical stage continuity checks; no hosted connection. Long-wet seed 4 requires six actual admitted incidents, correct terminal state, no duplicate deduction, fatigue/status parity, overnight recovery, health handoff and digest-bound next readiness. Shorter seed 4 requires positive fractional correction. Deterministic replay and tamper guards required. Native runtime/type checking not performed during development. Historical sporting policy parity and actual next-stage mixed-roster execution remain pending. Hosted activation BLOCKED.
+
+## Owner acceptance — 2026-11-27
+Owner pulled c8dd627; esbuild bundle 328.8kb succeeded in 111ms, repeated build in 33ms. Both native runs PASS 4/4: corrected terminal energy and no duplicate incident deduction (long-stage positive fractional refund=true); historical workload fatigue and sporting status carryover; overnight recovery, health handoff and next-stage eligibility; deterministic receipt chain and authority guards. Temporary bundle deleted; no hosted connection. Scoped 043AF accepted; cumulative 168/168 distinct native acceptance groups (repeat run not counted twice). Actual second-stage mixed-roster execution, historical sporting policy parity and authoritative health persistence remain pending. Hosted activation BLOCKED.
