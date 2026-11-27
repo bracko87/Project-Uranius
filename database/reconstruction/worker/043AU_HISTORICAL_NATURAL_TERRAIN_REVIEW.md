@@ -18,3 +18,6 @@ del "%TEMP%\uranius-043au-test.cjs"
 ```
 
 Expected PASS 4/4 historical natural terrain checks; no hosted connection.
+
+## Owner acceptance — 2026-11-27
+Owner pulled 91e5af5; esbuild bundle 476.5kb succeeded in 144ms. Native PASS 4/4: actual natural drops and measured historical candidates across physical groups (drops=12, measured=419, droppedCandidates=96, droppedIncidents=6 affected-rider applications); historical consequences, physical repair and terminal classifications (applications=13, repairTicks=23, contacts=13); controlled dropped-group repair target, no movement during repair and duplicate admission guard; deterministic replay, mismatch, frozen evidence and authority guards. Each of two 120km seeds completed with 5 selected incidents, 24 finishers, 6 natural drops. Temporary bundle deleted; no hosted connection. Scoped 043AU accepted; cumulative 228/228 distinct native acceptance groups. No DNF observed in these two scenarios; no claim of new withdrawal acceptance. Historical selection remains bounded to prefinish, explicit synthetic weather is risk only, repair/chase is experimental, helper assistance omitted. Combined preparation effects on calibrated natural separation, mixed-stage persistence, actual surface physics, catalogue configuration and TypeScript checks remain pending. Hosted activation BLOCKED.
