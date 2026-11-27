@@ -9,12 +9,14 @@
  */
 
 import type { RiderState } from '../domain/RiderState'
+import { calculateRiderTerrainCapability } from './riderTerrainCapability'
 import { calculateRiderFatigueModifier } from './fatigueModifier'
 
 export interface PelotonPaceInput {
   readonly riders: readonly RiderState[]
   /** Explicit offline review input; no persistent attribute mutation. */
   readonly experimentalEquipmentCapabilityAdjustments?: Readonly<Record<string, number>>
+  readonly experimentalTerrainGradientPercent?: number
   readonly minimumSpeedKmh: number
   readonly maximumSpeedKmh: number
 }
@@ -31,6 +33,7 @@ export interface RiderPaceContribution {
    */
   readonly rawCapabilityScore: number
   readonly experimentalEquipmentAdjustment?: number
+  readonly experimentalTerrainRawCapabilityScore?: number
 
   /**
    * Multiplier derived from the rider's current energy,
@@ -211,9 +214,11 @@ export function calculatePelotonBasePace(
           (typeof equipmentAdjustment !== 'number' || !Number.isFinite(equipmentAdjustment) || Math.abs(equipmentAdjustment)>20)) {
         throw new Error('calculatePelotonBasePace: invalid experimental equipment adjustment')
       }
+      const terrain = input.experimentalTerrainGradientPercent === undefined || input.experimentalTerrainGradientPercent === 0 ? undefined : calculateRiderTerrainCapability({riderId:rider.riderId,attributes:rider.attributes,currentEnergy:rider.energy,gradientPercent:input.experimentalTerrainGradientPercent})
+      const baseCapability = terrain?.rawCapabilityScore ?? rawCapabilityScore
       const capabilityScore =
-        (equipmentAdjustment === undefined ? rawCapabilityScore :
-          Math.min(100,Math.max(0,rawCapabilityScore+equipmentAdjustment))) *
+        (equipmentAdjustment === undefined ? baseCapability :
+          Math.min(100,Math.max(0,baseCapability+equipmentAdjustment))) *
         fatigueMultiplier
 
       return {
@@ -224,6 +229,7 @@ export function calculatePelotonBasePace(
         teamworkContribution,
         rawCapabilityScore,
         ...(equipmentAdjustment===undefined?{}:{experimentalEquipmentAdjustment:equipmentAdjustment}),
+        ...(terrain?{experimentalTerrainRawCapabilityScore:terrain.rawCapabilityScore}:{}),
         fatigueMultiplier,
         capabilityScore,
       }
