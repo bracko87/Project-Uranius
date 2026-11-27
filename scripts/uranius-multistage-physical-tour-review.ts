@@ -8,6 +8,8 @@ import {finishPhysicalIncidentStage} from './uranius-physical-incident-finish-re
 import {reviewSportingClassification} from './uranius-sporting-classification-review'
 import {reviewIndividualEquipmentWear} from './uranius-individual-equipment-wear-review'
 import {resolveClothingAllocation,reviewClothingExposure} from './uranius-weather-clothing-review.mjs'
+import {reviewHistoricalNaturalTerrain} from './uranius-historical-natural-terrain-review'
+import {calculateStageProfileCategory} from '../src/race-engine/simulation/stageProfileCategory'
 import {createInitialState} from '../src/race-engine/simulation/createInitialState'
 const P='synthetic_review_fixture',req=(x:unknown,m:string)=>{if(!x)throw Error('043AH: '+m)}
 const flags=()=>({official:false,hostedWriteAllowed:false,accountingAllowed:false,authoritativeSourceVerified:false,finalClassificationVerified:false})
@@ -27,6 +29,9 @@ const resourceState=(x:any)=>{
 export function reviewMultistagePhysicalTour({packet,expectedPacketSha256}:any){
  req(packet?.provenance===P&&carryoverDigest(packet)===expectedPacketSha256,'frozen tour packet required')
  const {firstSource,stages,initialResources}=packet
+ const mixed=packet.mixedTerrain===true
+ req(packet.mixedTerrain===undefined||mixed,'explicit mixed terrain mode required')
+ if(mixed)req(packet.individualEquipmentWear===true&&packet.mechanicalBinding&&packet.energyBinding?.mode==='archived_consumable_fallback_v1'&&packet.wearProtectionBinding&&packet.clothingBinding,'complete mixed preparation required')
  req(packet.clothingBinding===undefined||packet.clothingBinding&&Array.isArray(packet.clothingBinding.units)&&Array.isArray(packet.clothingBinding.medicalCenters),'explicit clothing binding required')
  req(packet.wearProtectionBinding===undefined||packet.individualEquipmentWear===true&&packet.mechanicalBinding,'wear protection requires individual equipment wear')
  req(packet.individualEquipmentWear===undefined||packet.individualEquipmentWear===true&&packet.mechanicalBinding,'individual wear requires explicit mechanical binding')
@@ -43,6 +48,8 @@ export function reviewMultistagePhysicalTour({packet,expectedPacketSha256}:any){
  const seenIncidents=new Set<string>()
  for(const [index,stage] of stages.entries()){
   const {input,context,policy,runId,date,difficultyCategory}=stage
+  const natural=mixed&&['hilly','mountain'].includes(context.terrainType)
+  if(mixed){req(['flat','hilly','mountain'].includes(context.terrainType)&&calculateStageProfileCategory(input).category===context.terrainType,'mixed stage terrain mismatch');req(!natural||!policy.flatFinish&&!context.flatSprint,'nonflat sprint policy unsupported');req(Array.isArray(stage.equipmentPerformanceRows),'complete mixed equipment rows required')}
   const stageId=input.stageId,scope={race_id:raceId,stage_id:stageId}
   let source=firstSource
   const nights:any[]=[]
@@ -77,16 +84,27 @@ export function reviewMultistagePhysicalTour({packet,expectedPacketSha256}:any){
   const effectiveContext={...context,plans:context.plans.filter(p=>ids.has(p.riderId)),gcStandings:gc.filter(r=>ids.has(r.riderId)).map(r=>({riderId:r.riderId,rank:r.rank}))}
   const mechanicalEvidence=packet.mechanicalBinding?{provenance:P,stageId,date,resources,requests:stage.resourceRequests,setups:packet.mechanicalBinding.setups,supports:packet.mechanicalBinding.supports}:null
   const energyEvidence=packet.energyBinding?{provenance:P,stageId,resources,requests:stage.resourceRequests,supplies:packet.energyBinding.supplies,...(packet.energyBinding.mode===undefined?{}:{mode:packet.energyBinding.mode})}:null
-  const performanceEvidence=stage.equipmentPerformanceRows?{provenance:P,stageId,rows:stage.equipmentPerformanceRows}:null
-  const prefix=(index?captureTourStageFinishPrefix:captureAutomaticOverlappingFinishPrefix)({input,source,expectedSourceSha256,context:effectiveContext,expectedContextSha256:carryoverDigest(effectiveContext),...(mechanicalEvidence?{resourceMechanicalEvidence:mechanicalEvidence,expectedResourceMechanicalSha256:carryoverDigest(mechanicalEvidence)}:{}),...(energyEvidence?{resourceEnergyEvidence:energyEvidence,expectedResourceEnergySha256:carryoverDigest(energyEvidence)}:{}),...(performanceEvidence?{equipmentPerformanceEvidence:performanceEvidence,expectedEquipmentPerformanceSha256:carryoverDigest(performanceEvidence)}:{})})
+  const performanceEvidence=stage.equipmentPerformanceRows?{provenance:P,stageId,...(natural?{terrainProfile:context.terrainType}:{}),rows:stage.equipmentPerformanceRows}:null
+  let prefix:any,finish:any,energyMultipliers:any,naturalReport:any=null
+  if(natural){
+   const naturalPacket={provenance:P,input,source,context:effectiveContext,preparation:{mechanical:mechanicalEvidence,energy:energyEvidence,performance:performanceEvidence}}
+   const n=reviewHistoricalNaturalTerrain({packet:naturalPacket,expectedPacketSha256:carryoverDigest(naturalPacket)})
+   const resolved=n.preparation!
+   energyMultipliers=Object.fromEntries(resolved.supply.rows.map(r=>[r.riderId,r.roadEnergyMultiplier]))
+   prefix={trace:n.trace,applications:n.applications.map(a=>({...a,kind:n.trace.incidents.find(e=>e.incident.incidentId===a.incidentId).incident.kind})),observations:n.observations,observationSha256:n.observationsSha256,resourceMechanical:resolved.mechanical,resourceEnergy:resolved.supply,equipmentPerformance:resolved.equipment,selectedCheckpoints:n.selectedCheckpoints,energyAudit:[]}
+   finish={state:n.finalState,classification:n.classification,classificationSha256:n.classificationSha256,official:false,ticks:n.ticks.map(t=>({state:t.state,crossings:t.finishDetection.candidates,energy:t.appliedEnergy.applications}))}
+   naturalReport={naturalTransitions:n.observations.flatMap(o=>o.transitions),contacts:n.observations.flatMap(o=>o.contacts),physicalRunner:'calibrated_historical_natural'}
+  }else{
+   prefix=(index?captureTourStageFinishPrefix:captureAutomaticOverlappingFinishPrefix)({input,source,expectedSourceSha256,context:effectiveContext,expectedContextSha256:carryoverDigest(effectiveContext),...(mechanicalEvidence?{resourceMechanicalEvidence:mechanicalEvidence,expectedResourceMechanicalSha256:carryoverDigest(mechanicalEvidence)}:{}),...(energyEvidence?{resourceEnergyEvidence:energyEvidence,expectedResourceEnergySha256:carryoverDigest(energyEvidence)}:{}),...(performanceEvidence?{equipmentPerformanceEvidence:performanceEvidence,expectedEquipmentPerformanceSha256:carryoverDigest(performanceEvidence)}:{})})
   const p=prefix.finishPrefix!
   req(prefix.trace.stopReason==='pre_finish_boundary'&&p.handled===prefix.trace.incidents.length,'stage must reach fully applied finish prefix: '+(index+1)+' '+prefix.trace.stopReason)
   const targetId=p.targetId??Object.values(prefix.finalState.groups).find((g:any)=>g.active&&g.groupType==='peloton')?.groupId
   req(targetId,'missing physical target')
-  const energyMultipliers=prefix.resourceEnergy?Object.fromEntries(prefix.resourceEnergy.rows.map(r=>[r.riderId,r.roadEnergyMultiplier])):undefined
-  const finish=finishPhysicalIncidentStage(prefix.finalState,p.episodes,targetId,1440,energyMultipliers,prefix.equipmentPerformance?.adjustments)
+   energyMultipliers=prefix.resourceEnergy?Object.fromEntries(prefix.resourceEnergy.rows.map(r=>[r.riderId,r.roadEnergyMultiplier])):undefined
+   finish=finishPhysicalIncidentStage(prefix.finalState,p.episodes,targetId,1440,energyMultipliers,prefix.equipmentPerformance?.adjustments)
+  }
   const evidence=prefix.trace.incidents.flatMap(e=>{
-   const obs=prefix.observations.find(o=>o.raceSecond===e.raceSecond),group=obs?.tick.groups.find(g=>g.displayCode==='P')
+   const obs=prefix.observations.find(o=>o.raceSecond===e.raceSecond),group=obs?.tick.groups.find(g=>natural?e.incident.affectedRiderIds.every(id=>g.riderIds.includes(id)):g.displayCode==='P')
    req(group&&!seenIncidents.has(e.incident.incidentId),'missing incident source or previous-stage replay')
    seenIncidents.add(e.incident.incidentId)
    return e.incident.affectedRiderIds.map(riderId=>({incidentId:e.incident.incidentId,riderId,kind:e.incident.kind,km:e.kmFromStart,sourceGroupRiderIds:group.riderIds,affectedRiderIds:e.incident.affectedRiderIds}))
@@ -152,8 +170,8 @@ export function reviewMultistagePhysicalTour({packet,expectedPacketSha256}:any){
   }).sort((a,b)=>a.totalTimeSeconds-b.totalTimeSeconds||a.rankSum-b.rankSum||a.riderId.localeCompare(b.riderId)).map((r,i,all)=>({...r,rank:i+1,gapSeconds:r.totalTimeSeconds-all[0].totalTimeSeconds}))
   req(gc.length>0,'no cumulative finishers')
   const receipt={version:'043AH_tour_stage_receipt_v1',provenance:P,raceId,stageId,stageNumber:index+1,runId,date,scheduleSha256,priorSha256:prior?carryoverDigest(prior):null,runHistory:[...(prior?.runHistory??[]),runId],riders,resources:resourceRows,gc,...(individualWear?{individualEquipmentWear:individualWear}:{}),...(clothingExposure?{clothingExposure}:{}),...flags()}
-  reports.push({stageId,stageNumber:index+1,ready,readinessSha256:bound.readinessSha256,recoveryReceipts:nights,initialRiders:starters.map(r=>({riderId:r.riderId,energy:initial.riders[r.riderId].energy,condition:initial.riders[r.riderId].startingCondition})),initialTeams:initial.input.teams,physicalCompleted:finish.state.completed,physicalClassification:finish.classification,physicalClassificationSha256:finish.classificationSha256,sportingRows:rows,incidentIds:prefix.trace.incidents.map(e=>e.incident.incidentId),applications:prefix.applications,observationSha256:prefix.observationSha256,...(performanceEvidence?{equipmentPerformance:prefix.equipmentPerformance,baselineWinnerTimeSeconds:prefix.baselineWinnerTimeSeconds,openingPhysicalObservation:prefix.observations[0]}:{}),...(mechanicalEvidence?{resourceMechanical:prefix.resourceMechanical,mechanicalCheckpoints:prefix.selectedCheckpoints}:{}),...(energyEvidence?{resourceEnergy:prefix.resourceEnergy,physicalEnergyAudit:[...prefix.energyAudit,...finish.ticks.flatMap(t=>t.energy.map(a=>({raceSecond:t.state.raceSecond,riderId:a.riderId,previousEnergy:a.previousEnergy,nextEnergy:a.nextEnergy,neutralCost:a.result.grossEnergyCost*a.result.efficiencyMultiplier,multiplier:energyMultipliers[a.riderId]})))],finishEnergyWitness:finish.ticks.flatMap(t=>t.crossings.map(c=>({riderId:c.riderId,crossingFraction:c.crossingFraction,energy:t.energy.find(a=>a.riderId===c.riderId)})))}:{}),receipt,receiptSha256:carryoverDigest(receipt)})
+  reports.push({stageId,stageNumber:index+1,...(mixed?{terrainType:context.terrainType,physicalRunner:natural?'calibrated_historical_natural':'accepted_flat',...(naturalReport??{})}:{}),ready,readinessSha256:bound.readinessSha256,recoveryReceipts:nights,initialRiders:starters.map(r=>({riderId:r.riderId,energy:initial.riders[r.riderId].energy,condition:initial.riders[r.riderId].startingCondition})),initialTeams:initial.input.teams,physicalCompleted:finish.state.completed,physicalClassification:finish.classification,physicalClassificationSha256:finish.classificationSha256,sportingRows:rows,incidentIds:prefix.trace.incidents.map(e=>e.incident.incidentId),applications:prefix.applications,observationSha256:prefix.observationSha256,...(performanceEvidence?{equipmentPerformance:prefix.equipmentPerformance,...(natural?{}:{baselineWinnerTimeSeconds:prefix.baselineWinnerTimeSeconds}),openingPhysicalObservation:prefix.observations[0]}:{}),...(mechanicalEvidence?{resourceMechanical:prefix.resourceMechanical,mechanicalCheckpoints:prefix.selectedCheckpoints}:{}),...(energyEvidence?{resourceEnergy:prefix.resourceEnergy,physicalEnergyAudit:[...prefix.energyAudit,...finish.ticks.flatMap(t=>t.energy.map(a=>({raceSecond:t.state.raceSecond,riderId:a.riderId,previousEnergy:a.previousEnergy,nextEnergy:a.nextEnergy,neutralCost:a.result.grossEnergyCost*a.result.efficiencyMultiplier,multiplier:energyMultipliers[a.riderId]})))],finishEnergyWitness:finish.ticks.flatMap(t=>t.crossings.map(c=>({riderId:c.riderId,crossingFraction:c.crossingFraction,energy:t.energy.find(a=>a.riderId===c.riderId)})))}:{}),receipt,receiptSha256:carryoverDigest(receipt)})
   prior=receipt
  }
- return {version:'043AH_multistage_physical_tour_v1',schedule,scheduleSha256,packetSha256:expectedPacketSha256,stages:reports,gc,gcSha256:carryoverDigest(gc),finalReceiptSha256:carryoverDigest(prior),...flags()}
+ return {version:'043AH_multistage_physical_tour_v1',...(mixed?{mixedTerrain:true}:{}),schedule,scheduleSha256,packetSha256:expectedPacketSha256,stages:reports,gc,gcSha256:carryoverDigest(gc),finalReceiptSha256:carryoverDigest(prior),...flags()}
 }
