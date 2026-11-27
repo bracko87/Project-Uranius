@@ -1,4 +1,5 @@
 // 043AE offline sporting projection; no official rule or publication authority.
+import {calculateWeatherPerformanceEffects} from '../src/race-engine/simulation/weatherPerformanceEffects'
 import {carryoverDigest} from './uranius-multistage-carryover-review.mjs'
 import type {finishPhysicalIncidentStage} from './uranius-physical-incident-finish-review'
 type Finish=ReturnType<typeof finishPhysicalIncidentStage>
@@ -33,13 +34,20 @@ export function reviewSportingClassification({finish,policy,incidents,expectedPo
   req(e&&num(c.crossingFraction,0,1)&&e.previousEnergy>=0&&e.nextEnergy===finish.state.riders[c.riderId].energy,'missing crossing energy')
   // Neutral energy formula is duration-linear and uncapped before subtraction.
   // Refuse alternate runtime modifiers instead of scaling a capped ledger.
-  req(!t.state.weatherPerformanceEffectsEnabled&&!t.state.groupShelterEnergyEnabled&&!t.state.experimentalAbsoluteSpeedEffortEnabled&&e.runtimeFatigueGain===undefined&&!(e.experimentalPullerEnergySurcharge??0),'unsupported energy modifier')
+  const weatherWitness=(e as any).experimentalWeatherEnergyMultiplier
+  const weatherEnabled=t.state.weatherPerformanceEffectsEnabled===true
+  req(!t.state.groupShelterEnergyEnabled&&!t.state.experimentalAbsoluteSpeedEffortEnabled&&!(e.experimentalPullerEnergySurcharge??0),'unsupported energy modifier')
+  if(weatherEnabled){
+   const w=calculateWeatherPerformanceEffects(t.state.input.weather)
+   req(t.state.input.weather?.source==='synthetic_review_fixture'&&num(weatherWitness,1,1.75)&&weatherWitness===Math.max(w.energyConsumptionMultiplier,w.staminaConsumptionMultiplier),'explicit combined weather energy witness required')
+  }else req(weatherWitness===undefined&&e.runtimeFatigueGain===undefined,'unexpected weather energy or fatigue witness')
   const multiplier=e.preparationEnergyMultiplier??1
   req(num(multiplier,.9,1),'invalid preparation energy multiplier')
-  const fullCost=e.result.grossEnergyCost*e.result.efficiencyMultiplier*multiplier
+  const fullCost=e.result.grossEnergyCost*e.result.efficiencyMultiplier*multiplier*(weatherWitness??1)
+  if(weatherEnabled)req(Math.abs(e.nextEnergy-Math.max(0,e.previousEnergy-fullCost))<1e-8&&Math.abs(e.energyCost-(e.previousEnergy-e.nextEnergy))<1e-8,'combined weather debit mismatch')
   const fraction=c.crossingFraction!
   const corrected=round(Math.max(0,e.previousEnergy-fullCost*fraction))
-  energyById.set(c.riderId,{crossingFraction:fraction,previousEnergy:e.previousEnergy,fullTickEnergy:e.nextEnergy,partialTickEnergy:corrected,partialTickCost:round(Math.min(e.previousEnergy,fullCost*fraction))})
+  energyById.set(c.riderId,{crossingFraction:fraction,previousEnergy:e.previousEnergy,fullTickEnergy:e.nextEnergy,partialTickEnergy:corrected,partialTickCost:round(Math.min(e.previousEnergy,fullCost*fraction)),...(weatherEnabled?{weatherEnergyMultiplier:weatherWitness}:{})})
  }
  const groupTimes=new Map<string,number>()
  let groupStart=winner,last=winner
