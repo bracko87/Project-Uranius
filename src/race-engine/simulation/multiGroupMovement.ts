@@ -12,6 +12,7 @@
  * File-level: multiGroupMovement contains pure calculations only and must not
  * import runtime side-effects.
  */
+import {calculateWeatherPerformanceEffects} from './weatherPerformanceEffects'
 import type {
   GroupState,
 } from '../domain/GroupState'
@@ -202,6 +203,7 @@ export function calculateMultiGroupMovement(
   state: SimulationState,
   experimentalEquipmentCapabilityAdjustments?: Readonly<Record<string, number>>,
   experimentalTerrainCapability = false,
+  experimentalPhysicalWeather = false,
 ): MultiGroupMovementResult {
   if (state.completed) {
     throw new Error(
@@ -252,6 +254,8 @@ export function calculateMultiGroupMovement(
       state.input,
     )
 
+  if(experimentalPhysicalWeather && (!state.weatherPerformanceEffectsEnabled || !state.input.weather)) throw Error('explicit physical weather state required')
+  const weatherSpeed = experimentalPhysicalWeather ? calculateWeatherPerformanceEffects(state.input.weather).speedMultiplier : 1
   const preliminary =
     activeGroups.map(
       (group) => {
@@ -411,7 +415,7 @@ export function calculateMultiGroupMovement(
               0.35,
           )
 
-        const terrainSpeed =
+        const neutralTerrainSpeed =
           calculateTerrainSpeed({
             baseSpeedKmh:
               finalStageAdjustedBaseSpeedKmh,
@@ -425,6 +429,7 @@ export function calculateMultiGroupMovement(
                 .maximumSpeedKmh,
           })
 
+        const terrainSpeed = weatherSpeed===1 ? neutralTerrainSpeed : {...neutralTerrainSpeed,speedKmh:neutralTerrainSpeed.speedKmh*weatherSpeed}
         const unclampedNextDistanceKm =
           group.distanceKm +
           terrainSpeed.speedKmh *
