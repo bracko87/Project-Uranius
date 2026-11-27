@@ -172,7 +172,7 @@ export function calculateTerrainAwareMultiGroupMovement(
     )
   }
 
-  const weatherEffects =
+  const openingWeatherEffects =
     state
       .weatherPerformanceEffectsEnabled ===
       true
@@ -210,6 +210,7 @@ export function calculateTerrainAwareMultiGroupMovement(
   const preliminary =
     activeGroups.map(
       (group) => {
+        const weatherEffects=state.weatherPerformanceEffectsEnabled&&state.input.weather?.courseBearingSegments?calculateWeatherPerformanceEffects(state.input.weather,group.distanceKm):openingWeatherEffects
         const riders =
           getRacingGroupRiders(
             state,
