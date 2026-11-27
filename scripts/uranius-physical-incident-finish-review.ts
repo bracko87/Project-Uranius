@@ -10,10 +10,11 @@ import {validateSimulationState} from '../src/race-engine/validation/validateSim
 import {carryoverDigest} from './uranius-multistage-carryover-review.mjs'
 import {captureAutomaticOverlappingFinishPrefix} from './uranius-automatic-overlapping-incident-review'
 import {multiRiderIncidentTick} from './uranius-multi-rider-incident-motion-review'
+import {applyReviewEnergyMultiplier,type EnergyMultipliers} from './uranius-resource-energy-review'
 type Episode=Parameters<typeof multiRiderIncidentTick>[1][number]
 type FinalEpisode=Omit<Episode,'phase'>&{phase:Episode['phase']|'finished'}
 const req=(x:unknown,m:string)=>{if(!x)throw Error('043AD: '+m)}
-export function physicalFinishTick(state:SimulationState,episodes:readonly FinalEpisode[],targetId:string){
+export function physicalFinishTick(state:SimulationState,episodes:readonly FinalEpisode[],targetId:string,multipliers?:EnergyMultipliers){
  req(!state.completed&&state.input.orders.length===0,'active no-command state required')
  const base=calculateMultiGroupMovement(state),dt=base.tickSeconds/3600
  const target=base.proposals.find(p=>p.groupId===targetId)
@@ -45,7 +46,7 @@ export function physicalFinishTick(state:SimulationState,episodes:readonly Final
  const elapsed=previousWinners.length?Math.max(0,state.raceSecond+base.tickSeconds-Math.min(...previousWinners)):0
  const movement={...base,leaderGroupId:leader.groupId,leaderDistanceKm,proposals:preliminary.map(p=>({...p,gapFromLeaderSeconds:Math.max(0,leaderDistanceKm-p.nextDistanceKm)*3600/Math.max(1,leader.appliedSpeedKmh)+elapsed}))}
  const moved=applyMultiGroupMovement({state,movement}).state
- const energy=applyMultiGroupEnergy({state:moved,movement})
+ const energy=applyReviewEnergyMultiplier(applyMultiGroupEnergy({state:moved,movement}),multipliers)
  let next=energy.state
  const pickups:string[]=[],rejoins:string[]=[]
  const merge=(fromId:string,toId:string)=>{
@@ -79,14 +80,14 @@ export function physicalFinishTick(state:SimulationState,episodes:readonly Final
  validateSimulationState(next)
  return {state:next,episodes:updated,pickups,rejoins,movement,energy:energy.applications,results:applied?.newResults??[],crossings:detection.candidates,official:false,hostedWriteAllowed:false}
 }
-export function finishPhysicalIncidentStage(initial:SimulationState,initialEpisodes:readonly Episode[],targetId:string,maximumTicks=1440){
+export function finishPhysicalIncidentStage(initial:SimulationState,initialEpisodes:readonly Episode[],targetId:string,maximumTicks=1440,multipliers?:EnergyMultipliers){
  req(!initial.completed&&Number.isSafeInteger(maximumTicks)&&maximumTicks>0&&maximumTicks<=1440,'invalid continuation scope')
  req(Object.values(initial.riders).every(r=>r.stageStatus==='racing'||r.stageStatus==='dnf'),'pre-finish prefix required')
  let state=initial,episodes:readonly FinalEpisode[]=initialEpisodes
  const ticks:ReturnType<typeof physicalFinishTick>[]=[],results:StageResult[]=[]
  while(!state.completed){
   req(ticks.length<maximumTicks,'finish horizon exceeded')
-  const t=physicalFinishTick(state,episodes,targetId);state=t.state;episodes=t.episodes;ticks.push(t);results.push(...t.results)
+  const t=physicalFinishTick(state,episodes,targetId,multipliers);state=t.state;episodes=t.episodes;ticks.push(t);results.push(...t.results)
  }
  const finishers=Object.values(state.riders).filter(r=>r.stageStatus==='finished'),withdrawn=Object.values(state.riders).filter(r=>r.stageStatus==='dnf').sort((a,b)=>a.riderId.localeCompare(b.riderId))
  req(finishers.length>0&&finishers.length+withdrawn.length===Object.keys(state.riders).length&&new Set(results.map(r=>r.riderId)).size===finishers.length&&results.length===finishers.length,'terminal coverage')
