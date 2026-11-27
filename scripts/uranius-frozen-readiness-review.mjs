@@ -98,8 +98,12 @@ export function bindLegacyReadiness({source,expectedSourceSha256,input}){
 
 // 043AG opt-in: keep full receipt, admit only eligible stage-two riders.
 export function bindMixedStageReadiness({source,expectedSourceSha256,input}){
- const {receipt,sha256}=buildFrozenReadinessReview({source,expectedSourceSha256})
- req(receipt.stageNumber===2&&input?.raceId===receipt.raceId&&input.stageId===receipt.stageId&&input.stageFormat==='road_race'&&Array.isArray(input.orders)&&input.orders.length===0&&uniq(input.riders,r=>r.riderId)&&input.riders.length===receipt.rows.length,'mixed stage input scope mismatch')
+ const ready=buildFrozenReadinessReview({source,expectedSourceSha256})
+ req(ready.receipt.stageNumber===2,'mixed stage input scope mismatch')
+ return bindMixedReceipt(ready,input)
+}
+function bindMixedReceipt({receipt,sha256},input){
+ req(input?.raceId===receipt.raceId&&input.stageId===receipt.stageId&&input.stageFormat==='road_race'&&Array.isArray(input.orders)&&input.orders.length===0&&uniq(input.riders,r=>r.riderId)&&input.riders.length===receipt.rows.length,'mixed stage input scope mismatch')
  req(uniq(input.teams,t=>t.teamId),'unique teams required')
  const starters=receipt.rows.filter(r=>r.startStatus==='starter')
  req(starters.length>=2&&starters.every(r=>['fit','not_fully_fit'].includes(r.condition.availabilityStatus)&&r.preparation.legacyCompatible&&r.preparation.workloadCompatible),'unsupported mixed starter readiness')
@@ -117,4 +121,33 @@ export function bindMixedStageReadiness({source,expectedSourceSha256,input}){
  }).filter(t=>t.riderIds.length>0)
  const riders=input.riders.filter(r=>ids.has(r.riderId)).map(r=>({...r,condition:starters.find(x=>x.riderId===r.riderId).condition}))
  return {input:{...input,riders,teams},receipt,readinessSha256:sha256,excluded:receipt.rows.filter(r=>r.startStatus==='dns').map(r=>r.riderId),...flags()}
+}
+
+// 043AH: full-roster tour receipts, including permanent exclusions and explicit
+// daily recovery chains. Legacy readiness and mixed-stage paths stay unchanged.
+export function bindTourStageReadiness({source,expectedSourceSha256,input}){
+ req(source?.provenance===P&&source.completeSyntheticEvidence===true&&carryoverDigest(source)===expectedSourceSha256,'tour source digest mismatch')
+ const {raceId,stageId,runId,date,stageNumber,difficultyCategory,participants,riderRows,modifierRows,prior,recoveryReceipts}=source
+ req([raceId,stageId,runId].every(uuid)&&day(date)&&Number.isInteger(stageNumber)&&stageNumber>=2&&stageNumber<=21&&Number.isInteger(difficultyCategory)&&difficultyCategory>=1&&difficultyCategory<=5,'tour stage scope')
+ req(prior?.version==='043AH_tour_stage_receipt_v1'&&prior.provenance===P&&prior.official===false&&prior.hostedWriteAllowed===false&&prior.accountingAllowed===false&&prior.raceId===raceId&&prior.stageNumber===stageNumber-1&&prior.stageId!==stageId&&day(prior.date)&&carryoverDigest(prior)===source.expectedPriorSha256&&prior.runHistory.length===stageNumber-1&&new Set(prior.runHistory).size===prior.runHistory.length&&!prior.runHistory.includes(runId),'tour prior receipt mismatch')
+ const gap=(Date.parse(date)-Date.parse(prior.date))/86400000
+ req(Number.isInteger(gap)&&gap>=1&&gap<=7,'tour day gap outside scope')
+ req([participants,riderRows,modifierRows].every(xs=>uniq(xs,x=>x.rider_id)&&xs.length===prior.riders.length)&&uniq(prior.riders,x=>x.riderId)&&uniq(recoveryReceipts,x=>x.riderId+'|'+x.date)&&recoveryReceipts.length===gap*participants.length,'tour roster or recovery coverage')
+ const rows=participants.map(p=>{
+  const old=prior.riders.find(x=>x.riderId===p.rider_id),r=riderRows.find(x=>x.rider_id===p.rider_id),m=modifierRows.find(x=>x.rider_id===p.rider_id)
+  req(old&&r&&m&&[p,r,m].every(x=>x.race_id===raceId&&x.stage_id===stageId&&x.team_id===old.teamId)&&uuid(p.rider_id)&&uuid(p.team_id)&&p.accepted===true&&typeof p.selected==='boolean'&&typeof p.selection_blocked==='boolean'&&bounded(r.morale)&&bounded(r.recovery)&&r.start_stamina===null,'tour roster identity or condition mismatch')
+  req(['finished','dnf','otl','dns'].includes(old.status)&&bounded(old.persistedFatigue)&&['fit','not_fully_fit','injured','sick'].includes(old.availabilityStatus)&&typeof old.selectionBlocked==='boolean','invalid prior rider state')
+  let fatigue=old.persistedFatigue
+  for(let i=1;i<=gap;i++){
+   const d=new Date(Date.parse(prior.date)+i*86400000).toISOString().slice(0,10)
+   const rec=recoveryReceipts.find(x=>x.riderId===p.rider_id&&x.date===d)
+   req(rec&&rec.raceId===raceId&&rec.previousStageId===prior.stageId&&rec.stageId===stageId&&rec.fatigueAfterStage===fatigue&&rec.recovery===r.recovery&&rec.morale===r.morale,'tour daily recovery mismatch')
+   fatigue=reviewOfficialRaceNight(rec).fatigue
+  }
+  req(r.fatigue===fatigue&&r.fatigue_before_stage===fatigue&&r.availability_status===old.availabilityStatus&&p.selection_blocked===old.selectionBlocked,'tour carried condition mismatch')
+  const startStatus=old.status!=='finished'||!p.selected||p.selection_blocked||['injured','sick'].includes(r.availability_status)?'dns':'starter'
+  return {riderId:p.rider_id,teamId:p.team_id,startStatus,priorStatus:old.status,condition:{startingEnergy:clamp(100-fatigue*.45,1,100),fatigueBeforeStage:fatigue,morale:r.morale,availabilityStatus:r.availability_status},staminaSource:'explicit_missing_fatigue_fallback',recoverySkill:r.recovery,preparation:normalizeFrozenPreparation(m),...flags()}
+ }).sort(sort)
+ const receipt={version:'043AH_tour_readiness_v1',provenance:P,raceId,stageId,runId,date,stageNumber,difficultyCategory,sourceSha256:expectedSourceSha256,priorSha256:source.expectedPriorSha256,rows,...flags()}
+ return bindMixedReceipt({receipt,sha256:carryoverDigest(receipt)},input)
 }
