@@ -69,6 +69,8 @@ export interface StageWeatherInput {
   readonly minimumTemperatureC: number | null
   readonly maximumTemperatureC: number | null
   readonly windSpeedKmh: number | null
+  /** Offline synthetic constant-bearing course only; meteorological FROM direction. */
+  readonly directionalWind?: {readonly courseBearingDegrees:number;readonly windFromDegrees:number;readonly scope:'synthetic_constant_bearing'}
   readonly precipitationMm: number | null
 
   readonly hostCity: string | null
