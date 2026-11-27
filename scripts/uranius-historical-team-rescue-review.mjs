@@ -825,7 +825,10 @@ export function reviewHistoricalRescuePickup(incident,gradient,distanceKm){
  req(fields(incident,['raceSecond','kmFromStart','timeLossSeconds'])&&num(incident.raceSecond,1,43200)&&num(incident.kmFromStart,0,distanceKm)&&num(incident.timeLossSeconds,0,220)&&num(gradient,-100,100)&&num(distanceKm,1,500),'pickup scope')
  return phase10TeamRescuePickupKm(incident,gradient,distanceKm)
 }
-export function reviewHistoricalTeamRescue({evidence,expectedEvidenceSha256}){
+export function reviewHistoricalTeamRescue(packet){return reviewTeamRescue(packet,false)}
+// 043X: chronological nonoverlapping repeated episodes; original strict entry unchanged.
+export function reviewHistoricalSequentialRescue(packet){return reviewTeamRescue(packet,true)}
+function reviewTeamRescue({evidence,expectedEvidenceSha256},sequential){
  req(evidence?.provenance==='synthetic_review_fixture'&&carryoverDigest(evidence)===expectedEvidenceSha256,'frozen synthetic rescue evidence required')
  req(fields(evidence,['provenance','consequences','riders','plans','gcStandings','profilePoints','terrainType','timeline','flatSprintFinish']),'unexpected rescue fields')
  const {consequences,riders,plans,gcStandings,profilePoints,terrainType,timeline,flatSprintFinish}=evidence
@@ -860,7 +863,7 @@ export function reviewHistoricalTeamRescue({evidence,expectedEvidenceSha256}){
   const selected=cp.candidates.find(x=>x.entityId===chosen.entityId&&x.probabilityInput.incidentKind===chosen.kind)
   req(selected,'selected source group missing')
   for(const r of inc.riderConsequences){
-   req(!affected.has(r.riderId),'repeat incident rider outside bounded review')
+   req(sequential||!affected.has(r.riderId),'repeat incident rider outside bounded review')
    affected.add(r.riderId)
    const state=phase10ReplayRiderStateAtKm(baseReplayTimeline,r.riderId,e.stage.kmFromStart)
    req(state?.status==='racing'&&state.displayCode===selected.displayCode,'incident source state mismatch')
@@ -869,7 +872,22 @@ export function reviewHistoricalTeamRescue({evidence,expectedEvidenceSha256}){
  }
  const result=phase10BuildAutonomousIncidentChase({input,riderReadiness,baseReplayTimeline,baseFinishResolution:{finishMode:flatSprintFinish?'flat_sprint':'other'},incidents})
  // Original planner may reserve future incident riders as helpers. Refuse overlapping episodes rather than assert valid physical provenance.
- req(uniq(result.episodes,e=>e.riderId),'overlapping incident/rescue rider outside bounded review')
+ if(!sequential)req(uniq(result.episodes,e=>e.riderId),'overlapping incident/rescue rider outside bounded review')
+ else{
+  req(uniq(result.episodes,e=>e.episodeKey),'duplicate chase episode key')
+  for(const rider of riders){
+   const es=result.episodes.filter(e=>e.riderId===rider.riderId).sort((a,b)=>a.activationKm-b.activationKm)
+   for(let i=1;i<es.length;i++)req(es[i-1].actualRejoinKm!==null&&es[i-1].actualRejoinKm<=es[i].activationKm-.000001,'overlapping incident/rescue episode')
+   const events=incidents.filter(inc=>inc.riderIds.includes(rider.riderId))
+   for(let i=0;i<events.length;i++){
+    const ev=events[i],row=ev.riderConsequences.find(r=>r.riderId===rider.riderId)
+    if(i){const prev=events[i-1],ep=result.episodeByKey.get(phase10EpisodeKey(prev.incidentId,rider.riderId))
+     req(ev.raceSecond>=prev.raceSecond+900&&ep?.actualRejoinKm!==null&&ep?.actualRejoinKm<=ev.kmFromStart-.000001,'repeat incident before rejoin/cooldown')
+    }
+    if(row.statusImpact==='dnf')req(i===events.length-1&&es.every(e=>e.actualRejoinKm!==null&&e.actualRejoinKm<=ev.kmFromStart-.000001),'episode or incident after withdrawal')
+   }
+  }
+ }
  const updated=incidents.map(inc=>({...inc,riderConsequences:inc.riderConsequences.map(r=>{
   const ep=result.episodeByKey.get(phase10EpisodeKey(inc.incidentId,r.riderId))
   return ep?{...r,actualRejoinKm:ep.actualRejoinKm,finalGapSeconds:ep.finalGapToTargetSeconds,finalTimePenaltySeconds:ep.actualRejoinKm!==null?0:Math.max(0,Math.round(ep.finalGapToTargetSeconds)),chaseEnergyCostPoints:ep.chaseEnergyCostPoints,temporarySeparation:ep.actualRejoinKm!==null}:r
