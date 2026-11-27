@@ -12,10 +12,11 @@ export function reviewPhysicalStageContinuity({args,policy,continuity,expectedCo
  req(continuity?.provenance===P&&carryoverDigest(continuity)===expectedContinuitySha256,'frozen continuity evidence required')
  const {source,expectedSourceSha256}=args
  const ready=buildFrozenReadinessReview({source,expectedSourceSha256}).receipt
- const {schedule,nextRunId,resources,recovery}=continuity
+ const {schedule,nextRunId,resources,recovery,nextModifierRows}=continuity
  req(source.stageNumber===1&&Array.isArray(schedule)&&schedule.length===2&&schedule[0].stageId===source.stageId&&schedule[0].date===source.date&&schedule[1].stageId!==source.stageId&&schedule[1].date===new Date(Date.parse(source.date)+86400000).toISOString().slice(0,10),'consecutive two-stage scope required')
  req(typeof nextRunId==='string'&&nextRunId!==source.runId&&/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(nextRunId),'distinct next run required')
  req(Array.isArray(recovery)&&recovery.length===ready.rows.length&&new Set(recovery.map(r=>r.riderId)).size===recovery.length&&ready.rows.every(r=>recovery.some(n=>n.riderId===r.riderId)),'explicit complete recovery inputs required')
+ req(Array.isArray(nextModifierRows)&&nextModifierRows.length===ready.rows.length&&new Set(nextModifierRows.map(m=>m.rider_id)).size===nextModifierRows.length,'explicit next-stage preparation required')
  const auto=reviewAutomaticPhysicalFinish(args)
  const evidence=auto.prefix.trace.incidents.flatMap(e=>{
   const obs=auto.prefix.observations.find(o=>o.raceSecond===e.raceSecond),group=obs?.tick.groups.find(g=>g.displayCode==='P')
@@ -60,7 +61,7 @@ export function reviewPhysicalStageContinuity({args,policy,continuity,expectedCo
    // Conservative review-only availability mapping; no invented injury duration.
    return {...r,...scope,fatigue_before_stage:n.fatigue,fatigue:n.fatigue,start_stamina:null,availability_status:h.selectionBlocked?'injured':h.outcomes.length?'not_fully_fit':r.availability_status}
   }),
-  modifierRows:source.modifierRows.map(m=>({...m,...scope,preparation_applied:false,equipment_selected:false,in_stage_energy_cost_multiplier:1,post_stage_fatigue_multiplier:1,equipment_fatigue_reduction_pct:0,post_stage_recovery_bonus_points:0,non_neutral_command_capability_bonus:0,equipment_engine_stage_bonus_pct:0,supply_stage_performance_pct:0,health_incident_risk_multiplier:1,mechanical_incident_risk_multiplier:1,mechanical_time_loss_multiplier:1,equipment_condition_factor:1}))
+  modifierRows:nextModifierRows
  }
  const nextReadiness=buildFrozenReadinessReview({source:nextSource,expectedSourceSha256:carryoverDigest(nextSource)})
  return {version:'043AF_physical_stage_continuity_v1',auto,sporting,correctedState,energyAudit,workloads,health,carry,nextSource,nextReadiness,continuitySha256:expectedContinuitySha256,official:false,hostedWriteAllowed:false,accountingAllowed:false,authoritativeSourceVerified:false,finalClassificationVerified:false}
