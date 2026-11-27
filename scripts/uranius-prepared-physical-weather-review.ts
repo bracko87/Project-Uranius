@@ -21,7 +21,7 @@ export function resolvePreparedPhysicalWeather(input:StageInput,context:any,weat
  req(context.weatherMultiplier===historicalRiskMultiplier,'historical weather factor must match canonical capped risk')
  const energyMultiplier=Math.max(effects.energyConsumptionMultiplier,effects.staminaConsumptionMultiplier)
  const neutral=effects.speedMultiplier===1&&energyMultiplier===1&&effects.fatigueGainMultiplier===1&&historicalRiskMultiplier===1
- return {weather,effects,energyMultiplier,historicalRiskMultiplier,neutral,directionalWindVerified:false,...(effects.directionalWind?{directionalWindApplied:true}:{}),official:false}
+ return {weather,effects,energyMultiplier,historicalRiskMultiplier,neutral,directionalWindVerified:false,...(effects.directionalWind?{directionalWindApplied:!neutral}:{}),official:false}
 }
 export function applyPreparedWeatherEnergy(result:ApplyMultiGroupEnergyResult,multipliers:EnergyMultipliers,weather:ReturnType<typeof resolvePreparedPhysicalWeather>,stateOverride?:SimulationState){
  const state=stateOverride??result.state
