@@ -16,3 +16,6 @@ del "%TEMP%\uranius-043ah-test.cjs"
 ```
 
 Expected PASS 4/4 multi-stage physical tour checks; no hosted connection. Hosted activation BLOCKED.
+
+## Owner acceptance — 2026-11-27
+Owner pulled 0d565ac; esbuild bundle 339.2kb succeeded in 150ms. Native PASS 4/4: three actual physical stages and permanent withdrawal history; sequential overnight and rest-day recovery, actual starting energy and no duplicate incident loss; equipment/supply continuity and cumulative general classification after every stage; deterministic tour receipt chain, missing recovery rejection and authority guards. Temporary bundle deleted; no hosted connection. Scoped 043AH accepted; cumulative 176/176 distinct native acceptance groups. Verified three-stage 310km fixture with one rest day. Full 7/14/21-stage endurance execution, resource-to-performance binding, broader terrain/tactics and official classification parity remain pending. Hosted activation BLOCKED.
