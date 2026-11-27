@@ -21,11 +21,12 @@ export function resolvePreparedPhysicalWeather(input:StageInput,context:any,weat
  req(context.weatherMultiplier===historicalRiskMultiplier,'historical weather factor must match canonical capped risk')
  const energyMultiplier=Math.max(effects.energyConsumptionMultiplier,effects.staminaConsumptionMultiplier)
  const neutral=effects.speedMultiplier===1&&energyMultiplier===1&&effects.fatigueGainMultiplier===1&&historicalRiskMultiplier===1
- return {weather,effects,energyMultiplier,historicalRiskMultiplier,neutral,directionalWindVerified:false,official:false}
+ return {weather,effects,energyMultiplier,historicalRiskMultiplier,neutral,directionalWindVerified:false,...(effects.directionalWind?{directionalWindApplied:true}:{}),official:false}
 }
 export function applyPreparedWeatherEnergy(result:ApplyMultiGroupEnergyResult,multipliers:EnergyMultipliers,weather:ReturnType<typeof resolvePreparedPhysicalWeather>,stateOverride?:SimulationState){
  const state=stateOverride??result.state
  req(state.weatherPerformanceEffectsEnabled===true&&!weather.neutral&&!state.groupShelterEnergyEnabled&&!state.experimentalAbsoluteSpeedEffortEnabled,'unsupported combined weather energy state')
+ if(weather.effects.directionalWind)req(state.input.weather?.directionalWind&&JSON.stringify(calculateWeatherPerformanceEffects(state.input.weather))===JSON.stringify(weather.effects),'directional wind state evidence mismatch')
  const riders={...state.riders}
  const applications=result.applications.map(a=>{
   const supply=multipliers[a.riderId]
