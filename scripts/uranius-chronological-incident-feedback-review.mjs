@@ -108,6 +108,7 @@ export function applyPriorIncidentFeedback({tick,kmFromStart,prefix,confirmed}){
  const simulation={episodes,episodeByKey:new Map(episodes.map(e=>[e.episodeKey,e]))}
  const byRider=new Map()
  for(const inc of incidents)for(const row of inc.riderConsequences){
+  req(inc.raceSecond<tick.raceSecond&&inc.kmFromStart<=kmFromStart+.000001,'future incident in prior prefix')
   req(!byRider.has(row.riderId),'repeat incident outside bounded review')
   byRider.set(row.riderId,{inc,row})
  }
@@ -117,7 +118,7 @@ export function applyPriorIncidentFeedback({tick,kmFromStart,prefix,confirmed}){
   const d=byRider.get(r.riderId),ep=episodes.find(e=>e.riderId===r.riderId)
   const initial=d?.row.energyLossPoints??0
   const chase=phase10AutonomousChaseEnergyAtKm(simulation,r.riderId,kmFromStart)
-  const energy=deterministicRound(Math.max(0,r.energy-initial-chase),6)
+  const energy=d?deterministicRound(Math.max(0,r.energy-initial-chase),6):r.energy
   const status=d?.row.statusImpact==='dnf'?'dnf':r.status
   let displayCode=null
   if(status==='racing'){
