@@ -55,7 +55,14 @@ export function reviewHistoricalEligibilityTraceWithFeedback(packet,feedback){
  const trace=evaluateHistoricalEligibilityTrace(packet,selectedCheckpoints,feedback)
  return {trace,selectedCheckpoints}
 }
-function evaluateHistoricalEligibilityTrace({evidence,expectedEvidenceSha256},selectedCheckpoints,feedback=null){
+// 043AA: explicitly bounded physical review; the standard trace paths remain unchanged.
+export function reviewHistoricalEligibilityTraceWithPhysicalFeedback(packet,feedback){
+ req(typeof feedback==='function','physical feedback callback required')
+ const selectedCheckpoints=[]
+ const trace=evaluateHistoricalEligibilityTrace(packet,selectedCheckpoints,feedback,true)
+ return {trace,selectedCheckpoints}
+}
+function evaluateHistoricalEligibilityTrace({evidence,expectedEvidenceSha256},selectedCheckpoints,feedback=null,physical=false){
  req(evidence?.provenance==='synthetic_review_fixture'&&carryoverDigest(evidence)===expectedEvidenceSha256,'frozen synthetic trace required')
  req(fields(evidence,['provenance','raceId','stageId','runId','seed','stage','winnerTimeSeconds','weatherMultiplier','severeWeather','flatSprint','roster','ticks']),'unexpected trace fields')
  const {raceId,stageId,runId,seed,stage,winnerTimeSeconds,weatherMultiplier,severeWeather,flatSprint,roster,ticks}=evidence
@@ -66,11 +73,17 @@ function evaluateHistoricalEligibilityTrace({evidence,expectedEvidenceSha256},se
  req(Array.isArray(ticks)&&ticks.length===lastTick/30,'complete 30-second grid required')
  const byId=new Map(roster.map(r=>[r.riderId,r])),state=new Map(roster.map(r=>[r.riderId,{nextEligibleSecond:0,rejoinKm:0,withdrawn:!r.eligibleToStart,lowSinceSecond:null,lastIncidentId:null}]))
  const phaseCounts=[0,0,0,0],incidents=[],audit=[]
- let nextGlobalEligibleSecond=0,crashCount=0
+ let nextGlobalEligibleSecond=0,crashCount=0,previousPhysicalKm=0,stopReason=null
  const baseSpeed=round(distanceKm/Math.max(winnerTimeSeconds/3600,.01))
  for(let i=0;i<ticks.length;i++){
-  const raceSecond=(i+1)*30,progressFraction=clamp(raceSecond/winnerTimeSeconds,0,1)
+  const raceSecond=(i+1)*30
+  let progressFraction=clamp(raceSecond/winnerTimeSeconds,0,1)
   const applied=feedback?feedback({tick:ticks[i],raceSecond,kmFromStart:round(distanceKm*progressFraction),incidents:incidents.slice(),selectedCheckpoints:selectedCheckpoints.slice()}):ticks[i]
+  if(physical){
+   if(applied.stopReason){req(typeof applied.stopReason==='string','invalid stop reason');stopReason=applied.stopReason;break}
+   req(num(applied.measuredKm,previousPhysicalKm,distanceKm),'invalid physical progress')
+   previousPhysicalKm=applied.measuredKm;progressFraction=applied.measuredKm/distanceKm
+  }
   const tick=applied.tick??applied,excluded=new Set(applied.excludedRiderIds??[])
   req([...excluded].every(id=>byId.has(id)),'unknown excluded feedback rider')
   req(fields(tick,['raceSecond','gradientPercent','riders','groups','rejoins'])&&tick.raceSecond===raceSecond&&num(tick.gradientPercent,-100,100)&&uniq(tick.riders,r=>r.riderId)&&tick.riders.length===roster.length&&tick.riders.every(r=>fields(r,['riderId','status','energy','commandIntensity'])&&byId.has(r.riderId)&&['racing','finished','dnf','dns','otl'].includes(r.status)&&num(r.energy,0,100)&&num(r.commandIntensity,.82,1.45))&&uniq(tick.groups,g=>g.displayCode)&&uniq(tick.rejoins,r=>r.riderId),'invalid checkpoint grid or coverage')
@@ -138,5 +151,5 @@ function evaluateHistoricalEligibilityTrace({evidence,expectedEvidenceSha256},se
   }
   audit.push({raceSecond,...gate,candidateCount:candidates.length,eligibleRiderIds:eligible.map(r=>r.riderId).sort(),exhaustionEligible:exhaustionEligible.sort(),selectedIncidentId:selected?.incidentId??null})
  }
- return {version:'043Q_historical_eligibility_review_v1',evidenceSha256:expectedEvidenceSha256,limits,phaseCounts,crashCount,incidents,audit,terminalEligibility:roster.map(r=>({riderId:r.riderId,...state.get(r.riderId)})),...flags()}
+ return {version:'043Q_historical_eligibility_review_v1',evidenceSha256:expectedEvidenceSha256,limits,phaseCounts,crashCount,incidents,audit,terminalEligibility:roster.map(r=>({riderId:r.riderId,...state.get(r.riderId)})),...(physical?{physicalProgressUsed:true,stopReason}:{}),...flags()}
 }
