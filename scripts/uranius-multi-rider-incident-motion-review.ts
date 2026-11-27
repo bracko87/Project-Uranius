@@ -62,9 +62,9 @@ function startBatch(state:SimulationState,rows:readonly Row[],prior:readonly Epi
  validateSimulationState(next)
  return {state:next,episodes,targetId:target.groupId}
 }
-export function multiRiderIncidentTick(state:SimulationState,episodes:readonly Episode[],targetId:string,multipliers?:EnergyMultipliers,capabilityAdjustments?:Readonly<Record<string,number>>){
+export function multiRiderIncidentTick(state:SimulationState,episodes:readonly Episode[],targetId:string,multipliers?:EnergyMultipliers,capabilityAdjustments?:Readonly<Record<string,number>>,terrainCapability=false){
  req(!state.completed&&state.currentKm<state.stageDistanceKm,'pre-finish scope')
- const base=calculateMultiGroupMovement(state,capabilityAdjustments),dt=base.tickSeconds/3600
+ const base=calculateMultiGroupMovement(state,capabilityAdjustments,terrainCapability),dt=base.tickSeconds/3600
  const target=base.proposals.find(p=>p.groupId===targetId)
  req(target,'target missing')
  const active=episodes.filter(e=>e.phase!=='joined')
@@ -75,7 +75,7 @@ export function multiRiderIncidentTick(state:SimulationState,episodes:readonly E
   let next=p.nextDistanceKm
   if(ep){
    const repair=state.raceSecond<ep.repairUntil
-   const speed=p.groupId===ep.groupId?(repair?0:Math.min(state.input.settings.maximumSpeedKmh,Math.max(p.appliedSpeedKmh,target!.appliedSpeedKmh+8))):(repair?target!.appliedSpeedKmh*.25:0)
+   const speed=p.groupId===ep.groupId?(repair?0:Math.min(state.input.settings.maximumSpeedKmh,(terrainCapability?p.appliedSpeedKmh+8*p.terrainMultiplier:Math.max(p.appliedSpeedKmh,target!.appliedSpeedKmh+8)))):(repair?(terrainCapability?p.appliedSpeedKmh:target!.appliedSpeedKmh)*.25:0)
    next=Math.min(target!.nextDistanceKm,p.previousDistanceKm+speed*dt)
    if(!repair&&p.groupId===ep.groupId&&ep.helperGroupId)next=Math.min(next,state.groups[ep.helperGroupId].distanceKm)
   }
