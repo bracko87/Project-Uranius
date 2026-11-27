@@ -55,7 +55,7 @@ assert.equal(project(finish,{...policy,flatFinish:false},mixed).rows.find(r=>r.r
 assert.equal(project(finish,{...policy,sprintZoneKm:0},mixed).rows.find(r=>r.riderId===a).status,'otl')
 assert.equal(project(finish,{...policy,sprintZoneKm:.001},mixed).rows.find(r=>r.riderId===a).status,'otl')
 assert.equal(project(finish,policy,[]).rows.find(r=>r.riderId===a).status,'otl')
-assert.equal(project(finish,policy,mixed.map(e=>({...e,sourceGroupRiderIds:affected}))).rows.find(r=>r.riderId===a).status,'otl')
+assert.equal(project(finish,policy,mixed.map(e=>({...e,sourceGroupRiderIds:e.affectedRiderIds}))).rows.find(r=>r.riderId===a).status,'otl')
 console.log('PASS 043AE explicit sprint-zone protection, exclusion boundaries and OTL without changing physical ranks')
 const classified=out.rows.filter(r=>r.status==='finished')
 assert.deepEqual(classified.map(r=>r.sportingRank),classified.map((_,i)=>i+1))
