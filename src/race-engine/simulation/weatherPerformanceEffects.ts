@@ -12,7 +12,7 @@ import type {
   StageWeatherInput,
 } from '../domain/StageInput'
 
-import {calculateDirectionalWindEffects} from './directionalWindEffects'
+import {calculateDirectionalWindEffects,weatherAtCourseKm} from './directionalWindEffects'
 
 export type RainIntensity =
   | 'none'
@@ -535,6 +535,7 @@ function createReasons(
 export function calculateWeatherPerformanceEffects(
   weather:
     StageWeatherInput | undefined,
+  distanceKm = 0,
 ): WeatherPerformanceEffects {
   if (!weather) {
     return {
@@ -556,7 +557,7 @@ export function calculateWeatherPerformanceEffects(
       weather,
     )
 
-  const directionalWind = weather.directionalWind===undefined ? undefined : calculateDirectionalWindEffects(weather)
+  const directionalWind = weather.directionalWind===undefined ? undefined : calculateDirectionalWindEffects(weatherAtCourseKm(weather,distanceKm))
   const windContribution = directionalWind?.contribution ??
     calculateWindContribution(
       weather.windSpeedKmh,
