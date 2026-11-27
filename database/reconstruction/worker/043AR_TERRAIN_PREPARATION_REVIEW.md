@@ -18,3 +18,6 @@ del "%TEMP%\uranius-043ar-test.cjs"
 ```
 
 Expected PASS 4/4 terrain preparation checks; no hosted connection.
+
+## Owner acceptance — 2026-11-27
+Owner pulled 60c9b28; esbuild bundle 236.9kb succeeded in 132ms. Native PASS 4/4: four original road suitability matrices and local gradient-dependent rider capability; actual hilly and mountain physical completions, mixed gradients, nutrition, wear and measured descent risk; cobbled stage suitability only, exact default flat physical parity and no surface claims; deterministic replay, terrain mismatch, unsupported format and authority guards. Hilly 20km finish seconds negative/neutral/positive=1971.634595875/1898.374669861/1830.249007343; mountain 20km=2220.797562878/2120.620923667/2036.048698081. Temporary bundle deleted; no hosted connection. Scoped 043AR accepted; cumulative 216/216 distinct native acceptance groups. Controlled incident-free simulation only; no automatic nonflat incident selection, group terrain separation or physical cobbled surface effects verified. Stage-level equipment percentages synthetic; local terrain model is opt-in new-engine adaptation rather than original movement parity. Actual catalogue configuration, health writer compatibility, jersey rules and TypeScript checks remain pending. Hosted activation BLOCKED.
