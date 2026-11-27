@@ -155,7 +155,21 @@ export function reviewMultistagePhysicalTour({packet,expectedPacketSha256}:any){
    const jacket=clothingAllocation?.units.find(u=>u.resourceId===before.resourceId&&before.resourceType==='supply')
    if(jacket&&!jacket.used)return {before,after:before,effect:null}
    if(!activeTeams.has(before.teamId)){req(request.selectedQuantity===0&&request.selectedStageUses===0,'inactive team cannot consume resources');return {before,after:before,effect:null}}
-   const engine={resourceType:before.resourceType,resourceId:before.resourceId,teamId:before.teamId,selectedQuantity:request.selectedQuantity,selectedStageUses:request.selectedStageUses,conditionLossPerRaceDay:request.conditionLossPerRaceDay}
+   let quantity=request.selectedQuantity,uses=request.selectedStageUses
+   if(mixed){
+    if(before.resourceType==='asset'){
+     const m=prefix.resourceMechanical.supportRows.find(x=>x.resourceId===before.resourceId),w=individualWear?.receipt.wearProtection?.assets.find(x=>x.resourceId===before.resourceId)
+     req(m||w,'unbound mixed asset');if(m&&w)req(m.available===w.available,'shared mixed asset allocation mismatch')
+     req(quantity===0,'asset quantity unsupported');uses=m?.available||w?.available?1:0
+    }else{
+     const a=prefix.resourceEnergy.allocations.find(x=>x.resourceId===before.resourceId)
+     req(Boolean(a)!==Boolean(jacket),'mixed supply must have exactly one allocation type')
+     quantity=a?.usableQuantity??0;uses=jacket?.used?1:0
+    }
+    req(quantity<=request.selectedQuantity&&uses<=request.selectedStageUses,'mixed allocation exceeds request')
+    if(!quantity&&!uses)return {before,after:before,effect:null}
+   }
+   const engine={resourceType:before.resourceType,resourceId:before.resourceId,teamId:before.teamId,selectedQuantity:quantity,selectedStageUses:uses,conditionLossPerRaceDay:request.conditionLossPerRaceDay}
    for(const k of ['quantity','stageUsesRemaining','maxStageUses','condition'])if(before[k]!==null)engine[k]=before[k]
    const effect=originalPhase9ResourceReview({provenance:P,completeResourceEvidence:true,distanceKm:input.distanceKm,resources:[engine]}).rows[0]
    const after=resourceState({...before,quantity:effect.quantityAfter??before.quantity,stageUsesRemaining:effect.stageUsesAfter??before.stageUsesRemaining,condition:effect.conditionAfter??before.condition,lastUsedDate:(effect.stageUsesUsed??0)>0?date:before.lastUsedDate})
