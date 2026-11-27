@@ -2,6 +2,7 @@
 import {createInitialState} from '../src/race-engine/simulation/createInitialState'
 import {simulateMultiGroupTick} from '../src/race-engine/simulation/simulateMultiGroupTick'
 import {runMultiGroupStage} from '../src/race-engine/simulation/runMultiGroupStage'
+import {resolveResourceEnergyReview,applyReviewEnergyMultiplier} from './uranius-resource-energy-review'
 import {resolveResourceMechanicalReview} from './uranius-resource-mechanical-review.mjs'
 import {bindLegacyReadiness,bindMixedStageReadiness,bindTourStageReadiness} from './uranius-frozen-readiness-review.mjs'
 import {carryoverDigest} from './uranius-multistage-carryover-review.mjs'
@@ -15,7 +16,7 @@ export function reviewAutomaticOverlappingIncident(args:any){return review(args,
 export function captureAutomaticOverlappingFinishPrefix(args:any){return review(args,true)}
 export function captureMixedStageFinishPrefix(args:any){return review(args,true,true)}
 export function captureTourStageFinishPrefix(args:any){return review(args,true,true,true)}
-function review({input:raw,source,context,expectedSourceSha256,expectedContextSha256,resourceMechanicalEvidence,expectedResourceMechanicalSha256}:any,capture:boolean,mixed=false,tour=false){
+function review({input:raw,source,context,expectedSourceSha256,expectedContextSha256,resourceMechanicalEvidence,expectedResourceMechanicalSha256,resourceEnergyEvidence,expectedResourceEnergySha256}:any,capture:boolean,mixed=false,tour=false){
  req(carryoverDigest(context)===expectedContextSha256,'context digest mismatch')
  const bound=(tour?bindTourStageReadiness:mixed?bindMixedStageReadiness:bindLegacyReadiness)({source,expectedSourceSha256,input:raw}),input=bound.input
  req(input.stageFormat==='road_race'&&input.orders.length===0&&input.settings.tickSeconds===30&&context.terrainType==='flat','bounded flat no-command scope')
@@ -24,6 +25,9 @@ function review({input:raw,source,context,expectedSourceSha256,expectedContextSh
  const winnerTimeSeconds=baseline.finalState.raceSecond
  req(baseline.finalState.completed&&Object.values(baseline.finalState.riders).every(r=>r.stageStatus==='finished'),'all-finisher baseline required')
  const mechanical=resourceMechanicalEvidence?resolveResourceMechanicalReview({evidence:resourceMechanicalEvidence,expectedEvidenceSha256:expectedResourceMechanicalSha256,ready:bound.receipt}):null
+ const supply=resourceEnergyEvidence?resolveResourceEnergyReview({evidence:resourceEnergyEvidence,expectedEvidenceSha256:expectedResourceEnergySha256,ready:bound.receipt}):null
+ const multipliers=supply?Object.fromEntries(supply.rows.map(r=>[r.riderId,r.roadEnergyMultiplier])):undefined
+ const energyAudit=[]
  const roster=input.riders.map(r=>{
   const ready=bound.receipt.rows.find(x=>x.riderId===r.riderId),p=ready?.preparation.modifiers
   req(ready?.startStatus==='starter'&&(ready.condition.availabilityStatus==='fit'||mixed&&ready.condition.availabilityStatus==='not_fully_fit'),'fit starters required')
@@ -80,17 +84,25 @@ function review({input:raw,source,context,expectedSourceSha256,expectedContextSh
   if(state.currentKm>=input.distanceKm-input.settings.maximumSpeedKmh*30/3600-.01)return {stopReason:'pre_finish_boundary'}
   let pickups=[],joined=[],rejoins=[]
   if(targetId){
-   const moved=multiRiderIncidentTick(state,episodes,targetId);state=moved.state;episodes=moved.episodes;pickups=moved.pickups;joined=moved.rejoins
+   const moved=multiRiderIncidentTick(state,episodes,targetId,multipliers);if(supply)energyAudit.push(...moved.energy.map(a=>({raceSecond:moved.state.raceSecond,riderId:a.riderId,previousEnergy:a.previousEnergy,nextEnergy:a.nextEnergy,neutralCost:a.result.grossEnergyCost*a.result.efficiencyMultiplier,multiplier:multipliers[a.riderId]})));state=moved.state;episodes=moved.episodes;pickups=moved.pickups;joined=moved.rejoins
    rejoins=joined.map(riderId=>{
     const ep=episodes.find(e=>e.affected===riderId&&e.phase==='joined'&&moved.movement.proposals.some(p=>p.groupId===e.groupId))
     req(ep&&incidentByGroup.has(ep.groupId),'missing rejoin identity')
     return {riderId,incidentId:incidentByGroup.get(ep.groupId),rejoinKm:round(state.currentKm),provenance:'synthetic_rejoin_witness'}
    })
-  }else state=simulateMultiGroupTick(state).state
+  }else{
+   const tick=simulateMultiGroupTick(state)
+   if(supply){
+    req(!tick.state.completed&&Object.values(tick.state.groups).filter(g=>g.active).length===1,'supply tick outside single peloton prefix')
+    const adjusted=applyReviewEnergyMultiplier(tick.appliedEnergy,multipliers,tick.state)
+    energyAudit.push(...adjusted.applications.map(a=>({raceSecond:adjusted.state.raceSecond,riderId:a.riderId,previousEnergy:a.previousEnergy,nextEnergy:a.nextEnergy,neutralCost:a.result.grossEnergyCost*a.result.efficiencyMultiplier,multiplier:multipliers[a.riderId]})))
+    state=adjusted.state
+   }else state=tick.state
+  }
   const tick=tickOf(state,rejoins)
   const excludedRiderIds=Object.values(state.riders).filter((r:any)=>r.stageStatus==='racing'&&state.groups[r.currentGroupId].groupType!=='peloton').map((r:any)=>r.riderId)
   observations.push({raceSecond:state.raceSecond,measuredKm:state.currentKm,tick,excludedRiderIds,pickups,joined,activeEpisodes:episodes.filter(e=>e.phase!=='joined').map(e=>({...e,incidentId:incidentByGroup.get(e.groupId)})),positions:Object.values(state.riders).map((r:any)=>({riderId:r.riderId,distanceKm:r.distanceKm,energy:r.energy,status:r.stageStatus,groupId:r.currentGroupId}))})
   return {tick,excludedRiderIds,measuredKm:state.currentKm}
  })
- return {version:'043AC_automatic_overlapping_review_v1',trace:result.trace,selectedCheckpoints:result.selectedCheckpoints,applications,admissions,observations,observationSha256:carryoverDigest(observations),finalState:state,baselineWinnerTimeSeconds:winnerTimeSeconds,physicalFeedbackApplied:applications.length>0,...(mechanical?{resourceMechanical:mechanical}:{}),...(mixed?{mixedStageBinding:{readinessSha256:bound.readinessSha256,excluded:bound.excluded,roster}}:{}),...(capture?{finishPrefix:{episodes,targetId,handled,incidentByGroup:Object.fromEntries(incidentByGroup)}}:{}),official:false,hostedWriteAllowed:false,accountingAllowed:false,authoritativeSourceVerified:false,finalClassificationVerified:false}
+ return {version:'043AC_automatic_overlapping_review_v1',trace:result.trace,selectedCheckpoints:result.selectedCheckpoints,applications,admissions,observations,observationSha256:carryoverDigest(observations),finalState:state,baselineWinnerTimeSeconds:winnerTimeSeconds,physicalFeedbackApplied:applications.length>0,...(mechanical?{resourceMechanical:mechanical}:{}),...(supply?{resourceEnergy:supply,energyAudit}:{}),...(mixed?{mixedStageBinding:{readinessSha256:bound.readinessSha256,excluded:bound.excluded,roster}}:{}),...(capture?{finishPrefix:{episodes,targetId,handled,incidentByGroup:Object.fromEntries(incidentByGroup)}}:{}),official:false,hostedWriteAllowed:false,accountingAllowed:false,authoritativeSourceVerified:false,finalClassificationVerified:false}
 }
