@@ -1,7 +1,7 @@
 // Offline review of the existing calibrated engine, NOT the 043AS Phase10 adapter.
 import {carryoverDigest} from './uranius-multistage-carryover-review.mjs'
 import {createInitialState} from '../src/race-engine/simulation/createInitialState'
-import {bindLegacyReadiness} from './uranius-frozen-readiness-review.mjs'
+import {bindLegacyReadiness,bindTourStageReadiness} from './uranius-frozen-readiness-review.mjs'
 import {calculateStageProfileCategory} from '../src/race-engine/simulation/stageProfileCategory'
 import {runIntegratedTerrainSeparationStage} from '../src/race-engine/simulation/runIntegratedTerrainSeparationStage'
 const req=(x:unknown,m:string)=>{if(!x)throw Error('043AT: '+m)}
@@ -12,7 +12,8 @@ export function reviewNaturalTerrainSeparation({packet,expectedPacketSha256}:any
  req(input.distanceKm>=10&&input.distanceKm<=200&&input.riders.length>=6&&input.riders.length<=128&&input.profilePoints[0].kilometre===0&&input.profilePoints.at(-1).kilometre===input.distanceKm&&input.profilePoints.every((p,i,a)=>Number.isFinite(p.elevationMetres)&&(!i||p.kilometre>a[i-1].kilometre)),'complete bounded course required')
  const profile=calculateStageProfileCategory(input)
  req(profile.category==='mountain'||profile.category==='hilly','nonflat profile required')
- const bound=bindLegacyReadiness({source,expectedSourceSha256:carryoverDigest(source),input})
+ const bound=(source.stageNumber>1?bindTourStageReadiness:bindLegacyReadiness)({source,expectedSourceSha256:carryoverDigest(source),input})
+ req(bound.input.riders.length>=2,'fewer than two physical starters')
  const initial=createInitialState(bound.input)
  const stage=runIntegratedTerrainSeparationStage(initial,{
   terrainCapabilityInfluence:.5,separationWindowSeconds:120,
