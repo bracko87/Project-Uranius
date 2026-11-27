@@ -26,6 +26,7 @@ const resourceState=(x:any)=>{
 export function reviewMultistagePhysicalTour({packet,expectedPacketSha256}:any){
  req(packet?.provenance===P&&carryoverDigest(packet)===expectedPacketSha256,'frozen tour packet required')
  const {firstSource,stages,initialResources}=packet
+ req(packet.wearProtectionBinding===undefined||packet.individualEquipmentWear===true&&packet.mechanicalBinding,'wear protection requires individual equipment wear')
  req(packet.individualEquipmentWear===undefined||packet.individualEquipmentWear===true&&packet.mechanicalBinding,'individual wear requires explicit mechanical binding')
  req(Array.isArray(stages)&&stages.length>=3&&stages.length<=21&&uniq(stages,s=>s.input.stageId)&&uniq(stages,s=>s.runId)&&uniq(stages,s=>s.input.seed),'distinct 3–21 stages required')
  req(firstSource.stageNumber===1&&firstSource.stageId===stages[0].input.stageId&&firstSource.runId===stages[0].runId&&firstSource.date===stages[0].date&&firstSource.difficultyCategory===stages[0].difficultyCategory,'first stage mismatch')
@@ -110,7 +111,8 @@ export function reviewMultistagePhysicalTour({packet,expectedPacketSha256}:any){
    return {riderId:r.riderId,teamId:r.teamId,status:row.status,persistedFatigue:started?Math.round(effect.fatigueAfterStage):r.condition.fatigueBeforeStage,availabilityStatus,selectionBlocked,withdrawal:old?.withdrawal??(row.status!=='finished'?{stageId,status:row.status}:null),injuries:[...(old?.injuries??[]),...injuries],workload,effect,energyAudit:{fullTickEnergy:actual?.energy??0,correctedEnergy:energy,alreadyAppliedIncidentLoss:history.reduce((n,h)=>n+h.appliedLoss,0),additionalIncidentDeduction:0}}
   })
   req(uniq(stage.resourceRequests,key)&&stage.resourceRequests.length===resources.length,'complete resource requests required')
-  const individualWear=packet.individualEquipmentWear===true?reviewIndividualEquipmentWear({finish,ready,mechanicalEvidence,expectedMechanicalSha256:carryoverDigest(mechanicalEvidence),sportingRows:rows}):null
+  const protectionEvidence=packet.wearProtectionBinding?{provenance:P,stageId,date,resources,requests:stage.resourceRequests,assets:packet.wearProtectionBinding.assets}:null
+  const individualWear=packet.individualEquipmentWear===true?reviewIndividualEquipmentWear({finish,ready,mechanicalEvidence,expectedMechanicalSha256:carryoverDigest(mechanicalEvidence),sportingRows:rows,...(protectionEvidence?{protectionEvidence,expectedProtectionSha256:carryoverDigest(protectionEvidence)}:{})}):null
   const activeTeams=new Set(starters.map(r=>r.teamId))
   const resourceRows=resources.map(before=>{
    const request=stage.resourceRequests.find(r=>key(r)===key(before))
