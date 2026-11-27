@@ -36,7 +36,17 @@ try{
  const limit=48
  for(let i=0;i<limit&&(!repeat.size||!rescue.size);i++){
   const seed='043Y-engine-'+i
-  const result=JSON.parse(run(engine,packet({...input,seed})).stdout)
+  const child=run(engine,packet({...input,seed}),true)
+  if(child.status!==0){
+   if(child.status===1&&!child.signal&&/^Error: 043T: overlapping incident\/rescue rider outside bounded review\s*$/m.test(child.stderr)){
+    const reason='043T subprocess overlapping incident/rescue rider outside bounded review'
+    refusals[reason]=(refusals[reason]??0)+1
+    console.log('INFO 043Y '+seed+' bounded subprocess refusal: '+reason)
+    continue
+   }
+   assert.equal(child.status,0,child.stderr)
+  }
+  const result=JSON.parse(child.stdout)
   if(!result.review.trace.incidents.length)continue
   const args={engine:result,expectedEvidenceSha256:result.evidenceSha256,context}
   let out
