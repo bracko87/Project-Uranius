@@ -12,3 +12,6 @@ del "%TEMP%\uranius-043z-test.cjs"
 ```
 
 Expected PASS 3/3 physical incident motion checks; no hosted connection. Hosted activation blocked. Next integrate verified selected incident consequences into physical state and then full-stage finishing/classification; no claim of completion until native evidence.
+
+## Owner acceptance — 2026-11-27
+Owner pulled 61536b7; esbuild bundle succeeded (202.1kb, 223ms); native test PASS 3/3: repair/separation/helper waiting/pickup/chase/contact rejoin; deterministic motion and separate energy; permanent withdrawal and no further movement or energy charge. Temporary bundle deleted. No hosted connection. Scoped controlled pre-finish experiment accepted; cumulative 145/145 native groups. Historical incident selection integration, full stage finish and classification, calibration and general tactical interaction remain unverified. Hosted activation remains blocked.
