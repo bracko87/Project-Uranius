@@ -18,3 +18,6 @@ del "%TEMP%\uranius-043ap-test.cjs"
 ```
 
 Expected PASS 4/4 weather clothing checks; no hosted connection.
+
+## Owner acceptance — 2026-11-27
+Owner pulled ff2bab0; esbuild bundle 385.7kb succeeded in 172ms. Native PASS 4/4: physical jacket stock allocation, single use, exhaustion and actual finisher exposure (protected=1, unprotected=55); causal repeated exposure, medical center threshold, synthetic hash witnesses and no unverified health changes (eligible candidates=13); 14-day inclusive boundary, strict roll threshold, duplicate/future evidence and same-date use guards; deterministic replay, unchanged physical outcomes and authority guards. Temporary bundle deleted; no hosted connection. Scoped 043AP accepted; cumulative 208/208 distinct native acceptance groups. Candidate eligibility is not successful illness creation; PostgreSQL hashtext parity, actual health-case writer compatibility, verified illness duration and rider availability changes remain blocked. Jacket allocation is explicit isolated policy, not recovered production allocation. Jersey penalties, actual catalogue configuration, TypeScript checking and production integration remain pending. Hosted activation BLOCKED.
