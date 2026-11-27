@@ -100,6 +100,7 @@ export function simulateMultiGroupTick(
   state: SimulationState,
   experimentalEquipmentCapabilityAdjustments?: Readonly<Record<string, number>>,
   experimentalTerrainCapability = false,
+  experimentalPhysicalWeather = false,
 ): SimulateMultiGroupTickResult {
   if (state.completed) {
     throw new Error(
@@ -119,7 +120,7 @@ export function simulateMultiGroupTick(
     )
 
   const tacticalState = prepareLiveFollows(appliedOrderEffects.state, appliedOrderEffects.attackEffects)
-  const movement = calculateMultiGroupMovement(tacticalState,experimentalEquipmentCapabilityAdjustments,experimentalTerrainCapability)
+  const movement = calculateMultiGroupMovement(tacticalState,experimentalEquipmentCapabilityAdjustments,experimentalTerrainCapability,experimentalPhysicalWeather)
 
   const appliedMovement =
     applyMultiGroupMovement({
