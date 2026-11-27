@@ -214,7 +214,7 @@ export function calculatePelotonBasePace(
           (typeof equipmentAdjustment !== 'number' || !Number.isFinite(equipmentAdjustment) || Math.abs(equipmentAdjustment)>20)) {
         throw new Error('calculatePelotonBasePace: invalid experimental equipment adjustment')
       }
-      const terrain = input.experimentalTerrainGradientPercent === undefined || input.experimentalTerrainGradientPercent === 0 ? undefined : calculateRiderTerrainCapability({riderId:rider.riderId,attributes:rider.attributes,currentEnergy:rider.energy,gradientPercent:input.experimentalTerrainGradientPercent})
+      const terrain = input.experimentalTerrainGradientPercent === undefined ? undefined : calculateRiderTerrainCapability({riderId:rider.riderId,attributes:rider.attributes,currentEnergy:rider.energy,gradientPercent:input.experimentalTerrainGradientPercent})
       const baseCapability = terrain?.rawCapabilityScore ?? rawCapabilityScore
       const capabilityScore =
         (equipmentAdjustment === undefined ? baseCapability :
