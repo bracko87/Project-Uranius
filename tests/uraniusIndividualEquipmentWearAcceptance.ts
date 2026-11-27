@@ -121,7 +121,8 @@ for(const c of controlled.receipt.rows.filter(r=>r.riderId===d)){
  assert.ok(c.conditionUsed>0&&c.conditionUsed<old.conditionUsed)
 }
 console.log('PASS 043AM actual mid-stage DNF uses partial terminal distance; distanceKm='+dnf.distanceKm)
-const legacy=run({...mileagePacket,individualEquipmentWear:undefined})
+const {individualEquipmentWear:ignored,...legacyPacket}=mileagePacket
+const legacy=run(legacyPacket)
 for(const [i,s] of out.stages.entries()){
  if(i)for(const row of s.receipt.resources)assert.deepEqual(row.before,out.stages[i-1].receipt.resources.find(x=>x.after.resourceId===row.before.resourceId).after)
  for(const m of s.resourceMechanical.rows){
