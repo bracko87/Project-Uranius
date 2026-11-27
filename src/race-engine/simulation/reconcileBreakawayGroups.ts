@@ -312,6 +312,8 @@ export function reconcileBreakawayGroups(
     readonly experimentalPreserveRecedingDroppedGroups?: boolean
     /** Offline only: no proximity merge of dropped riders, including at the finish. */
     readonly experimentalRequirePhysicalDroppedCatch?: boolean
+    /** Offline external repair groups must not be reconciled by native proximity rules. */
+    readonly experimentalIndependentRepairGroupIds?: readonly string[]
     /** OFFLINE OPT-IN: a trailing attack group cannot teleport to a peloton
      * farther than the physical 5-second catch radius ahead of it. */
     readonly experimentalPreserveTrailingAttackGroups?: boolean
@@ -446,6 +448,7 @@ export function reconcileBreakawayGroups(
            * A dropped group may remain behind the peloton when its separation is
            * greater than the catch window.
            */
+          if (options.experimentalIndependentRepairGroupIds?.includes(group.groupId)) return false
           if (group.groupType === 'chase' && group.riderIds.some(id => state.livePursuits?.[id])) return false
 
           // A drop is born at its source's current position. Without an
@@ -588,6 +591,7 @@ export function reconcileBreakawayGroups(
     pelotonReconciliationGroups
   ) {
     if (
+      options.experimentalIndependentRepairGroupIds?.includes(group.groupId) ||
       group.groupType !==
         'dropped' ||
       group.distanceKm <=
