@@ -70,6 +70,7 @@ export interface TerrainAwareMultiGroupMovementOptions {
    * the existing Phase 7B.7 terrain-aware calculation.
    */
   /** OFFLINE POC ONLY: attack speeds for orders executed in THIS movement tick. */
+  readonly experimentalEquipmentCapabilityAdjustments?: Readonly<Record<string,number>>
   readonly experimentalLaunchSpeedByGroupId?: Readonly<Record<string, number>>
   /** OFFLINE POC ONLY: executed chase can modestly raise actual peloton speed. */
   readonly experimentalChaseOrdersEnabled?: boolean
@@ -242,6 +243,7 @@ export function calculateTerrainAwareMultiGroupMovement(
               state.input.settings
                 .maximumSpeedKmh,
             terrainCapabilityInfluence,
+            ...(options.experimentalEquipmentCapabilityAdjustments?{experimentalEquipmentCapabilityAdjustments:options.experimentalEquipmentCapabilityAdjustments}:{}),
             groupType:
               group.groupType,
             steepGradientSeverityEnabled:
