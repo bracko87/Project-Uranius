@@ -65,12 +65,21 @@ console.log('PASS 043AC atomic overlapping admission, active helper reservations
 assert.deepEqual(run(),controlled)
 console.log('PASS 043AC single clock, individual energy, out-of-order recovery and permanent DNF')
 let witness=null
-const seeds=[6,38,4,...Array.from({length:48},(_,i)=>i).filter(i=>![6,38,4].includes(i))]
-for(const i of seeds){
- const args=argsFor('043Y-engine-'+i),out=reviewAutomaticOverlappingIncident(args)
- const admission=out.admissions.find(a=>a.priorActive.length&&a.newGroups.length&&out.observations.some(o=>o.activeEpisodes.some(e=>e.incidentId===a.incidentId)&&o.activeEpisodes.some(e=>a.priorActive.some(p=>p.incidentId===e.incidentId))))
- console.log('INFO 043AC '+args.input.seed+' selected='+out.trace.incidents.length+' admitted='+out.admissions.length+' overlap='+Boolean(admission)+' stop='+out.trace.stopReason)
- if(admission){witness={args,out,admission};break}
+// The 90km reference fixture admits at most one event per phase. Use a
+// separate long wet stage (two events permitted in phases 2 and 4) and a
+// narrow speed envelope to exercise long, physically unresolved chases.
+// No changes to historical draws, cooldowns, losses or movement arithmetic.
+const fixtures=[
+ {label:'long-wet',distance:200,min:40,max:44},
+ {label:'short-limited-chase',distance:90,min:40,max:42}
+]
+search: for(const f of fixtures)for(const i of [4,6,38,0,1,2,5,8,12,14,16,25]){
+ const base=argsFor('043Y-engine-'+i)
+ const args={...base,input:{...base.input,stageName:'043AC '+f.label,distanceKm:f.distance,profilePoints:[{kilometre:0,elevationMetres:50},{kilometre:f.distance,elevationMetres:50}],settings:{...base.input.settings,minimumSpeedKmh:f.min,maximumSpeedKmh:f.max}}}
+ const out=reviewAutomaticOverlappingIncident(args)
+ const admission=out.admissions.find(a=>a.priorActive.length&&a.newGroups.length&&out.observations.some(o=>o.raceSecond>a.raceSecond&&o.activeEpisodes.some(e=>e.incidentId===a.incidentId)&&o.activeEpisodes.some(e=>a.priorActive.some(p=>p.incidentId===e.incidentId))))
+ console.log('INFO 043AC '+f.label+' '+args.input.seed+' selected='+out.trace.incidents.length+' admitted='+out.admissions.length+' overlap='+Boolean(admission)+' stop='+out.trace.stopReason+' eventSeconds='+out.admissions.map(a=>a.raceSecond).join(',')+' peakActive='+Math.max(0,...out.observations.map(o=>new Set(o.activeEpisodes.map(e=>e.incidentId)).size)))
+ if(admission){witness={args,out,admission};break search}
 }
 assert.ok(witness,'no automatic overlapping active incident witness')
 const {args,out,admission}=witness
