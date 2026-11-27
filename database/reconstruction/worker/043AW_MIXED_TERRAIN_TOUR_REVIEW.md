@@ -16,3 +16,6 @@ del "%TEMP%\uranius-043aw-test.cjs"
 ```
 
 Expected PASS 4/4 mixed terrain tour checks; no hosted connection.
+
+## Owner acceptance — 2026-11-27
+Owner pulled b03f439; esbuild bundle 626.0kb succeeded in 138ms. Native PASS 4/4: seven physical mixed stages and actual natural separation (km=380, naturalDrops=14, contacts=3, finalGC=16, elapsedMs=15092); permanent withdrawals, daily recovery, actual energy and cumulative GC (withdrawn=8, recoveryNights=168, savedTicks=1747); cross-terrain consumable exhaustion, single asset debit, individual mileage wear and exposure history (protectedComponents=96); deterministic mixed tour replay, chained receipts and authority guards. Stage terrain/start/GC/incidents: flat/24/16/6; mountain/16/16/3; hilly/16/16/1; flat/16/16/0; mountain/16/16/0; hilly/16/16/0; flat/16/16/0. Temporary bundle deleted; no hosted connection. Scoped 043AW accepted; cumulative 236/236 distinct native acceptance groups. Synthetic shortened seven-stage acceptance only; 21-stage mixed terrain verification, combined physical weather, cobbles, TT, helper integration in natural groups, actual original catalogue/jersey rules, health writer and TypeScript checks remain pending. Hosted activation BLOCKED.
