@@ -50,7 +50,7 @@ export function historicalRepairMovement(state:SimulationState,base:TerrainAware
   const e=tracked.find(e=>e.groupId===p.groupId)
   if(!e)return p
   const repair=state.raceSecond<e.repairUntil,target=base.movement.proposals.find(x=>x.groupId===e.targetId)
-  const speed=repair?0:target?Math.min(state.input.settings.maximumSpeedKmh,p.appliedSpeedKmh+8*p.terrainMultiplier*(state.weatherPerformanceEffectsEnabled?calculateWeatherPerformanceEffects(state.input.weather).speedMultiplier:1)):p.appliedSpeedKmh
+  const speed=repair?0:target?Math.min(state.input.settings.maximumSpeedKmh,p.appliedSpeedKmh+8*p.terrainMultiplier*(state.weatherPerformanceEffectsEnabled?calculateWeatherPerformanceEffects(state.input.weather,p.previousDistanceKm).speedMultiplier:1)):p.appliedSpeedKmh
   let next=Math.min(limit,p.previousDistanceKm+speed*dt)
   if(!repair&&target&&target.previousDistanceKm>=p.previousDistanceKm&&target.nextDistanceKm<limit)next=Math.min(next,target.nextDistanceKm)
   req(next>=p.previousDistanceKm,'backward repair motion')
@@ -121,7 +121,7 @@ export function reviewHistoricalNaturalTerrain({packet,expectedPacketSha256}:any
    return {...e,targetId,phase:'chase'}
   })
   validateSimulationState(state)
-  const measuredGroups=active(state).map(g=>({displayCode:display(g),groupId:g.groupId,groupType:g.groupType,distanceKm:g.distanceKm,speedKmh:g.speedKmh,gradientPercent:getStageTerrainSample(input,g.distanceKm).gradientPercent}))
+  const measuredGroups=active(state).map(g=>({displayCode:display(g),groupId:g.groupId,groupType:g.groupType,distanceKm:g.distanceKm,speedKmh:g.speedKmh,gradientPercent:getStageTerrainSample(input,g.distanceKm).gradientPercent,...(weather?.weather.courseBearingSegments?{weatherMultiplier:Math.min(2.5,calculateWeatherPerformanceEffects(weather.weather,g.distanceKm).incidentProbabilityMultiplier)}:{})}))
   const tick=tickOf(state,rejoins)
   const excludedRiderIds=episodes.filter(e=>e.phase==='repair'||e.phase==='chase').map(e=>e.riderId)
   observations.push({raceSecond:state.raceSecond,measuredKm:state.currentKm,tick,measuredGroups,excludedRiderIds,contacts,episodes:episodes.map(e=>({...e})),transitions:t.transitions.map(x=>({sourceGroupId:x.sourceGroupId,targetGroupId:x.targetGroupId,movedRiderIds:x.movedRiderIds,kilometre:x.kilometre})),pressure:t.pressureEvaluations.map(e=>({riderId:e.riderId,groupId:e.groupId,status:e.hold.status,seconds:e.eligibility.nextConsecutiveCannotHoldSeconds})),movement:t.movement.movement.proposals})
