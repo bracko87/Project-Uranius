@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import {carryoverDigest} from '../scripts/uranius-multistage-carryover-review.mjs'
 import {bindMixedStageReadiness,bindLegacyReadiness} from '../scripts/uranius-frozen-readiness-review.mjs'
+import {reviewPhysicalStageContinuity} from '../scripts/uranius-physical-stage-continuity-review'
 import {reviewTwoStagePhysical} from '../scripts/uranius-two-stage-physical-review'
 assert.deepEqual(process.argv.slice(2),['--offline-only'])
 const id=n=>'00000000-0000-4000-8000-'+String(n).padStart(12,'0'),P='synthetic_review_fixture',raceId=id(100),stageId=id(101),runId=id(201),teams=[id(11),id(12)],distanceKm=90
@@ -21,18 +22,35 @@ const argsFor=seed=>({input:{...input,seed},source,context,expectedSourceSha256:
 
 
 const base=argsFor('043Y-engine-4')
-const args={...base,input:{...base.input,stageName:'043AC long-wet',distanceKm:200,profilePoints:[{kilometre:0,elevationMetres:50},{kilometre:200,elevationMetres:50}],settings:{...base.input.settings,minimumSpeedKmh:40,maximumSpeedKmh:44}}}
+const args={...base,input:{...base.input,stageName:'043AC long-wet',distanceKm:200,profilePoints:[{kilometre:0,elevationMetres:50},{kilometre:200,elevationMetres:50}],settings:{...base.input.settings,minimumSpeedKmh:40,maximumSpeedKmh:40}}}
 const nextStage=id(102)
 const continuity={provenance:P,schedule:[{stageId,stageNumber:1,date:source.date,weatherCancelled:false},{stageId:nextStage,stageNumber:2,date:'2000-01-04',weatherCancelled:false}],nextRunId:id(202),
  resources:[{resourceType:'equipment',resourceId:'review-equipment',teamId:teams[0],quantity:null,stageUsesRemaining:null,maxStageUses:null,condition:100,lastUsedDate:null}],
  recovery:roster.map((r,i)=>({riderId:r.riderId,travelDelta:i%2,activityLoad:0,consecutiveHeavyDays:0,activityBonus:i%3,doctorBonus:1,clubType:'main',residentialCampusActive:false})),
  nextModifierRows:source.modifierRows.map(m=>({...m,stage_id:nextStage,preparation_applied:false,health_incident_risk_multiplier:1}))}
-const policy={provenance:P,groupGapSeconds:1,timeLimitPercent:0,sprintZoneKm:3,flatFinish:true}
+const policy={provenance:P,groupGapSeconds:0.001,timeLimitPercent:0,sprintZoneKm:0,flatFinish:true}
 const packet={args,policy,continuity,expectedContinuitySha256:carryoverDigest(continuity)}
 
 const second={provenance:P,input:{...input,stageId:nextStage,stageName:'043AG stage two',seed:'043AG-stage-two-4'},context,policy:{...policy,timeLimitPercent:100}}
-const request={firstPacket:packet,second,expectedSecondSha256:carryoverDigest(second)}
-const out=reviewTwoStagePhysical(request),s=out.second
+// No chase headroom in this synthetic Stage 1 fixture: separated riders
+// cannot erase the repair deficit simply by riding faster. Strict review
+// OTL and disabled protection allow actual physical gaps to exclude riders.
+// Selection, repair, classification and readiness rules are not bypassed.
+const preview=reviewPhysicalStageContinuity(packet)
+const previewRows=preview.nextReadiness.receipt.rows
+console.log('INFO 043AG stage1 physical='+JSON.stringify(preview.auto.finish.classification.reduce((m,r)=>(m[r.status]=(m[r.status]??0)+1,m),{}))+' sporting='+JSON.stringify(preview.sporting.rows.reduce((m,r)=>(m[r.status]=(m[r.status]??0)+1,m),{}))+' starters='+previewRows.filter(r=>r.startStatus==='starter').length+' excluded='+previewRows.filter(r=>r.startStatus==='dns').length)
+assert.ok(previewRows.some(r=>r.startStatus==='dns')&&previewRows.filter(r=>r.startStatus==='starter').length>=2,'targeted physical mixed roster witness required')
+let witness=null
+for(const seed of [4,0,1,2,5,6,8,12]){
+ const candidate={...second,input:{...second.input,seed:'043AG-stage-two-'+seed}}
+ const request={firstPacket:packet,second:candidate,expectedSecondSha256:carryoverDigest(candidate)}
+ const out=reviewTwoStagePhysical(request)
+ console.log('INFO 043AG '+candidate.input.seed+' selected='+out.second.prefix.trace.incidents.length+' applied='+out.second.prefix.applications.length)
+ if(out.second.prefix.applications.length){witness={out,request};break}
+}
+assert.ok(witness,'second-stage automatic incident witness required')
+const {out,request}=witness,s=out.second
+assert.deepEqual(out.first,preview)
 const readiness=out.first.nextReadiness.receipt.rows,starts=readiness.filter(r=>r.startStatus==='starter'),dns=readiness.filter(r=>r.startStatus==='dns')
 assert.ok(dns.length>0&&starts.length>=2,'mixed roster witness required')
 assert.deepEqual(Object.keys(s.initial.riders).sort(),starts.map(r=>r.riderId).sort())
