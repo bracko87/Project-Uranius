@@ -1,5 +1,9 @@
 // Offline isolated adapter: historical selection, calibrated terrain pressure.
 import {carryoverDigest} from './uranius-multistage-carryover-review.mjs'
+import {bindLegacyReadiness} from './uranius-frozen-readiness-review.mjs'
+import {resolveResourceMechanicalReview} from './uranius-resource-mechanical-review.mjs'
+import {resolveEquipmentPerformanceReview} from './uranius-equipment-performance-review'
+import {resolveResourceEnergyReview,applyReviewEnergyMultiplier} from './uranius-resource-energy-review'
 import {reviewNaturalTerrainSeparation} from './uranius-natural-terrain-separation-review'
 import {reviewHistoricalTerrainTraceWithPhysicalFeedback} from './uranius-historical-incident-eligibility-review.mjs'
 import {reviewHistoricalCheckpointConsequences} from './uranius-historical-incident-consequences-review.mjs'
@@ -64,12 +68,19 @@ export function reviewHistoricalNaturalTerrain({packet,expectedPacketSha256}:any
  const baseline=reviewNaturalTerrainSeparation({packet:baselinePacket,expectedPacketSha256:carryoverDigest(baselinePacket)})
  req(baseline.profile.category===context.terrainType,'terrain context mismatch')
  let state=baseline.stage.initialState,episodes:Episode[]=[],handled=0
+ const preparation=packet.preparation
+ const bound=preparation?bindLegacyReadiness({source,expectedSourceSha256:carryoverDigest(source),input}):null
+ const mechanical=preparation?resolveResourceMechanicalReview({evidence:preparation.mechanical,expectedEvidenceSha256:carryoverDigest(preparation.mechanical),ready:bound!.receipt}):null
+ if(preparation){req(preparation.performance.terrainProfile===context.terrainType,'terrain equipment profile mismatch');req(carryoverDigest(preparation.energy.resources)===carryoverDigest(preparation.mechanical.resources)&&carryoverDigest(preparation.energy.requests)===carryoverDigest(preparation.mechanical.requests),'preparation ledger mismatch')}
+ const equipment=preparation?resolveEquipmentPerformanceReview({evidence:preparation.performance,expectedEvidenceSha256:carryoverDigest(preparation.performance),ready:bound!.receipt,input:bound!.input,mechanical}):null
+ const supply=preparation?resolveResourceEnergyReview({evidence:preparation.energy,expectedEvidenceSha256:carryoverDigest(preparation.energy),ready:bound!.receipt}):null
+ const multipliers=supply?Object.fromEntries(supply.rows.map(r=>[r.riderId,r.roadEnergyMultiplier])):undefined
  const ready=new Map(source.riderRows.map(r=>[r.rider_id,r]))
  const modifiers=new Map(source.modifierRows.map(r=>[r.rider_id,r]))
  const roster=Object.values(state.riders).map(r=>{
   const row:any=ready.get(r.riderId),p:any=modifiers.get(r.riderId)
   req(row&&p,'complete rider incident evidence required')
-  return {riderId:r.riderId,teamId:r.teamId,eligibleToStart:true,startingEnergy:r.energy,effectiveFatigue:row.fatigue_before_stage,resistance:r.attributes.resistance,raceIq:r.attributes.raceIq,riderSupport:p.health_incident_risk_multiplier,teamSupport:1,equipmentConditionPercent:p.equipment_condition_factor*100,mechanicalRisk:p.mechanical_incident_risk_multiplier}
+  return {riderId:r.riderId,teamId:r.teamId,eligibleToStart:true,startingEnergy:r.energy,effectiveFatigue:row.fatigue_before_stage,resistance:r.attributes.resistance,raceIq:r.attributes.raceIq,riderSupport:p.health_incident_risk_multiplier,teamSupport:1,equipmentConditionPercent:mechanical?.rows.find(x=>x.riderId===r.riderId)?.equipmentConditionPercent??p.equipment_condition_factor*100,mechanicalRisk:mechanical?.rows.find(x=>x.riderId===r.riderId)?.mechanicalRisk??p.mechanical_incident_risk_multiplier}
  })
  const tickOf=(s:SimulationState,rejoins:any[]=[])=>({raceSecond:s.raceSecond,gradientPercent:active(s).find(g=>g.groupType==='peloton')?getStageTerrainSample(input,active(s).find(g=>g.groupType==='peloton')!.distanceKm).gradientPercent:0,riders:Object.values(s.riders).map(r=>({riderId:r.riderId,status:r.stageStatus,energy:r.energy,commandIntensity:1})),groups:active(s).map(g=>({displayCode:display(g),aheadOfPeloton:false,riderIds:g.riderIds})),rejoins})
  const evidence={provenance:packet.provenance,raceId:input.raceId,stageId:input.stageId,runId:source.runId,seed:input.seed,stage:{distanceKm:input.distanceKm,terrainType:context.terrainType,weatherCondition:context.weatherCondition,precipitationMm:context.precipitationMm,rainProbabilityPct:context.rainProbabilityPct},winnerTimeSeconds:baseline.stage.finalState.raceSecond,weatherMultiplier:context.weatherMultiplier,severeWeather:context.severeWeather,flatSprint:false,roster,ticks:baseline.stage.ticks.map(t=>tickOf(t.state))}
@@ -81,7 +92,9 @@ export function reviewHistoricalNaturalTerrain({packet,expectedPacketSha256}:any
    terrainCapabilityInfluence:.5,separationWindowSeconds:120,droppedWaveConsolidationEnabled:false,droppedTransitionEventsEnabled:true,
    steepGradientSeverityEnabled:true,steepGradientSeverityModel:'progressive_resilience',steepGradientMovementSeverityEnabled:true,steepGradientMovementSeverityModel:'progressive_resilience',
    subTickFinishInterpolationEnabled:true,experimentalRequirePhysicalDroppedCatch:true,experimentalIndependentRepairGroupIds:tracked.map(e=>e.groupId),
-   experimentalRepairMotion:(s,m)=>historicalRepairMovement(s,m,tracked)
+   experimentalRepairMotion:(s,m)=>historicalRepairMovement(s,m,tracked),
+   ...(equipment?{experimentalEquipmentCapabilityAdjustments:equipment.adjustments}:{}),
+   ...(supply?{experimentalPreparationEnergy:e=>applyReviewEnergyMultiplier(e,multipliers)}:{})
   })
   state=t.state;results.push(...(t.appliedFinish?.newResults??[]))
   const contacts=[],rejoins=[]
@@ -115,7 +128,7 @@ export function reviewHistoricalNaturalTerrain({packet,expectedPacketSha256}:any
   if(handled<incidents.length){
    req(incidents.length===handled+1,'incident sequence')
    const selected=incidents[handled],cp=selectedCheckpoints[handled],ids=new Map(cp.evidence.candidates.flatMap(c=>c.riders).map(r=>[r.riderId,r.teamId]))
-   const ce={provenance:packet.provenance,checkpoint:cp.evidence,expectedCheckpointSha256:cp.expectedEvidenceSha256,repairModifiers:[...ids].map(([riderId,teamId])=>({riderId,teamId,mechanicalTimeLossMultiplier:(modifiers.get(riderId) as any).mechanical_time_loss_multiplier})),stage:{stageFormat:'road_race',distanceKm:input.distanceKm,kmFromStart:selected.kmFromStart,flatFinish:false,summitFinish:false,sprintZoneKm:null}}
+   const ce={provenance:packet.provenance,checkpoint:cp.evidence,expectedCheckpointSha256:cp.expectedEvidenceSha256,repairModifiers:[...ids].map(([riderId,teamId])=>({riderId,teamId,mechanicalTimeLossMultiplier:mechanical?.rows.find(r=>r.riderId===riderId)?.mechanicalTimeLoss??(modifiers.get(riderId) as any).mechanical_time_loss_multiplier})),stage:{stageFormat:'road_race',distanceKm:input.distanceKm,kmFromStart:selected.kmFromStart,flatFinish:false,summitFinish:false,sprintZoneKm:null}}
    const consequence=reviewHistoricalCheckpointConsequences({evidence:ce,expectedEvidenceSha256:carryoverDigest(ce)}).incident
    req(consequence?.incidentId===selected.incident.incidentId,'selected consequence mismatch')
    const next=applyHistoricalTerrainIncident(state,consequence,episodes)
@@ -129,5 +142,5 @@ export function reviewHistoricalNaturalTerrain({packet,expectedPacketSha256}:any
  while(!state.completed){req(observations.length<1440,'terminal horizon exceeded');advance()}
  const classification=[...results,...Object.values(state.riders).filter(r=>r.stageStatus==='dnf').sort((a,b)=>a.riderId.localeCompare(b.riderId)).map(r=>({riderId:r.riderId,teamId:r.teamId,status:'dnf',rank:null,elapsedSeconds:null,gapSeconds:null}))]
  req(classification.length===roster.length&&new Set(classification.map(r=>r.riderId)).size===roster.length&&results.length>0,'terminal coverage')
- return {version:'043AU_historical_natural_terrain_v1',packetSha256:expectedPacketSha256,trace:historical.trace,selectedCheckpoints:historical.selectedCheckpoints,applications,observations,observationsSha256:carryoverDigest(observations),prefixTicks,classification,classificationSha256:carryoverDigest(classification),finalState:state,episodes,ticks,...flags()}
+ return {version:'043AU_historical_natural_terrain_v1',packetSha256:expectedPacketSha256,trace:historical.trace,selectedCheckpoints:historical.selectedCheckpoints,applications,observations,observationsSha256:carryoverDigest(observations),prefixTicks,classification,classificationSha256:carryoverDigest(classification),finalState:state,episodes,ticks,...(preparation?{preparation:{ready:bound!.receipt,mechanical,equipment,supply}}:{}),...flags()}
 }
