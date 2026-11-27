@@ -18,3 +18,6 @@ del "%TEMP%\uranius-043ax-test.cjs"
 ```
 
 Expected PASS 4/4 mixed Grand Tour checks; no hosted connection.
+
+## Owner acceptance — 2026-11-27
+Owner pulled 553b205; esbuild bundle 628.9kb succeeded in 72ms. Native PASS 4/4: 21 physical mixed stages, two rest days and repeated natural separation (km=790, naturalDrops=49, lateNaturalDrops=35, contacts=5, finalGC=16, elapsedMs=29055); permanent withdrawals, daily recovery, actual energy and cumulative GC (withdrawn=8, recoveryNights=528, savedTicks=1747); cross-terrain consumable exhaustion, single asset debit, individual mileage wear and exposure history (protectedComponents=96); deterministic 21-stage replay, seven-stage prefix invariance, chained receipts and authority guards. All 21 stages completed; 24 initial starters, 16 GC riders from stage one through stage 21; selected incidents by stage: 6,3,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0 (12 total). Temporary bundle deleted; no hosted connection. Scoped 043AX accepted; cumulative 240/240 distinct native acceptance groups. Shortened synthetic road-stage lifecycle test, not full real-world Grand Tour distance or calibration. Combined physical weather, cobbles, time trials, natural-group teammate assistance, actual catalogue/jersey rules, health writer and TypeScript checks remain pending. Hosted activation BLOCKED.
