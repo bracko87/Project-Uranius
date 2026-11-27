@@ -16,7 +16,6 @@ type FinalEpisode=Omit<Episode,'phase'>&{phase:Episode['phase']|'finished'}
 const req=(x:unknown,m:string)=>{if(!x)throw Error('043AD: '+m)}
 export function physicalFinishTick(state:SimulationState,episodes:readonly FinalEpisode[],targetId:string,multipliers?:EnergyMultipliers,capabilityAdjustments?:Readonly<Record<string,number>>,terrainCapability=false){
  req(!state.completed&&state.input.orders.length===0,'active no-command state required')
- req(!terrainCapability||episodes.length===0,'experimental terrain capability requires controlled incident-free scope')
  const base=calculateMultiGroupMovement(state,capabilityAdjustments,terrainCapability),dt=base.tickSeconds/3600
  const target=base.proposals.find(p=>p.groupId===targetId)
  req(target||(!state.groups[targetId]?.active&&state.currentKm===state.stageDistanceKm),'missing live or finished target')
@@ -29,7 +28,7 @@ export function physicalFinishTick(state:SimulationState,episodes:readonly Final
   let speed=p.appliedSpeedKmh,cap=limit
   if(ep){
    const repair=state.raceSecond<ep.repairUntil
-   speed=p.groupId===ep.groupId?(repair?0:target?Math.min(state.input.settings.maximumSpeedKmh,Math.max(p.appliedSpeedKmh,target.appliedSpeedKmh+8)):p.appliedSpeedKmh):(repair?(target?.appliedSpeedKmh??p.appliedSpeedKmh)*.25:0)
+   speed=p.groupId===ep.groupId?(repair?0:target?Math.min(state.input.settings.maximumSpeedKmh,(terrainCapability?p.appliedSpeedKmh+8*p.terrainMultiplier:Math.max(p.appliedSpeedKmh,target.appliedSpeedKmh+8))):p.appliedSpeedKmh):(repair?(terrainCapability?p.appliedSpeedKmh:(target?.appliedSpeedKmh??p.appliedSpeedKmh))*.25:0)
    // Before the finish tick retain target contact cap; never merge into a finished target.
    if(target&&target.nextDistanceKm<limit)cap=target.nextDistanceKm
    if(!repair&&p.groupId===ep.groupId&&ep.helperGroupId)cap=Math.min(cap,state.groups[ep.helperGroupId].distanceKm)
@@ -105,6 +104,6 @@ export function reviewAutomaticPhysicalFinish(args:any){
  const targetId=p.targetId??Object.values(prefix.finalState.groups).find((g:any)=>g.active&&g.groupType==='peloton')?.groupId
  req(targetId,'missing finish target')
  const multipliers=prefix.resourceEnergy?Object.fromEntries(prefix.resourceEnergy.rows.map(r=>[r.riderId,r.roadEnergyMultiplier])):undefined
- const finish=finishPhysicalIncidentStage(prefix.finalState,p.episodes,targetId,1440,multipliers,prefix.equipmentPerformance?.adjustments)
+ const finish=finishPhysicalIncidentStage(prefix.finalState,p.episodes,targetId,1440,multipliers,prefix.equipmentPerformance?.adjustments,prefix.terrainCapability===true)
  return {prefix,finish,official:false,hostedWriteAllowed:false,accountingAllowed:false,authoritativeSourceVerified:false,finalClassificationVerified:false}
 }
