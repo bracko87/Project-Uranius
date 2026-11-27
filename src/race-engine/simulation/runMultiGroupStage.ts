@@ -36,6 +36,7 @@ export interface RunMultiGroupStageOptions {
    */
   readonly maximumTickCount?: number
   readonly experimentalEquipmentCapabilityAdjustments?: Readonly<Record<string, number>>
+  readonly experimentalTerrainCapability?: boolean
 }
 
 export interface RunMultiGroupStageResult {
@@ -132,6 +133,7 @@ export function runMultiGroupStage(
       simulateMultiGroupTick(
         previousState,
         options.experimentalEquipmentCapabilityAdjustments,
+        options.experimentalTerrainCapability,
       )
 
     ticks.push(tick)
