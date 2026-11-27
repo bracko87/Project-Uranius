@@ -3,11 +3,14 @@
 import {carryoverDigest} from './uranius-multistage-carryover-review.mjs'
 import {resolveResourceMechanicalReview} from './uranius-resource-mechanical-review.mjs'
 import {originalPhase9ResourceReview} from './uranius-original-engine-effects-review.mjs'
+import {resolveWearProtection} from './uranius-original-preparation-effects-review.mjs'
 import {validateSimulationState} from '../src/race-engine/validation/validateSimulationState'
 const P='synthetic_review_fixture',req=(x:unknown,m:string)=>{if(!x)throw Error('043AM: '+m)}
 const uniq=(a:any[],f:(x:any)=>string)=>Array.isArray(a)&&new Set(a.map(f)).size===a.length
-export function reviewIndividualEquipmentWear({finish,ready,mechanicalEvidence,expectedMechanicalSha256,sportingRows}:any){
+export function reviewIndividualEquipmentWear({finish,ready,mechanicalEvidence,expectedMechanicalSha256,sportingRows,protectionEvidence,expectedProtectionSha256}:any){
  const mechanical=resolveResourceMechanicalReview({evidence:mechanicalEvidence,expectedEvidenceSha256:expectedMechanicalSha256,ready})
+ const protection=protectionEvidence?resolveWearProtection({evidence:protectionEvidence,expectedEvidenceSha256:expectedProtectionSha256,ready}):null
+ if(protection)req(carryoverDigest(protectionEvidence.resources)===carryoverDigest(mechanicalEvidence.resources)&&carryoverDigest(protectionEvidence.requests)===carryoverDigest(mechanicalEvidence.requests),'protection opening ledger mismatch')
  const state=finish?.state
  req(state?.completed&&state.stageId===ready.stageId&&state.raceId===ready.raceId&&Number.isFinite(state.stageDistanceKm)&&state.stageDistanceKm>0&&finish.classificationSha256===carryoverDigest(finish.classification),'complete scoped physical finish required')
  validateSimulationState(state)
@@ -36,11 +39,13 @@ export function reviewIndividualEquipmentWear({finish,ready,mechanicalEvidence,e
   const rider=assignment?mileage.find(r=>r.riderId===assignment.riderId):null
   if(assignment)req(rider&&rider.teamId===before.teamId,'component rider scope mismatch')
   const distanceKm=rider?.distanceKm??0
-  const effect=distanceKm>0?originalPhase9ResourceReview({provenance:P,completeResourceEvidence:true,distanceKm,resources:[{resourceType:'equipment',resourceId:before.resourceId,teamId:before.teamId,condition:before.condition,selectedQuantity:0,selectedStageUses:0,conditionLossPerRaceDay:request.conditionLossPerRaceDay}]}).rows[0]:null
+  const intensity=protection?protection.teams.find(t=>t.teamId===before.teamId)?.wearIntensity:1
+  req(typeof intensity==='number'&&Number.isFinite(intensity)&&intensity>=.35-1e-12&&intensity<=1,'invalid protection intensity')
+  const effect=distanceKm>0?originalPhase9ResourceReview({provenance:P,completeResourceEvidence:true,distanceKm,resources:[{resourceType:'equipment',resourceId:before.resourceId,teamId:before.teamId,condition:before.condition,selectedQuantity:0,selectedStageUses:0,conditionLossPerRaceDay:request.conditionLossPerRaceDay*intensity}]}).rows[0]:null
   const after={...before,condition:effect?.conditionAfter??before.condition}
-  return {resourceId:before.resourceId,riderId:assignment?.riderId??null,category:assignment?.category??null,distanceKm,configuredWear:request.conditionLossPerRaceDay,conditionUsed:effect?.conditionUsed??0,before,after,effect}
+  return {resourceId:before.resourceId,riderId:assignment?.riderId??null,category:assignment?.category??null,distanceKm,configuredWear:request.conditionLossPerRaceDay,...(protection?{wearIntensity:intensity,effectiveWear:request.conditionLossPerRaceDay*intensity}:{}),conditionUsed:effect?.conditionUsed??0,before,after,effect}
  }).sort((a,b)=>a.resourceId.localeCompare(b.resourceId))
  req(assignments.every(a=>rows.some(r=>r.resourceId===a.resourceId)),'missing component wear receipt')
- const receipt={version:'043AM_individual_equipment_wear_v1',provenance:P,raceId:ready.raceId,stageId:ready.stageId,runId:ready.runId,date:ready.date,physicalClassificationSha256:finish.classificationSha256,mechanicalEvidenceSha256:expectedMechanicalSha256,mileage,mileageSha256:carryoverDigest(mileage),rows,official:false,hostedWriteAllowed:false,accountingAllowed:false,authoritativeSourceVerified:false}
+ const receipt={version:'043AM_individual_equipment_wear_v1',provenance:P,raceId:ready.raceId,stageId:ready.stageId,runId:ready.runId,date:ready.date,physicalClassificationSha256:finish.classificationSha256,mechanicalEvidenceSha256:expectedMechanicalSha256,mileage,mileageSha256:carryoverDigest(mileage),rows,...(protection?{wearProtection:protection}:{}),official:false,hostedWriteAllowed:false,accountingAllowed:false,authoritativeSourceVerified:false}
  return {receipt,sha256:carryoverDigest(receipt)}
 }
