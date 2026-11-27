@@ -2,7 +2,7 @@
 import {createInitialState} from '../src/race-engine/simulation/createInitialState'
 import {simulateMultiGroupTick} from '../src/race-engine/simulation/simulateMultiGroupTick'
 import {runMultiGroupStage} from '../src/race-engine/simulation/runMultiGroupStage'
-import {bindLegacyReadiness,bindMixedStageReadiness} from './uranius-frozen-readiness-review.mjs'
+import {bindLegacyReadiness,bindMixedStageReadiness,bindTourStageReadiness} from './uranius-frozen-readiness-review.mjs'
 import {carryoverDigest} from './uranius-multistage-carryover-review.mjs'
 import {reviewHistoricalEligibilityTraceWithPhysicalFeedback} from './uranius-historical-incident-eligibility-review.mjs'
 import {reviewHistoricalCheckpointConsequences} from './uranius-historical-incident-consequences-review.mjs'
@@ -13,9 +13,10 @@ export function reviewAutomaticOverlappingIncident(args:any){return review(args,
 // Explicit isolated continuation only; accepted 043AC result shape stays identical.
 export function captureAutomaticOverlappingFinishPrefix(args:any){return review(args,true)}
 export function captureMixedStageFinishPrefix(args:any){return review(args,true,true)}
-function review({input:raw,source,context,expectedSourceSha256,expectedContextSha256}:any,capture:boolean,mixed=false){
+export function captureTourStageFinishPrefix(args:any){return review(args,true,true,true)}
+function review({input:raw,source,context,expectedSourceSha256,expectedContextSha256}:any,capture:boolean,mixed=false,tour=false){
  req(carryoverDigest(context)===expectedContextSha256,'context digest mismatch')
- const bound=(mixed?bindMixedStageReadiness:bindLegacyReadiness)({source,expectedSourceSha256,input:raw}),input=bound.input
+ const bound=(tour?bindTourStageReadiness:mixed?bindMixedStageReadiness:bindLegacyReadiness)({source,expectedSourceSha256,input:raw}),input=bound.input
  req(input.stageFormat==='road_race'&&input.orders.length===0&&input.settings.tickSeconds===30&&context.terrainType==='flat','bounded flat no-command scope')
  req(input.profilePoints.every(p=>p.elevationMetres===input.profilePoints[0].elevationMetres),'flat profile required')
  const baseline=runMultiGroupStage(createInitialState(input),{maximumTickCount:1440})
