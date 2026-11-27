@@ -349,7 +349,7 @@ export function calculateTerrainAwareMultiGroupMovement(
             ? chaseAdjustedAppliedSpeedKmh
             : Number(
                 (
-                  chaseAdjustedAppliedSpeedKmh *
+                  weatherEffects.speedMultiplier>1 ? Math.min(state.input.settings.maximumSpeedKmh,chaseAdjustedAppliedSpeedKmh*weatherEffects.speedMultiplier) : chaseAdjustedAppliedSpeedKmh *
                   weatherEffects
                     .speedMultiplier
                 ).toFixed(6),
