@@ -6,7 +6,8 @@ import {calculateMultiGroupMovement} from '../src/race-engine/simulation/multiGr
 import {applyMultiGroupMovement} from '../src/race-engine/simulation/applyMultiGroupMovement'
 import {applyMultiGroupEnergy} from '../src/race-engine/simulation/applyMultiGroupEnergy'
 import {validateSimulationState} from '../src/race-engine/validation/validateSimulationState'
-import {applyReviewEnergyMultiplier,type EnergyMultipliers} from './uranius-resource-energy-review'
+import type {EnergyMultipliers} from './uranius-resource-energy-review'
+import {applyOptionalPreparedWeatherEnergy,type PreparedWeather} from './uranius-prepared-physical-weather-review'
 type Row={riderId:string,helper:string|null,statusImpact:'finished'|'dnf',repairSeconds:number,energyLossPoints:number}
 type Episode={affected:string,helper:string|null,groupId:string,helperGroupId:string|null,targetId:string,repairUntil:number,phase:'repair'|'chase'|'joined'}
 const req=(x:unknown,m:string)=>{if(!x)throw Error('043AB: '+m)}
@@ -62,9 +63,10 @@ function startBatch(state:SimulationState,rows:readonly Row[],prior:readonly Epi
  validateSimulationState(next)
  return {state:next,episodes,targetId:target.groupId}
 }
-export function multiRiderIncidentTick(state:SimulationState,episodes:readonly Episode[],targetId:string,multipliers?:EnergyMultipliers,capabilityAdjustments?:Readonly<Record<string,number>>,terrainCapability=false){
+export function multiRiderIncidentTick(state:SimulationState,episodes:readonly Episode[],targetId:string,multipliers?:EnergyMultipliers,capabilityAdjustments?:Readonly<Record<string,number>>,terrainCapability=false,weather?:PreparedWeather){
  req(!state.completed&&state.currentKm<state.stageDistanceKm,'pre-finish scope')
- const base=calculateMultiGroupMovement(state,capabilityAdjustments,terrainCapability),dt=base.tickSeconds/3600
+ const speedFactor=weather?.effects.speedMultiplier??1
+ const base=calculateMultiGroupMovement(state,capabilityAdjustments,terrainCapability,!!weather&&!weather.neutral),dt=base.tickSeconds/3600
  const target=base.proposals.find(p=>p.groupId===targetId)
  req(target,'target missing')
  const active=episodes.filter(e=>e.phase!=='joined')
@@ -75,7 +77,7 @@ export function multiRiderIncidentTick(state:SimulationState,episodes:readonly E
   let next=p.nextDistanceKm
   if(ep){
    const repair=state.raceSecond<ep.repairUntil
-   const speed=p.groupId===ep.groupId?(repair?0:Math.min(state.input.settings.maximumSpeedKmh,(terrainCapability?p.appliedSpeedKmh+8*p.terrainMultiplier:Math.max(p.appliedSpeedKmh,target!.appliedSpeedKmh+8)))):(repair?(terrainCapability?p.appliedSpeedKmh:target!.appliedSpeedKmh)*.25:0)
+   const speed=p.groupId===ep.groupId?(repair?0:Math.min(state.input.settings.maximumSpeedKmh,(terrainCapability?p.appliedSpeedKmh+8*p.terrainMultiplier*speedFactor:Math.max(p.appliedSpeedKmh,target!.appliedSpeedKmh+8*speedFactor)))):(repair?(terrainCapability?p.appliedSpeedKmh:target!.appliedSpeedKmh)*.25:0)
    next=Math.min(target!.nextDistanceKm,p.previousDistanceKm+speed*dt)
    if(!repair&&p.groupId===ep.groupId&&ep.helperGroupId)next=Math.min(next,state.groups[ep.helperGroupId].distanceKm)
   }
@@ -85,7 +87,7 @@ export function multiRiderIncidentTick(state:SimulationState,episodes:readonly E
  req(proposals.every(p=>p.nextDistanceKm<state.stageDistanceKm),'finish outside bounded experiment')
  const movement={...base,leaderGroupId:targetId,leaderDistanceKm:target!.nextDistanceKm,proposals}
  const moved=applyMultiGroupMovement({state,movement}).state
- const energy=applyReviewEnergyMultiplier(applyMultiGroupEnergy({state:moved,movement}),multipliers)
+ const energy=applyOptionalPreparedWeatherEnergy(applyMultiGroupEnergy({state:moved,movement}),multipliers,weather)
  let next=energy.state
  const pickups:string[]=[],rejoins:string[]=[]
  const merge=(fromId:string,toId:string)=>{
