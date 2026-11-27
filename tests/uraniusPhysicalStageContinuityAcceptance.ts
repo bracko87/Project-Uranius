@@ -46,7 +46,11 @@ for(const a of out.energyAudit){
  if(next.energy>old.energy+1e-8)corrected=true
 }
 assert.ok(incidentLoss,'actual incident loss witness required')
-console.log('PASS 043AF corrected terminal energy and no duplicate incident deduction; positive fractional refund='+corrected)
+// Shorter accepted 043AB seed retains energy for a positive correction witness.
+const shorter=reviewPhysicalStageContinuity({...packet,args:{...base,input:{...base.input,stageName:'043AF short wet'}}})
+assert.ok(shorter.energyAudit.some(a=>a.correctedEnergy>a.fullTickEnergy+1e-8),'positive fractional correction witness required')
+assert.ok(shorter.workloads.every(w=>w.incidentEnergyLoss===0))
+console.log('PASS 043AF corrected terminal energy and no duplicate incident deduction; long-stage positive fractional refund='+corrected)
 for(const w of out.workloads){
  const r=out.carry.receipt.riders.find(x=>x.riderId===w.riderId),s=out.sporting.rows.find(x=>x.riderId===w.riderId)
  assert.equal(w.status,s.status)
