@@ -19,3 +19,21 @@ export function calculateDirectionalWindEffects(weather:StageWeatherInput){
  const contribution:WeatherEffectContribution={speedMultiplier,energyConsumptionMultiplier,staminaConsumptionMultiplier:energyConsumptionMultiplier,fatigueGainMultiplier:1,incidentProbabilityMultiplier:round(clamp(1+.015*h+.02*c,1,1.7))}
  return {scope:d.scope,courseBearingDegrees:d.courseBearingDegrees,windFromDegrees:d.windFromDegrees,relativeFromDegrees,longitudinalFromKmh,lateralFromRightKmh,headwindKmh,tailwindKmh,crosswindKmh,contribution}
 }
+
+/** Validate exact course coverage. No inference from elevation or GPS. */
+export function validateCourseBearingSegments(weather:StageWeatherInput,stageDistanceKm?:number){
+ const segments=weather.courseBearingSegments
+ if(segments===undefined)return
+ const d=weather.directionalWind
+ if(!d||d.scope!=='synthetic_constant_bearing'||weather.source!=='synthetic_review_fixture'||!Array.isArray(segments)||segments.length<1||segments.length>512||!segments.every((s,i)=>s&&Number.isFinite(s.fromKm)&&Number.isFinite(s.toKm)&&s.fromKm>=0&&s.toKm>s.fromKm&&Number.isFinite(s.courseBearingDegrees)&&s.courseBearingDegrees>=0&&s.courseBearingDegrees<360&&s.fromKm===(i?segments[i-1].toKm:0))||segments[0].courseBearingDegrees!==d.courseBearingDegrees||(stageDistanceKm!==undefined&&segments.at(-1)!.toKm!==stageDistanceKm))throw Error('invalid synthetic course bearing coverage')
+}
+/** Tick-start local segment. Internal boundaries belong to the next segment; finish belongs to the last. */
+export function weatherAtCourseKm(weather:StageWeatherInput,distanceKm:number){
+ if(weather.courseBearingSegments===undefined)return weather
+ validateCourseBearingSegments(weather)
+ const segments=weather.courseBearingSegments
+ if(!Number.isFinite(distanceKm)||distanceKm<0||distanceKm>segments.at(-1)!.toKm)throw Error('invalid local course distance')
+ const segment=segments.find(s=>distanceKm>=s.fromKm&&distanceKm<s.toKm)??segments.at(-1)!
+ const {courseBearingSegments:ignored,...base}=weather
+ return {...base,directionalWind:{...weather.directionalWind!,courseBearingDegrees:segment.courseBearingDegrees}}
+}
