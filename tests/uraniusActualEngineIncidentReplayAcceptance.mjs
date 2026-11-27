@@ -62,7 +62,14 @@ try{
  assert.deepEqual(projectEngineIncidentReplay(args),review)
  assert.throws(()=>projectEngineIncidentReplay({...args,frames:frames.slice(1)}),/complete measured tick grid/)
  const bad=structuredClone(frames);bad[0].riders[0].energy=1;assert.throws(()=>projectEngineIncidentReplay({...args,frames:bad}),/initial energy/)
- const injected=run(engine,{...chosen,frames},true);assert.notEqual(injected.status,0);assert.match(injected.stderr,/unexpected review packet/)
+ // Exercise each guard independently: a small injected field must reach the
+ // shape guard, while a deliberately oversized packet must hit the byte limit.
+ const injectedPacket={...chosen,frames:[]}
+ assert.ok(Buffer.byteLength(JSON.stringify(injectedPacket),'utf8')<=524288)
+ const injected=run(engine,injectedPacket,true);assert.notEqual(injected.status,0);assert.match(injected.stderr,/unexpected review packet/)
+ const oversizedPacket={...chosen,frames:'x'.repeat(524289)}
+ assert.ok(Buffer.byteLength(JSON.stringify(oversizedPacket),'utf8')>524288)
+ const oversized=run(engine,oversizedPacket,true);assert.notEqual(oversized.status,0);assert.match(oversized.stderr,/input too large/)
  const stale=run(engine,{...chosen,context:{...context,weatherMultiplier:1}},true);assert.notEqual(stale.status,0);assert.match(stale.stderr,/input\/context digest mismatch/)
  pass('043U deterministic re-projection, incomplete/altered ticks and injected caller output rejected')
  for(const k of ['official','hostedWriteAllowed','accountingAllowed','authoritativeSourceVerified','incidentFeedbackApplied','finalClassificationVerified','healthWritesPerformed'])assert.equal(review[k],false)
