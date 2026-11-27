@@ -10,8 +10,21 @@ type Row={riderId:string,helper:string|null,statusImpact:'finished'|'dnf',repair
 type Episode={affected:string,helper:string|null,groupId:string,helperGroupId:string|null,targetId:string,repairUntil:number,phase:'repair'|'chase'|'joined'}
 const req=(x:unknown,m:string)=>{if(!x)throw Error('043AB: '+m)}
 export function startMultiRiderIncident(state:SimulationState,rows:readonly Row[]){
- const active=Object.values(state.groups).filter(g=>g.active),target=active[0]
- req(!state.completed&&state.input.orders.length===0&&active.length===1&&target?.groupType==='peloton','single peloton source required')
+ return startBatch(state,rows,[])
+}
+// 043AC: explicit opt-in admission. Existing 043AB entry point still refuses overlap.
+export function extendMultiRiderIncident(state:SimulationState,rows:readonly Row[],prior:readonly Episode[]){
+ return startBatch(state,rows,prior)
+}
+function startBatch(state:SimulationState,rows:readonly Row[],prior:readonly Episode[]){
+ const active=Object.values(state.groups).filter(g=>g.active),pelotons=active.filter(g=>g.groupType==='peloton'),target=pelotons[0]
+ const pending=prior.filter(e=>e.phase!=='joined')
+ const tracked=pending.flatMap(e=>[e.groupId,...(e.helperGroupId?[e.helperGroupId]:[])])
+ req(!state.completed&&state.input.orders.length===0&&pelotons.length===1&&active.length===tracked.length+1&&new Set(tracked).size===tracked.length&&pending.every(e=>e.targetId===target.groupId)&&tracked.every(id=>active.some(g=>g.groupId===id&&g.groupType==='chase')),'single peloton source required; untracked active group')
+ for(const ep of pending){
+  req(state.riders[ep.affected]?.currentGroupId===ep.groupId&&state.riders[ep.affected]?.stageStatus==='racing','invalid prior affected rider')
+  if(ep.helper)req(state.riders[ep.helper]?.stageStatus==='racing'&&state.riders[ep.helper]?.currentGroupId===(ep.helperGroupId??ep.groupId),'invalid prior helper')
+ }
  req(rows.length>0&&rows.length<=6&&new Set(rows.map(r=>r.riderId)).size===rows.length,'unique bounded incident riders required')
  const affected=new Set(rows.map(r=>r.riderId)),helpers=new Set<string>()
  for(const row of rows){
@@ -27,7 +40,7 @@ export function startMultiRiderIncident(state:SimulationState,rows:readonly Row[
  }
  req(target.riderIds.length>affected.size+helpers.size,'empty target')
  const groups:Record<string,GroupState>={...state.groups,[target.groupId]:{...target,riderIds:target.riderIds.filter(id=>!affected.has(id)&&!helpers.has(id))}}
- const riders:Record<string,RiderState>={...state.riders},pressure={...state.separationPressureSecondsByRiderId},episodes:Episode[]=[]
+ const riders:Record<string,RiderState>={...state.riders},pressure={...state.separationPressureSecondsByRiderId},episodes:Episode[]=[...prior]
  const makeGroup=(id:string,riderId:string,terminal=false)=>{
   req(!groups[id],'duplicate incident group')
   groups[id]={...target,groupId:id,groupType:terminal?'dropped':'chase',active:!terminal,riderIds:[riderId],speedKmh:terminal?0:target.speedKmh,createdAtRaceSecond:state.raceSecond,createdAtKm:target.distanceKm}
