@@ -35,6 +35,7 @@ export interface RunMultiGroupStageOptions {
    * Safety bound preventing an invalid state from producing an endless loop.
    */
   readonly maximumTickCount?: number
+  readonly experimentalEquipmentCapabilityAdjustments?: Readonly<Record<string, number>>
 }
 
 export interface RunMultiGroupStageResult {
@@ -130,6 +131,7 @@ export function runMultiGroupStage(
     const tick =
       simulateMultiGroupTick(
         previousState,
+        options.experimentalEquipmentCapabilityAdjustments,
       )
 
     ticks.push(tick)
