@@ -38,7 +38,9 @@ export function reviewSportingClassification({finish,policy,incidents,expectedPo
   const weatherEnabled=t.state.weatherPerformanceEffectsEnabled===true
   req(!t.state.groupShelterEnergyEnabled&&!t.state.experimentalAbsoluteSpeedEffortEnabled&&!(e.experimentalPullerEnergySurcharge??0),'unsupported energy modifier')
   if(weatherEnabled){
-   const w=calculateWeatherPerformanceEffects(t.state.input.weather)
+   const segmented=t.state.input.weather?.courseBearingSegments!==undefined
+   if(segmented)req(num(e.experimentalWeatherStartKm,0,distance),'missing local finishing weather witness')
+   const w=calculateWeatherPerformanceEffects(t.state.input.weather,segmented?e.experimentalWeatherStartKm:0)
    req(t.state.input.weather?.source==='synthetic_review_fixture'&&num(weatherWitness,w.directionalWind?.scope==='synthetic_constant_bearing' ? .895 : 1,1.75)&&weatherWitness===Math.max(w.energyConsumptionMultiplier,w.staminaConsumptionMultiplier),'explicit combined weather energy witness required')
   }else req(weatherWitness===undefined&&e.runtimeFatigueGain===undefined,'unexpected weather energy or fatigue witness')
   const multiplier=e.preparationEnergyMultiplier??1
