@@ -136,6 +136,7 @@ export interface IntegratedTerrainSeparationOptions {
   readonly experimentalPreserveBirthTickDroppedGroups?: boolean
   /** OFFLINE POC: a slower dropped group already behind the peloton cannot be caught from ahead. */
   readonly experimentalPreserveRecedingDroppedGroups?: boolean
+  readonly experimentalRequirePhysicalDroppedCatch?: boolean
   /** OFFLINE OPT-IN: no physical peloton teleport from a trailing attack. */
   readonly experimentalPreserveTrailingAttackGroups?: boolean
   /** OFFLINE COUNTERFACTUAL ONLY; default OFF. */
@@ -1490,11 +1491,12 @@ export function simulateIntegratedTerrainSeparationTick(
       {
         experimentalRequirePhysicalBreakawayCatch:
           options.experimentalRequirePhysicalBreakawayCatch === true,
+        ...(options.experimentalRequirePhysicalDroppedCatch === true ? {experimentalRequirePhysicalDroppedCatch:true} : {}),
         ...(options.experimentalRequirePhysicalBreakawayCatch === true &&
             subTickFinishInterpolationEnabled
           ? { experimentalFinishCrossingSecondsByGroupId }
           : {}),
-        ...(options.experimentalPreserveBirthTickDroppedGroups
+        ...((options.experimentalPreserveBirthTickDroppedGroups || options.experimentalRequirePhysicalDroppedCatch)
         ? {
             experimentalPreserveRecedingDroppedGroups:
               options.experimentalPreserveRecedingDroppedGroups === true,
