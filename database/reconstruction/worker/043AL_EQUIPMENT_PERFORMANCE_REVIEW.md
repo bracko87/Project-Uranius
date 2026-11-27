@@ -16,3 +16,6 @@ del "%TEMP%\uranius-043al-test.cjs"
 ```
 
 Expected PASS 4/4 equipment performance checks; no hosted connection. Hosted activation BLOCKED.
+
+## Owner acceptance — 2026-11-27
+Owner pulled 22fb37b; esbuild bundle 359.4kb succeeded in 200ms. Native PASS 4/4: historical flat suitability adjustment, full equipment evidence and DNS exclusion; actual tour movement responds to equipment (openingKm=0.3255 -> 0.33809999999999996, baselineSeconds=1860 -> 1800); matched physical finishes, neutral parity, negative/positive capability and speed bounds (seconds=1921.888944544/1847.673352662/1778.964517126); deterministic replay, tamper rejection and authority guards. Temporary bundle deleted; no hosted connection. Scoped 043AL accepted; cumulative 192/192 distinct native acceptance groups. Experimental physical pace bridge uses explicit synthetic normalized equipment percentages, not recovered catalogue or condition-scaling derivation. Individual mileage wear, broader terrain and tactical verification, official sporting parity and TypeScript checking remain pending. Hosted activation BLOCKED.
