@@ -134,11 +134,13 @@ const physical=finishPhysicalIncidentStage(three.state,three.episodes,batch.targ
 assert.ok(physical.state.completed&&physical.classification.length===24)
 console.log('PASS 043AS controlled uphill repair duration, physical helper contact cap and full terminal completion')
 const last=results.at(-1),replay=captureAutomaticOverlappingFinishPrefix(last.args)
-assert.equal(carryoverDigest(replay),carryoverDigest(last.prefix))
-assert.equal(carryoverDigest(complete(replay)),carryoverDigest(last.finish))
+assert.deepEqual(replay,last.prefix)
+assert.deepEqual(complete(replay),last.finish)
+const flatArgs={...argsFor('043AS-flat-parity'),input:{...input,seed:'043AS-flat-parity',distanceKm:20,profilePoints:[{kilometre:0,elevationMetres:100},{kilometre:20,elevationMetres:100}]}}
+assert.deepEqual(captureAutomaticOverlappingFinishPrefix(flatArgs),captureAutomaticOverlappingFinishPrefix({...flatArgs,terrainCapability:false}))
 const bad={...last.args,context:{...last.args.context,terrainType:'flat'}}
 assert.throws(()=>captureAutomaticOverlappingFinishPrefix({...bad,expectedContextSha256:carryoverDigest(bad.context)}),/nonflat terrain context mismatch/)
 assert.throws(()=>captureAutomaticOverlappingFinishPrefix({...last.args,terrainCapability:false}),/bounded flat/)
 for(const x of results)for(const o of [x.prefix,x.finish])for(const k of ['official','hostedWriteAllowed','accountingAllowed','authoritativeSourceVerified','finalClassificationVerified'])assert.equal(o[k],false)
-console.log('PASS 043AS deterministic terrain replay, opt-in mismatch and authority guards')
+console.log('PASS 043AS deterministic terrain replay, flat default parity, opt-in mismatch and authority guards')
 console.log('PASS 4/4 automatic terrain incident checks; no hosted connection')
