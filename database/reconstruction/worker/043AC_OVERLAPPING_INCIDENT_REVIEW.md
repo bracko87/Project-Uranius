@@ -16,3 +16,6 @@ del "%TEMP%\uranius-043ac-test.cjs"
 ```
 
 Expected PASS 4/4 overlapping incident checks; no hosted connection. Next full-stage physical finish and classification review after native acceptance. Hosted activation BLOCKED.
+
+## First native run and correction — 2026-11-27
+Owner at 8fe086e: controlled two groups PASS; all 48 original 90km seeds completed without overlap witness; automatic acceptance failed as designed. Reference wet 90km phase caps are [1,1,1,1], limiting opportunities for closely spaced independent selections. Acceptance-only correction a24612f uses two explicitly synthetic input fixtures (200km wet, speed limits 40–44km/h; 90km wet, 40–42km/h), 12 fixed seeds each. Longer stage permits two selections in phases 2 and 4; narrow speed envelopes deliberately stress chase headroom. No engine rules, cooldowns, historical severity or selection altered. Requires actual concurrent active episode observations strictly after admission. Prints admission times and peak distinct active incident count. Native rerun pending; no guaranteed witness; cumulative previously fully accepted groups remain 152/152, 043AC open. Hosted activation blocked.
