@@ -16,3 +16,6 @@ del "%TEMP%\uranius-043ad-test.cjs"
 ```
 
 Expected PASS 4/4 physical incident finish checks; no hosted connection. Hosted activation BLOCKED.
+
+## Owner acceptance — 2026-11-27
+Owner pulled bd81950; esbuild bundle 297.3kb succeeded in 126ms. Native PASS 4/4: continued repair, helper pickup and independent crossing after winner; exact sub-tick classification, unique ranks, terminal DNF and deterministic continuation; automatically selected overlapping incident prefix reaches complete physical classification; deterministic automatic classification and authority guards. Temporary bundle deleted; no hosted connection. Scoped 043AD accepted; cumulative 160/160 native acceptance groups. Sprint-zone protection, OTL, partial-tick energy, tactical interaction, calibration and official classification parity remain unverified. Hosted activation BLOCKED.
