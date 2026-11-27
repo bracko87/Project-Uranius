@@ -76,10 +76,11 @@ export function multiRiderIncidentTick(state:SimulationState,episodes:readonly E
  const proposals=base.proposals.map(p=>{
   const ep=active.find(e=>e.groupId===p.groupId||e.helperGroupId===p.groupId)
   const speedFactor=segmented?calculateWeatherPerformanceEffects(weather!.weather,p.previousDistanceKm).speedMultiplier:weather?.effects.speedMultiplier??1
+  const differentLocalWind=segmented&&!!target&&speedFactor!==calculateWeatherPerformanceEffects(weather!.weather,target.previousDistanceKm).speedMultiplier
   let next=p.nextDistanceKm
   if(ep){
    const repair=state.raceSecond<ep.repairUntil
-   const speed=p.groupId===ep.groupId?(repair?0:Math.min(state.input.settings.maximumSpeedKmh,(terrainCapability||segmented?p.appliedSpeedKmh+8*p.terrainMultiplier*speedFactor:Math.max(p.appliedSpeedKmh,target!.appliedSpeedKmh+8*speedFactor)))):(repair?(terrainCapability||segmented?p.appliedSpeedKmh:target!.appliedSpeedKmh)*.25:0)
+   const speed=p.groupId===ep.groupId?(repair?0:Math.min(state.input.settings.maximumSpeedKmh,(terrainCapability||differentLocalWind?p.appliedSpeedKmh+8*p.terrainMultiplier*speedFactor:Math.max(p.appliedSpeedKmh,target!.appliedSpeedKmh+8*speedFactor)))):(repair?(terrainCapability||differentLocalWind?p.appliedSpeedKmh:target!.appliedSpeedKmh)*.25:0)
    next=Math.min(target!.nextDistanceKm,p.previousDistanceKm+speed*dt)
    if(!repair&&p.groupId===ep.groupId&&ep.helperGroupId)next=Math.min(next,state.groups[ep.helperGroupId].distanceKm)
   }
