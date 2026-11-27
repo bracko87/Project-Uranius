@@ -40,6 +40,7 @@ export interface GroupTerrainPaceInput {
    * 1 applies the full relative terrain-capability ratio.
    */
   readonly terrainCapabilityInfluence: number
+  readonly experimentalEquipmentCapabilityAdjustments?: Readonly<Record<string,number>>
 
   /**
    * Optional inactive extension. When omitted or false, the runtime result is
@@ -219,6 +220,7 @@ export function calculateGroupTerrainPace(
         racingRiders,
       minimumSpeedKmh,
       maximumSpeedKmh,
+      ...(input.experimentalEquipmentCapabilityAdjustments?{experimentalEquipmentCapabilityAdjustments:input.experimentalEquipmentCapabilityAdjustments}:{}),
     })
 
   const flatCapabilities =
