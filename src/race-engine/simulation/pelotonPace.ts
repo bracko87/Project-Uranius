@@ -13,6 +13,8 @@ import { calculateRiderFatigueModifier } from './fatigueModifier'
 
 export interface PelotonPaceInput {
   readonly riders: readonly RiderState[]
+  /** Explicit offline review input; no persistent attribute mutation. */
+  readonly experimentalEquipmentCapabilityAdjustments?: Readonly<Record<string, number>>
   readonly minimumSpeedKmh: number
   readonly maximumSpeedKmh: number
 }
@@ -203,8 +205,14 @@ export function calculatePelotonBasePace(
       const fatigueMultiplier =
         fatigueResult.capabilityMultiplier
 
+      const equipmentAdjustment = input.experimentalEquipmentCapabilityAdjustments?.[rider.riderId]
+      if (input.experimentalEquipmentCapabilityAdjustments &&
+          (typeof equipmentAdjustment !== 'number' || !Number.isFinite(equipmentAdjustment) || Math.abs(equipmentAdjustment)>20)) {
+        throw new Error('calculatePelotonBasePace: invalid experimental equipment adjustment')
+      }
       const capabilityScore =
-        rawCapabilityScore *
+        (equipmentAdjustment === undefined ? rawCapabilityScore :
+          Math.min(100,Math.max(0,rawCapabilityScore+equipmentAdjustment))) *
         fatigueMultiplier
 
       return {
@@ -214,6 +222,7 @@ export function calculatePelotonBasePace(
         resistanceContribution,
         teamworkContribution,
         rawCapabilityScore,
+        ...(equipmentAdjustment===undefined?{}:{experimentalEquipmentAdjustment:equipmentAdjustment}),
         fatigueMultiplier,
         capabilityScore,
       }
