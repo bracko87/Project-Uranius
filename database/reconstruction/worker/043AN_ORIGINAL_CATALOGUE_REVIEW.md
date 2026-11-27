@@ -16,3 +16,6 @@ del "%TEMP%\uranius-043an-test.cjs"
 ```
 
 Expected PASS 4/4 original catalogue checks; no hosted connection.
+
+## Owner acceptance — 2026-11-27
+Owner pulled 5b162ab; esbuild bundle 371.0kb succeeded in 136ms. Native PASS 4/4: archived starter identities, weighted equipment preview, terrain keys and caps; original water, gel and nutrition fallback effects reach physical ticks (savedTicks=2232); partial allocation, zero-stock shortage maximum and duplicate/custom input rejection; deterministic replay, neutral first-stage parity and authority guards. Temporary bundle deleted; no hosted connection. Scoped 043AN accepted; cumulative 200/200 distinct native acceptance groups. Actual equipment catalogue rows, active category weights, allowed-key configuration, original component-specific wear settings and current road condition-scaled performance derivation remain unverified. Synthetic preview fixture is not original catalogue data; recovered consumable fallback excludes saved overrides, jerseys/jackets and shared parent-club allocation. Gel support points are reported, not applied to physical speed. TypeScript checking and production integration remain pending. Hosted activation BLOCKED.
