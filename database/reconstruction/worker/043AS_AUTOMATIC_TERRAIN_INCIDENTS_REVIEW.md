@@ -18,3 +18,6 @@ del "%TEMP%\uranius-043as-test.cjs"
 ```
 
 Expected PASS 4/4 automatic terrain incident checks; no hosted connection.
+
+## Owner acceptance — 2026-11-27
+Owner pulled 921c4ae; esbuild bundle 338.4kb succeeded in 166ms. Native PASS 4/4: actual hilly/mountain automatic checkpoint speed and gradient, weather/equipment risk (measuredCandidates=574, descendingCandidates=360); physical incident application, terrain repair/chase and terminal finish (applications=14, repairTicks=30, chaseTicks=242, savedTicks=15657); controlled uphill repair duration, actual helper pickup/rejoin and full terminal completion; deterministic terrain replay, flat default parity, opt-in mismatch and authority guards. Hilly 200km: incidents=7, finishers=24, winnerSeconds=19338.35501697. Mountain 200km: incidents=7, finishers=22, winnerSeconds=21243.952573713. Temporary bundle deleted; no hosted connection. Scoped 043AS accepted; cumulative 220/220 distinct native acceptance groups. Terrain chase/helper rules are experimental adaptations, not original movement parity; automatic selection bounded to prefinish prefix, existing episodes continue to finish. Mountain-induced group separation, mixed-terrain multistage tour, surface physics, actual catalogue configuration, health writer compatibility, jersey penalties and TypeScript checks remain pending. Hosted activation BLOCKED.
