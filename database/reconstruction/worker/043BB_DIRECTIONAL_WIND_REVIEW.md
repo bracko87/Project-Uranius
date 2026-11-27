@@ -1,0 +1,18 @@
+# 043BB — directional wind physics (offline constant-bearing review)
+
+043BA owner native 4/4 accepted; cumulative 252/252 distinct native groups. 71e28e9/8473ba8 add optional synthetic constant-bearing direction contract and validation; 1ba3ab6 adds pure vector projection and bounded gameplay coefficients; 0bbc0f1 replaces nondirectional wind only for explicit evidence; c2d9380/fd0cdc5 preserve physical speed maximum; 55848be/c7c75f3 bind directional energy and sporting fraction; 373eb59 neutral marker refinement; efc13d1 adds native acceptance. Native execution and TypeScript checks pending.
+
+Input weather.directionalWind = {scope:'synthetic_constant_bearing',courseBearingDegrees,windFromDegrees}; both bearings clockwise from north, meteorological FROM direction, finite [0,360), wind speed finite 0–50 km/h, synthetic source only. No route geometry or per-segment direction exists in accepted domain contract. Constant bearing is explicit synthetic evidence, not inferred from elevation or real GPS. Longitudinal from = wind*cos(relative angle), lateral from right = wind*sin(relative angle), head/tail components are opposite nonnegative parts, crosswind absolute lateral. Components rounded six decimals. Excess h,t,c = clamp(component-15,0,35). Wind-only speed clamp(1-.003h+.002t-.0015c,.895,1.07); energy/stamina clamp(1+.006h-.003t+.003c,.895,1.21); incident clamp(1+.015h+.02c,1,1.7); wind fatigue identity. Headwind matches accepted scalar model; tailwind benefit and lateral coefficients are provisional gameplay design, not historical source or real aerodynamic calibration. Existing temperature/precipitation factors and bounds remain, except explicit directional total upper speed 1.07 and lower energy .895. Historical risk cap 2.5 remains. Scalar wind is replaced, never stacked. Directionless input retains prior shape and formulas. Tailwind speed capped at physical maximum on flat and calibrated terrain paths, including existing pursuit rules. Energy uses existing uncapped gross * efficiency * weather * nutrition once; fractional sporting witness admits below-one weather only when validated directional model supplies it. No directional fatigue surcharge or added clothing/equipment wear. DirectionalWindApplied marker scoped; directionalWindVerified stays false for production authority.
+
+Acceptance: cardinal/diagonal and wraparound projection, 1152 bounded combined coefficient cases, scalar headwind parity; matched full flat stage finish under 40km/h head/tail/crosswind, actual energy and fractional sporting workload, speed-cap boundary; prepared mountain head/tail and hilly crosswind with nutrition, resource debit, historical risk, deterministic replay and invalid bearing/risk/authority guards. Direct flat comparison uses controlled no-incident physical finish; not a claim of automatic crosswind group formation. Native output required. Remaining: varying route bearings, wind exposure differences, actual echelon/crosswind separation, automatic directional-wind incidents and tour endurance verification, specialized wet descents, cobbles, TT, original catalogue/jersey rules, natural-group helpers, health writer, TypeScript, production activation. No hosted connection or write. Hosted activation BLOCKED.
+
+Windows CMD:
+
+```bat
+git pull origin main
+node_modules\.bin\esbuild.cmd tests\uraniusDirectionalWindAcceptance.ts --bundle --platform=node --format=cjs --outfile="%TEMP%\uranius-043bb-test.cjs"
+node "%TEMP%\uranius-043bb-test.cjs" --offline-only
+del "%TEMP%\uranius-043bb-test.cjs"
+```
+
+Expected PASS 4/4 directional wind checks; no hosted connection.
