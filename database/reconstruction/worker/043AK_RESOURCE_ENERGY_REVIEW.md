@@ -16,3 +16,6 @@ del "%TEMP%\uranius-043ak-test.cjs"
 ```
 
 Expected PASS 4/4 resource energy checks; no hosted connection. Hosted activation BLOCKED.
+
+## Owner acceptance — 2026-11-27
+Owner pulled 88b0dc8; esbuild bundle 353.4kb succeeded in 265ms. Native PASS 4/4: explicit nutrition stock binds historical Phase9 multipliers and removes benefit after exhaustion; physical tick savings, fractional finishing and historical post-stage fatigue (savedTicks=2232, finishWitness=8); historical multiplier caps, shortage neutrality and invalid evidence rejection; deterministic replay, neutral first-stage parity and authority guards. Temporary bundle deleted; no hosted connection. Scoped 043AK accepted; cumulative 188/188 distinct native acceptance groups. Explicit synthetic per-item values and all-or-none allocation remain review choices, not recovered production supply catalogue or policy; original speed/suitability integration, individual mileage wear, full historical base-energy parity and TypeScript checking remain pending. Hosted activation BLOCKED.
