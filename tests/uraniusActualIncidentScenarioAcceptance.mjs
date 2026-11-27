@@ -35,7 +35,7 @@ try{
  const repeat=new Map(),rescue=new Map(),refusals={}
  const limit=48
  for(let i=0;i<limit&&(!repeat.size||!rescue.size);i++){
-  const seed='043Y-engine-'+i
+  const seed='043Y-engine-'+([4,6,38,...Array.from({length:48},(_,j)=>j).filter(j=>![4,6,38].includes(j))][i])
   const child=run(engine,packet({...input,seed}),true)
   if(child.status!==0){
    if(child.status===1&&!child.signal&&/^Error: 043T: overlapping incident\/rescue rider outside bounded review\s*$/m.test(child.stderr)){
@@ -66,10 +66,22 @@ try{
    if(witness&&applied)repeat.set(seed,{args,out,riderId:ep.riderId})
   }
   for(const event of out.chase.teamRescueEvents){
-   const helper=event.helperRiderIds.find(id=>episodes.some(e=>e.riderId===id&&e.incidentId===event.incidentId&&e.episodeKind==='team_rescue_helper'))
-   if(!helper)continue
-   const active=out.feedbackAudit.find(f=>f.excludedRiderIds.includes(helper)&&f.adjustments.some(a=>a.riderId===helper&&a.episodeKeys.includes(event.incidentId+':'+helper)))
-   if(active)rescue.set(seed,{args,out,helper})
+   for(const helper of event.helperRiderIds){
+    const ep=episodes.find(e=>e.riderId===helper&&e.incidentId===event.incidentId&&e.episodeKind==='team_rescue_helper')
+    if(!ep)continue
+    // The historical planner uses a pipe-delimited opaque episode key.
+    // Use the actual episode identity rather than reconstructing it.
+    const active=out.feedbackAudit.find(f=>f.excludedRiderIds.includes(helper)&&f.adjustments.some(a=>a.riderId===helper&&a.episodeKeys.includes(ep.episodeKey)))
+    if(active){
+     assert.ok(active.kmFromStart>=ep.activationKm-.000001)
+     assert.ok(ep.actualRejoinKm===null||active.kmFromStart<ep.actualRejoinKm-.000001)
+     assert.ok(active.groups.some(g=>g.displayCode!=='P'&&g.riderIds.includes(helper)))
+     assert.ok(!active.rejoins.some(w=>w.riderId===helper&&w.incidentId===event.incidentId))
+     rescue.set(seed,{args,out,helper})
+     break
+    }
+    console.log('INFO 043Y rescue episode '+ep.episodeKey+' pickup='+ep.activationKm+' rejoin='+ep.actualRejoinKm+' excludedTicks='+out.feedbackAudit.filter(f=>f.excludedRiderIds.includes(helper)).length)
+   }
   }
   console.log('INFO 043Y '+seed+' incidents='+incidents.length+' rescue='+out.chase.teamRescueEvents.length+' repeatWitness='+repeat.size+' rescueWitness='+rescue.size)
  }
