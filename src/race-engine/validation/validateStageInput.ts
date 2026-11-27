@@ -11,6 +11,7 @@
  * - basic input-array structure.
  */
 
+import {validateCourseBearingSegments} from '../simulation/directionalWindEffects'
 import type {
   StageInput,
   StageProfilePoint,
@@ -869,6 +870,7 @@ function validateWeather(
  */
 export function validateStageInput(stageInput: StageInput): void {
   const issues: string[] = []
+  if(stageInput.weather?.courseBearingSegments!==undefined){try{validateCourseBearingSegments(stageInput.weather,stageInput.distanceKm)}catch(e){issues.push('invalid synthetic course bearing coverage')}}
 
   if (!isNonBlankString(stageInput.raceId)) {
     issues.push('raceId must not be blank.')
