@@ -24,7 +24,7 @@ export function reviewPreparedNaturalTerrain({packet,expectedPacketSha256}:any){
  for(const r of resources){
   const q=requests.find(q=>q.resourceId===r.resourceId&&q.resourceType===r.resourceType)
   req(q&&['selectedQuantity','selectedStageUses','conditionLossPerRaceDay'].every(k=>Number.isFinite(q[k])&&q[k]>=0)&&Number.isSafeInteger(q.selectedQuantity)&&Number.isSafeInteger(q.selectedStageUses),'invalid resource request')
-  req(ready.rows.some(x=>x.teamId===r.teamId)&&['quantity','stageUsesRemaining','maxStageUses','condition','lastUsedDate'].every(k=>Object.hasOwn(r,k)),'explicit resource owner/state required')
+  req(['equipment','asset','supply'].includes(r.resourceType)&&ready.rows.some(x=>x.teamId===r.teamId)&&['quantity','stageUsesRemaining','maxStageUses','condition','lastUsedDate'].every(k=>Object.hasOwn(r,k)),'explicit resource owner/state required')
   req(r.quantity===null||Number.isSafeInteger(r.quantity)&&r.quantity>=0,'invalid quantity')
   req(r.stageUsesRemaining===null&&r.maxStageUses===null||Number.isSafeInteger(r.stageUsesRemaining)&&Number.isSafeInteger(r.maxStageUses)&&r.stageUsesRemaining>=0&&r.stageUsesRemaining<=r.maxStageUses,'invalid durable counter')
   req(r.condition===null||Number.isFinite(r.condition)&&r.condition>=0&&r.condition<=100,'invalid resource condition')
@@ -64,12 +64,13 @@ export function reviewPreparedNaturalTerrain({packet,expectedPacketSha256}:any){
   }
   req(usedQuantity<=q.selectedQuantity&&usedStageUses<=q.selectedStageUses,'allocation exceeds request')
   req(!usedStageUses||before.lastUsedDate!==ready.date,'duplicate daily use')
-  if(!usedQuantity&&!usedStageUses)return {before,after:before,effect:null}
+  const allocation={requestedQuantity:q.selectedQuantity,requestedStageUses:q.selectedStageUses,usedQuantity,usedStageUses,unfulfilledQuantity:q.selectedQuantity-usedQuantity,unfulfilledStageUses:q.selectedStageUses-usedStageUses}
+  if(!usedQuantity&&!usedStageUses)return {before,after:before,effect:null,allocation}
   const engine={resourceType:before.resourceType,resourceId:before.resourceId,teamId:before.teamId,selectedQuantity:usedQuantity,selectedStageUses:usedStageUses,conditionLossPerRaceDay:q.conditionLossPerRaceDay}
   for(const k of ['quantity','stageUsesRemaining','maxStageUses','condition'])if(before[k]!==null)engine[k]=before[k]
   const effect=originalPhase9ResourceReview({provenance:P,completeResourceEvidence:true,distanceKm:input.distanceKm,resources:[engine]}).rows[0]
   req((effect.quantityUsed??0)===usedQuantity&&(effect.stageUsesUsed??0)===usedStageUses,'closing debit mismatch')
-  return {before,after:{...before,quantity:effect.quantityAfter??before.quantity,stageUsesRemaining:effect.stageUsesAfter??before.stageUsesRemaining,condition:effect.conditionAfter??before.condition,lastUsedDate:usedStageUses?ready.date:before.lastUsedDate},effect}
+  return {before,after:{...before,quantity:effect.quantityAfter??before.quantity,stageUsesRemaining:effect.stageUsesAfter??before.stageUsesRemaining,condition:effect.conditionAfter??before.condition,lastUsedDate:usedStageUses?ready.date:before.lastUsedDate},effect,allocation}
  })
  const riders=ready.rows.map(r=>{
   const terminal=physical.finalState.riders[r.riderId],row=physical.classification.find(x=>x.riderId===r.riderId)
