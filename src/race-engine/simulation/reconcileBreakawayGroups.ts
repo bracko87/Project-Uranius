@@ -310,6 +310,8 @@ export function reconcileBreakawayGroups(
     /** POC ONLY: preserve a dropped group physically behind and slower than the peloton;
      * rejoin remains eligible once the distance closes or the group catches up. */
     readonly experimentalPreserveRecedingDroppedGroups?: boolean
+    /** Offline only: no proximity merge of dropped riders, including at the finish. */
+    readonly experimentalRequirePhysicalDroppedCatch?: boolean
     /** OFFLINE OPT-IN: a trailing attack group cannot teleport to a peloton
      * farther than the physical 5-second catch radius ahead of it. */
     readonly experimentalPreserveTrailingAttackGroups?: boolean
@@ -456,6 +458,13 @@ export function reconcileBreakawayGroups(
             group.createdAtRaceSecond === state.raceSecond
           ) {
             return false
+          }
+          if (options.experimentalRequirePhysicalDroppedCatch === true && group.groupType === 'dropped') {
+            // Birth protection is handled above. A natural drop begins at contact,
+            // then receives its own movement; a trailing group must close the gap.
+            // Finish clamping is not physical contact: finish each group separately.
+            if (group.distanceKm >= state.stageDistanceKm || peloton.distanceKm >= state.stageDistanceKm) return false
+            return group.distanceKm >= peloton.distanceKm - 1e-10
           }
           // A trailing dropped group which is still losing ground cannot
           // physically rejoin the faster peloton ahead of it. This is an
