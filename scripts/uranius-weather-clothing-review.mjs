@@ -40,8 +40,8 @@ export function resolveClothingAllocation({evidence,expectedEvidenceSha256,ready
 }
 export function reviewClothingExposure({evidence,expectedEvidenceSha256,ready,finish,priorExposures,expectedPriorExposuresSha256}){
  const allocation=resolveClothingAllocation({evidence,expectedEvidenceSha256,ready})
- req(carryoverDigest(priorExposures)===expectedPriorExposuresSha256&&uniq(priorExposures,x=>x.stageId+':'+x.riderId)&&priorExposures.every(x=>x.required===true&&typeof x.jacketUsed==='boolean'&&day(x.date)<day(evidence.date)&&ready.rows.some(r=>r.riderId===x.riderId&&r.teamId===x.teamId)),'invalid prior exposure history')
- req(finish?.state?.completed&&finish.state.stageId===ready.stageId&&finish.classificationSha256===carryoverDigest(finish.classification)&&uniq(finish.classification,x=>x.riderId),'complete physical finish evidence required')
+ req(carryoverDigest(priorExposures)===expectedPriorExposuresSha256&&uniq(priorExposures,x=>x.stageId+':'+x.riderId)&&priorExposures.every(x=>x.required===true&&typeof x.jacketUsed==='boolean'&&x.illnessRiskScore===(x.jacketUsed?10:60)&&typeof x.stageId==='string'&&typeof x.runId==='string'&&day(x.date)<day(evidence.date)&&ready.rows.some(r=>r.riderId===x.riderId&&r.teamId===x.teamId)),'invalid prior exposure history')
+ req(finish?.state?.completed&&finish.state.stageId===ready.stageId&&finish.state.raceId===ready.raceId&&finish.classification.length===allocation.rows.filter(r=>r.starter).length&&finish.classification.every(x=>['finished','dnf'].includes(x.status))&&finish.classificationSha256===carryoverDigest(finish.classification)&&uniq(finish.classification,x=>x.riderId),'complete physical finish evidence required')
  const {medicalCenters,hashWitnesses}=evidence
  req(uniq(medicalCenters,x=>x.teamId)&&medicalCenters.length===new Set(ready.rows.map(r=>r.teamId)).size&&medicalCenters.every(c=>ready.rows.some(r=>r.teamId===c.teamId)&&integer(c.level)),'complete medical center levels required')
  req(uniq(hashWitnesses,x=>x.riderId)&&hashWitnesses.length===ready.rows.length,'complete synthetic hashtext witnesses required')
