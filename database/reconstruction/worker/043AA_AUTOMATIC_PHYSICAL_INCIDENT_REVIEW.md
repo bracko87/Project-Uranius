@@ -16,3 +16,6 @@ del "%TEMP%\uranius-043aa-test.cjs"
 ```
 
 Expected PASS 3/3 automatic physical incident checks; no hosted connection. Next: extend simultaneous/group incident support and integrate finish/withdrawal classification only after native acceptance. Hosted activation BLOCKED.
+
+## Owner acceptance — 2026-11-27
+Owner pulled 1625769, esbuild bundle 284.7kb succeeded in 372ms. Native test PASS 3/3: automatic selection/consequence/physical separation/contact rejoin; later selection uses measured progress, energy and group eligibility; deterministic review and authority guards. Seed 4 selected 1/applied 0, stopped at multi-rider scope; seed 6 selected 4/applied 3, physical rejoin and later selection witnessed, stopped at multi-rider scope. Temporary bundle deleted; no hosted connection. Scoped 043AA accepted, cumulative 148/148 native groups. Multi-rider/overlapping incident execution, full-stage classification and authoritative integration remain pending. Hosted activation BLOCKED.
