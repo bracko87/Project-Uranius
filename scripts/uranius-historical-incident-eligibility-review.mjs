@@ -62,7 +62,14 @@ export function reviewHistoricalEligibilityTraceWithPhysicalFeedback(packet,feed
  const trace=evaluateHistoricalEligibilityTrace(packet,selectedCheckpoints,feedback,true)
  return {trace,selectedCheckpoints}
 }
-function evaluateHistoricalEligibilityTrace({evidence,expectedEvidenceSha256},selectedCheckpoints,feedback=null,physical=false){
+// Explicit measured terrain mode. Legacy synthetic/flat paths stay identical.
+export function reviewHistoricalTerrainTraceWithPhysicalFeedback(packet,feedback){
+ req(typeof feedback==='function','physical terrain feedback callback required')
+ const selectedCheckpoints=[]
+ const trace=evaluateHistoricalEligibilityTrace(packet,selectedCheckpoints,feedback,true,true)
+ return {trace,selectedCheckpoints}
+}
+function evaluateHistoricalEligibilityTrace({evidence,expectedEvidenceSha256},selectedCheckpoints,feedback=null,physical=false,measuredTerrain=false){
  req(evidence?.provenance==='synthetic_review_fixture'&&carryoverDigest(evidence)===expectedEvidenceSha256,'frozen synthetic trace required')
  req(fields(evidence,['provenance','raceId','stageId','runId','seed','stage','winnerTimeSeconds','weatherMultiplier','severeWeather','flatSprint','roster','ticks']),'unexpected trace fields')
  const {raceId,stageId,runId,seed,stage,winnerTimeSeconds,weatherMultiplier,severeWeather,flatSprint,roster,ticks}=evidence
@@ -75,7 +82,7 @@ function evaluateHistoricalEligibilityTrace({evidence,expectedEvidenceSha256},se
  const phaseCounts=[0,0,0,0],incidents=[],audit=[]
  let nextGlobalEligibleSecond=0,crashCount=0,previousPhysicalKm=0,stopReason=null
  const baseSpeed=round(distanceKm/Math.max(winnerTimeSeconds/3600,.01))
- for(let i=0;i<ticks.length;i++){
+ for(let i=0;i<(measuredTerrain?1440:ticks.length);i++){
   const raceSecond=(i+1)*30
   let progressFraction=clamp(raceSecond/winnerTimeSeconds,0,1)
   const applied=feedback?feedback({tick:ticks[i],raceSecond,kmFromStart:round(distanceKm*progressFraction),incidents:incidents.slice(),selectedCheckpoints:selectedCheckpoints.slice()}):ticks[i]
@@ -85,6 +92,8 @@ function evaluateHistoricalEligibilityTrace({evidence,expectedEvidenceSha256},se
    previousPhysicalKm=applied.measuredKm;progressFraction=applied.measuredKm/distanceKm
   }
   const tick=applied.tick??applied,excluded=new Set(applied.excludedRiderIds??[])
+  if(measuredTerrain)req(applied.measuredGroups&&uniq(applied.measuredGroups,g=>g.displayCode)&&applied.measuredGroups.length===tick.groups.length&&tick.groups.every(g=>applied.measuredGroups.some(m=>m.displayCode===g.displayCode&&num(m.speedKmh,0,120)&&num(m.gradientPercent,-30,30))),'complete measured terrain group evidence required')
+  const measured=g=>measuredTerrain?applied.measuredGroups.find(m=>m.displayCode===g.displayCode):null
   req([...excluded].every(id=>byId.has(id)),'unknown excluded feedback rider')
   req(fields(tick,['raceSecond','gradientPercent','riders','groups','rejoins'])&&tick.raceSecond===raceSecond&&num(tick.gradientPercent,-100,100)&&uniq(tick.riders,r=>r.riderId)&&tick.riders.length===roster.length&&tick.riders.every(r=>fields(r,['riderId','status','energy','commandIntensity'])&&byId.has(r.riderId)&&['racing','finished','dnf','dns','otl'].includes(r.status)&&num(r.energy,0,100)&&num(r.commandIntensity,.82,1.45))&&uniq(tick.groups,g=>g.displayCode)&&uniq(tick.rejoins,r=>r.riderId),'invalid checkpoint grid or coverage')
   const obs=new Map(tick.riders.map(r=>[r.riderId,r])),groupFor=new Map()
@@ -107,7 +116,7 @@ function evaluateHistoricalEligibilityTrace({evidence,expectedEvidenceSha256},se
   const situation=(kind,g,n)=>{
    const chase=g.displayCode==='P'&&gate.phase===4&&tick.groups.some(x=>x.aheadOfPeloton)
    const sprint=g.displayCode==='P'&&stage.terrainType==='flat'&&flatSprint&&progressFraction>=.9&&n>=12
-   const speed=round(clamp(baseSpeed+(tick.gradientPercent< -1?Math.min(22,Math.abs(tick.gradientPercent)*3):0)+(chase?6:0)+(sprint?12:0),20,80))
+   const speed=measuredTerrain?measured(g).speedKmh:round(clamp(baseSpeed+(tick.gradientPercent< -1?Math.min(22,Math.abs(tick.gradientPercent)*3):0)+(chase?6:0)+(sprint?12:0),20,80))
    const m=(chase?(kind==='group_crash'?2.4:kind==='individual_crash'?1.45:1.2):1)*(sprint?(kind==='group_crash'?4.5:kind==='individual_crash'?1.9:1.15):1)
    return {speed,multiplier:round(clamp(m,.6,6)),chase,sprint}
   }
@@ -115,17 +124,17 @@ function evaluateHistoricalEligibilityTrace({evidence,expectedEvidenceSha256},se
   const add=(kind,os,g,depletion=false)=>{
    const rs=os.map(o=>byId.get(o.riderId)),avg=f=>rs.reduce((sum,r,j)=>sum+f(r,os[j]),0)/rs.length,n=kind==='group_crash'?rs.length:g.riderIds.length
    const runtimeFatigue=round(avg((r,o)=>fatigue(o))),supportValue=kind==='group_crash'?avg(support):round(support(rs[0])),command=avg((r,o)=>o.commandIntensity)
-   const condition=kind==='group_crash'?100:rs[0].equipmentConditionPercent,si=situation(kind,g,n),causes=[]
+   const condition=kind==='group_crash'?100:rs[0].equipmentConditionPercent,si=situation(kind,g,n),causes=[],gradient=measured(g)?.gradientPercent??tick.gradientPercent
    if(depletion){causes.push('sustained_energy_depletion','runtime_fatigue')}
    else{
     if(limits.wetWeather)causes.push('wet_road');else if(severeWeather)causes.push('severe_weather')
-    if(runtimeFatigue>=50)causes.push('runtime_fatigue');if(tick.gradientPercent<=-2)causes.push('descending');if(si.speed>=45)causes.push('high_speed')
+    if(runtimeFatigue>=50)causes.push('runtime_fatigue');if(gradient<=-2)causes.push('descending');if(si.speed>=45)causes.push('high_speed')
     if(kind==='technical_incident'&&condition<90)causes.push('equipment_condition');if(supportValue<.999)causes.push('team_staff_asset_support')
     if(command>1.05)causes.push('high_command_intensity');if(command<.95)causes.push('risk_avoidance')
     if(si.chase)causes.push('peloton_chase');if(si.sprint)causes.push('sprint_congestion')
    }
    const rr=rs.map(r=>({riderId:r.riderId,teamId:r.teamId,equipmentConditionPercent:r.equipmentConditionPercent}))
-   candidates.push({entityId:kind==='group_crash'?g.displayCode+':'+rr.map(r=>r.riderId).sort().join(','):rr[0].riderId,displayCode:g.displayCode,riders:rr,probabilityInput:{incidentKind:kind,tickSeconds:30,weatherMultiplier,currentSpeedKmh:depletion?baseSpeed:si.speed,gradientPercent:tick.gradientPercent,groupSize:n,runtimeFatigue,resistance:avg(r=>r.resistance),raceIq:avg(r=>r.raceIq),preparationSupportMultiplier:supportValue,commandIntensityMultiplier:command,raceSituationMultiplier:depletion?(tick.gradientPercent>=3?1.8:stage.terrainType==='mountain'?1.5:stage.terrainType==='cobbled'?1.2:1):si.multiplier,equipmentConditionPercent:condition,mechanicalIncidentRiskMultiplier:kind==='technical_incident'?rs[0].mechanicalRisk:1},causes:causes.sort(),exposureEligibility:'explicit_synthetic_eligible'})
+   candidates.push({entityId:kind==='group_crash'?g.displayCode+':'+rr.map(r=>r.riderId).sort().join(','):rr[0].riderId,displayCode:g.displayCode,riders:rr,probabilityInput:{incidentKind:kind,tickSeconds:30,weatherMultiplier,currentSpeedKmh:depletion&&!measuredTerrain?baseSpeed:si.speed,gradientPercent:gradient,groupSize:n,runtimeFatigue,resistance:avg(r=>r.resistance),raceIq:avg(r=>r.raceIq),preparationSupportMultiplier:supportValue,commandIntensityMultiplier:command,raceSituationMultiplier:depletion?(gradient>=3?1.8:stage.terrainType==='mountain'?1.5:stage.terrainType==='cobbled'?1.2:1):si.multiplier,equipmentConditionPercent:condition,mechanicalIncidentRiskMultiplier:kind==='technical_incident'?rs[0].mechanicalRisk:1},causes:causes.sort(),exposureEligibility:'explicit_synthetic_eligible'})
   }
   for(const o of eligible){
    const s=state.get(o.riderId),dep=historicalDepletionStep({distanceKm,progressFraction,energy:o.energy,runtimeFatigue:fatigue(o),raceSecond,lowSinceSecond:s.lowSinceSecond});s.lowSinceSecond=dep.lowSinceSecond
@@ -151,5 +160,5 @@ function evaluateHistoricalEligibilityTrace({evidence,expectedEvidenceSha256},se
   }
   audit.push({raceSecond,...gate,candidateCount:candidates.length,eligibleRiderIds:eligible.map(r=>r.riderId).sort(),exhaustionEligible:exhaustionEligible.sort(),selectedIncidentId:selected?.incidentId??null})
  }
- return {version:'043Q_historical_eligibility_review_v1',evidenceSha256:expectedEvidenceSha256,limits,phaseCounts,crashCount,incidents,audit,terminalEligibility:roster.map(r=>({riderId:r.riderId,...state.get(r.riderId)})),...(physical?{physicalProgressUsed:true,stopReason}:{}),...flags()}
+ return {version:'043Q_historical_eligibility_review_v1',evidenceSha256:expectedEvidenceSha256,limits,phaseCounts,crashCount,incidents,audit,terminalEligibility:roster.map(r=>({riderId:r.riderId,...state.get(r.riderId)})),...(physical?{physicalProgressUsed:true,stopReason}:{}),...(measuredTerrain?{measuredTerrainUsed:true}:{}),...flags()}
 }
