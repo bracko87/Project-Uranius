@@ -18,3 +18,6 @@ del "%TEMP%\uranius-043aq-test.cjs"
 ```
 
 Expected PASS 4/4 combined preparation checks; no hosted connection.
+
+## Owner acceptance — 2026-11-27
+Owner pulled 5e4020b; esbuild bundle 392.8kb succeeded in 80ms. Native PASS 4/4: complete 21-stage combined physical tour (km=850, finalGC=16, elapsedMs=60906, heapMiB=76); interacting pace, energy, fatigue, mechanical, clothing and wear evidence (savedTicks=2683, paceRows=320, protectedComponents=96, mechanicalCandidates=215, incidents=12, illnessCandidates=13); one shared vehicle debit, consumable partial/exhausted stock, permanent withdrawals and 21-stage receipt continuity; matched combined pace response, prefix invariance, deterministic 21-stage replay and authority guards. Temporary bundle deleted; no hosted connection. Scoped 043AQ accepted; cumulative 212/212 distinct native acceptance groups. Runtime and heap snapshot are local observations, not production SLA or peak memory. Flat synthetic preparation fixture only; illness candidates do not create health cases. Actual catalogue configuration, health writer compatibility, jersey penalty derivation, PostgreSQL hashtext parity, broader terrain/tactical scope, TypeScript checks and production integration remain pending. Hosted activation BLOCKED.
