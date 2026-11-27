@@ -39,7 +39,16 @@ export function historicalDepletionStep({distanceKm,progressFraction,energy,runt
  return {lowSinceSecond:since,eligible:since!==null&&raceSecond-since>=240}
 }
 const flags=()=>({physicalCheckpointVerified:false,completeOccurrenceVerified:false,authoritativeSourceVerified:false,official:false,hostedWriteAllowed:false,accountingAllowed:false})
-export function reviewHistoricalEligibilityTrace({evidence,expectedEvidenceSha256}){
+export function reviewHistoricalEligibilityTrace(packet){
+ return evaluateHistoricalEligibilityTrace(packet,null)
+}
+// 043U: retain only selected source packets; existing 043Q result shape unchanged.
+export function reviewHistoricalEligibilityTraceWithCheckpoints(packet){
+ const selectedCheckpoints=[]
+ const trace=evaluateHistoricalEligibilityTrace(packet,selectedCheckpoints)
+ return {trace,selectedCheckpoints}
+}
+function evaluateHistoricalEligibilityTrace({evidence,expectedEvidenceSha256},selectedCheckpoints){
  req(evidence?.provenance==='synthetic_review_fixture'&&carryoverDigest(evidence)===expectedEvidenceSha256,'frozen synthetic trace required')
  req(fields(evidence,['provenance','raceId','stageId','runId','seed','stage','winnerTimeSeconds','weatherMultiplier','severeWeather','flatSprint','roster','ticks']),'unexpected trace fields')
  const {raceId,stageId,runId,seed,stage,winnerTimeSeconds,weatherMultiplier,severeWeather,flatSprint,roster,ticks}=evidence
@@ -106,6 +115,7 @@ export function reviewHistoricalEligibilityTrace({evidence,expectedEvidenceSha25
   const packet={provenance:'synthetic_review_fixture',raceId,stageId,runId,seed,raceSecond,priorIncidentCount:incidents.length,candidates}
   const selected=reviewHistoricalCheckpoint({evidence:packet,expectedEvidenceSha256:carryoverDigest(packet)}).incident
   if(selected){
+   if(selectedCheckpoints)selectedCheckpoints.push({evidence:packet,expectedEvidenceSha256:carryoverDigest(packet)})
    phaseCounts[gate.phase-1]++;if(['individual_crash','group_crash'].includes(selected.kind))crashCount++
    incidents.push({raceSecond,phase:gate.phase,kmFromStart:gate.kmFromStart,incident:selected})
    nextGlobalEligibleSecond=raceSecond+120
