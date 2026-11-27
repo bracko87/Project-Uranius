@@ -16,3 +16,6 @@ del "%TEMP%\uranius-043ao-test.cjs"
 ```
 
 Expected PASS 4/4 original preparation effects checks; no hosted connection.
+
+## Owner acceptance — 2026-11-27
+Owner pulled 050a058; esbuild bundle 375.2kb succeeded in 140ms. Native PASS 4/4: archived jacket weather boundaries, exposure scores and workshop condition bands; actual component mileage wear uses historical combined protection and expires after stock use (components=48); asset ownership, duplicate assignment, already-used date, unusable condition and digest guards; default-path parity, improved component condition and deterministic authority guards. Temporary bundle deleted; no hosted connection. Scoped 043AO accepted; cumulative 204/204 distinct native acceptance groups. Protection effects remain explicit synthetic standardized inputs, stock/use policy remains an isolated adaptation. Jacket requirements and exposure scores verified as standalone calculations only, not illness creation or durable allocation. Original catalogue configuration, jersey penalty derivation, vehicle level effects, TypeScript checking and production integration remain pending. Metadata-only original catalogue inspection requires separate explicit approval and verified original project identity; not executed. Hosted activation BLOCKED.
