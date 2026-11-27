@@ -200,6 +200,7 @@ function getRacingGroupRiders(
  */
 export function calculateMultiGroupMovement(
   state: SimulationState,
+  experimentalEquipmentCapabilityAdjustments?: Readonly<Record<string, number>>,
 ): MultiGroupMovementResult {
   if (state.completed) {
     throw new Error(
@@ -271,6 +272,7 @@ export function calculateMultiGroupMovement(
         const pace =
           calculatePelotonBasePace({
             riders,
+            experimentalEquipmentCapabilityAdjustments,
             minimumSpeedKmh:
               state.input.settings
                 .minimumSpeedKmh,
