@@ -40,7 +40,6 @@ export function reviewPreparedNaturalTerrain({packet,expectedPacketSha256}:any){
  const physicalPacket={provenance:P,input,source,context,preparation:{mechanical,performance,energy},...(packet.physicalWeather===undefined?{}:{physicalWeather:packet.physicalWeather})}
  const physical=reviewHistoricalNaturalTerrain({packet:physicalPacket,expectedPacketSha256:digest(physicalPacket)})
  const weather=physical.physicalWeather
- const weatherEnergy=weather?.energyMultiplier??1
  const finish={state:physical.finalState,classification:physical.classification,classificationSha256:physical.classificationSha256}
  const individualWear=reviewIndividualEquipmentWear({finish,ready,mechanicalEvidence:mechanical,expectedMechanicalSha256:digest(mechanical),sportingRows:physical.classification,protectionEvidence:protection,expectedProtectionSha256:digest(protection)})
  const clothingExposure=reviewClothingExposure({evidence:clothing,expectedEvidenceSha256:digest(clothing),ready,finish,priorExposures,expectedPriorExposuresSha256:digest(priorExposures)})
@@ -85,8 +84,9 @@ export function reviewPreparedNaturalTerrain({packet,expectedPacketSha256}:any){
    const tick=physical.ticks.find(t=>t.finishDetection.candidates.some(c=>c.riderId===r.riderId))
    const c=tick?.finishDetection.candidates.find(c=>c.riderId===r.riderId),e=tick?.appliedEnergy.applications.find(a=>a.riderId===r.riderId)
    req(c&&e&&Number.isFinite(c.crossingFraction)&&c.crossingFraction>=0&&c.crossingFraction<=1,'fractional finish evidence missing')
+   const weatherEnergy=e.experimentalWeatherEnergyMultiplier??weather?.energyMultiplier??1
    correctedEnergy=Math.max(0,e.previousEnergy-e.result.grossEnergyCost*e.result.efficiencyMultiplier*a.roadEnergyMultiplier*weatherEnergy*c.crossingFraction)
-   finishWitness={crossingFraction:c.crossingFraction,previousEnergy:e.previousEnergy,neutralCost:e.result.grossEnergyCost*e.result.efficiencyMultiplier,multiplier:a.roadEnergyMultiplier,...(weather?{weatherMultiplier:weatherEnergy}:{})}
+   finishWitness={crossingFraction:c.crossingFraction,previousEnergy:e.previousEnergy,neutralCost:e.result.grossEnergyCost*e.result.efficiencyMultiplier,multiplier:a.roadEnergyMultiplier,...(weather?{weatherMultiplier:weatherEnergy}:{}),...(e.experimentalWeatherStartKm!==undefined?{weatherStartKm:e.experimentalWeatherStartKm}:{})}
   }
   const applications=physical.applications.filter(x=>x.riderId===r.riderId)
   const workload={provenance:P,completeWorkloadEvidence:true,riderId:r.riderId,teamId:r.teamId,status:row.status,eligibleToStart:true,effectiveFatigueBeforeStage:r.condition.fatigueBeforeStage,startEnergy:r.condition.startingEnergy,rawFinishEnergy:correctedEnergy,incidentEnergyLoss:0,additionalPointEnergyCost:0,distanceKm:input.distanceKm,difficultyCategory,postStageFatigueMultiplier:weather?combinedPreparedWeatherFatigue(a.postStageFatigueMultiplier,weather):a.postStageFatigueMultiplier,postStageRecoveryBonusPoints:a.postStageRecoveryBonusPoints,recoverySkill:r.recoverySkill,morale:r.condition.morale,preparationIncidentRiskMultiplier:r.preparation.modifiers?.incidentRiskMultiplier??1,incidents:applications.map(x=>({incidentId:x.incidentId,incidentType:physical.trace.incidents.find(i=>i.incident.incidentId===x.incidentId).incident.kind})),breakawaySegments:[]}
