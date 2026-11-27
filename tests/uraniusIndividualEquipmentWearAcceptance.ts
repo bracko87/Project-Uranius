@@ -142,8 +142,17 @@ assert.deepEqual(out.stages[0].physicalClassification,legacy.stages[0].physicalC
 console.log('PASS 043AM exact ledger carryover, rest-day neutrality, no duplicate component debit and unchanged support resources')
 assert.deepEqual(reviewIndividualEquipmentWear(request),controlled)
 assert.throws(()=>reviewIndividualEquipmentWear({...request,expectedMechanicalSha256:'0'.repeat(64)}),/frozen stage resource/)
-const bad=structuredClone(request);bad.sportingRows.find(r=>r.riderId===d).status='finished'
+// Preserve the physical classification digest: structuredClone(request) alone
+// preserves the shared classification/sportingRows reference in this fixture.
+const bad={...request,sportingRows:structuredClone(request.sportingRows)}
+bad.sportingRows.find(r=>r.riderId===d).status='finished'
+assert.equal(carryoverDigest(bad.finish.classification),request.finish.classificationSha256)
 assert.throws(()=>reviewIndividualEquipmentWear(bad),/sporting and physical status/)
+// Independently exercise the earlier physical digest guard.
+const badPhysical=structuredClone(request)
+badPhysical.finish.classification.find(r=>r.riderId===d).status='finished'
+assert.throws(()=>reviewIndividualEquipmentWear(badPhysical),/complete scoped physical finish required/)
+assert.deepEqual(request,before)
 const duplicate=structuredClone(mileagePacket);duplicate.stages[2].runId=duplicate.stages[1].runId
 assert.throws(()=>run(duplicate),/distinct 3/)
 assert.deepEqual(run(mileagePacket),out)
