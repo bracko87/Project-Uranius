@@ -7,6 +7,7 @@ import {applyMultiGroupMovement} from '../src/race-engine/simulation/applyMultiG
 import {applyMultiGroupEnergy} from '../src/race-engine/simulation/applyMultiGroupEnergy'
 import {validateSimulationState} from '../src/race-engine/validation/validateSimulationState'
 import type {EnergyMultipliers} from './uranius-resource-energy-review'
+import {calculateWeatherPerformanceEffects} from '../src/race-engine/simulation/weatherPerformanceEffects'
 import {applyOptionalPreparedWeatherEnergy,type PreparedWeather} from './uranius-prepared-physical-weather-review'
 type Row={riderId:string,helper:string|null,statusImpact:'finished'|'dnf',repairSeconds:number,energyLossPoints:number}
 type Episode={affected:string,helper:string|null,groupId:string,helperGroupId:string|null,targetId:string,repairUntil:number,phase:'repair'|'chase'|'joined'}
@@ -65,7 +66,7 @@ function startBatch(state:SimulationState,rows:readonly Row[],prior:readonly Epi
 }
 export function multiRiderIncidentTick(state:SimulationState,episodes:readonly Episode[],targetId:string,multipliers?:EnergyMultipliers,capabilityAdjustments?:Readonly<Record<string,number>>,terrainCapability=false,weather?:PreparedWeather){
  req(!state.completed&&state.currentKm<state.stageDistanceKm,'pre-finish scope')
- const speedFactor=weather?.effects.speedMultiplier??1
+ const segmented=weather?.weather.courseBearingSegments!==undefined
  const base=calculateMultiGroupMovement(state,capabilityAdjustments,terrainCapability,!!weather&&!weather.neutral),dt=base.tickSeconds/3600
  const target=base.proposals.find(p=>p.groupId===targetId)
  req(target,'target missing')
@@ -74,10 +75,11 @@ export function multiRiderIncidentTick(state:SimulationState,episodes:readonly E
  req(new Set(ids).size===ids.length&&active.every(e=>e.targetId===targetId)&&base.proposals.every(p=>p.groupId===targetId||ids.includes(p.groupId))&&ids.every(id=>base.proposals.some(p=>p.groupId===id)),'untracked active group')
  const proposals=base.proposals.map(p=>{
   const ep=active.find(e=>e.groupId===p.groupId||e.helperGroupId===p.groupId)
+  const speedFactor=segmented?calculateWeatherPerformanceEffects(weather!.weather,p.previousDistanceKm).speedMultiplier:weather?.effects.speedMultiplier??1
   let next=p.nextDistanceKm
   if(ep){
    const repair=state.raceSecond<ep.repairUntil
-   const speed=p.groupId===ep.groupId?(repair?0:Math.min(state.input.settings.maximumSpeedKmh,(terrainCapability?p.appliedSpeedKmh+8*p.terrainMultiplier*speedFactor:Math.max(p.appliedSpeedKmh,target!.appliedSpeedKmh+8*speedFactor)))):(repair?(terrainCapability?p.appliedSpeedKmh:target!.appliedSpeedKmh)*.25:0)
+   const speed=p.groupId===ep.groupId?(repair?0:Math.min(state.input.settings.maximumSpeedKmh,(terrainCapability||segmented?p.appliedSpeedKmh+8*p.terrainMultiplier*speedFactor:Math.max(p.appliedSpeedKmh,target!.appliedSpeedKmh+8*speedFactor)))):(repair?(terrainCapability||segmented?p.appliedSpeedKmh:target!.appliedSpeedKmh)*.25:0)
    next=Math.min(target!.nextDistanceKm,p.previousDistanceKm+speed*dt)
    if(!repair&&p.groupId===ep.groupId&&ep.helperGroupId)next=Math.min(next,state.groups[ep.helperGroupId].distanceKm)
   }
