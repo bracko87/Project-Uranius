@@ -757,6 +757,11 @@ function validateWeather(
     )
   }
 
+  if (weather.directionalWind !== undefined) {
+    const d=weather.directionalWind
+    if (!d || d.scope!=='synthetic_constant_bearing' || weather.source!=='synthetic_review_fixture' || !isFiniteNumber(weather.windSpeedKmh) || weather.windSpeedKmh<0 || weather.windSpeedKmh>50 || ![d.courseBearingDegrees,d.windFromDegrees].every(v=>typeof v==='number'&&Number.isFinite(v)&&v>=0&&v<360)) issues.push('weather.directionalWind requires bounded synthetic constant bearing and wind from direction.')
+  }
+
   if (!isNonBlankString(weather.source)) {
     issues.push(
       'weather.source must not be blank.',
