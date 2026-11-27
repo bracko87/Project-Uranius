@@ -29,10 +29,11 @@ export function physicalFinishTick(state:SimulationState,episodes:readonly Final
  const preliminary=base.proposals.map(p=>{
   const ep=active.find(e=>e.groupId===p.groupId||e.helperGroupId===p.groupId)
   const speedFactor=segmented?calculateWeatherPerformanceEffects(weather!.weather,p.previousDistanceKm).speedMultiplier:weather?.effects.speedMultiplier??1
+  const differentLocalWind=segmented&&!!target&&speedFactor!==calculateWeatherPerformanceEffects(weather!.weather,target.previousDistanceKm).speedMultiplier
   let speed=p.appliedSpeedKmh,cap=limit
   if(ep){
    const repair=state.raceSecond<ep.repairUntil
-   speed=p.groupId===ep.groupId?(repair?0:target?Math.min(state.input.settings.maximumSpeedKmh,(terrainCapability||segmented?p.appliedSpeedKmh+8*p.terrainMultiplier*speedFactor:Math.max(p.appliedSpeedKmh,target.appliedSpeedKmh+8*speedFactor))):p.appliedSpeedKmh):(repair?(terrainCapability||segmented?p.appliedSpeedKmh:(target?.appliedSpeedKmh??p.appliedSpeedKmh))*.25:0)
+   speed=p.groupId===ep.groupId?(repair?0:target?Math.min(state.input.settings.maximumSpeedKmh,(terrainCapability||differentLocalWind?p.appliedSpeedKmh+8*p.terrainMultiplier*speedFactor:Math.max(p.appliedSpeedKmh,target.appliedSpeedKmh+8*speedFactor))):p.appliedSpeedKmh):(repair?(terrainCapability||differentLocalWind?p.appliedSpeedKmh:(target?.appliedSpeedKmh??p.appliedSpeedKmh))*.25:0)
    // Before the finish tick retain target contact cap; never merge into a finished target.
    if(target&&target.nextDistanceKm<limit)cap=target.nextDistanceKm
    if(!repair&&p.groupId===ep.groupId&&ep.helperGroupId)cap=Math.min(cap,state.groups[ep.helperGroupId].distanceKm)
