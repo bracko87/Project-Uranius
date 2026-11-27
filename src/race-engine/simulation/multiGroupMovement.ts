@@ -429,7 +429,7 @@ export function calculateMultiGroupMovement(
                 .maximumSpeedKmh,
           })
 
-        const terrainSpeed = weatherSpeed===1 ? neutralTerrainSpeed : {...neutralTerrainSpeed,speedKmh:neutralTerrainSpeed.speedKmh*weatherSpeed}
+        const terrainSpeed = weatherSpeed===1 ? neutralTerrainSpeed : {...neutralTerrainSpeed,speedKmh:weatherSpeed>1?Math.min(state.input.settings.maximumSpeedKmh,neutralTerrainSpeed.speedKmh*weatherSpeed):neutralTerrainSpeed.speedKmh*weatherSpeed}
         const unclampedNextDistanceKm =
           group.distanceKm +
           terrainSpeed.speedKmh *
