@@ -12,3 +12,6 @@ node tests\uraniusActualIncidentScenarioAcceptance.mjs --offline-only
 ```
 
 Expected if both witnessed: PASS 2/2 actual-engine sourced scenario checks; no hosted connection. Otherwise inspect OPEN/refusal output and improve deterministic fixture coverage before proceeding. Hosted activation remains BLOCKED.
+
+## Owner acceptance — 2026-11-27
+Native Node v20.20.0 run after ae5d175 PASS 2/2; repeat seed 4 feedback SHA-256 2dc098591e35c022afcb53afeae796b51a17bc4c97223ed1661ece58cfc30aa5; rescue seed 6 feedback SHA-256 b5dcf94c650df46b5afbb5ba7b7052365d2f8828dabd84eb6ff9ec46bd7643d3. No bounded refusals in final run; no hosted connection; offline bundles cleaned up. Prior harness corrections 2bbf8a6 (exact subprocess refusal) and ae5d175 (opaque episode identity). Scoped 043Y accepted; cumulative 142/142 native groups. Physical movement and authoritative classification remain unverified. Hosted activation remains blocked.
