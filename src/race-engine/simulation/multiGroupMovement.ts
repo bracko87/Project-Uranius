@@ -201,6 +201,7 @@ function getRacingGroupRiders(
 export function calculateMultiGroupMovement(
   state: SimulationState,
   experimentalEquipmentCapabilityAdjustments?: Readonly<Record<string, number>>,
+  experimentalTerrainCapability = false,
 ): MultiGroupMovementResult {
   if (state.completed) {
     throw new Error(
@@ -269,10 +270,12 @@ export function calculateMultiGroupMovement(
           )
         }
 
+        const terrainSample = getStageTerrainSample(state.input, group.distanceKm)
         const pace =
           calculatePelotonBasePace({
             riders,
             experimentalEquipmentCapabilityAdjustments,
+            ...(experimentalTerrainCapability ? {experimentalTerrainGradientPercent:terrainSample.gradientPercent} : {}),
             minimumSpeedKmh:
               state.input.settings
                 .minimumSpeedKmh,
@@ -280,12 +283,6 @@ export function calculateMultiGroupMovement(
               state.input.settings
                 .maximumSpeedKmh,
           })
-
-        const terrainSample =
-          getStageTerrainSample(
-            state.input,
-            group.distanceKm,
-          )
 
         const cooperationPaceEnabled =
           state
