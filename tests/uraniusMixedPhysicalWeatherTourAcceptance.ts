@@ -167,8 +167,8 @@ console.log('PASS 043AZ seven-stage mixed weather physical motion, measured inci
 const wetStage=weatherTour.stages[3],resolved=resolvePreparedPhysicalWeather(wetStage.input,wetStage.context,wetStage.physicalWeather)
 const flatInput={...wetStage.input,settings:{...wetStage.input.settings,minimumSpeedKmh:40,maximumSpeedKmh:60}}
 const neutralState=createInitialState(flatInput),wetState={...neutralState,input:{...neutralState.input,weather:resolved.weather},weatherPerformanceEffectsEnabled:true}
-const base=calculateMultiGroupMovement(neutralState),wet=calculateMultiGroupMovement(wetState,undefined,false,true)
-assert.ok(Math.abs(wet.proposals[0].appliedSpeedKmh-base.proposals[0].appliedSpeedKmh*resolved.effects.speedMultiplier)<1e-9)
+const neutralMovement=calculateMultiGroupMovement(neutralState),wet=calculateMultiGroupMovement(wetState,undefined,false,true)
+assert.ok(Math.abs(wet.proposals[0].appliedSpeedKmh-neutralMovement.proposals[0].appliedSpeedKmh*resolved.effects.speedMultiplier)<1e-9)
 const started=startMultiRiderIncident(wetState,[{riderId:roster[0].riderId,helper:roster[1].riderId,statusImpact:'finished',repairSeconds:60,energyLossPoints:2}])
 const mult=Object.fromEntries(roster.map(r=>[r.riderId,.95]))
 let state=started.state,episodes=started.episodes,pickups=0,contacts=0
