@@ -27,7 +27,8 @@ export function integrateCourseWindTick(
   const effects=calculateWeatherPerformanceEffects(weather,position)
   const speed=speedAt(effects.speedMultiplier)
   if(!Number.isFinite(speed)||speed<0)throw Error('invalid wind integration speed')
-  const duration=speed===0?remaining:(boundary-position)*3600/speed
+  // A stationary group cannot reach a positive-distance boundary.
+  const duration=speed===0?Infinity:(boundary-position)*3600/speed
   const reachesBoundary=duration<=remaining
   const seconds=reachesBoundary?duration:remaining
   const end=reachesBoundary?boundary:Math.min(boundary,position+speed*seconds/3600)
