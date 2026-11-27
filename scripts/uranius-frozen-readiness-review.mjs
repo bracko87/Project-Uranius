@@ -95,3 +95,26 @@ export function bindLegacyReadiness({source,expectedSourceSha256,input}){
  const readiness=receipt.rows.map(r=>({riderId:r.riderId,teamId:r.teamId,difficultyCategory:receipt.difficultyCategory,postStageFatigueMultiplier:r.preparation.modifiers?.postStageFatigueMultiplier??1,postStageRecoveryBonusPoints:r.preparation.modifiers?.postStageRecoveryBonusPoints??0,preparationIncidentRiskMultiplier:r.preparation.modifiers?.incidentRiskMultiplier??1}))
  return {input:{...input,riders},readiness,receipt,readinessSha256:sha256,...flags()}
 }
+
+// 043AG opt-in: keep full receipt, admit only eligible stage-two riders.
+export function bindMixedStageReadiness({source,expectedSourceSha256,input}){
+ const {receipt,sha256}=buildFrozenReadinessReview({source,expectedSourceSha256})
+ req(receipt.stageNumber===2&&input?.raceId===receipt.raceId&&input.stageId===receipt.stageId&&input.stageFormat==='road_race'&&Array.isArray(input.orders)&&input.orders.length===0&&uniq(input.riders,r=>r.riderId)&&input.riders.length===receipt.rows.length,'mixed stage input scope mismatch')
+ req(uniq(input.teams,t=>t.teamId),'unique teams required')
+ const starters=receipt.rows.filter(r=>r.startStatus==='starter')
+ req(starters.length>=2&&starters.every(r=>['fit','not_fully_fit'].includes(r.condition.availabilityStatus)&&r.preparation.legacyCompatible&&r.preparation.workloadCompatible),'unsupported mixed starter readiness')
+ const ids=new Set(starters.map(r=>r.riderId))
+ for(const r of input.riders){
+  const x=receipt.rows.find(x=>x.riderId===r.riderId)
+  req(x&&x.teamId===r.teamId&&!Object.hasOwn(r,'condition')&&!Object.hasOwn(r,'equipment')&&r.attributes?.recovery===x.recoverySkill,'mixed roster or caller readiness mismatch')
+  const t=input.teams.find(t=>t.teamId===r.teamId)
+  req(t&&t.riderIds.includes(r.riderId),'missing original team membership')
+ }
+ for(const t of input.teams)req(uniq(t.riderIds,x=>x)&&t.riderIds.every(id=>input.riders.some(r=>r.riderId===id&&r.teamId===t.teamId))&&t.riderIds.includes(t.captainRiderId),'invalid original team')
+ const teams=input.teams.map(t=>{
+  const riderIds=t.riderIds.filter(id=>ids.has(id)).sort()
+  return {...t,riderIds,captainRiderId:riderIds.includes(t.captainRiderId)?t.captainRiderId:riderIds[0]}
+ }).filter(t=>t.riderIds.length>0)
+ const riders=input.riders.filter(r=>ids.has(r.riderId)).map(r=>({...r,condition:starters.find(x=>x.riderId===r.riderId).condition}))
+ return {input:{...input,riders,teams},receipt,readinessSha256:sha256,excluded:receipt.rows.filter(r=>r.startStatus==='dns').map(r=>r.riderId),...flags()}
+}
