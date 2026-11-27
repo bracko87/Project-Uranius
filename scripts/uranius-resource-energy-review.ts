@@ -14,12 +14,14 @@ export type EnergyMultipliers=Readonly<Record<string,number>>
 export function resolveResourceEnergyReview({evidence,expectedEvidenceSha256,ready}:any){
  req(evidence?.provenance==='synthetic_review_fixture'&&carryoverDigest(evidence)===expectedEvidenceSha256&&evidence.stageId===ready.stageId,'frozen supply evidence required')
  const {resources,requests,supplies}=evidence
+ const key=x=>x.resourceType+':'+x.resourceId
+ req(Array.isArray(resources)&&Array.isArray(requests)&&new Set(resources.map(key)).size===resources.length&&new Set(requests.map(key)).size===requests.length&&resources.length===requests.length&&resources.every(r=>requests.some(q=>key(q)===key(r))),'complete unique stock/request evidence required')
  req(Array.isArray(supplies)&&new Set(supplies.map(s=>s.resourceId)).size===supplies.length,'unique supply evidence required')
  const allocations=supplies.map(s=>{
   const r=resources.find(x=>x.resourceType==='supply'&&x.resourceId===s.resourceId),q=requests.find(x=>x.resourceType==='supply'&&x.resourceId===s.resourceId)
   req(r&&q&&r.teamId===s.teamId&&ready.rows.some(x=>x.teamId===s.teamId)&&['bidons_water_bottles','energy_gels','nutrition_packs'].includes(s.supplyKey),'invalid consumable binding')
   req(Number.isSafeInteger(r.quantity)&&r.quantity>=0&&Number.isSafeInteger(q.selectedQuantity)&&q.selectedQuantity>=0&&q.selectedStageUses===0&&r.stageUsesRemaining===null,'explicit consumable stock required')
-  req(Number.isSafeInteger(s.requiredQuantity)&&s.requiredQuantity>0&&fields.every(k=>typeof s.standardized[k]==='number'&&Number.isFinite(s.standardized[k])&&s.standardized[k]>=0&&s.standardized[k]<=100)&&Object.keys(s.standardized).length===fields.length,'explicit normalized supply input required')
+  req(Number.isSafeInteger(s.requiredQuantity)&&s.requiredQuantity>0&&s.standardized&&fields.every(k=>typeof s.standardized[k]==='number'&&Number.isFinite(s.standardized[k])&&s.standardized[k]>=0&&s.standardized[k]<=100)&&Object.keys(s.standardized).length===fields.length,'explicit normalized supply input required')
   const active=ready.rows.some(x=>x.teamId===s.teamId&&x.startStatus==='starter')
   // Conservative review-only all-or-none allocation: no invented partial bonus.
   const available=active&&q.selectedQuantity===s.requiredQuantity&&r.quantity>=s.requiredQuantity
