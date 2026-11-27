@@ -14,3 +14,7 @@ git pull origin main
 node tests\uraniusHistoricalTeamRescueAcceptance.mjs --offline-only
 ```
 Expected PASS 5/5 historical team rescue checks; no hosted connection. No PostgreSQL or additional downloads. Next prioritize actual engine base-replay/locked-plan evidence bridge and integrated incident trace rather than more isolated arithmetic. Official writer admission and production deployment remain BLOCKED.
+
+## Owner native acceptance — 2026-11-27
+
+Owner pulled 381a0a3..2d1e98b and ran prescribed offline harness. All five groups PASS, no hosted connection. Scoped 043T CLOSED; 123/123 owner-accepted native groups through 043T, overall 49/60. Physical replay, repeated/overlapping episodes and official authority remain outstanding.
