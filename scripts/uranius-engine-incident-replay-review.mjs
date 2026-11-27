@@ -8,7 +8,13 @@ const num=(x,a,b)=>typeof x==='number'&&Number.isFinite(x)&&x>=a&&x<=b
 const fields=(x,k)=>x&&typeof x==='object'&&!Array.isArray(x)&&Object.keys(x).sort().join(',')===[...k].sort().join(',')
 const round=x=>Math.round((x+Number.EPSILON)*1e6)/1e6
 const flags=()=>({official:false,hostedWriteAllowed:false,accountingAllowed:false,authoritativeSourceVerified:false,incidentFeedbackApplied:false,finalClassificationVerified:false,healthWritesPerformed:false})
-export function projectEngineIncidentReplay({input,readinessReceipt,runId,context,frames,winnerTimeSeconds}){
+export function projectEngineIncidentReplay(args){return project(args,null)}
+export function projectEngineIncidentReplayWithSource(args){
+ const source={}
+ const review=project(args,source)
+ return {review,...source}
+}
+function project({input,readinessReceipt,runId,context,frames,winnerTimeSeconds},capture){
  req(input.stageFormat==='road_race'&&input.orders.length===0&&input.settings.tickSeconds===30&&input.settings.replaySnapshotIntervalSeconds===30,'no-command 30s road stage required')
  req(fields(context,['terrainType','weatherCondition','precipitationMm','rainProbabilityPct','weatherMultiplier','severeWeather','flatSprint','plans','gcStandings'])&&['flat','hilly','mountain','cobbled'].includes(context.terrainType)&&typeof context.flatSprint==='boolean','explicit supplemental context required')
  req(readinessReceipt.raceId===input.raceId&&readinessReceipt.stageId===input.stageId&&readinessReceipt.runId===runId,'readiness scope mismatch')
@@ -54,6 +60,7 @@ export function projectEngineIncidentReplay({input,readinessReceipt,runId,contex
  // Original historical progress is time fraction, not measured road distance.
  // Supplemental stage plans and GC are synthetic; no rejoin feedback into occurrence loop.
  const chaseEvidence={provenance:'synthetic_review_fixture',consequences,riders,plans:context.plans,gcStandings:context.gcStandings,profilePoints,terrainType:context.terrainType,timeline,flatSprintFinish:context.flatSprint}
+ if(capture){capture.eligibilityEvidence=evidence;capture.chaseEvidence=chaseEvidence}
  const chase=consequences.length?reviewHistoricalTeamRescue({evidence:chaseEvidence,expectedEvidenceSha256:carryoverDigest(chaseEvidence)}):null
  return {version:'043U_engine_incident_replay_review_v1',measurements,trace,consequences,chase,measurementSha256:carryoverDigest(measurements),traceSha256:carryoverDigest(trace),chaseSha256:carryoverDigest(chase),distanceRule:'historical_time_fraction_separate_from_measured_km',occurrenceRule:'no_rejoin_feedback_conservative',...flags()}
 }
