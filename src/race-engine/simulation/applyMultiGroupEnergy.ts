@@ -61,6 +61,9 @@ export interface MultiGroupRiderEnergyApplication {
   readonly gradientPercent: number
   /** Full result after weather and optional shelter adjustment */
   readonly result: RiderEnergyCostResult
+  readonly experimentalWeatherStartKm?:number
+  readonly experimentalWeatherEnergyMultiplier?:number
+  readonly preparationEnergyMultiplier?:number
 
   /**
    * Present only when group-shelter energy savings are enabled.
@@ -210,7 +213,7 @@ export function applyMultiGroupEnergy(
           undefined,
         )
 
-  const weatherConsumptionMultiplier =
+  const openingWeatherConsumptionMultiplier =
     Math.max(
       weatherEffects
         .energyConsumptionMultiplier,
@@ -307,6 +310,9 @@ export function applyMultiGroupEnergy(
             )
           }
 
+          const segmented=state.weatherPerformanceEffectsEnabled===true&&state.input.weather?.courseBearingSegments!==undefined
+          const localWeather=segmented?calculateWeatherPerformanceEffects(state.input.weather,proposal.previousDistanceKm):weatherEffects
+          const weatherConsumptionMultiplier=segmented?Math.max(localWeather.energyConsumptionMultiplier,localWeather.staminaConsumptionMultiplier):openingWeatherConsumptionMultiplier
           const unadjustedResult =
             calculateRiderEnergyCost({
               currentEnergy:
@@ -509,6 +515,7 @@ export function applyMultiGroupEnergy(
               proposal
                 .gradientPercent,
             result:recordedResult,
+            ...(segmented?{experimentalWeatherStartKm:proposal.previousDistanceKm}:{}),
             ...(absoluteSpeedCandidate?{experimentalAbsoluteSpeedEnergySurcharge:paidAbsoluteSurcharge}:{}),
             ...(paidPullerSurcharge>0?{experimentalPullerEnergySurcharge:paidPullerSurcharge}:{}),
             ...(shelterResult
