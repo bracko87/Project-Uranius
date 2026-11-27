@@ -3,6 +3,8 @@
 import {calculateWeatherPerformanceEffects} from '../src/race-engine/simulation/weatherPerformanceEffects'
 import {validateStageInput} from '../src/race-engine/validation/validateStageInput'
 import {validateSimulationState} from '../src/race-engine/validation/validateSimulationState'
+import type {SimulationState} from '../src/race-engine/domain/SimulationState'
+import {applyReviewEnergyMultiplier} from './uranius-resource-energy-review'
 import type {StageInput,StageWeatherInput} from '../src/race-engine/domain/StageInput'
 import type {ApplyMultiGroupEnergyResult} from '../src/race-engine/simulation/applyMultiGroupEnergy'
 import type {EnergyMultipliers} from './uranius-resource-energy-review'
@@ -21,8 +23,8 @@ export function resolvePreparedPhysicalWeather(input:StageInput,context:any,weat
  const neutral=effects.speedMultiplier===1&&energyMultiplier===1&&effects.fatigueGainMultiplier===1&&historicalRiskMultiplier===1
  return {weather,effects,energyMultiplier,historicalRiskMultiplier,neutral,directionalWindVerified:false,official:false}
 }
-export function applyPreparedWeatherEnergy(result:ApplyMultiGroupEnergyResult,multipliers:EnergyMultipliers,weather:ReturnType<typeof resolvePreparedPhysicalWeather>){
- const state=result.state
+export function applyPreparedWeatherEnergy(result:ApplyMultiGroupEnergyResult,multipliers:EnergyMultipliers,weather:ReturnType<typeof resolvePreparedPhysicalWeather>,stateOverride?:SimulationState){
+ const state=stateOverride??result.state
  req(state.weatherPerformanceEffectsEnabled===true&&!weather.neutral&&!state.groupShelterEnergyEnabled&&!state.experimentalAbsoluteSpeedEffortEnabled,'unsupported combined weather energy state')
  const riders={...state.riders}
  const applications=result.applications.map(a=>{
@@ -38,6 +40,11 @@ export function applyPreparedWeatherEnergy(result:ApplyMultiGroupEnergyResult,mu
  })
  const next={...state,riders};validateSimulationState(next)
  return {...result,state:next,applications}
+}
+export type PreparedWeather=ReturnType<typeof resolvePreparedPhysicalWeather>
+export function applyOptionalPreparedWeatherEnergy(result:ApplyMultiGroupEnergyResult,multipliers?:EnergyMultipliers,weather?:PreparedWeather,stateOverride?:SimulationState){
+ if(weather&&!weather.neutral){req(multipliers,'explicit combined supply multipliers required');return applyPreparedWeatherEnergy(result,multipliers!,weather,stateOverride)}
+ return applyReviewEnergyMultiplier(result,multipliers,stateOverride)
 }
 export function combinedPreparedWeatherFatigue(supply:number,weather:ReturnType<typeof resolvePreparedPhysicalWeather>){
  req(Number.isFinite(supply)&&supply>=.9&&supply<=1.15,'invalid supply fatigue multiplier')
