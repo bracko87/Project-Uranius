@@ -34,14 +34,14 @@ const batch=startMultiRiderIncident(start,[
 ])
 
 const finish=finishPhysicalIncidentStage(batch.state,batch.episodes,batch.targetId)
-const digest=carryoverDigest(finish)
+const snapshot=structuredClone(finish)
 const policy={provenance:'synthetic_review_fixture' as const,groupGapSeconds:1,timeLimitPercent:10,sprintZoneKm:3,flatFinish:true}
 const affected=[a,b,d],sourceGroupRiderIds=start.groups[batch.targetId].riderIds.slice()
 const incidents=affected.map(riderId=>({incidentId:'controlled-late-crash',riderId,kind:'group_crash' as const,km:start.currentKm,sourceGroupRiderIds,affectedRiderIds:affected}))
 const project=(f=finish,p=policy,e=incidents)=>reviewSportingClassification({finish:f,policy:p,incidents:e,expectedPolicySha256:carryoverDigest(p),expectedIncidentsSha256:carryoverDigest(e)})
 // Protect only the rider with an eligible late-incident witness; the second
 // witness is exhaustion, not a crash/mechanical incident. DNF stays terminal.
-const mixed=incidents.map(e=>({...e,kind:e.riderId===b?'exhaustion' as const:e.kind}))
+const mixed=incidents.map(e=>e.riderId===b?{...e,incidentId:'controlled-exhaustion',kind:'exhaustion' as const,affectedRiderIds:[b]}:{...e,affectedRiderIds:[a,d]})
 const out=project(finish,policy,mixed),get=id=>out.rows.find(r=>r.riderId===id)
 assert.equal(get(a).status,'finished')
 assert.equal(get(a).sportingElapsedSeconds,out.winnerSportingSeconds)
@@ -64,7 +64,7 @@ const leading=finish.classification.filter(r=>r.elapsedSeconds===finish.classifi
 assert.ok(leading.length>1)
 assert.ok(leading.every(r=>get(r.riderId).sportingElapsedSeconds===out.winnerSportingSeconds))
 assert.ok(out.rows.filter(r=>r.status==='finished').every(r=>Number.isInteger(r.sportingElapsedSeconds)&&r.sportingGapSeconds===r.sportingElapsedSeconds-out.winnerSportingSeconds))
-assert.equal(carryoverDigest(finish),digest)
+assert.deepEqual(finish,snapshot)
 console.log('PASS 043AE shared group times, contiguous sporting ranks and immutable physical classification')
 let fractional=false
 for(const r of out.rows){
