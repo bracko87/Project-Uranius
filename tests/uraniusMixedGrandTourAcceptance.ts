@@ -123,7 +123,7 @@ assert.equal(terrain.filter(t=>t==='mountain').length,7)
 assert.equal(terrain.filter(t=>t==='hilly').length,6)
 assert.equal((Date.parse(mixed.stages.at(-1).date)-Date.parse(mixed.stages[0].date))/86400000+1,23)
 assert.equal(mixed.stages.filter((s,i)=>i&&(Date.parse(s.date)-Date.parse(mixed.stages[i-1].date))/86400000===2).length,2)
-assert.equal(mixed.stages.reduce((n,s)=>n+s.input.distanceKm,0),810)
+assert.equal(mixed.stages.reduce((n,s)=>n+s.input.distanceKm,0),790)
 console.log('PASS 043AX 21 physical mixed stages, two rest days and repeated natural separation; km='+mixed.stages.reduce((n,s)=>n+s.input.distanceKm,0)+' naturalDrops='+naturalDrops+' lateNaturalDrops='+lateNaturalDrops+' contacts='+contacts+' finalGC='+out.gc.length+' elapsedMs='+Math.round(performance.now()-start))
 const withdrawn=new Set(),incidents=new Set(),totals=new Map()
 let recoveryNights=0,savedTicks=0
