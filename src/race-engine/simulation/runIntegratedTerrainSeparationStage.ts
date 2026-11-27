@@ -140,6 +140,8 @@ export interface IntegratedTerrainSeparationOptions {
   /** Offline single-tick adapter; caller owns frozen incident evidence and replay. */
   readonly experimentalRepairMotion?: (state:SimulationState, movement:TerrainAwareMultiGroupMovementResult)=>TerrainAwareMultiGroupMovementResult
   readonly experimentalIndependentRepairGroupIds?: readonly string[]
+  readonly experimentalEquipmentCapabilityAdjustments?: Readonly<Record<string,number>>
+  readonly experimentalPreparationEnergy?: (result:ApplyMultiGroupEnergyResult)=>ApplyMultiGroupEnergyResult
   /** OFFLINE OPT-IN: no physical peloton teleport from a trailing attack. */
   readonly experimentalPreserveTrailingAttackGroups?: boolean
   /** OFFLINE COUNTERFACTUAL ONLY; default OFF. */
@@ -482,6 +484,7 @@ function evaluatePressure(
   steepGradientSeverityEnabled: boolean,
   steepGradientSeverityModel:
     SteepGradientSeverityModel,
+  equipmentAdjustments?: Readonly<Record<string,number>>,
 ): PressureEvaluationResult {
   const proposalByGroupId =
     createProposalMap(
@@ -681,19 +684,18 @@ function evaluatePressure(
         ?.additionalDemandPoints ??
       0
 
+    const preparedCapability=(result:RiderTerrainCapabilityResult)=>{
+      const base=steepSeverityByRiderId.get(result.riderId)?.adjustedCapabilityScore??result.capabilityScore
+      if(!equipmentAdjustments)return base
+      const delta=equipmentAdjustments[result.riderId]
+      if(!Number.isFinite(delta)||Math.abs(delta)>20)throw Error('invalid equipment pressure adjustment')
+      return Math.min(100,Math.max(0,base+delta*result.fatigueMultiplier))
+    }
     const groupDemandScore =
       Math.min(
         100,
         average(
-          capabilities.map(
-            (result) =>
-              steepSeverityByRiderId
-                .get(
-                  result.riderId,
-                )
-                ?.adjustedCapabilityScore ??
-              result.capabilityScore,
-          ),
+          capabilities.map(preparedCapability),
         ) +
           additionalDemandPoints,
       )
@@ -711,7 +713,7 @@ function evaluatePressure(
           capability.riderId,
         ) ?? null
 
-      const effectiveCapabilityScore =
+      const effectiveCapabilityScore = equipmentAdjustments ? Math.min(100,preparedCapability(capability)+(steepGradientSeverity?.adjustedShelterBonus??shelter.shelterBonus)) :
         steepGradientSeverity
           ?.effectiveCapabilityScore ??
         Math.min(
@@ -1312,6 +1314,7 @@ export function simulateIntegratedTerrainSeparationTick(
       {
         steepGradientSeverityEnabled:
           steepGradientMovementSeverityEnabled,
+        ...(options.experimentalEquipmentCapabilityAdjustments?{experimentalEquipmentCapabilityAdjustments:options.experimentalEquipmentCapabilityAdjustments}:{}),
         steepGradientSeverityModel:
           steepGradientMovementSeverityModel,
         experimentalChaseOrdersEnabled:
@@ -1346,7 +1349,7 @@ export function simulateIntegratedTerrainSeparationTick(
         movement.movement,
     })
 
-  const appliedEnergy =
+  const neutralEnergy =
     applyMultiGroupEnergy({
       state:
         appliedMovement.state,
@@ -1358,6 +1361,8 @@ export function simulateIntegratedTerrainSeparationTick(
         ?{experimentalPullerEnergyCosts:movement.experimentalPullerEnergyCosts}:{}),
     })
 
+  const appliedEnergy=options.experimentalPreparationEnergy?options.experimentalPreparationEnergy(neutralEnergy):neutralEnergy
+  if(options.experimentalPreparationEnergy&&(options.individualCrashIntegration||options.crashIncidentIntegration||options.raceIncidentIntegration))throw Error('external preparation energy cannot coexist with native incidents')
   if(options.experimentalRepairMotion && (options.individualCrashIntegration || options.crashIncidentIntegration || options.raceIncidentIntegration)) throw Error('external repair motion cannot coexist with native incidents')
   const enabledIncidentIntegrationCount =
     Number(
@@ -1445,6 +1450,7 @@ export function simulateIntegratedTerrainSeparationTick(
       separationWindowSeconds,
       steepGradientSeverityEnabled,
       steepGradientSeverityModel,
+      options.experimentalEquipmentCapabilityAdjustments,
     )
 
   const transitionApplication =
