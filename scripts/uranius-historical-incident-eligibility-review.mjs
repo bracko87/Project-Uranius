@@ -70,7 +70,9 @@ function evaluateHistoricalEligibilityTrace({evidence,expectedEvidenceSha256},se
  const baseSpeed=round(distanceKm/Math.max(winnerTimeSeconds/3600,.01))
  for(let i=0;i<ticks.length;i++){
   const raceSecond=(i+1)*30,progressFraction=clamp(raceSecond/winnerTimeSeconds,0,1)
-  const tick=feedback?feedback({tick:ticks[i],raceSecond,kmFromStart:round(distanceKm*progressFraction),incidents:incidents.slice(),selectedCheckpoints:selectedCheckpoints.slice()}):ticks[i]
+  const applied=feedback?feedback({tick:ticks[i],raceSecond,kmFromStart:round(distanceKm*progressFraction),incidents:incidents.slice(),selectedCheckpoints:selectedCheckpoints.slice()}):ticks[i]
+  const tick=applied.tick??applied,excluded=new Set(applied.excludedRiderIds??[])
+  req([...excluded].every(id=>byId.has(id)),'unknown excluded feedback rider')
   req(fields(tick,['raceSecond','gradientPercent','riders','groups','rejoins'])&&tick.raceSecond===raceSecond&&num(tick.gradientPercent,-100,100)&&uniq(tick.riders,r=>r.riderId)&&tick.riders.length===roster.length&&tick.riders.every(r=>fields(r,['riderId','status','energy','commandIntensity'])&&byId.has(r.riderId)&&['racing','finished','dnf','dns','otl'].includes(r.status)&&num(r.energy,0,100)&&num(r.commandIntensity,.82,1.45))&&uniq(tick.groups,g=>g.displayCode)&&uniq(tick.rejoins,r=>r.riderId),'invalid checkpoint grid or coverage')
   const obs=new Map(tick.riders.map(r=>[r.riderId,r])),groupFor=new Map()
   for(const g of tick.groups){
@@ -86,7 +88,7 @@ function evaluateHistoricalEligibilityTrace({evidence,expectedEvidenceSha256},se
    s.rejoinKm=rejoin.rejoinKm
   }
   if(!gate.eligible){audit.push({raceSecond,...gate,candidateCount:0,exhaustionEligible:[],selectedIncidentId:null});continue}
-  const eligible=tick.riders.filter(o=>o.status==='racing'&&byId.get(o.riderId).eligibleToStart&&historicalRiderGate({raceSecond,kmFromStart:gate.kmFromStart,...state.get(o.riderId)}))
+  const eligible=tick.riders.filter(o=>!excluded.has(o.riderId)&&o.status==='racing'&&byId.get(o.riderId).eligibleToStart&&historicalRiderGate({raceSecond,kmFromStart:gate.kmFromStart,...state.get(o.riderId)}))
   const fatigue=o=>{const r=byId.get(o.riderId),start=Math.max(1,r.startingEnergy);return round(clamp(r.effectiveFatigue+Math.max(0,start-o.energy)/start*45,0,100))}
   const support=r=>clamp(r.riderSupport*r.teamSupport,.7,1.4)
   const situation=(kind,g,n)=>{
