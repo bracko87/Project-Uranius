@@ -1,0 +1,20 @@
+# 043AP — durable clothing and historical weather illness candidate (offline only)
+
+043AO owner native 4/4 accepted; cumulative 204/204 distinct groups. 58c8b7a adds clothing allocation and exposure candidate calculation; a6eb720 binds stage evidence and durable stock ledger to actual tour; f6c6783 adds native acceptance; fae87ac strengthens terminal scope and history score validation. Sources: `reference/database/20260929183600_baseline_03_plpgsql_751_900.sql.txt` lines 1866–2160; `20260929184654_baseline_04_sql_dump_241_360.sql.txt` lines 10986–11020; `20260929183608_baseline_03_plpgsql_901_1050.sql.txt` lines 6349–6520; prior accepted 043B durable reservation and medical center review.
+
+Explicit same-team individually assigned rain jacket units with maxStageUses=25 (043B), one use per actual assigned starter on a date, no reuse by another rider. No auto assignment or shared parent-club allocation; requests for depleted stock yield no jacket and no use, unassigned/spare/DNS consume none. This is an explicit isolated allocation policy, not a claim of recovered production allocation writer. Stock debit occurs once in existing resource ledger, checked against allocation; actual physical finishers only generate exposure when required. Physical OTL finishers count as physical finishers in this adaptation. History is chained through actual tour receipts starting empty; no external historical record claimed. For each unprotected finisher, count current exposure plus prior unprotected exposures in inclusive previous 14 days (strictly prior dates, causal scope). Original threshold is roll < 45 * medical risk multiplier, with at least 2 exposures. Medical center level 0–5 reduces risk 3% per level, capped 15%. Original roll uses abs(hashtext(rider_id || '-' || stage_id || '-weather-illness')) % 100. This review uses explicit synthetic signed int32 hashtext witnesses bound to exact input string; excludes INT32_MIN to avoid abs overflow, no claim PostgreSQL hash parity or actual historical roll. Candidates record original requested start date next day and legacy numeric arguments [3,10,2], not a verified recovery period.
+
+Critical blocker: archived exposure function calls create_rider_health_case with illness and free-form label/description and active status, but recovered legacy function signature requires case type injury/sickness, severity minor/moderate/major, normalized catalogue code and valid source. Cannot assume successful case creation or infer actual illness duration. Candidate only, no availability change, no fabricated illness, no health writes, no forced DNS, no in-race weather benefit. Jersey eligibility/shortage formula not established; not implemented. Actual original catalogue/configuration metadata read still requires separate explicit owner approval and verified project identity. Hosted activation BLOCKED.
+
+Acceptance: actual 3-stage physical tour (200/90/20km) baseline and clothing-enabled, one jacket with one use left then exhausted, spare untouched; medical levels 0 and 5, synthetic signed hash witnesses -38/99, actual physical exposure continuity and candidates, unchanged physical classifications and rider states. Controlled genuine short finish verifies inclusive 14-day boundary, strict roll threshold, duplicate/future history, duplicate allocation, same-day nonreuse and digest guard; deterministic replay. Native execution and TypeScript checking pending. No hosted access or writes performed.
+
+Windows CMD:
+
+```bat
+git pull origin main
+node_modules\.bin\esbuild.cmd tests\uraniusWeatherClothingAcceptance.ts --bundle --platform=node --format=cjs --outfile="%TEMP%\uranius-043ap-test.cjs"
+node "%TEMP%\uranius-043ap-test.cjs" --offline-only
+del "%TEMP%\uranius-043ap-test.cjs"
+```
+
+Expected PASS 4/4 weather clothing checks; no hosted connection.
