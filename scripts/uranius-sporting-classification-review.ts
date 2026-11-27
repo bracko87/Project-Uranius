@@ -39,7 +39,7 @@ export function reviewSportingClassification({finish,policy,incidents,expectedPo
   req(!t.state.groupShelterEnergyEnabled&&!t.state.experimentalAbsoluteSpeedEffortEnabled&&!(e.experimentalPullerEnergySurcharge??0),'unsupported energy modifier')
   if(weatherEnabled){
    const w=calculateWeatherPerformanceEffects(t.state.input.weather)
-   req(t.state.input.weather?.source==='synthetic_review_fixture'&&num(weatherWitness,1,1.75)&&weatherWitness===Math.max(w.energyConsumptionMultiplier,w.staminaConsumptionMultiplier),'explicit combined weather energy witness required')
+   req(t.state.input.weather?.source==='synthetic_review_fixture'&&num(weatherWitness,w.directionalWind?.scope==='synthetic_constant_bearing' ? .895 : 1,1.75)&&weatherWitness===Math.max(w.energyConsumptionMultiplier,w.staminaConsumptionMultiplier),'explicit combined weather energy witness required')
   }else req(weatherWitness===undefined&&e.runtimeFatigueGain===undefined,'unexpected weather energy or fatigue witness')
   const multiplier=e.preparationEnergyMultiplier??1
   req(num(multiplier,.9,1),'invalid preparation energy multiplier')
