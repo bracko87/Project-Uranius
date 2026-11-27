@@ -30,6 +30,7 @@ export interface RiderPaceContribution {
    * Capability before fatigue is applied.
    */
   readonly rawCapabilityScore: number
+  readonly experimentalEquipmentAdjustment?: number
 
   /**
    * Multiplier derived from the rider's current energy,
