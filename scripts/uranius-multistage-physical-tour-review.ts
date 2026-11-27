@@ -6,6 +6,7 @@ import {originalPostStageFatigueReview,originalPhase9ResourceReview} from './ura
 import {captureAutomaticOverlappingFinishPrefix,captureTourStageFinishPrefix} from './uranius-automatic-overlapping-incident-review'
 import {finishPhysicalIncidentStage} from './uranius-physical-incident-finish-review'
 import {reviewSportingClassification} from './uranius-sporting-classification-review'
+import {reviewIndividualEquipmentWear} from './uranius-individual-equipment-wear-review'
 import {createInitialState} from '../src/race-engine/simulation/createInitialState'
 const P='synthetic_review_fixture',req=(x:unknown,m:string)=>{if(!x)throw Error('043AH: '+m)}
 const flags=()=>({official:false,hostedWriteAllowed:false,accountingAllowed:false,authoritativeSourceVerified:false,finalClassificationVerified:false})
@@ -25,6 +26,7 @@ const resourceState=(x:any)=>{
 export function reviewMultistagePhysicalTour({packet,expectedPacketSha256}:any){
  req(packet?.provenance===P&&carryoverDigest(packet)===expectedPacketSha256,'frozen tour packet required')
  const {firstSource,stages,initialResources}=packet
+ req(packet.individualEquipmentWear===undefined||packet.individualEquipmentWear===true&&packet.mechanicalBinding,'individual wear requires explicit mechanical binding')
  req(Array.isArray(stages)&&stages.length>=3&&stages.length<=21&&uniq(stages,s=>s.input.stageId)&&uniq(stages,s=>s.runId)&&uniq(stages,s=>s.input.seed),'distinct 3–21 stages required')
  req(firstSource.stageNumber===1&&firstSource.stageId===stages[0].input.stageId&&firstSource.runId===stages[0].runId&&firstSource.date===stages[0].date&&firstSource.difficultyCategory===stages[0].difficultyCategory,'first stage mismatch')
  const original=stages[0].input,raceId=original.raceId
@@ -108,6 +110,7 @@ export function reviewMultistagePhysicalTour({packet,expectedPacketSha256}:any){
    return {riderId:r.riderId,teamId:r.teamId,status:row.status,persistedFatigue:started?Math.round(effect.fatigueAfterStage):r.condition.fatigueBeforeStage,availabilityStatus,selectionBlocked,withdrawal:old?.withdrawal??(row.status!=='finished'?{stageId,status:row.status}:null),injuries:[...(old?.injuries??[]),...injuries],workload,effect,energyAudit:{fullTickEnergy:actual?.energy??0,correctedEnergy:energy,alreadyAppliedIncidentLoss:history.reduce((n,h)=>n+h.appliedLoss,0),additionalIncidentDeduction:0}}
   })
   req(uniq(stage.resourceRequests,key)&&stage.resourceRequests.length===resources.length,'complete resource requests required')
+  const individualWear=packet.individualEquipmentWear===true?reviewIndividualEquipmentWear({finish,ready,mechanicalEvidence,expectedMechanicalSha256:carryoverDigest(mechanicalEvidence),sportingRows:rows}):null
   const activeTeams=new Set(starters.map(r=>r.teamId))
   const resourceRows=resources.map(before=>{
    const request=stage.resourceRequests.find(r=>key(r)===key(before))
@@ -117,6 +120,11 @@ export function reviewMultistagePhysicalTour({packet,expectedPacketSha256}:any){
    req(before.stageUsesRemaining!==null||request.selectedStageUses===0,'durable request without stock')
    req(before.lastUsedDate===null||day(before.lastUsedDate)<=day(date),'future durable use date')
    req(before.lastUsedDate!==date||request.selectedStageUses===0,'duplicate daily durable use')
+   if(individualWear&&before.resourceType==='equipment'){
+    const w=individualWear.receipt.rows.find(r=>r.resourceId===before.resourceId)
+    req(w&&carryoverDigest(w.before)===carryoverDigest(before),'individual wear opening ledger mismatch')
+    return {before,after:resourceState(w.after),effect:w.effect}
+   }
    if(!activeTeams.has(before.teamId)){req(request.selectedQuantity===0&&request.selectedStageUses===0,'inactive team cannot consume resources');return {before,after:before,effect:null}}
    const engine={resourceType:before.resourceType,resourceId:before.resourceId,teamId:before.teamId,selectedQuantity:request.selectedQuantity,selectedStageUses:request.selectedStageUses,conditionLossPerRaceDay:request.conditionLossPerRaceDay}
    for(const k of ['quantity','stageUsesRemaining','maxStageUses','condition'])if(before[k]!==null)engine[k]=before[k]
@@ -131,7 +139,7 @@ export function reviewMultistagePhysicalTour({packet,expectedPacketSha256}:any){
    return {riderId:r.riderId,teamId:r.teamId,totalTimeSeconds:(old?.totalTimeSeconds??0)+r.sportingElapsedSeconds!,rankSum:(old?.rankSum??0)+r.sportingRank!}
   }).sort((a,b)=>a.totalTimeSeconds-b.totalTimeSeconds||a.rankSum-b.rankSum||a.riderId.localeCompare(b.riderId)).map((r,i,all)=>({...r,rank:i+1,gapSeconds:r.totalTimeSeconds-all[0].totalTimeSeconds}))
   req(gc.length>0,'no cumulative finishers')
-  const receipt={version:'043AH_tour_stage_receipt_v1',provenance:P,raceId,stageId,stageNumber:index+1,runId,date,scheduleSha256,priorSha256:prior?carryoverDigest(prior):null,runHistory:[...(prior?.runHistory??[]),runId],riders,resources:resourceRows,gc,...flags()}
+  const receipt={version:'043AH_tour_stage_receipt_v1',provenance:P,raceId,stageId,stageNumber:index+1,runId,date,scheduleSha256,priorSha256:prior?carryoverDigest(prior):null,runHistory:[...(prior?.runHistory??[]),runId],riders,resources:resourceRows,gc,...(individualWear?{individualEquipmentWear:individualWear}:{}),...flags()}
   reports.push({stageId,stageNumber:index+1,ready,readinessSha256:bound.readinessSha256,recoveryReceipts:nights,initialRiders:starters.map(r=>({riderId:r.riderId,energy:initial.riders[r.riderId].energy,condition:initial.riders[r.riderId].startingCondition})),initialTeams:initial.input.teams,physicalCompleted:finish.state.completed,physicalClassification:finish.classification,physicalClassificationSha256:finish.classificationSha256,sportingRows:rows,incidentIds:prefix.trace.incidents.map(e=>e.incident.incidentId),applications:prefix.applications,observationSha256:prefix.observationSha256,...(performanceEvidence?{equipmentPerformance:prefix.equipmentPerformance,baselineWinnerTimeSeconds:prefix.baselineWinnerTimeSeconds,openingPhysicalObservation:prefix.observations[0]}:{}),...(mechanicalEvidence?{resourceMechanical:prefix.resourceMechanical,mechanicalCheckpoints:prefix.selectedCheckpoints}:{}),...(energyEvidence?{resourceEnergy:prefix.resourceEnergy,physicalEnergyAudit:[...prefix.energyAudit,...finish.ticks.flatMap(t=>t.energy.map(a=>({raceSecond:t.state.raceSecond,riderId:a.riderId,previousEnergy:a.previousEnergy,nextEnergy:a.nextEnergy,neutralCost:a.result.grossEnergyCost*a.result.efficiencyMultiplier,multiplier:energyMultipliers[a.riderId]})))],finishEnergyWitness:finish.ticks.flatMap(t=>t.crossings.map(c=>({riderId:c.riderId,crossingFraction:c.crossingFraction,energy:t.energy.find(a=>a.riderId===c.riderId)})))}:{}),receipt,receiptSha256:carryoverDigest(receipt)})
   prior=receipt
  }
