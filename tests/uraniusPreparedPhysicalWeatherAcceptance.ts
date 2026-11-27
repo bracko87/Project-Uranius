@@ -65,7 +65,9 @@ console.log('PASS 043AY canonical rain, strong-wind, cold and heat coefficients,
 let ticks=0,weatherFatigue=0,saved=0,cap=0,measuredCandidates=0,descents=0
 const results=[]
 for(const [name,w] of cases.slice(1)){
- const p=scenario(w,name==='heat'?'hilly':'mountain'),x=run(p),physical=x.physical,e=physical.physicalWeather
+ const candidate=scenario(w,name==='heat'?'hilly':'mountain')
+ const p=name==='severe'?{...candidate,input:{...route,seed:'043AU-natural-history-0'}}:candidate
+ const x=run(p),physical=x.physical,e=physical.physicalWeather
  assert.ok(physical.finalState.completed&&physical.classification.length===24)
  assert.equal(e.historicalRiskMultiplier,p.context.weatherMultiplier)
  const first=physical.ticks[0].movement
@@ -104,6 +106,14 @@ for(const [name,w] of cases.slice(1)){
  results.push({p,x})
 }
 assert.ok(ticks>0&&weatherFatigue>0&&saved>0&&descents>0)
+// Controlled exhaustion boundary from a real weather tick: the combined
+// cost must be capped after multiplying the uncapped gross, not before.
+const t=results[0].x.physical.ticks[0].appliedEnergy,a=t.applications[0]
+const small=Math.min(.000001,a.result.grossEnergyCost*a.result.efficiencyMultiplier/10)
+assert.ok(small>0)
+const boundary={...t,applications:[{...a,previousEnergy:small,nextEnergy:0}],state:{...t.state,riders:{...t.state.riders,[a.riderId]:{...t.state.riders[a.riderId],energy:0}}}}
+const checked=applyPreparedWeatherEnergy(boundary,{[a.riderId]:.9},results[0].x.physical.physicalWeather)
+assert.equal(checked.applications[0].nextEnergy,0);assert.equal(checked.applications[0].energyCost,small)
 console.log('PASS 043AY actual prepared weather motion, capped energy and nutrition; ticks='+ticks+' savedTicks='+saved+' capTicks='+cap+' weatherFatigueTicks='+weatherFatigue+' descentProposals='+descents)
 assert.ok(measuredCandidates>0,'actual selected historical checkpoints required')
 console.log('PASS 043AY one historical weather risk factor, fractional finish workload, fatigue and single resource accounting; measuredCandidates='+measuredCandidates)
