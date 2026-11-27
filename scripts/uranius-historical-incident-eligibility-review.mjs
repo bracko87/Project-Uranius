@@ -48,7 +48,14 @@ export function reviewHistoricalEligibilityTraceWithCheckpoints(packet){
  const trace=evaluateHistoricalEligibilityTrace(packet,selectedCheckpoints)
  return {trace,selectedCheckpoints}
 }
-function evaluateHistoricalEligibilityTrace({evidence,expectedEvidenceSha256},selectedCheckpoints){
+// 043W experimental callback is local review logic, not part of frozen external evidence.
+export function reviewHistoricalEligibilityTraceWithFeedback(packet,feedback){
+ req(typeof feedback==='function','feedback callback required')
+ const selectedCheckpoints=[]
+ const trace=evaluateHistoricalEligibilityTrace(packet,selectedCheckpoints,feedback)
+ return {trace,selectedCheckpoints}
+}
+function evaluateHistoricalEligibilityTrace({evidence,expectedEvidenceSha256},selectedCheckpoints,feedback=null){
  req(evidence?.provenance==='synthetic_review_fixture'&&carryoverDigest(evidence)===expectedEvidenceSha256,'frozen synthetic trace required')
  req(fields(evidence,['provenance','raceId','stageId','runId','seed','stage','winnerTimeSeconds','weatherMultiplier','severeWeather','flatSprint','roster','ticks']),'unexpected trace fields')
  const {raceId,stageId,runId,seed,stage,winnerTimeSeconds,weatherMultiplier,severeWeather,flatSprint,roster,ticks}=evidence
@@ -62,7 +69,8 @@ function evaluateHistoricalEligibilityTrace({evidence,expectedEvidenceSha256},se
  let nextGlobalEligibleSecond=0,crashCount=0
  const baseSpeed=round(distanceKm/Math.max(winnerTimeSeconds/3600,.01))
  for(let i=0;i<ticks.length;i++){
-  const tick=ticks[i],raceSecond=(i+1)*30,progressFraction=clamp(raceSecond/winnerTimeSeconds,0,1)
+  const raceSecond=(i+1)*30,progressFraction=clamp(raceSecond/winnerTimeSeconds,0,1)
+  const tick=feedback?feedback({tick:ticks[i],raceSecond,kmFromStart:round(distanceKm*progressFraction),incidents:incidents.slice(),selectedCheckpoints:selectedCheckpoints.slice()}):ticks[i]
   req(fields(tick,['raceSecond','gradientPercent','riders','groups','rejoins'])&&tick.raceSecond===raceSecond&&num(tick.gradientPercent,-100,100)&&uniq(tick.riders,r=>r.riderId)&&tick.riders.length===roster.length&&tick.riders.every(r=>fields(r,['riderId','status','energy','commandIntensity'])&&byId.has(r.riderId)&&['racing','finished','dnf','dns','otl'].includes(r.status)&&num(r.energy,0,100)&&num(r.commandIntensity,.82,1.45))&&uniq(tick.groups,g=>g.displayCode)&&uniq(tick.rejoins,r=>r.riderId),'invalid checkpoint grid or coverage')
   const obs=new Map(tick.riders.map(r=>[r.riderId,r])),groupFor=new Map()
   for(const g of tick.groups){
