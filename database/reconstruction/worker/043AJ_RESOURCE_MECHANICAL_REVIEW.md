@@ -16,3 +16,6 @@ del "%TEMP%\uranius-043aj-test.cjs"
 ```
 
 Expected PASS 4/4 resource mechanical checks; no hosted connection. Hosted activation BLOCKED.
+
+## Owner acceptance — 2026-11-27
+Owner pulled 19721bc; esbuild bundle 345.4kb succeeded in 473ms. Native PASS 4/4: six physical components and weakest-condition wear carried into actual stages; historical mechanical risk reaches actual candidates (167 candidates, 48 worn, 5 technical applications); support benefit enabled only with available use, exhausted stock removes benefit; deterministic resource-bound replay, invalid setup rejection and authority guards. Temporary bundle deleted; no hosted connection. Scoped 043AJ accepted; cumulative 184/184 distinct native acceptance groups. Technical repair calculations witnessed; exact count of supported versus unsupported repair applications not reported. Original speed/energy/nutrition derivation, per-rider mileage wear and production preparation eligibility remain pending. Hosted activation BLOCKED.
