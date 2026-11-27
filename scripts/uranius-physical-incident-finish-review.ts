@@ -10,13 +10,15 @@ import {validateSimulationState} from '../src/race-engine/validation/validateSim
 import {carryoverDigest} from './uranius-multistage-carryover-review.mjs'
 import {captureAutomaticOverlappingFinishPrefix} from './uranius-automatic-overlapping-incident-review'
 import {multiRiderIncidentTick} from './uranius-multi-rider-incident-motion-review'
-import {applyReviewEnergyMultiplier,type EnergyMultipliers} from './uranius-resource-energy-review'
+import type {EnergyMultipliers} from './uranius-resource-energy-review'
+import {applyOptionalPreparedWeatherEnergy,type PreparedWeather} from './uranius-prepared-physical-weather-review'
 type Episode=Parameters<typeof multiRiderIncidentTick>[1][number]
 type FinalEpisode=Omit<Episode,'phase'>&{phase:Episode['phase']|'finished'}
 const req=(x:unknown,m:string)=>{if(!x)throw Error('043AD: '+m)}
-export function physicalFinishTick(state:SimulationState,episodes:readonly FinalEpisode[],targetId:string,multipliers?:EnergyMultipliers,capabilityAdjustments?:Readonly<Record<string,number>>,terrainCapability=false){
+export function physicalFinishTick(state:SimulationState,episodes:readonly FinalEpisode[],targetId:string,multipliers?:EnergyMultipliers,capabilityAdjustments?:Readonly<Record<string,number>>,terrainCapability=false,weather?:PreparedWeather){
  req(!state.completed&&state.input.orders.length===0,'active no-command state required')
- const base=calculateMultiGroupMovement(state,capabilityAdjustments,terrainCapability),dt=base.tickSeconds/3600
+ const speedFactor=weather?.effects.speedMultiplier??1
+ const base=calculateMultiGroupMovement(state,capabilityAdjustments,terrainCapability,!!weather&&!weather.neutral),dt=base.tickSeconds/3600
  const target=base.proposals.find(p=>p.groupId===targetId)
  req(target||(!state.groups[targetId]?.active&&state.currentKm===state.stageDistanceKm),'missing live or finished target')
  const active=episodes.filter(e=>e.phase!=='joined'&&e.phase!=='finished')
@@ -28,7 +30,7 @@ export function physicalFinishTick(state:SimulationState,episodes:readonly Final
   let speed=p.appliedSpeedKmh,cap=limit
   if(ep){
    const repair=state.raceSecond<ep.repairUntil
-   speed=p.groupId===ep.groupId?(repair?0:target?Math.min(state.input.settings.maximumSpeedKmh,(terrainCapability?p.appliedSpeedKmh+8*p.terrainMultiplier:Math.max(p.appliedSpeedKmh,target.appliedSpeedKmh+8))):p.appliedSpeedKmh):(repair?(terrainCapability?p.appliedSpeedKmh:(target?.appliedSpeedKmh??p.appliedSpeedKmh))*.25:0)
+   speed=p.groupId===ep.groupId?(repair?0:target?Math.min(state.input.settings.maximumSpeedKmh,(terrainCapability?p.appliedSpeedKmh+8*p.terrainMultiplier*speedFactor:Math.max(p.appliedSpeedKmh,target.appliedSpeedKmh+8*speedFactor))):p.appliedSpeedKmh):(repair?(terrainCapability?p.appliedSpeedKmh:(target?.appliedSpeedKmh??p.appliedSpeedKmh))*.25:0)
    // Before the finish tick retain target contact cap; never merge into a finished target.
    if(target&&target.nextDistanceKm<limit)cap=target.nextDistanceKm
    if(!repair&&p.groupId===ep.groupId&&ep.helperGroupId)cap=Math.min(cap,state.groups[ep.helperGroupId].distanceKm)
@@ -46,7 +48,7 @@ export function physicalFinishTick(state:SimulationState,episodes:readonly Final
  const elapsed=previousWinners.length?Math.max(0,state.raceSecond+base.tickSeconds-Math.min(...previousWinners)):0
  const movement={...base,leaderGroupId:leader.groupId,leaderDistanceKm,proposals:preliminary.map(p=>({...p,gapFromLeaderSeconds:Math.max(0,leaderDistanceKm-p.nextDistanceKm)*3600/Math.max(1,leader.appliedSpeedKmh)+elapsed}))}
  const moved=applyMultiGroupMovement({state,movement}).state
- const energy=applyReviewEnergyMultiplier(applyMultiGroupEnergy({state:moved,movement}),multipliers)
+ const energy=applyOptionalPreparedWeatherEnergy(applyMultiGroupEnergy({state:moved,movement}),multipliers,weather)
  let next=energy.state
  const pickups:string[]=[],rejoins:string[]=[]
  const merge=(fromId:string,toId:string)=>{
@@ -80,14 +82,14 @@ export function physicalFinishTick(state:SimulationState,episodes:readonly Final
  validateSimulationState(next)
  return {state:next,episodes:updated,pickups,rejoins,movement,energy:energy.applications,results:applied?.newResults??[],crossings:detection.candidates,official:false,hostedWriteAllowed:false}
 }
-export function finishPhysicalIncidentStage(initial:SimulationState,initialEpisodes:readonly Episode[],targetId:string,maximumTicks=1440,multipliers?:EnergyMultipliers,capabilityAdjustments?:Readonly<Record<string,number>>,terrainCapability=false){
+export function finishPhysicalIncidentStage(initial:SimulationState,initialEpisodes:readonly Episode[],targetId:string,maximumTicks=1440,multipliers?:EnergyMultipliers,capabilityAdjustments?:Readonly<Record<string,number>>,terrainCapability=false,weather?:PreparedWeather){
  req(!initial.completed&&Number.isSafeInteger(maximumTicks)&&maximumTicks>0&&maximumTicks<=1440,'invalid continuation scope')
  req(Object.values(initial.riders).every(r=>r.stageStatus==='racing'||r.stageStatus==='dnf'),'pre-finish prefix required')
  let state=initial,episodes:readonly FinalEpisode[]=initialEpisodes
  const ticks:ReturnType<typeof physicalFinishTick>[]=[],results:StageResult[]=[]
  while(!state.completed){
   req(ticks.length<maximumTicks,'finish horizon exceeded')
-  const t=physicalFinishTick(state,episodes,targetId,multipliers,capabilityAdjustments,terrainCapability);state=t.state;episodes=t.episodes;ticks.push(t);results.push(...t.results)
+  const t=physicalFinishTick(state,episodes,targetId,multipliers,capabilityAdjustments,terrainCapability,weather);state=t.state;episodes=t.episodes;ticks.push(t);results.push(...t.results)
  }
  const finishers=Object.values(state.riders).filter(r=>r.stageStatus==='finished'),withdrawn=Object.values(state.riders).filter(r=>r.stageStatus==='dnf').sort((a,b)=>a.riderId.localeCompare(b.riderId))
  req(finishers.length>0&&finishers.length+withdrawn.length===Object.keys(state.riders).length&&new Set(results.map(r=>r.riderId)).size===finishers.length&&results.length===finishers.length,'terminal coverage')
@@ -104,6 +106,6 @@ export function reviewAutomaticPhysicalFinish(args:any){
  const targetId=p.targetId??Object.values(prefix.finalState.groups).find((g:any)=>g.active&&g.groupType==='peloton')?.groupId
  req(targetId,'missing finish target')
  const multipliers=prefix.resourceEnergy?Object.fromEntries(prefix.resourceEnergy.rows.map(r=>[r.riderId,r.roadEnergyMultiplier])):undefined
- const finish=finishPhysicalIncidentStage(prefix.finalState,p.episodes,targetId,1440,multipliers,prefix.equipmentPerformance?.adjustments,prefix.terrainCapability===true)
+ const finish=finishPhysicalIncidentStage(prefix.finalState,p.episodes,targetId,1440,multipliers,prefix.equipmentPerformance?.adjustments,prefix.terrainCapability===true,prefix.physicalWeather)
  return {prefix,finish,official:false,hostedWriteAllowed:false,accountingAllowed:false,authoritativeSourceVerified:false,finalClassificationVerified:false}
 }
