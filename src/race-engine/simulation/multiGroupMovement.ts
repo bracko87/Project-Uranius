@@ -255,10 +255,11 @@ export function calculateMultiGroupMovement(
     )
 
   if(experimentalPhysicalWeather && (!state.weatherPerformanceEffectsEnabled || !state.input.weather)) throw Error('explicit physical weather state required')
-  const weatherSpeed = experimentalPhysicalWeather ? calculateWeatherPerformanceEffects(state.input.weather).speedMultiplier : 1
+  const openingWeatherSpeed = experimentalPhysicalWeather ? calculateWeatherPerformanceEffects(state.input.weather).speedMultiplier : 1
   const preliminary =
     activeGroups.map(
       (group) => {
+        const weatherSpeed=experimentalPhysicalWeather&&state.input.weather?.courseBearingSegments?calculateWeatherPerformanceEffects(state.input.weather,group.distanceKm).speedMultiplier:openingWeatherSpeed
         const riders =
           getRacingGroupRiders(
             state,
