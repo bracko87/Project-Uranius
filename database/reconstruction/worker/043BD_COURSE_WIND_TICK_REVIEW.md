@@ -7,3 +7,5 @@ Helper returns ordered local duration, distance, speed and energy witnesses, inc
 Owner Windows native energy acceptance at 90ad6de: 4/4 passed (local workload, single reserve cap, fractional and stationary parity, malformed evidence). Cumulative 268/268 distinct native groups. Both helpers remain isolated; no hosted connection.
 
 Owner Windows native combined group acceptance at 127b2a3: 4/4 passed (simultaneous wind, fractional finish, conserved workload, deterministic ordering and guards). Cumulative 272/272 distinct native groups. No hosted connection.
+
+Owner Windows native exact physical runner acceptance at 63b03eb: 4/4 passed, complete 20 km synthetic stage with 24 riders and 4 corner-transition ticks, conserved rider energy, fractional finish/classification, deterministic replay, and legacy default/authority guards. Cumulative 276/276 distinct native groups. Exact path is opt-in, incident-free, wind-only; incident/pursuit, severe weather, downstream workload and TypeScript/full regression remain pending. No hosted connection. Official activation blocked.
