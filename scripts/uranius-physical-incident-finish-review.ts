@@ -11,22 +11,43 @@ import {carryoverDigest} from './uranius-multistage-carryover-review.mjs'
 import {captureAutomaticOverlappingFinishPrefix} from './uranius-automatic-overlapping-incident-review'
 import {multiRiderIncidentTick} from './uranius-multi-rider-incident-motion-review'
 import type {EnergyMultipliers} from './uranius-resource-energy-review'
+import {reviewCourseWindGroupTick} from '../src/race-engine/simulation/reviewCourseWindGroupTick'
 import {calculateWeatherPerformanceEffects} from '../src/race-engine/simulation/weatherPerformanceEffects'
 import {applyOptionalPreparedWeatherEnergy,type PreparedWeather} from './uranius-prepared-physical-weather-review'
 type Episode=Parameters<typeof multiRiderIncidentTick>[1][number]
 type FinalEpisode=Omit<Episode,'phase'>&{phase:Episode['phase']|'finished'}
 const req=(x:unknown,m:string)=>{if(!x)throw Error('043AD: '+m)}
-export function physicalFinishTick(state:SimulationState,episodes:readonly FinalEpisode[],targetId:string,multipliers?:EnergyMultipliers,capabilityAdjustments?:Readonly<Record<string,number>>,terrainCapability=false,weather?:PreparedWeather){
+export function physicalFinishTick(state:SimulationState,episodes:readonly FinalEpisode[],targetId:string,multipliers?:EnergyMultipliers,capabilityAdjustments?:Readonly<Record<string,number>>,terrainCapability=false,weather?:PreparedWeather,exactCourseWind=false){
  req(!state.completed&&state.input.orders.length===0,'active no-command state required')
  const segmented=weather?.weather.courseBearingSegments!==undefined
- const base=calculateMultiGroupMovement(state,capabilityAdjustments,terrainCapability,!!weather&&!weather.neutral),dt=base.tickSeconds/3600
+ const base=calculateMultiGroupMovement(state,capabilityAdjustments,terrainCapability,!exactCourseWind&&!!weather&&!weather.neutral),dt=base.tickSeconds/3600
  const target=base.proposals.find(p=>p.groupId===targetId)
  req(target||(!state.groups[targetId]?.active&&state.currentKm===state.stageDistanceKm),'missing live or finished target')
  const active=episodes.filter(e=>e.phase!=='joined'&&e.phase!=='finished')
  const ids=active.flatMap(e=>[e.groupId,...(e.helperGroupId?[e.helperGroupId]:[])])
  req(new Set(ids).size===ids.length&&active.every(e=>e.targetId===targetId)&&base.proposals.every(p=>p.groupId===targetId||ids.includes(p.groupId))&&ids.every(id=>base.proposals.some(p=>p.groupId===id)),'untracked group')
  const limit=state.stageDistanceKm
+ // First opt-in runtime slice: ordinary incident-free continuation only.
+ // Pursuit/contact constraints and post-stage workload consumers are not yet admitted.
+ if(exactCourseWind)req(segmented&&weather&&weather.weather.source==='synthetic_review_fixture'&&
+  state.weatherPerformanceEffectsEnabled===true&&JSON.stringify(state.input.weather)===JSON.stringify(weather.weather)&&
+  weather.effects.fatigueGainMultiplier===1&&multipliers&&active.length===0&&
+  !state.groupShelterEnergyEnabled&&!state.experimentalAbsoluteSpeedEffortEnabled,
+  'exact course wind requires incident-free synthetic wind-only workload')
+ const exact=exactCourseWind?reviewCourseWindGroupTick(weather!.weather,limit,base.tickSeconds,state.raceSecond,
+  base.proposals.map(p=>({groupId:p.groupId,startKm:p.previousDistanceKm,neutralSpeedKmh:p.appliedSpeedKmh,
+   maximumSpeedKmh:state.input.settings.maximumSpeedKmh,riders:p.riderIds.map(riderId=>{
+    const r=state.riders[riderId]
+    return {riderId,supplyMultiplier:multipliers![riderId],workload:{currentEnergy:r.energy,
+     baseSpeedKmh:p.baseSpeedKmh,gradientPercent:p.gradientPercent,stamina:r.attributes.stamina,
+     resistance:r.attributes.resistance,recovery:r.attributes.recovery}}
+   })}))) : undefined
  const preliminary=base.proposals.map(p=>{
+  if(exact){
+   const m=exact.groups.find(g=>g.groupId===p.groupId)!.movement
+   return {...p,nextDistanceKm:m.nextDistanceKm,distanceAdvancedKm:m.nextDistanceKm-p.previousDistanceKm,
+    appliedSpeedKmh:m.averageSpeedKmh}
+  }
   const ep=active.find(e=>e.groupId===p.groupId||e.helperGroupId===p.groupId)
   const speedFactor=segmented?calculateWeatherPerformanceEffects(weather!.weather,p.previousDistanceKm).speedMultiplier:weather?.effects.speedMultiplier??1
   const differentLocalWind=segmented&&!!target&&speedFactor!==calculateWeatherPerformanceEffects(weather!.weather,target.previousDistanceKm).speedMultiplier
@@ -51,7 +72,20 @@ export function physicalFinishTick(state:SimulationState,episodes:readonly Final
  const elapsed=previousWinners.length?Math.max(0,state.raceSecond+base.tickSeconds-Math.min(...previousWinners)):0
  const movement={...base,leaderGroupId:leader.groupId,leaderDistanceKm,proposals:preliminary.map(p=>({...p,gapFromLeaderSeconds:Math.max(0,leaderDistanceKm-p.nextDistanceKm)*3600/Math.max(1,leader.appliedSpeedKmh)+elapsed}))}
  const moved=applyMultiGroupMovement({state,movement}).state
- const energy=applyOptionalPreparedWeatherEnergy(applyMultiGroupEnergy({state:moved,movement}),multipliers,weather)
+ const baselineEnergy=applyMultiGroupEnergy({state:moved,movement})
+ const energy=exact?(()=>{
+  const riders={...moved.riders}
+  const applications=baselineEnergy.applications.map(a=>{
+   const workload=exact.groups.find(g=>g.groupId===a.groupId)!.riders.find(r=>r.riderId===a.riderId)!
+   riders[a.riderId]={...riders[a.riderId],energy:workload.nextEnergy}
+   // Single-speed gross metadata is not a segmented workload witness.
+   // Carry the exact per-slice receipt separately; consumers must use it.
+   return {...a,nextEnergy:workload.nextEnergy,energyCost:workload.energyCost,
+    result:{...a.result,nextEnergy:workload.nextEnergy,energyCost:workload.energyCost},
+    exactCourseWindWorkload:workload}
+  })
+  return {state:{...moved,riders},applications}
+ })():applyOptionalPreparedWeatherEnergy(baselineEnergy,multipliers,weather)
  let next=energy.state
  const pickups:string[]=[],rejoins:string[]=[]
  const merge=(fromId:string,toId:string)=>{
@@ -83,16 +117,16 @@ export function physicalFinishTick(state:SimulationState,episodes:readonly Final
   return ep
  })
  validateSimulationState(next)
- return {state:next,episodes:updated,pickups,rejoins,movement,energy:energy.applications,results:applied?.newResults??[],crossings:detection.candidates,official:false,hostedWriteAllowed:false}
+ return {state:next,episodes:updated,pickups,rejoins,movement,energy:energy.applications,results:applied?.newResults??[],crossings:detection.candidates,...(exact?{exactCourseWind:exact}:{}),official:false,hostedWriteAllowed:false}
 }
-export function finishPhysicalIncidentStage(initial:SimulationState,initialEpisodes:readonly Episode[],targetId:string,maximumTicks=1440,multipliers?:EnergyMultipliers,capabilityAdjustments?:Readonly<Record<string,number>>,terrainCapability=false,weather?:PreparedWeather){
+export function finishPhysicalIncidentStage(initial:SimulationState,initialEpisodes:readonly Episode[],targetId:string,maximumTicks=1440,multipliers?:EnergyMultipliers,capabilityAdjustments?:Readonly<Record<string,number>>,terrainCapability=false,weather?:PreparedWeather,exactCourseWind=false){
  req(!initial.completed&&Number.isSafeInteger(maximumTicks)&&maximumTicks>0&&maximumTicks<=1440,'invalid continuation scope')
  req(Object.values(initial.riders).every(r=>r.stageStatus==='racing'||r.stageStatus==='dnf'),'pre-finish prefix required')
  let state=initial,episodes:readonly FinalEpisode[]=initialEpisodes
  const ticks:ReturnType<typeof physicalFinishTick>[]=[],results:StageResult[]=[]
  while(!state.completed){
   req(ticks.length<maximumTicks,'finish horizon exceeded')
-  const t=physicalFinishTick(state,episodes,targetId,multipliers,capabilityAdjustments,terrainCapability,weather);state=t.state;episodes=t.episodes;ticks.push(t);results.push(...t.results)
+  const t=physicalFinishTick(state,episodes,targetId,multipliers,capabilityAdjustments,terrainCapability,weather,exactCourseWind);state=t.state;episodes=t.episodes;ticks.push(t);results.push(...t.results)
  }
  const finishers=Object.values(state.riders).filter(r=>r.stageStatus==='finished'),withdrawn=Object.values(state.riders).filter(r=>r.stageStatus==='dnf').sort((a,b)=>a.riderId.localeCompare(b.riderId))
  req(finishers.length>0&&finishers.length+withdrawn.length===Object.keys(state.riders).length&&new Set(results.map(r=>r.riderId)).size===finishers.length&&results.length===finishers.length,'terminal coverage')
