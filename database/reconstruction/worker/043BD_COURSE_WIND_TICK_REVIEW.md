@@ -5,3 +5,5 @@ Owner Windows native acceptance at 584af21: 4/4 isolated helper checks passed; c
 Helper returns ordered local duration, distance, speed and energy witnesses, including fractional finish and stationary slices. Runtime not connected. Remaining: movement integration, uncapped per-slice energy accounting, fractional finish and replay evidence, full regressions and TypeScript verification. Official activation blocked.
 
 Owner Windows native energy acceptance at 90ad6de: 4/4 passed (local workload, single reserve cap, fractional and stationary parity, malformed evidence). Cumulative 268/268 distinct native groups. Both helpers remain isolated; no hosted connection.
+
+Owner Windows native combined group acceptance at 127b2a3: 4/4 passed (simultaneous wind, fractional finish, conserved workload, deterministic ordering and guards). Cumulative 272/272 distinct native groups. No hosted connection.
